@@ -3,6 +3,19 @@
 <!-- UNRELEASED:START -->
 <!-- UNRELEASED:END -->
 
+## v1.361.0 (September 2026)
+
+## Core
+
+- Move sign-in to an OAuth App and make the client ID resolvable (@nikomatt69)
+- Run a subagent on a different model (@nikomatt69)
+
+**Thank you to 1 community contributor:**
+
+- @nikomatt69:
+  - feat(task): run a subagent on a different model
+  - fix(github): move sign-in to an OAuth App and make the client ID resolvable
+
 ## v1.360.0 (September 2026)
 
 ## Core
