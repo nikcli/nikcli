@@ -1,6 +1,6 @@
 {
   "name": "@nikcli-ai/slack",
-  "version": "1.362.0",
+  "version": "1.363.0",
   "type": "module",
   "license": "MIT",
   "scripts": {

@@ -3,6 +3,17 @@
 <!-- UNRELEASED:START -->
 <!-- UNRELEASED:END -->
 
+## v1.363.0 (September 2026)
+
+## Core
+
+- Let a pairing token be enough, and stop moving the pairing port (@nikomatt69)
+
+**Thank you to 1 community contributor:**
+
+- @nikomatt69:
+  - fix(mobile): let a pairing token be enough, and stop moving the pairing port
+
 ## v1.362.0 (September 2026)
 
 - No notable changes
