@@ -2,7 +2,7 @@ import { describe, expect, test } from "bun:test"
 import { generateQR, generateQRMatrix, shouldRenderCompactTerminalQR } from "@nikcli-ai/remote"
 import { shouldUseAsciiQR } from "@nikcli-ai/util/win32"
 import { buildMobilePairingDeepLink } from "@/cli/handlers/mobile/shared"
-import { rankLocalAddress } from "@nikcli-ai/util/mobile-pairing"
+import { rankLocalAddress, selectPairingAddresses } from "@nikcli-ai/util/mobile-pairing"
 import { normalizeMobileServerUrl, shouldShowPairingLink } from "@tui/component/dialog-mobile-connect"
 import {
   asciiQRRuns,
@@ -18,6 +18,69 @@ import {
 } from "@tui/component/qr"
 
 describe("mobile pairing", () => {
+  /**
+   * The Windows shape that broke pairing: an unplugged adapter and the WSL switch both hold an
+   * address, the Wi-Fi one is not first, and the QR took whatever came first.
+   */
+  const windowsInterfaces = [
+    { name: "Ethernet", address: "169.254.83.107", family: "IPv4", internal: false },
+    { name: "vEthernet (WSL)", address: "172.28.0.1", family: "IPv4", internal: false },
+    { name: "Wi-Fi", address: "192.168.1.14", family: "IPv4", internal: false },
+    { name: "Loopback", address: "127.0.0.1", family: "IPv4", internal: true },
+    { name: "Wi-Fi", address: "fe80::1c2d", family: "IPv6", internal: false },
+  ]
+
+  test("puts the reachable Wi-Fi address first on the Windows shape that broke pairing", () => {
+    expect(selectPairingAddresses(windowsInterfaces)).toEqual(["192.168.1.14", "172.28.0.1"])
+  })
+
+  test("drops link-local addresses, which no phone can reach", () => {
+    const addresses = selectPairingAddresses(windowsInterfaces)
+
+    expect(addresses).not.toContain("169.254.83.107")
+  })
+
+  test("drops loopback and IPv6 entries", () => {
+    const addresses = selectPairingAddresses(windowsInterfaces)
+
+    expect(addresses).not.toContain("127.0.0.1")
+    expect(addresses).not.toContain("fe80::1c2d")
+  })
+
+  test("still offers virtual adapters when they are all there is", () => {
+    expect(
+      selectPairingAddresses([
+        { name: "vEthernet (WSL)", address: "172.28.0.1", family: "IPv4", internal: false },
+        { name: "docker0", address: "172.17.0.1", family: "IPv4", internal: false },
+      ]),
+    ).toEqual(["172.28.0.1", "172.17.0.1"])
+  })
+
+  test("returns nothing when every address is link-local, so the dialog can say so", () => {
+    expect(
+      selectPairingAddresses([
+        { name: "Ethernet", address: "169.254.83.107", family: "IPv4", internal: false },
+        { name: "Ethernet 2", address: "169.254.1.9", family: "IPv4", internal: false },
+      ]),
+    ).toEqual([])
+  })
+
+  test("keeps enumeration order between addresses of equal rank", () => {
+    expect(
+      selectPairingAddresses([
+        { name: "Ethernet", address: "192.168.1.20", family: "IPv4", internal: false },
+        { name: "Wi-Fi", address: "192.168.1.14", family: "IPv4", internal: false },
+      ]),
+    ).toEqual(["192.168.1.20", "192.168.1.14"])
+  })
+
+  test("does not mutate the interface list it is given", () => {
+    const entries = [...windowsInterfaces]
+    selectPairingAddresses(entries)
+
+    expect(entries).toEqual(windowsInterfaces)
+  })
+
   test("ranks a real LAN address above a virtual adapter", () => {
     const entries = [
       { name: "vEthernet (WSL)", address: "172.28.0.1" },

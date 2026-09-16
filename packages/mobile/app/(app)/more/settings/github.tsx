@@ -9,7 +9,6 @@ import { ErrorBanner } from "@/components/ui/ErrorBanner"
 import { InfoChip } from "@/components/ui/InfoChip"
 import { SurfaceCard } from "@/components/ui/SurfaceCard"
 import { TextField } from "@/components/ui/TextField"
-import { startGithubDeviceAuthWithHostDefault } from "@/lib/github"
 import { useServer } from "@/lib/server-context"
 import { hexToRgba, useAppTheme } from "@/lib/theme"
 import { type as typeStyle } from "@/lib/typography"
@@ -174,7 +173,7 @@ export default function GithubSettingsScreen() {
     try {
       setOauthBusy(true)
       setMessage(null)
-      const flow = await startGithubDeviceAuthWithHostDefault(client, oauthConfigured)
+      const flow = await client.startGithubDeviceAuth()
       authRun.current += 1
       const runID = authRun.current
       setOauthFlow(flow)
@@ -185,7 +184,7 @@ export default function GithubSettingsScreen() {
       const text = error instanceof Error ? error.message : String(error)
       setMessage(
         /github oauth client id is not configured/i.test(text)
-          ? "Could not save the nikcli GitHub App on this host. Restart nikcli on the computer, then tap Reconnect GitHub."
+          ? "This nikcli host has no GitHub client ID. Update nikcli on the computer, or set one under OAuth client ID below."
           : text,
       )
     } finally {

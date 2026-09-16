@@ -1016,44 +1016,57 @@ async function explicitGithubCredential(connector: Config.Connector): Promise<st
   return connector.type === "github" ? (connector.token?.trim() ?? null) : null
 }
 
+/**
+ * Each candidate is trimmed *before* it is considered, so one set to blank
+ * falls through to the next instead of swallowing it. `a || b` on untrimmed
+ * values does the opposite: a whitespace-only `a` is truthy and wins.
+ */
+function firstNonBlank(values: readonly (string | undefined)[]): string | undefined {
+  for (const value of values) {
+    const trimmed = value?.trim()
+    if (trimmed) return trimmed
+  }
+  return undefined
+}
+
+/** Most specific wins: an operator's env var, then `nikcli.json`, then the built-in default. */
+export function resolveGithubOAuthClientID(input: {
+  env?: readonly (string | undefined)[]
+  config?: readonly (string | undefined)[]
+}): {
+  clientID: string
+  source: "env" | "config" | "flag"
+} {
+  const env = firstNonBlank(input.env ?? [])
+  if (env) return { clientID: env, source: "env" }
+  const config = firstNonBlank(input.config ?? [])
+  if (config) return { clientID: config, source: "config" }
+  return { clientID: Flag.NIKCLI_GITHUB_OAUTH_CLIENT_ID_DEFAULT, source: "flag" }
+}
+
+/**
+ * Which GitHub OAuth client this host authorizes against.
+ *
+ * `Flag.NIKCLI_GITHUB_OAUTH_CLIENT_ID` is deliberately not consulted. It folds
+ * the built-in default into the same value as an explicitly set env var, so
+ * asking it first meant it answered for *every* host and left the config and
+ * env branches unreachable: a client ID saved through the mobile settings
+ * screen was accepted, written to the config, reported back as stored — and
+ * then never used for a single request.
+ */
 export async function githubOAuthClientID() {
-  const fallback = Flag.NIKCLI_GITHUB_OAUTH_CLIENT_ID_DEFAULT
+  const env = [
+    process.env.NIKCLI_GITHUB_OAUTH_CLIENT_ID,
+    process.env.GITHUB_CLIENT_ID_CONSOLE,
+    process.env.GITHUB_CLIENT_ID,
+  ]
+  // Read the config only when it can still decide the outcome.
+  const fromEnv = resolveGithubOAuthClientID({ env })
+  if (fromEnv.source === "env") return fromEnv
+
   const config = await configGet().catch(() => undefined)
-  const githubConnector = Object.values(config?.connectors ?? {}).find(isGithubConnector)
-
-  const flagValue = Flag.NIKCLI_GITHUB_OAUTH_CLIENT_ID?.trim()
-  if (flagValue) {
-    return {
-      clientID: flagValue,
-      source: "flag" as const,
-    }
-  }
-
-  const configValue = (githubConnector?.oauthClientId || githubConnector?.clientId)?.trim()
-  if (configValue) {
-    return {
-      clientID: configValue,
-      source: "config" as const,
-    }
-  }
-
-  const envValue = (
-    process.env.NIKCLI_GITHUB_OAUTH_CLIENT_ID ||
-    process.env.GITHUB_CLIENT_ID_CONSOLE ||
-    process.env.GITHUB_CLIENT_ID
-  )?.trim()
-
-  if (envValue) {
-    return {
-      clientID: envValue,
-      source: "env" as const,
-    }
-  }
-
-  return {
-    clientID: fallback,
-    source: "flag" as const,
-  }
+  const connector = Object.values(config?.connectors ?? {}).find(isGithubConnector)
+  return resolveGithubOAuthClientID({ env, config: [connector?.oauthClientId, connector?.clientId] })
 }
 
 export async function startGithubDeviceAuth() {

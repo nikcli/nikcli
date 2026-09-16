@@ -105,9 +105,34 @@ export namespace Flag {
   export const NIKCLI_FIGMA_TOKEN = process.env["NIKCLI_FIGMA_TOKEN"]
   export const NIKCLI_SLACK_BOT_TOKEN = process.env["NIKCLI_SLACK_BOT_TOKEN"]
   export const NIKCLI_GITHUB_TOKEN = process.env["NIKCLI_GITHUB_TOKEN"]
-  /** Public OAuth App client ID (not a secret). Users only approve their GitHub account. */
-  export const NIKCLI_GITHUB_OAUTH_CLIENT_ID_DEFAULT = "Iv23liviwaSQK4HZ0qkl"
-  // `||` so empty-string env vars do not win over the nikcli GitHub App default.
+  /**
+   * The GitHub client every host falls back to. Public, not a secret: users
+   * only approve their own GitHub account against it.
+   *
+   * This must be an **OAuth App**, not a GitHub App. A GitHub App issues user
+   * tokens that expire in 8 hours and can only be refreshed by presenting the
+   * app's client secret — which a CLI and a phone, both public clients, cannot
+   * hold. GitHub answers `incorrect_client_credentials` and the connection
+   * dies with no way back (see `refreshGithubToken` in
+   * `server/mobile/helpers.ts`). An OAuth App's tokens do not expire, so that
+   * failure cannot happen. A GitHub App also ignores the requested `scope` and
+   * grants repo access per installation instead, which is where the 404s on
+   * repositories came from.
+   *
+   * Single source of truth: the host resolves env var → `nikcli.json`
+   * connector → this value, and nothing else ships a copy.
+   */
+  export const NIKCLI_GITHUB_OAUTH_CLIENT_ID_DEFAULT = "Ov23liIrum4YVdDu8Ogr"
+  /**
+   * The same lookup with the built-in default folded in, so this is never
+   * empty. Kept for callers that just want "whatever client ID applies", but
+   * do NOT use it to decide precedence: it cannot tell an operator's env var
+   * apart from the default, and doing so is what made `nikcli.json` unable to
+   * override the client ID. `githubOAuthClientID` in `server/mobile/helpers.ts`
+   * owns that decision.
+   *
+   * `||` so empty-string env vars do not win over the default.
+   */
   export const NIKCLI_GITHUB_OAUTH_CLIENT_ID =
     process.env["NIKCLI_GITHUB_OAUTH_CLIENT_ID"]?.trim() ||
     process.env["GITHUB_CLIENT_ID_CONSOLE"]?.trim() ||

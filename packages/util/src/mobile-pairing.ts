@@ -48,17 +48,36 @@ export function rankLocalAddress(input: { name: string; address: string }): numb
   return (isPrivateLAN(input.address) ? 0 : 1) + (VIRTUAL_INTERFACE.test(input.name) ? 2 : 0)
 }
 
+export type LocalInterfaceAddress = {
+  name: string
+  address: string
+  family: string
+  internal: boolean
+}
+
+/**
+ * The pairing candidates hidden in a `networkInterfaces()` snapshot, best first.
+ *
+ * Split out from `getLocalIPs` so the rules above can be checked against a fixed interface list:
+ * read straight from the OS they are only ever exercised with whatever adapters the machine
+ * running the test happens to have, which is never the broken Windows shape they exist for.
+ */
+export function selectPairingAddresses(entries: readonly LocalInterfaceAddress[]): string[] {
+  return entries
+    .filter((entry) => entry.family === "IPv4" && !entry.internal && !isLinkLocal(entry.address))
+    .sort((a, b) => rankLocalAddress(a) - rankLocalAddress(b))
+    .map((entry) => entry.address)
+}
+
 export function getLocalIPs(): string[] {
-  const candidates: { name: string; address: string }[] = []
+  const entries: LocalInterfaceAddress[] = []
   for (const [name, iface] of Object.entries(networkInterfaces())) {
     if (!iface) continue
     for (const addr of iface) {
-      if (addr.family !== "IPv4" || addr.internal) continue
-      if (isLinkLocal(addr.address)) continue
-      candidates.push({ name, address: addr.address })
+      entries.push({ name, address: addr.address, family: addr.family, internal: addr.internal })
     }
   }
-  return candidates.sort((a, b) => rankLocalAddress(a) - rankLocalAddress(b)).map((entry) => entry.address)
+  return selectPairingAddresses(entries)
 }
 
 export function isLoopbackHostname(hostname: string) {
