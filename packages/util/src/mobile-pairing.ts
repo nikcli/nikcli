@@ -34,18 +34,37 @@ function isPrivateLAN(address: string) {
 
 /**
  * Adapters that hold a routable address which is almost never the one the phone sits on: VM
- * switches, container bridges and VPN tunnels. They stay in the list — `tab` in the pairing dialog
- * cycles through it — but they never go first.
+ * switches and container bridges. They stay in the list — `tab` in the pairing dialog cycles
+ * through it — but they never go first.
  */
-const VIRTUAL_INTERFACE =
-  /^(vEthernet|Hyper-V|VirtualBox|VMware|docker|veth|virbr|br-|utun|tun\d|tap\d|ZeroTier|zt|Tailscale|tailscale)/i
+const VIRTUAL_INTERFACE = /^(vEthernet|Hyper-V|VirtualBox|VMware|docker|veth|virbr|br-|utun|tun\d|tap\d)/i
 
 /**
- * Pairing candidates, best first: a real LAN address beats a routable one on a virtual adapter,
- * and enumeration order breaks ties (`sort` is stable).
+ * Tailscale gives every node an address in 100.64.0.0/10, on every platform. The interface name
+ * does not travel — macOS calls it `utun3`, Windows `Tailscale`, Linux `tailscale0` — so the name
+ * is only a fallback for the overlays that have no address range of their own.
+ */
+function isTailscale(address: string) {
+  const octets = address.split(".").map(Number)
+  return octets[0] === 100 && octets[1]! >= 64 && octets[1]! <= 127
+}
+
+const OVERLAY_INTERFACE = /^(Tailscale|tailscale|ZeroTier|zt)/i
+
+/**
+ * Pairing candidates, best first.
+ *
+ * An overlay VPN sits between a real LAN address and everything else, rather than last with the VM
+ * switches it used to share a rank with. The distinction is whether the phone can be on the other
+ * end: a tailnet address reaches a phone running Tailscale from any network, including one where
+ * the LAN itself is blocked by AP isolation, while a Hyper-V switch reaches nothing. It stays
+ * *behind* the LAN because same-network pairing needs no tailnet on the phone and is faster — `tab`
+ * makes it one keypress away, with its own QR.
  */
 export function rankLocalAddress(input: { name: string; address: string }): number {
-  return (isPrivateLAN(input.address) ? 0 : 1) + (VIRTUAL_INTERFACE.test(input.name) ? 2 : 0)
+  if (isTailscale(input.address) || OVERLAY_INTERFACE.test(input.name)) return 1
+  if (VIRTUAL_INTERFACE.test(input.name)) return 3
+  return isPrivateLAN(input.address) ? 0 : 2
 }
 
 export type LocalInterfaceAddress = {

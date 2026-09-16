@@ -27,6 +27,13 @@ export namespace Server {
   let memoryPressureBound = false
 
   let _url: URL | undefined
+  /**
+   * The LAN pairing listener's default port, one above the engine's 4096 so the
+   * two never contend. Fixed on purpose: it is the port that ends up in the
+   * pairing QR and in the firewall rule the user writes for it.
+   */
+  export const MOBILE_PORT = 4097
+
   let _corsWhitelist: string[] = []
   let _listenHostname: string | undefined
   let _mobileAuthRequired = false
@@ -221,14 +228,32 @@ export namespace Server {
       listenHostname: hostname,
       mobileAuthRequired: true,
     })
-    const server = Bun.serve<WebSocketData>({
+    const args = {
       hostname,
-      port: opts.port ?? 0,
       idleTimeout: 0,
       maxRequestBodySize: Flag.NIKCLI_SERVER_MAX_BODY ?? 2 * 1024 * 1024 * 1024,
       fetch: (request: Request, bound: Bun.Server<WebSocketData>) => handler(request, bound),
       websocket: ServerWebSocket.handlers,
-    })
+    }
+    const tryServe = (candidate: number) => {
+      try {
+        return Bun.serve<WebSocketData>({ ...args, port: candidate })
+      } catch {
+        return undefined
+      }
+    }
+    // An ephemeral port meant the pairing QR carried a different port on every
+    // restart, so the firewall rule the user had just written for it stopped
+    // matching and the saved server URL in the app went stale. Prefer a fixed
+    // one — and still fall back rather than fail, because a listener on an
+    // unexpected port can at least be paired with, while none cannot.
+    const wanted = opts.port ?? MOBILE_PORT
+    let server = tryServe(wanted)
+    if (!server) {
+      log.warn(`port ${wanted} is in use; the pairing link will carry an ephemeral port`, { hostname })
+      server = tryServe(0)
+    }
+    if (!server) throw new Error(`Failed to start the mobile listener on port ${wanted}`)
     const port = server.port
     if (!port) {
       void server.stop(true)

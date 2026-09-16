@@ -45,7 +45,7 @@ export function ServerProvider(props: PropsWithChildren) {
       config
         ? new MobileClient(
             { ...config, token: userToken ?? config.token },
-            { onUnauthorized: () => refreshOAuth(true) },
+            { onUnauthorized: () => refreshOAuth(true), fallbackToken: config.token },
           )
         : null,
     [config, refreshOAuth, userToken],

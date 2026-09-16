@@ -35,7 +35,11 @@ function AuthGuard() {
     if (!config) return // no server — index.tsx (connect screen) handles this
     // Don't redirect if already on login or connect screen
     if (pathname === "/login" || pathname === "/" || pathname === "" || pathname === "/connect") return
-    if (!userToken) {
+    // A pairing token is authentication too. Gating on the account token alone
+    // bounced anyone who had paired with the QR but never signed in to a nikcli
+    // account straight back to /login, from a session the host would have
+    // served perfectly well.
+    if (!userToken && !config.token) {
       router.replace("/login")
     }
   }, [ready, rootNavigationState?.key, userLoading, config, userToken, pathname])
@@ -160,7 +164,10 @@ function NotificationCoordinator() {
         !authState.ready ||
         authState.userLoading ||
         !authState.config ||
-        !authState.userToken
+        // Same rule as AuthGuard: either token is enough to be signed in. Held
+        // to the account token, a notification tapped on a QR-paired phone was
+        // parked in `pendingNotificationHref` and never opened.
+        (!authState.userToken && !authState.config.token)
       ) {
         pendingNotificationHref = href
         return

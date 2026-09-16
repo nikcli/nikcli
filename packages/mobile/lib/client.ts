@@ -216,7 +216,14 @@ export function normalizeTeleportBaseUrl(raw: string): string | null {
 export class MobileClient {
   constructor(
     private readonly config: ServerConfig,
-    private readonly auth?: { onUnauthorized(): Promise<string | null> },
+    /**
+     * `onUnauthorized` refreshes the account token after a 401. `fallbackToken`
+     * is the pairing token from the stored config, kept apart because the
+     * account token overwrites `config.token` while a user is signed in — so
+     * once a refresh fails there is otherwise nothing left to try, even on a
+     * phone whose pairing token the host still honours.
+     */
+    private readonly auth?: { onUnauthorized(): Promise<string | null>; fallbackToken?: string },
   ) {}
 
   withDirectory(directory: string) {
@@ -237,7 +244,13 @@ export class MobileClient {
       headers: this.headers(init?.headers as Record<string, string> | undefined),
     })
     if (response.status === 401 && this.auth) {
-      const token = await this.auth.onUnauthorized()
+      // A failed refresh is not the end of the road: fall back to the pairing
+      // token. The guard skips the retry when it would resend what already
+      // failed — with no account token, `config.token` is that same pairing
+      // token and a second identical request just earns a second 401.
+      const refreshed = await this.auth.onUnauthorized()
+      const fallback = this.auth.fallbackToken?.trim() || undefined
+      const token = refreshed ?? (fallback && fallback !== this.config.token ? fallback : null)
       if (token) {
         response = await fetch(this.url(pathname), {
           ...init,

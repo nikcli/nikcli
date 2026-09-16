@@ -81,7 +81,7 @@ describe("mobile pairing", () => {
     expect(entries).toEqual(windowsInterfaces)
   })
 
-  test("ranks a real LAN address above a virtual adapter", () => {
+  test("ranks a real LAN address first, the tailnet next, the VM switch last", () => {
     const entries = [
       { name: "vEthernet (WSL)", address: "172.28.0.1" },
       { name: "Wi-Fi", address: "192.168.1.14" },
@@ -90,8 +90,31 @@ describe("mobile pairing", () => {
 
     const ordered = [...entries].sort((a, b) => rankLocalAddress(a) - rankLocalAddress(b)).map((e) => e.address)
 
-    expect(ordered[0]).toBe("192.168.1.14")
-    expect(ordered.at(-1)).toBe("100.86.3.2")
+    expect(ordered).toEqual(["192.168.1.14", "100.86.3.2", "172.28.0.1"])
+  })
+
+  // Tailscale's interface name does not survive the trip between platforms — macOS calls it
+  // `utun3`, which is also what every other VPN tunnel is called — so the 100.64.0.0/10 range
+  // is what identifies it.
+  test("recognises a tailnet address on macOS, where the interface is called utun", () => {
+    expect(rankLocalAddress({ name: "utun3", address: "100.86.3.2" })).toBe(1)
+    expect(rankLocalAddress({ name: "utun4", address: "10.8.0.2" })).toBe(3)
+  })
+
+  test("keeps 100.x addresses outside the CGNAT range off the tailnet rank", () => {
+    expect(rankLocalAddress({ name: "Ethernet", address: "100.63.0.1" })).toBe(2)
+    expect(rankLocalAddress({ name: "Ethernet", address: "100.128.0.1" })).toBe(2)
+    expect(rankLocalAddress({ name: "Ethernet", address: "100.64.0.1" })).toBe(1)
+    expect(rankLocalAddress({ name: "Ethernet", address: "100.127.255.1" })).toBe(1)
+  })
+
+  test("offers the tailnet before a VM switch that reaches no phone at all", () => {
+    expect(
+      selectPairingAddresses([
+        { name: "vEthernet (Default Switch)", address: "172.20.16.1", family: "IPv4", internal: false },
+        { name: "Tailscale", address: "100.86.3.2", family: "IPv4", internal: false },
+      ]),
+    ).toEqual(["100.86.3.2", "172.20.16.1"])
   })
 
   test("builds the deep link consumed by the mobile app", () => {
