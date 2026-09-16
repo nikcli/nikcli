@@ -5,6 +5,8 @@ Available agents:
 
 Require `subagent_type`. Always background (`background` defaults true) — returns immediately; completion wakes this session. Use `delegation` to inspect/cancel. Prefer parallel tasks when independent.
 
+Optional `model` runs the subagent on a different model. When the user's request names a model in passing ("get a review from <model>", "run it on <model>"), pass that name through as they wrote it — nikcli resolves it against the models it can reach. If the name fits none, or fits several variants of a family, the tool answers with the candidates: pick the one that matches what the user asked for and call again with its full "providerID/modelID". Omit it when they named none.
+
 Use Task when: multi-step research/implementation, slash-command handoff, deep analysis.
 Do NOT use Task for: single-file read, simple class lookup, 1–2 file edits (use Read/Glob/Edit).
 

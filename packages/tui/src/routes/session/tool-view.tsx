@@ -1560,6 +1560,9 @@ function Task(props: ToolProps<any>) {
     return undefined
   })
   const isBackground = createMemo(() => Boolean(meta().background))
+  // Only set when the caller overrode the model, so the line doubles as the
+  // signal that this subagent is not running on the session's own model.
+  const modelOverride = createMemo(() => (typeof meta().model === "string" ? meta().model.trim() : ""))
   const kind = createMemo(() => (typeof meta().kind === "string" ? meta().kind : undefined))
   const question = createMemo(() => (typeof meta().question === "string" ? meta().question.trim() : ""))
   const backgroundJob = createMemo(() => {
@@ -1655,6 +1658,9 @@ function Task(props: ToolProps<any>) {
       >
         <Show when={meta().summary?.length}>
           <text style={{ fg: theme.foreground.muted }}>({meta().summary?.length} toolcalls)</text>
+        </Show>
+        <Show when={modelOverride()}>
+          <text style={{ fg: theme.foreground.muted }}>└ {modelOverride()}</text>
         </Show>
         <Show when={kind() === "research" && question()}>
           <text style={{ fg: theme.foreground.muted }}>└ {question()}</text>
