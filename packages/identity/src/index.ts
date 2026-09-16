@@ -153,7 +153,14 @@ app.post("/oauth/device/code", async (c) => {
     c.header("Retry-After", String(rate.retryAfter))
     return c.json({ error: "rate_limited" }, 429)
   }
-  const body = await readJson(c.req.raw)
+  // RFC 8628 specifies this request as form-encoded, and the metadata document
+  // advertises the route as `device_authorization_endpoint`, so a conformant
+  // client sends a form and used to get a bare 415. nikcli's own CLI sets a
+  // JSON content-type explicitly, so reading both costs it nothing — the same
+  // shape `pollDevice` below already uses.
+  const body = c.req.header("content-type")?.startsWith("application/json")
+    ? await readJson(c.req.raw)
+    : formRecord(await readForm(c.req.raw))
   const clientID = typeof body.client_id === "string" ? body.client_id : ""
   if (!isClientID(clientID)) return oauthError(c, "invalid_client", "Unknown public client")
   const now = Date.now()
@@ -189,7 +196,11 @@ app.post("/oauth/device/code", async (c) => {
   return c.json({
     device_code: deviceCode,
     user_code: userCode,
+    // `verification_url` is the name nikcli's own clients read and cannot be
+    // dropped; `verification_uri` is the one RFC 8628 defines, and without it a
+    // conformant client sees the complete URI but no base to fall back on.
     verification_url: verificationURL,
+    verification_uri: verificationURL,
     verification_uri_complete: `${verificationURL}?user_code=${encodeURIComponent(userCode)}`,
     interval: DEVICE_POLL_INTERVAL_SECONDS,
     expires_in: DEVICE_CODE_TTL_SECONDS,

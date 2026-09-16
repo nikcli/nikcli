@@ -126,10 +126,44 @@ describe("identity contracts", () => {
     expect(typeof body.device_code).toBe("string")
     expect(body.user_code).toMatch(/^\d{4}-\d{4}$/)
     expect(body.verification_url).toBe("https://auth.nikcli.store/device")
+    // The name RFC 8628 defines, alongside the one nikcli's own clients read.
+    expect(body.verification_uri).toBe("https://auth.nikcli.store/device")
     expect(body.interval).toBe(5)
     // The window has to outlast a github.com round trip with 2FA plus the
     // passkey offer, not just typing the code.
     expect(body.expires_in).toBe(1200)
+  })
+
+  // The metadata document advertises this route as `device_authorization_endpoint`,
+  // and RFC 8628 specifies that request as form-encoded. Reading JSON only
+  // answered a conformant client with a bare 415.
+  test("accepts a form-encoded device authorization request", async () => {
+    const response = await app.fetch(
+      new Request("https://auth.nikcli.store/oauth/device/code", {
+        method: "POST",
+        headers: { "content-type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ client_id: "nikcli" }),
+      }),
+      env(),
+    )
+
+    expect(response.status).toBe(200)
+    const body = (await response.json()) as Record<string, unknown>
+    expect(body.user_code).toMatch(/^\d{4}-\d{4}$/)
+    expect(body.verification_uri).toBe("https://auth.nikcli.store/device")
+  })
+
+  test("still rejects an unknown client on a form-encoded request", async () => {
+    const response = await app.fetch(
+      new Request("https://auth.nikcli.store/oauth/device/code", {
+        method: "POST",
+        headers: { "content-type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ client_id: "not-a-nikcli-client" }),
+      }),
+      env(),
+    )
+
+    expect(response.status).toBe(400)
   })
 
   test("redraws the user code when the generated one is already taken", async () => {
@@ -276,6 +310,33 @@ describe("Content Security Policy", () => {
   // `connect-src 'self'` lets the challenge round-trip its solved token back
   // to the issuer origin via `fetch` — without it, Cloudflare's challenge
   // POSTs hit "Refused to connect".
+  // WebAuthn reports "you dismissed the prompt" and "this device holds no
+  // passkey for us" as the same NotAllowedError, on purpose, so a site cannot
+  // probe which credentials exist. Returning early on it left a phone whose
+  // passkey lives in another vendor's keychain — an iCloud passkey opened on
+  // Android — with a button that did nothing and said nothing.
+  test("the sign-in page answers a NotAllowedError instead of swallowing it", async () => {
+    const authUrl =
+      "https://auth.nikcli.store/authorize?response_type=code" +
+      "&client_id=nikcli-studio" +
+      "&redirect_uri=https%3A%2F%2Fnikcli.store%2Fdashboard%2Fcallback" +
+      "&state=opaque&code_challenge=" +
+      "a".repeat(43) +
+      "&code_challenge_method=S256"
+    const html = await (await app.fetch(new Request(authUrl), env())).text()
+
+    // The old shape: NotAllowedError shared AbortError's bare `return`.
+    expect(html).not.toMatch(/NotAllowedError"\s*\|\|\s*name === "AbortError"\) return/)
+    expect(html).toMatch(/name === "NotAllowedError"/)
+    // Whatever it says must name the two ways forward the page still offers.
+    const branch = html.slice(html.indexOf('name === "NotAllowedError"'))
+    expect(branch.slice(0, 700)).toMatch(/GitHub/)
+    expect(branch.slice(0, 700)).toMatch(/email code/)
+    // ...and must not be dressed as a failure: `.notice` alone renders red.
+    expect(html).toMatch(/notice hint/)
+    expect(html).toMatch(/\.notice\.hint\{/)
+  })
+
   test("HTML pages carry a strict CSP that allows inline scripts, the issuer origin, and self-fetch", async () => {
     const authUrl =
       "https://auth.nikcli.store/authorize?response_type=code" +
