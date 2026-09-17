@@ -1,0 +1,42 @@
+<link data-theme-icon="light" rel="icon" type="image/png" sizes="48x48" href="/brand/favicon-light.png" media="(prefers-color-scheme: light)" />
+<link data-theme-icon="dark" rel="icon" type="image/png" sizes="48x48" href="/brand/favicon.png" media="(prefers-color-scheme: dark)" />
+<link data-theme-touch-icon rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon-light.png" />
+<meta data-theme-color="light" name="theme-color" content="#faf9f6" media="(prefers-color-scheme: light)" />
+<meta data-theme-color="dark" name="theme-color" content="#080809" media="(prefers-color-scheme: dark)" />
+<meta name="color-scheme" content="light dark" />
+
+<script is:inline data-astro-rerun>
+  (() => {
+    // Inline so icons match the first paint, including pages without the router.
+    // Replacing the head during Astro navigation must not accumulate observers.
+    window.__nikcliThemeIconsCleanup?.();
+    const root = document.documentElement;
+    const media = window.matchMedia("(prefers-color-scheme: dark)");
+    const sync = () => {
+      let theme = root.getAttribute("data-theme");
+      if (theme !== "light" && theme !== "dark") {
+        try { theme = localStorage.getItem("theme"); } catch {}
+      }
+      if (theme !== "light" && theme !== "dark") theme = media.matches ? "dark" : "light";
+      document.querySelectorAll("[data-theme-icon], [data-theme-color]").forEach((element) => {
+        const variant = element.getAttribute("data-theme-icon") || element.getAttribute("data-theme-color");
+        element.setAttribute("media", variant === theme ? "all" : "not all");
+      });
+      document.querySelector("[data-theme-touch-icon]")?.setAttribute(
+        "href", theme === "dark" ? "/apple-touch-icon.png" : "/apple-touch-icon-light.png"
+      );
+      document.querySelector('meta[name="color-scheme"]')?.setAttribute("content", theme);
+    };
+    const observer = new MutationObserver(sync);
+    observer.observe(root, { attributes: true, attributeFilter: ["data-theme"] });
+    media.addEventListener("change", sync);
+    const cleanup = () => {
+      observer.disconnect();
+      media.removeEventListener("change", sync);
+      document.removeEventListener("astro:before-swap", cleanup);
+    };
+    document.addEventListener("astro:before-swap", cleanup);
+    window.__nikcliThemeIconsCleanup = cleanup;
+    sync();
+  })();
+</script>

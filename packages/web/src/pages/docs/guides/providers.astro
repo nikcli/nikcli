@@ -1,0 +1,316 @@
+---
+export const prerender = true;
+
+import DocsLayout from "../../../layouts/DocsLayout.astro";
+import DocCallout from "../../../components/docs/DocCallout.astro";
+import DocCode from "../../../components/docs/DocCode.astro";
+import DocRelated from "../../../components/docs/DocRelated.astro";
+
+const toc = [
+  { title: "What a provider plugin does", href: "#what", depth: 2 },
+  { title: "An API-key provider", href: "#api-key", depth: 2 },
+  { title: "Prompting for extra fields", href: "#prompts", depth: 2 },
+  { title: "The loader", href: "#loader", depth: 2 },
+  { title: "An OAuth provider", href: "#oauth", depth: 2 },
+  { title: "Refreshing tokens", href: "#refresh", depth: 2 },
+  { title: "Listing models dynamically", href: "#models", depth: 2 },
+  { title: "Per-provider request fixups", href: "#fixups", depth: 2 },
+  { title: "Real examples in the tree", href: "#real", depth: 2 },
+  { title: "Failure modes", href: "#failure-modes", depth: 2 },
+];
+---
+
+<DocsLayout
+  title="Custom model providers"
+  subtitle="Register a provider, its auth flow and its model list from a plugin — including an internal gateway that will never be in the public catalogue."
+  description="Guide to writing a nikcli provider plugin: the auth hook for API-key and OAuth methods, the loader, token refresh, dynamic model lists and per-provider request fixups."
+  toc={toc}
+>
+  <section id="what" class="doc-section">
+    <h2>What a provider plugin does</h2>
+    <p>
+      nikcli resolves models from a catalogue, but a plugin can add to it. Two hooks do the work,
+      and they are independent — you can use either alone.
+    </p>
+    <table class="doc-table">
+      <thead><tr><th>Hook</th><th>Answers</th></tr></thead>
+      <tbody>
+        <tr><td><code>auth</code></td><td>How does a user sign in to this provider, and what credentials does a request carry?</td></tr>
+        <tr><td><code>provider</code></td><td>Which models does this provider offer <em>for this user</em>?</td></tr>
+      </tbody>
+    </table>
+    <p>
+      The pattern covers three real situations: a provider that needs a key nikcli does not know how
+      to ask for, a provider behind OAuth, and a gateway whose model list depends on the account.
+    </p>
+  </section>
+
+  <section id="api-key" class="doc-section">
+    <h2>An API-key provider</h2>
+    <p>
+      The smallest useful provider plugin declares one auth method. nikcli then offers it in the
+      login flow and stores whatever the user enters.
+    </p>
+    <DocCode language="ts" title=".nikcli/plugins/internal-gateway.ts">{`import type { Plugin } from "@nikcli-ai/plugin"
+
+export const InternalGateway: Plugin = async () => ({
+  auth: {
+    provider: "internal-gateway",
+    methods: [{ type: "api", label: "API key" }],
+  },
+})`}</DocCode>
+  </section>
+
+  <section id="prompts" class="doc-section">
+    <h2>Prompting for extra fields</h2>
+    <p>
+      Some providers need more than a key — an account id, a region, a gateway name. Declare
+      <code>prompts</code> and the values are collected alongside it. Building the array
+      conditionally lets you skip anything already in the environment.
+    </p>
+    <DocCode language="ts">{`export const Gateway: Plugin = async () => {
+  const prompts = [
+    ...(!process.env.GATEWAY_ACCOUNT_ID
+      ? [{
+          type: "text" as const,
+          key: "accountId",
+          message: "Enter your gateway account ID",
+          placeholder: "e.g. 1234567890abcdef",
+        }]
+      : []),
+    {
+      type: "select" as const,
+      key: "region",
+      message: "Which region?",
+      options: [
+        { label: "EU", value: "eu", hint: "Frankfurt" },
+        { label: "US", value: "us" },
+      ],
+    },
+  ]
+
+  return {
+    auth: {
+      provider: "internal-gateway",
+      methods: [{ type: "api", label: "Gateway API token", prompts }],
+    },
+  }
+}`}</DocCode>
+    <p>
+      A <code>text</code> prompt can carry a <code>validate</code> function that returns an error
+      string, and either kind can carry a <code>condition</code> that hides it based on earlier
+      answers.
+    </p>
+  </section>
+
+  <section id="loader" class="doc-section">
+    <h2>The loader</h2>
+    <p>
+      <code>loader</code> turns a stored credential into the options the model client uses. Return
+      <code>apiKey</code>, a <code>baseURL</code>, headers — or a whole <code>fetch</code> when the
+      provider needs the request rewritten.
+    </p>
+    <DocCode language="ts">{`auth: {
+  provider: "internal-gateway",
+  async loader(getAuth) {
+    const auth = await getAuth()
+    if (auth.type !== "api") return {}
+
+    return {
+      apiKey: auth.key,
+      baseURL: "https://gateway.internal/v1",
+      headers: { "x-team": "platform" },
+    }
+  },
+  methods: [{ type: "api", label: "API key" }],
+}`}</DocCode>
+    <DocCallout type="info" title="loader runs per request, not once">
+      <p>
+        <code>getAuth()</code> is a function rather than a value precisely so a long-lived session
+        sees a refreshed credential. Read it inside the call you are serving, not at plugin load.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="oauth" class="doc-section">
+    <h2>An OAuth provider</h2>
+    <p>
+      An <code>oauth</code> method returns a URL, instructions for the user, and a callback. There
+      are two shapes: <code>auto</code>, where nikcli polls your callback until the provider
+      completes the flow, and <code>code</code>, where the user pastes a code back.
+    </p>
+    <DocCode language="ts">{`auth: {
+  provider: "internal-gateway",
+  methods: [
+    {
+      type: "oauth",
+      label: "Sign in with SSO",
+      async authorize() {
+        const { verifier, challenge } = await pkce()
+        const url = new URL("https://sso.internal/authorize")
+        url.searchParams.set("client_id", CLIENT_ID)
+        url.searchParams.set("code_challenge", challenge)
+        url.searchParams.set("code_challenge_method", "S256")
+
+        return {
+          url: url.toString(),
+          instructions: "Approve the request, then paste the code shown.",
+          method: "code",
+          async callback(code: string) {
+            const tokens = await exchange(code, verifier)
+            if (!tokens) return { type: "failed" }
+            return {
+              type: "success",
+              refresh: tokens.refresh_token,
+              access: tokens.access_token,
+              expires: Date.now() + tokens.expires_in * 1000,
+            }
+          },
+        }
+      },
+    },
+  ],
+}`}</DocCode>
+    <p>
+      A successful callback can return either an OAuth triple
+      (<code>refresh</code>, <code>access</code>, <code>expires</code>) or a plain
+      <code>{'{ key }'}</code> when the flow ends in a long-lived API key.
+    </p>
+  </section>
+
+  <section id="refresh" class="doc-section">
+    <h2>Refreshing tokens</h2>
+    <p>
+      Stored credentials are readonly from the plugin's point of view. To rotate one, exchange the
+      refresh token and write the new pair back through the client — then use the fresh access token
+      for the request you are currently serving.
+    </p>
+    <DocCode language="ts">{`async loader(getAuth) {
+  return {
+    apiKey: "unused-but-required",
+    async fetch(input: RequestInfo | URL, init?: RequestInit) {
+      const auth = await getAuth()
+      if (auth.type !== "oauth") return fetch(input, init)
+
+      let access = auth.access
+      if (!access || auth.expires < Date.now()) {
+        const tokens = await refresh(auth.refresh)
+        access = tokens.access_token
+
+        await client.auth.set({
+          providerID: "internal-gateway",
+          payload: {
+            type: "oauth",
+            refresh: tokens.refresh_token ?? auth.refresh,
+            access: tokens.access_token,
+            expires: Date.now() + (tokens.expires_in ?? 3600) * 1000,
+          },
+        })
+      }
+
+      const headers = new Headers(init?.headers)
+      headers.set("authorization", \`Bearer \${access}\`)
+      return fetch(input, { ...init, headers })
+    },
+  }
+}`}</DocCode>
+    <DocCallout type="warn" title="Strip the Authorization the SDK already set">
+      <p>
+        The model SDK sets its own <code>Authorization</code> from <code>apiKey</code> before your
+        <code>fetch</code> runs. If you add a second one without deleting the first, providers
+        differ in which they honour — which is why the built-in xAI plugin explicitly removes it in
+        all three <code>HeadersInit</code> shapes before setting its own.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="models" class="doc-section">
+    <h2>Listing models dynamically</h2>
+    <p>
+      The <code>provider</code> hook returns the model map. It receives the statically configured
+      provider plus the current auth, so the list can depend on the signed-in account — and must
+      degrade to the static list when the lookup fails.
+    </p>
+    <DocCode language="ts">{`provider: {
+  id: "internal-gateway",
+  async models(provider, ctx) {
+    if (ctx.auth?.type !== "oauth") return provider.models
+
+    return await fetchEntitledModels(ctx.auth.access).catch((error) => {
+      // a failed lookup must not remove the user's models
+      console.error("model list failed", error)
+      return provider.models
+    })
+  },
+}`}</DocCode>
+    <DocCallout type="warn" title="Never return an empty map on failure">
+      <p>
+        An empty list does not read as "lookup failed" anywhere downstream — it reads as "this
+        provider has no models", and the provider silently disappears from the picker. Fall back to
+        <code>provider.models</code>.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="fixups" class="doc-section">
+    <h2>Per-provider request fixups</h2>
+    <p>
+      Gateways that multiplex several upstreams often need a field removed or renamed for one family
+      of models. <code>chat.params</code> is where that belongs — guarded on the provider id, so it
+      cannot affect anyone else's traffic.
+    </p>
+    <DocCode language="ts">{`async "chat.params"(input, output) {
+  if (input.model.providerID !== "internal-gateway") return
+  if (!input.model.api.id.toLowerCase().startsWith("openai/")) return
+  if (!input.model.capabilities.reasoning) return
+
+  // OpenAI reasoning models reject max_tokens and want max_completion_tokens,
+  // which the openai-compatible SDK cannot rename — so drop the cap.
+  output.options.maxOutputTokens = undefined
+}`}</DocCode>
+    <p>
+      That example is not hypothetical: it is what the built-in Cloudflare AI Gateway plugin does,
+      for exactly that reason.
+    </p>
+  </section>
+
+  <section id="real" class="doc-section">
+    <h2>Real examples in the tree</h2>
+    <p>
+      The built-in provider plugins are ordinary plugins using these same hooks. Read them rather
+      than guessing — they are the reference implementations.
+    </p>
+    <table class="doc-table">
+      <thead><tr><th>File</th><th>Shows</th></tr></thead>
+      <tbody>
+        <tr><td><code>src/plugin/cloudflare.ts</code></td><td>The compact case: two API-key providers with conditional prompts, plus a <code>chat.params</code> fixup. ~76 lines.</td></tr>
+        <tr><td><code>src/plugin/github-copilot/copilot.ts</code></td><td>A <code>provider.models</code> hook that fetches entitled models and falls back to the static list.</td></tr>
+        <tr><td><code>src/plugin/xai.ts</code></td><td>Full OAuth: PKCE, endpoint discovery, a <code>fetch</code> that strips and replaces the header, and token refresh written back through the client.</td></tr>
+        <tr><td><code>src/plugin/cursor.ts</code></td><td>The largest one, including provider-specific request shaping.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="failure-modes" class="doc-section">
+    <h2>Failure modes</h2>
+    <table class="doc-table">
+      <thead><tr><th>Symptom</th><th>Cause</th></tr></thead>
+      <tbody>
+        <tr><td>Provider missing from the picker</td><td><code>models()</code> returned an empty map, usually from a caught error.</td></tr>
+        <tr><td>401 despite a valid token</td><td>Two <code>Authorization</code> headers — the SDK's and yours.</td></tr>
+        <tr><td>Works, then fails after an hour</td><td>Reading <code>getAuth()</code> once at load instead of per request, so the expired access token is reused.</td></tr>
+        <tr><td>Auth method never offered</td><td><code>auth.provider</code> does not match the provider id used by the model.</td></tr>
+        <tr><td>Fixup affects other providers</td><td>A <code>chat.params</code> hook without a <code>providerID</code> guard — every hook sees every call.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <DocRelated
+    links={[
+      { title: "Writing a plugin", href: "/docs/guides/plugins", description: "The plugin basics this guide builds on." },
+      { title: "Providers", href: "/docs/providers", description: "The built-in provider catalogue and configuration." },
+      { title: "Plugin recipes", href: "/docs/guides/plugin-recipes", description: "Eight smaller plugins to copy from." },
+      { title: "Providers & Auth API", href: "/docs/api/provider", description: "The endpoints behind provider auth." },
+    ]}
+  />
+</DocsLayout>

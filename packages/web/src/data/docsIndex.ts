@@ -1,3 +1,4 @@
+import { apiGroups } from "./apiGroups"
 import { docsSidebar } from "./docsSidebar"
 
 /**
@@ -259,6 +260,274 @@ const meta: Record<string, DocsIndexMeta> = {
       "prompt",
     ],
   },
+  "/docs/guides": {
+    summary:
+      "Index of the step-by-step guides: writing a plugin, plugin recipes, using the HTTP API, and streaming a response.",
+    keywords: ["guide", "guides", "tutorial", "walkthrough", "how to", "example", "getting started", "step by step"],
+  },
+  "/docs/guides/plugins": {
+    summary:
+      "Step-by-step guide to writing a nikcli plugin: the local file, the config entry, the two accepted module shapes, the plugin input, every hook, adding a custom tool with tool(), publishing to npm and debugging.",
+    keywords: [
+      "write a plugin",
+      "create plugin",
+      "plugin tutorial",
+      "custom tool",
+      "tool()",
+      "hooks",
+      "PluginInput",
+      "plugin module",
+      "publish plugin",
+      "plugin not loading",
+      "extend nikcli",
+    ],
+  },
+  "/docs/guides/plugin-recipes": {
+    summary:
+      "Eight complete example plugins: a tool that runs a script, a tool that streams progress, auto-denying a permission class, injecting shell secrets, tuning model parameters, redacting outbound requests, appending project rules to the system prompt, and notifying on session idle.",
+    keywords: [
+      "plugin example",
+      "recipe",
+      "sample plugin",
+      "copy paste",
+      "permission policy",
+      "shell env",
+      "secrets",
+      "chat.params",
+      "redact",
+      "system prompt",
+      "slack notification",
+      "custom tool example",
+    ],
+  },
+  "/docs/guides/api": {
+    summary:
+      "Quickstart for driving the nikcli HTTP API with curl and the typed client side by side: starting a server, authenticating, selecting a project, creating and prompting sessions, diffs, files, search, shell commands, permission replies, and a complete script.",
+    keywords: [
+      "api guide",
+      "api tutorial",
+      "how to use the api",
+      "curl",
+      "quickstart",
+      "create session",
+      "send prompt",
+      "read file",
+      "search",
+      "permission reply",
+      "automate",
+      "script",
+      "ci",
+    ],
+  },
+  "/docs/guides/api-tour": {
+    summary:
+      "A hands-on tour of the HTTP API where every response shown was captured from a real server: health, paths, projects, the tool registry, agent permission tables, sessions, files, ripgrep search, empty-collection shapes, the SSE handshake, and what 404s, validation errors and unmatched paths actually return.",
+    keywords: [
+      "example output",
+      "real response",
+      "sample response",
+      "try the api",
+      "test endpoint",
+      "curl example",
+      "what does it return",
+      "response shape",
+      "json example",
+      "playground",
+      "error response",
+      "404",
+      "validation error",
+      "NIKCLI_TEST_HOME",
+      "throwaway server",
+    ],
+  },
+  "/docs/guides/streaming": {
+    summary:
+      "Streaming nikcli output: subscribing to the event feed before submitting, promptAsync, printing message.part.updated deltas, detecting session.idle, the useful event types, and the same flow with curl.",
+    keywords: [
+      "streaming",
+      "stream response",
+      "sse",
+      "event feed",
+      "promptAsync",
+      "delta",
+      "tokens",
+      "realtime",
+      "session.idle",
+      "message.part.updated",
+      "live output",
+    ],
+  },
+  "/docs/guides/providers": {
+    summary:
+      "Writing a provider plugin: the auth hook for API-key and OAuth methods, conditional prompts, the loader that turns a credential into request options, token refresh written back through the client, dynamic model lists, and per-provider chat.params fixups.",
+    keywords: [
+      "custom provider",
+      "add provider",
+      "model provider",
+      "auth hook",
+      "oauth provider",
+      "api key provider",
+      "loader",
+      "refresh token",
+      "provider models",
+      "gateway",
+      "internal model",
+    ],
+  },
+  "/docs/guides/custom-interface": {
+    summary:
+      "Building a nikcli client: event-driven state keyed by part id, rendering parts, answering permission requests and questions, todos and diffs, reconnecting without losing the transcript, and a complete working terminal client.",
+    keywords: [
+      "custom interface",
+      "build a client",
+      "custom ui",
+      "frontend",
+      "render parts",
+      "permission prompt",
+      "question reply",
+      "reconnect",
+      "todo",
+      "chat ui",
+      "alternative interface",
+    ],
+  },
+  "/docs/guides/terminals": {
+    summary:
+      "Driving the PTY API: creating terminals, attaching over a websocket with a query-parameter token, resizing so full-screen programs render, lifecycle, environment injection through shell.env, and wiring a terminal to xterm.js in the browser.",
+    keywords: [
+      "terminal",
+      "pty",
+      "websocket",
+      "xterm",
+      "shell",
+      "resize",
+      "tty",
+      "interactive command",
+      "terminal ui",
+      "attach",
+    ],
+  },
+  "/docs/guides/loops": {
+    summary:
+      "Automating with loops: defining stages with agents, objectives and token budgets, manual and interval triggers, maxRuns and timeouts, worktree isolation and createPR, running and pausing, run history, and generating a loop from a description.",
+    keywords: [
+      "loop",
+      "automation",
+      "schedule",
+      "recurring",
+      "nightly",
+      "stages",
+      "token budget",
+      "worktree",
+      "createPR",
+      "interval",
+      "cron",
+      "unattended",
+    ],
+  },
+  "/docs/guides/missions": {
+    summary:
+      "Orchestrating missions: milestones and features, dependsOn dependency graphs that allow parallel work, scrutiny and user-test validation gates, starting and pausing, watching execs, and mutating a feature mid-run.",
+    keywords: [
+      "mission",
+      "milestone",
+      "feature",
+      "dependency graph",
+      "dependsOn",
+      "validation",
+      "scrutiny",
+      "parallel features",
+      "orchestration",
+      "plan",
+    ],
+  },
+  "/docs/guides/workspaces": {
+    summary:
+      "Parallel work with workspaces: worktree and container configurations, creating and targeting them, warping a session between workspaces with copyChanges, status and events, cleanup, and running three branches at once from one script.",
+    keywords: [
+      "workspace",
+      "parallel",
+      "worktree",
+      "container",
+      "warp",
+      "isolation",
+      "multiple branches",
+      "concurrent sessions",
+      "sandbox",
+    ],
+  },
+  "/docs/guides/ci": {
+    summary:
+      "Running nikcli in CI: the GitHub Action and every input, OIDC token exchange versus GITHUB_TOKEN, scheduled unattended runs, starting a headless server on any CI, filtering permissions in an unattended run, and a review job that fails the build.",
+    keywords: [
+      "ci",
+      "github actions",
+      "continuous integration",
+      "pipeline",
+      "gitlab",
+      "automation",
+      "review bot",
+      "pull request",
+      "workflow",
+      "headless",
+      "unattended",
+      "oidc",
+    ],
+  },
+  "/docs/build": {
+    summary:
+      "The three ways to build on nikcli without forking it: plugins that run inside the agent, the typed HTTP client that drives a running server, and the embedded host that runs nikcli in your own process.",
+    keywords: [
+      "build",
+      "extend",
+      "integrate",
+      "embed",
+      "sdk",
+      "plugin",
+      "custom tool",
+      "hooks",
+      "api client",
+      "automation",
+      "custom interface",
+      "developer",
+    ],
+  },
+  "/docs/build/client": {
+    summary:
+      "Driving a running nikcli server with @nikcli-ai/sdk: creating a client, the { data, error } result envelope and throwOnError, instance selection, method naming, streaming event feeds, authentication headers and ClientError.",
+    keywords: [
+      "client",
+      "sdk",
+      "createNikcliClient",
+      "@nikcli-ai/sdk",
+      "http client",
+      "typed client",
+      "throwOnError",
+      "result envelope",
+      "event stream",
+      "sse",
+      "bearer token",
+      "script nikcli",
+      "automation",
+      "ci",
+    ],
+  },
+  "/docs/build/sdk": {
+    summary:
+      "Embedding nikcli in-process with @nikcli-ai/sdk-next: creating a host, the Effect layer, directory binding, registering tools locally, and the process-global instance state caveat.",
+    keywords: [
+      "embedded",
+      "embed",
+      "sdk-next",
+      "in-process",
+      "no server",
+      "effect layer",
+      "NikCli.create",
+      "register tool",
+      "tool registry",
+      "host",
+    ],
+  },
   "/docs/plugins": {
     summary:
       "How nikcli installs plugins, patches server and TUI config, loads built-ins and exposes plugin hooks, plus skills.",
@@ -486,13 +755,51 @@ const meta: Record<string, DocsIndexMeta> = {
   },
 }
 
+/**
+ * Retrieval metadata for the generated API reference. The group definitions
+ * already carry a summary and the vocabulary a reader would type, so deriving
+ * it here keeps one description per resource instead of two that drift.
+ */
+const apiMeta: Record<string, DocsIndexMeta> = {
+  "/docs/api": {
+    summary:
+      "Complete HTTP API reference for the nikcli server: base URL, the four authentication schemes, instance selection, streaming endpoints, the generated SDK client, and every resource group.",
+    keywords: [
+      "api",
+      "http api",
+      "rest",
+      "endpoint",
+      "openapi",
+      "swagger",
+      "spec",
+      "curl",
+      "base url",
+      "authentication",
+      "bearer token",
+      "sdk client",
+      "operation id",
+    ],
+  },
+  ...Object.fromEntries(
+    apiGroups.map((group) => [
+      `/docs/api/${group.slug}`,
+      {
+        summary: `HTTP API endpoints — ${group.summary}`,
+        keywords: ["api", "endpoint", "http", ...group.keywords],
+      },
+    ]),
+  ),
+}
+
+const entryMeta = (href: string): DocsIndexMeta | undefined => meta[href] ?? apiMeta[href]
+
 export const docsIndex: DocsIndexEntry[] = docsSidebar.flatMap((group) =>
   group.items.map((item) => ({
     title: item.title,
     href: item.href,
     group: group.title,
-    summary: meta[item.href]?.summary ?? item.title,
-    keywords: meta[item.href]?.keywords ?? [],
+    summary: entryMeta(item.href)?.summary ?? item.title,
+    keywords: entryMeta(item.href)?.keywords ?? [],
   })),
 )
 
@@ -500,7 +807,7 @@ export const docsIndex: DocsIndexEntry[] = docsSidebar.flatMap((group) =>
 export function docsIndexGaps() {
   const sidebarPaths = new Set(docsIndex.map((entry) => entry.href))
   return {
-    missing: docsIndex.filter((entry) => !meta[entry.href]).map((entry) => entry.href),
-    orphaned: Object.keys(meta).filter((href) => !sidebarPaths.has(href)),
+    missing: docsIndex.filter((entry) => !entryMeta(entry.href)).map((entry) => entry.href),
+    orphaned: [...Object.keys(meta), ...Object.keys(apiMeta)].filter((href) => !sidebarPaths.has(href)),
   }
 }

@@ -5,9 +5,12 @@ import "../styles/brand.css";
 import Navbar from "../components/Navbar.astro";
 import DocToc from "../components/docs/DocToc.astro";
 import DocsSidebar from "../components/docs/DocsSidebar.astro";
+import DocsSubnav from "../components/docs/DocsSubnav.astro";
 import DocAiActions from "../components/docs/DocAiActions.astro";
 import DocAssistant from "../components/docs/DocAssistant.astro";
 import { ClientRouter } from 'astro:transitions';
+
+import SocialMeta from "../components/SocialMeta.astro";
 
 interface Props {
   title?: string;
@@ -24,7 +27,6 @@ const {
 } = Astro.props;
 
 const pathname = Astro.url.pathname;
-const ogImage = "https://nikcli.store/og.png";
 ---
 
 <!doctype html>
@@ -39,22 +41,7 @@ const ogImage = "https://nikcli.store/og.png";
     <meta name="author" content="Nikcli" />
     <meta name="keywords" content="nikcli, ai agent, development agent, terminal, cli, lsp, mcp, open source, documentation" />
     
-    <!-- Open Graph / Facebook -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content={`https://nikcli.store${pathname}`} />
-    <meta property="og:title" content={`${title} - Nikcli Docs`} />
-    <meta property="og:description" content={description} />
-    <meta property="og:image" content={ogImage} />
-
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content={`https://nikcli.store${pathname}`} />
-    <meta property="twitter:title" content={`${title} - Nikcli Docs`} />
-    <meta property="twitter:description" content={description} />
-    <meta property="twitter:image" content={ogImage} />
-    
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="canonical" href={`https://nikcli.store${pathname}`} />
+    <SocialMeta title={`${title} - Nikcli Docs`} description={description} />
     <link rel="alternate" type="text/markdown" href={`/.llm?path=${encodeURIComponent(pathname)}`} title={`${title} as Markdown`} />
 
     <!-- Fonts: Syne (display) + Figtree (body) -->
@@ -77,11 +64,12 @@ const ogImage = "https://nikcli.store/og.png";
   <body class="bg-terminal-bg text-terminal-text antialiased font-sans min-h-screen flex flex-col">
     <a class="sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 z-[100] px-5 py-2.5 bg-terminal-text text-terminal-bg font-semibold rounded-lg shadow-xl" href="#main-content">Skip to content</a>
     <Navbar />
-    
+    <DocsSubnav />
+
     <div class="page-shell relative flex w-full flex-1 min-h-0 flex-col xl:flex-row">
 
       <!-- Mobile Docs Menu Toggle -->
-       <div class="sticky top-[var(--topbar-height)] z-40 flex min-h-[var(--docs-mobilebar-height)] items-center justify-between border-b border-terminal-border/60 bg-terminal-bg/90 px-0 py-3 shadow-sm backdrop-blur-xl dark:border-white/5 dark:bg-terminal-bg/80 xl:hidden">
+       <div class="sticky top-[calc(var(--topbar-height)+var(--docs-subnav-height))] z-40 flex min-h-[var(--docs-mobilebar-height)] items-center justify-between border-b border-terminal-border/60 bg-terminal-bg/90 px-0 py-3 shadow-sm backdrop-blur-xl dark:border-white/5 dark:bg-terminal-bg/80 xl:hidden">
           <span class="text-sm font-semibold text-terminal-text">Docs</span>
           <button id="mobile-docs-toggle" type="button" class="inline-flex items-center gap-2 rounded-full border border-terminal-border/60 bg-terminal-panel/90 px-3 py-2 text-sm font-semibold text-terminal-text shadow-sm transition-[background-color,transform] duration-150 ease-out hover:bg-surface-hover active:scale-[0.97]" aria-label="Open docs navigation" aria-controls="docs-sidebar" aria-expanded="false">
            <svg class="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h6M4 12h6M4 18h6M14 5h6v14h-6z"></path></svg>
@@ -113,7 +101,7 @@ const ogImage = "https://nikcli.store/og.png";
       <!-- Table of Contents (Right Sidebar) -->
       {toc.length > 0 && (
         <div class="hidden xl:block w-72 shrink-0 pl-6 self-start">
-          <div class="sticky top-[var(--topbar-height)] max-h-[calc(100vh-var(--topbar-height))] overflow-y-auto pt-12 pb-24 custom-scrollbar">
+          <div class="sticky top-[calc(var(--topbar-height)+var(--docs-subnav-height))] max-h-[calc(100vh-var(--topbar-height)-var(--docs-subnav-height))] overflow-y-auto pt-12 pb-24 custom-scrollbar">
              <DocToc items={toc} />
           </div>
         </div>
@@ -167,10 +155,10 @@ const ogImage = "https://nikcli.store/og.png";
         const mobileSidebarClasses = [
           'fixed',
           'inset-x-[var(--page-gutter)]',
-          'top-[calc(var(--topbar-height)+var(--docs-mobilebar-height)+0.5rem)]',
+          'top-[calc(var(--topbar-height)+var(--docs-subnav-height)+var(--docs-mobilebar-height)+0.5rem)]',
           'z-50',
           'block',
-          'h-[calc(100dvh-var(--topbar-height)-var(--docs-mobilebar-height)-1rem)]',
+          'h-[calc(100dvh-var(--topbar-height)-var(--docs-subnav-height)-var(--docs-mobilebar-height)-1rem)]',
           'overflow-y-auto',
           'rounded-[var(--radius-card)]',
           'border',

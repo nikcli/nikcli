@@ -1,0 +1,319 @@
+---
+export const prerender = true;
+
+import DocsLayout from "../../../layouts/DocsLayout.astro";
+import DocCallout from "../../../components/docs/DocCallout.astro";
+import DocCode from "../../../components/docs/DocCode.astro";
+import DocRelated from "../../../components/docs/DocRelated.astro";
+
+const toc = [
+  { title: "Two ways to run in CI", href: "#two-ways", depth: 2 },
+  { title: "The GitHub Action", href: "#action", depth: 2 },
+  { title: "Action inputs", href: "#inputs", depth: 2 },
+  { title: "Token exchange vs GITHUB_TOKEN", href: "#tokens", depth: 2 },
+  { title: "Running it on a schedule", href: "#schedule", depth: 2 },
+  { title: "The API path", href: "#api", depth: 2 },
+  { title: "Permissions in an unattended run", href: "#permissions", depth: 2 },
+  { title: "A review job on any CI", href: "#complete", depth: 2 },
+  { title: "Failure modes", href: "#failure-modes", depth: 2 },
+];
+---
+
+<DocsLayout
+  title="Running nikcli in CI"
+  subtitle="Mention it on a pull request with the GitHub Action, or drive a headless server from any CI with the API."
+  description="Guide to running nikcli in CI: the GitHub Action and its inputs, OIDC token exchange, scheduled runs, and driving a headless server over the API from any provider."
+  toc={toc}
+>
+  <section id="two-ways" class="doc-section">
+    <h2>Two ways to run in CI</h2>
+    <table class="doc-table">
+      <thead><tr><th></th><th>GitHub Action</th><th>API</th></tr></thead>
+      <tbody>
+        <tr><td>Setup</td><td>One workflow file</td><td>Start a server, write a script</td></tr>
+        <tr><td>Triggered by</td><td>A mention in an issue or PR comment</td><td>Anything you can script</td></tr>
+        <tr><td>Posts back to GitHub</td><td>Built in</td><td>You do it</td></tr>
+        <tr><td>Works on</td><td>GitHub Actions</td><td>Any CI</td></tr>
+        <tr><td>Control over the flow</td><td>The action's inputs</td><td>Total</td></tr>
+      </tbody>
+    </table>
+    <p>
+      Start with the action. Move to the API when you need a shape the action does not have — a
+      nightly job that opens its own PR, a gate that fails the build, a run on GitLab.
+    </p>
+  </section>
+
+  <section id="action" class="doc-section">
+    <h2>The GitHub Action</h2>
+    <p>
+      The action runs nikcli inside a workflow and answers when someone mentions it in a comment.
+      The default triggers are <code>/nikcli</code> and <code>/nik</code>.
+    </p>
+    <DocCode language="yaml" title=".github/workflows/nikcli.yml">{`name: nikcli
+
+on:
+  issue_comment:
+    types: [created]
+  pull_request_review_comment:
+    types: [created]
+
+jobs:
+  nikcli:
+    if: |
+      contains(github.event.comment.body, '/nik') ||
+      contains(github.event.comment.body, '/nikcli')
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Run nikcli
+        uses: nikomatt69/nikcli/github@latest
+        env:
+          ANTHROPIC_API_KEY: \${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
+        with:
+          model: anthropic/claude-sonnet-4-20250514
+          use_github_token: true`}</DocCode>
+    <p>
+      Provider keys go in repository or organisation secrets — <strong>Settings → Secrets and
+      variables → Actions</strong>. The <code>if:</code> guard matters: without it the job starts on
+      every comment and exits, which is slow and noisy.
+    </p>
+  </section>
+
+  <section id="inputs" class="doc-section">
+    <h2>Action inputs</h2>
+    <table class="doc-table">
+      <thead><tr><th>Input</th><th>Required</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><code>model</code></td><td>yes</td><td>The model to run, as <code>provider/model</code>.</td></tr>
+        <tr><td><code>agent</code></td><td>no</td><td>A primary agent. Falls back to the configured default, then <code>build</code>.</td></tr>
+        <tr><td><code>prompt</code></td><td>no</td><td>Overrides the default prompt — this is how a scheduled job says what to do.</td></tr>
+        <tr><td><code>mentions</code></td><td>no</td><td>Comma-separated trigger phrases, case-insensitive. Defaults to <code>/nikcli,/nik</code>.</td></tr>
+        <tr><td><code>share</code></td><td>no</td><td>Share the session. Defaults to true on public repositories.</td></tr>
+        <tr><td><code>variant</code></td><td>no</td><td>Provider-specific reasoning effort, such as <code>high</code> or <code>minimal</code>.</td></tr>
+        <tr><td><code>use_github_token</code></td><td>no</td><td>Use <code>GITHUB_TOKEN</code> directly and skip OIDC exchange. Defaults to <code>false</code>.</td></tr>
+        <tr><td><code>oidc_base_url</code></td><td>no</td><td>Only for a custom GitHub App install. Defaults to <code>https://api.nikcli.store</code>.</td></tr>
+      </tbody>
+    </table>
+    <DocCallout type="warn" title="share defaults to true on public repos">
+      <p>
+        A shared session gets a public link. That is usually the point on an open-source repository
+        and usually not what you want on a private one that has been made public — set
+        <code>share: false</code> explicitly if you are unsure.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="tokens" class="doc-section">
+    <h2>Token exchange vs GITHUB_TOKEN</h2>
+    <p>
+      By default the action exchanges a GitHub OIDC token for an app token, which is why the job
+      needs <code>permissions: id-token: write</code>. Setting
+      <code>use_github_token: true</code> skips that and uses the workflow's own
+      <code>GITHUB_TOKEN</code>.
+    </p>
+    <table class="doc-table">
+      <thead><tr><th></th><th>OIDC exchange (default)</th><th><code>use_github_token: true</code></th></tr></thead>
+      <tbody>
+        <tr><td>Needs</td><td><code>id-token: write</code> and the app installed</td><td>Only <code>GITHUB_TOKEN</code></td></tr>
+        <tr><td>Comments appear as</td><td>The nikcli app</td><td><code>github-actions[bot]</code></td></tr>
+        <tr><td>Good for</td><td>Normal use</td><td>Forks, self-hosted, no app install</td></tr>
+      </tbody>
+    </table>
+    <DocCallout type="info" title="A bare Transport error means the child died">
+      <p>
+        If a run fails with nothing but <code>##[error]Transport</code>, the nikcli server the
+        action started exited — the transport error is the symptom, not the cause. Look above it in
+        the log for the child's own output.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="schedule" class="doc-section">
+    <h2>Running it on a schedule</h2>
+    <p>
+      The action does not have to be triggered by a comment. Give it a <code>prompt</code> and a
+      <code>schedule</code> trigger and it becomes an unattended job.
+    </p>
+    <DocCode language="yaml" title=".github/workflows/nightly.yml">{`name: nightly-audit
+
+on:
+  schedule:
+    - cron: "0 3 * * *"
+  workflow_dispatch:
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: nikomatt69/nikcli/github@latest
+        env:
+          ANTHROPIC_API_KEY: \${{ secrets.ANTHROPIC_API_KEY }}
+          GITHUB_TOKEN: \${{ secrets.GITHUB_TOKEN }}
+        with:
+          model: anthropic/claude-sonnet-4-20250514
+          agent: plan
+          share: "false"
+          prompt: |
+            Audit the repository for dependencies more than two majors behind.
+            Report findings only. Do not modify any files.`}</DocCode>
+    <DocCallout type="note" title="Say what it must not do">
+      <p>
+        An unattended run has nobody to stop it. "Report findings only. Do not modify any files" is
+        doing as much work in that prompt as the instruction itself.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="api" class="doc-section">
+    <h2>The API path</h2>
+    <p>
+      On any other CI, start a server in the job and drive it. The server is local to the runner, so
+      loopback needs no password.
+    </p>
+    <DocCode language="yaml" title=".gitlab-ci.yml">{`review:
+  image: oven/bun:1
+  script:
+    - bun add -g nikcli-ai
+    - nikcli serve --hostname 127.0.0.1 --port 4096 &
+    - until curl -sf http://127.0.0.1:4096/global/health; do sleep 1; done
+    - bun run ci/review.ts
+  variables:
+    ANTHROPIC_API_KEY: $ANTHROPIC_API_KEY`}</DocCode>
+    <DocCallout type="warn" title="Wait for health, do not sleep">
+      <p>
+        The server picks an ephemeral port if the requested one is taken, and starts in variable
+        time. Poll <code>/global/health</code> rather than guessing a sleep — a fixed sleep is the
+        single most common cause of a flaky nikcli CI job.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="permissions" class="doc-section">
+    <h2>Permissions in an unattended run</h2>
+    <p>
+      Nothing is watching, so a permission request stops the run forever unless something answers
+      it. Answer deliberately rather than approving everything.
+    </p>
+    <DocCode language="ts">{`const ALLOWED = new Set(["read", "grep", "glob", "webfetch"])
+
+const pump = setInterval(async () => {
+  const { data: pending } = await client.permission.list()
+  for (const request of pending ?? []) {
+    await client.permission.reply({
+      requestID: request.id,
+      reply: ALLOWED.has(request.permission) ? "once" : "reject",
+    })
+  }
+}, 1000)`}</DocCode>
+    <p>
+      A throwaway container is the one place blanket approval is defensible. A runner with
+      deployment credentials is not — see <a href="/docs/permissions">Permissions</a>.
+    </p>
+  </section>
+
+  <section id="complete" class="doc-section">
+    <h2>A review job on any CI</h2>
+    <p>
+      Reviews the diff against the base branch, prints the findings, and fails the build if the
+      agent reports something blocking.
+    </p>
+    <DocCode language="ts" title="ci/review.ts">{`import { createNikcliClient } from "@nikcli-ai/sdk/httpapi"
+
+const client = createNikcliClient({
+  baseUrl: "http://127.0.0.1:4096",
+  directory: process.cwd(),
+})
+
+const { data: session, error } = await client.session.create({ title: "ci review" })
+if (!session) throw error
+
+const READ_ONLY = new Set(["read", "grep", "glob", "list"])
+const pump = setInterval(async () => {
+  const { data: pending } = await client.permission.list()
+  for (const request of pending ?? []) {
+    await client.permission.reply({
+      requestID: request.id,
+      reply: READ_ONLY.has(request.permission) ? "once" : "reject",
+    })
+  }
+}, 1000)
+
+try {
+  const base = process.env.CI_MERGE_REQUEST_TARGET_BRANCH_NAME ?? "main"
+
+  const { data: reply } = await client.session.prompt({
+    sessionID: session.id,
+    parts: [{
+      type: "text",
+      text: [
+        \`Review the diff between HEAD and \${base}.\`,
+        "Report correctness bugs only — not style, not naming.",
+        "You have read-only access; do not attempt to edit files.",
+        "End your reply with the single line BLOCKING: yes or BLOCKING: no.",
+      ].join("\\n"),
+    }],
+  })
+
+  const text = (reply?.parts ?? [])
+    .filter((part) => part.type === "text")
+    .map((part) => part.text)
+    .join("\\n")
+
+  console.log(text)
+
+  if (/^BLOCKING:\\s*yes/im.test(text)) {
+    console.error("\\nReview found blocking issues.")
+    process.exit(1)
+  }
+} finally {
+  clearInterval(pump)
+}`}</DocCode>
+    <DocCallout type="info" title="The sentinel line is load-bearing">
+      <p>
+        Parsing prose for a verdict is guesswork. Asking for one exact line and matching on it is
+        the difference between a gate that works and one that fails the build on the word
+        "blocking" appearing in a sentence.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="failure-modes" class="doc-section">
+    <h2>Failure modes</h2>
+    <table class="doc-table">
+      <thead><tr><th>Symptom</th><th>Cause</th></tr></thead>
+      <tbody>
+        <tr><td>Job hangs, no output</td><td>A permission request nobody answered.</td></tr>
+        <tr><td><code>##[error]Transport</code> alone</td><td>The nikcli child process died; the real error is earlier in the log.</td></tr>
+        <tr><td>Connection refused</td><td>Started the script before the server was healthy, or it fell back to another port.</td></tr>
+        <tr><td>Action never triggers</td><td>The <code>if:</code> guard does not match the mention, or <code>mentions</code> was changed.</td></tr>
+        <tr><td>OIDC exchange fails</td><td>Missing <code>permissions: id-token: write</code>, or the app is not installed.</td></tr>
+        <tr><td>Agent edits files in a read-only job</td><td>Approving every permission instead of filtering by <code>request.permission</code>.</td></tr>
+        <tr><td>Gate never fails</td><td>Matching prose instead of a sentinel line.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <DocRelated
+    links={[
+      { title: "Using the API", href: "/docs/guides/api", description: "The client and endpoints this guide drives." },
+      { title: "Permissions", href: "/docs/permissions", description: "What you are approving or rejecting." },
+      { title: "Automating with loops", href: "/docs/guides/loops", description: "Scheduled work that lives in nikcli rather than in CI." },
+      { title: "Sessions API", href: "/docs/api/session", description: "Every session endpoint." },
+    ]}
+  />
+</DocsLayout>

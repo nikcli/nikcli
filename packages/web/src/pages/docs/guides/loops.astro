@@ -1,0 +1,293 @@
+---
+export const prerender = true;
+
+import DocsLayout from "../../../layouts/DocsLayout.astro";
+import DocCallout from "../../../components/docs/DocCallout.astro";
+import DocCode from "../../../components/docs/DocCode.astro";
+import DocRelated from "../../../components/docs/DocRelated.astro";
+
+const toc = [
+  { title: "What a loop is", href: "#what", depth: 2 },
+  { title: "Define one", href: "#define", depth: 2 },
+  { title: "Stages", href: "#stages", depth: 2 },
+  { title: "Triggers and limits", href: "#triggers", depth: 2 },
+  { title: "Isolating the work", href: "#isolation", depth: 2 },
+  { title: "Run, pause, abort", href: "#control", depth: 2 },
+  { title: "Reading run history", href: "#history", depth: 2 },
+  { title: "Generating one from a description", href: "#generate", depth: 2 },
+  { title: "A nightly QA loop", href: "#complete", depth: 2 },
+  { title: "Failure modes", href: "#failure-modes", depth: 2 },
+];
+---
+
+<DocsLayout
+  title="Automating with loops"
+  subtitle="A loop is a staged, repeatable piece of agent work with its own budget, isolation and schedule — defined once and driven from the API."
+  description="Guide to nikcli loops: defining stages, triggers, token budgets, worktree and sandbox isolation, running and aborting, and reading run history."
+  toc={toc}
+>
+  <section id="what" class="doc-section">
+    <h2>What a loop is</h2>
+    <p>
+      A loop is a named sequence of <strong>stages</strong>, each run by an agent with an objective
+      and a token budget. It can run on demand or on an interval, in its own worktree, optionally
+      opening a pull request when it is done.
+    </p>
+    <p>
+      It is the right shape for work that repeats and has structure: a nightly QA pass, a dependency
+      sweep, a docs audit. For one-off work, just open a session.
+    </p>
+    <DocCallout type="info" title="Loops vs missions">
+      <p>
+        A loop is a linear pipeline that repeats. A <a href="/docs/guides/missions">mission</a> is a
+        dependency graph of features that runs once to completion. Reach for a mission when the work
+        has a shape; reach for a loop when it has a cadence.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="define" class="doc-section">
+    <h2>Define one</h2>
+    <p>
+      <code>PUT /loop</code> upserts a definition. The name is what you will recognise it by; the
+      stages are the work.
+    </p>
+    <DocCode language="ts">{`const { data: loop, error } = await client.loop.upsert({
+  name: "nightly-qa",
+  stages: [
+    {
+      name: "run-tests",
+      agent: "build",
+      objective: "Run the full test suite and collect every failure with its output.",
+      tokenBudget: 60_000,
+    },
+    {
+      name: "triage",
+      agent: "plan",
+      objective: "Group the failures by root cause. Do not fix anything yet.",
+      tokenBudget: 40_000,
+    },
+    {
+      name: "fix",
+      agent: "build",
+      objective: "Fix the single highest-confidence root cause. Leave the rest.",
+      tokenBudget: 120_000,
+    },
+  ],
+  trigger: { kind: "interval", everyMs: 24 * 60 * 60 * 1000 },
+})
+if (!loop) throw error`}</DocCode>
+  </section>
+
+  <section id="stages" class="doc-section">
+    <h2>Stages</h2>
+    <table class="doc-table">
+      <thead><tr><th>Field</th><th>Required</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><code>name</code></td><td>yes</td><td>Identifies the stage in run history.</td></tr>
+        <tr><td><code>agent</code></td><td>yes</td><td>Which agent runs it — and therefore which tools and permissions apply.</td></tr>
+        <tr><td><code>objective</code></td><td>yes</td><td>The prompt. Write it as a contract, including what the stage must <em>not</em> do.</td></tr>
+        <tr><td><code>model</code></td><td>no</td><td>Overrides the model for this stage only.</td></tr>
+        <tr><td><code>tokenBudget</code></td><td>no</td><td>Caps the stage. A stage that runs out stops rather than spending unbounded.</td></tr>
+      </tbody>
+    </table>
+    <DocCallout type="note" title="Stage objectives should forbid as well as ask">
+      <p>
+        Stages share a working tree in sequence. "Group the failures. Do not fix anything yet" keeps
+        the triage stage from doing the fix stage's job and blowing its budget — the negative half
+        of the instruction is doing real work.
+      </p>
+    </DocCallout>
+    <p>
+      Leaving <code>model</code> unset inherits the launching session's model, which is usually what
+      you want: it keeps a loop consistent with the model the rest of your work runs on.
+    </p>
+  </section>
+
+  <section id="triggers" class="doc-section">
+    <h2>Triggers and limits</h2>
+    <DocCode language="ts">{`// only when something asks it to
+trigger: { kind: "manual" }
+
+// every six hours
+trigger: { kind: "interval", everyMs: 6 * 60 * 60 * 1000 }`}</DocCode>
+    <table class="doc-table">
+      <thead><tr><th>Field</th><th>Effect</th></tr></thead>
+      <tbody>
+        <tr><td><code>maxRuns</code></td><td>Stops the loop after this many runs — the safety rail on a new interval loop.</td></tr>
+        <tr><td><code>timeoutMs</code></td><td>Caps a single run's wall-clock time.</td></tr>
+        <tr><td><code>createPR</code></td><td>Opens a pull request from the loop's branch when a run produces changes.</td></tr>
+        <tr><td><code>sandbox</code></td><td>Runs the loop under sandbox restrictions.</td></tr>
+      </tbody>
+    </table>
+    <DocCallout type="warn" title="Set maxRuns on the first interval loop you write">
+      <p>
+        An interval loop with a bad objective does not fail loudly — it repeats. A small
+        <code>maxRuns</code> turns a bad definition into three wasted runs instead of an
+        indefinite spend, and you can raise it once you have seen the history.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="isolation" class="doc-section">
+    <h2>Isolating the work</h2>
+    <p>
+      A loop that edits files should not do it in the tree you are working in. Give it a worktree and
+      it gets its own directory and branch.
+    </p>
+    <DocCode language="ts">{`await client.loop.upsert({
+  name: "dependency-sweep",
+  stages: [/* … */],
+  trigger: { kind: "interval", everyMs: 7 * 24 * 60 * 60 * 1000 },
+  worktree: {
+    name: "dependency-sweep",
+    branch: "chore/dependency-sweep",
+    directory: "/Users/me/project",
+  },
+  createPR: true,
+  maxRuns: 4,
+})`}</DocCode>
+    <p>
+      With <code>createPR</code> set, a run that changes files ends as a pull request rather than as
+      commits you have to find later.
+    </p>
+  </section>
+
+  <section id="control" class="doc-section">
+    <h2>Run, pause, abort</h2>
+    <DocCode language="ts">{`await client.loop.run({ id: loop.id })            // start a run now
+await client.loop.abort({ id: loop.id })          // stop the run in flight
+await client.loop.pause({ id: loop.id })          // stop scheduling new runs
+await client.loop.resume({ id: loop.id })         // schedule again
+await client.loop.toggle({ id: loop.id })         // flip enabled state
+await client.loop.delete({ id: loop.id })         // remove the definition`}</DocCode>
+    <p>
+      <code>run</code> accepts an optional <code>sessionID</code>, which attaches the run to an
+      existing session instead of opening a new one — useful when a loop is triggered from work
+      already in progress.
+    </p>
+    <DocCallout type="info" title="pause and abort are different questions">
+      <p>
+        <code>abort</code> stops what is running now. <code>pause</code> stops the <em>next</em> one
+        from starting. Stopping a misbehaving interval loop needs both.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="history" class="doc-section">
+    <h2>Reading run history</h2>
+    <DocCode language="ts">{`const { data: runs } = await client.loop.runs({ id: loop.id })
+const { data: recent } = await client.loop.recentRuns({ limit: 20 })
+const { data: all } = await client.loop.list()`}</DocCode>
+    <p>
+      <code>recentRuns</code> spans every loop, which is the view to build a dashboard on;
+      <code>runs</code> is scoped to one definition.
+    </p>
+  </section>
+
+  <section id="generate" class="doc-section">
+    <h2>Generating one from a description</h2>
+    <p>
+      Writing stage objectives by hand is the fiddly part. <code>generate</code> drafts a definition
+      from prose, which you then review and upsert.
+    </p>
+    <DocCode language="ts">{`const { data: draft } = await client.loop.generate({
+  description:
+    "Every morning, check for dependencies more than two majors behind, " +
+    "upgrade the safest one, run the tests, and open a PR if they pass.",
+})
+
+// review before committing to it
+console.log(draft?.stages.map((stage) => stage.objective))`}</DocCode>
+    <DocCallout type="warn" title="Read the draft before you schedule it">
+      <p>
+        A generated loop is a proposal. It has real token budgets and, if you set
+        <code>createPR</code>, it opens real pull requests. Run it manually once before giving it an
+        interval.
+      </p>
+    </DocCallout>
+    <p>
+      <code>client.loop.templates()</code> returns the built-in starting points, which is the other
+      way to avoid writing stages from scratch.
+    </p>
+  </section>
+
+  <section id="complete" class="doc-section">
+    <h2>A nightly QA loop</h2>
+    <DocCode language="ts" title="setup-nightly-qa.ts">{`import { createNikcliClient } from "@nikcli-ai/sdk/httpapi"
+
+const client = createNikcliClient({
+  baseUrl: "http://127.0.0.1:4096",
+  directory: process.cwd(),
+})
+
+const { data: loop, error } = await client.loop.upsert({
+  name: "nightly-qa",
+  trigger: { kind: "interval", everyMs: 24 * 60 * 60 * 1000 },
+  maxRuns: 7,
+  timeoutMs: 45 * 60 * 1000,
+  createPR: true,
+  worktree: {
+    name: "nightly-qa",
+    branch: "chore/nightly-qa",
+    directory: process.cwd(),
+  },
+  stages: [
+    {
+      name: "run-tests",
+      agent: "build",
+      objective:
+        "Run the full test suite. Collect every failure with its name and output. " +
+        "Do not change any source files in this stage.",
+      tokenBudget: 60_000,
+    },
+    {
+      name: "triage",
+      agent: "plan",
+      objective:
+        "Group the failures from the previous stage by root cause. Rank them by confidence. " +
+        "Produce a short written plan. Do not edit code.",
+      tokenBudget: 40_000,
+    },
+    {
+      name: "fix",
+      agent: "build",
+      objective:
+        "Fix only the highest-confidence root cause from the plan, then re-run the affected " +
+        "tests. If the fix is not clearly correct, stop and explain why instead of guessing.",
+      tokenBudget: 120_000,
+    },
+  ],
+})
+if (!loop) throw error
+
+// prove it works before letting the schedule own it
+await client.loop.pause({ id: loop.id })
+await client.loop.run({ id: loop.id })
+console.log("running once; resume the schedule when the run looks right")`}</DocCode>
+  </section>
+
+  <section id="failure-modes" class="doc-section">
+    <h2>Failure modes</h2>
+    <table class="doc-table">
+      <thead><tr><th>Symptom</th><th>Cause</th></tr></thead>
+      <tbody>
+        <tr><td>Stage stops halfway through</td><td><code>tokenBudget</code> exhausted. Raise it, or split the stage.</td></tr>
+        <tr><td>Later stages have nothing to do</td><td>An earlier stage did their work. Add the negative half to its objective.</td></tr>
+        <tr><td>Your working tree changed under you</td><td>No <code>worktree</code> set, so the loop ran in the project directory.</td></tr>
+        <tr><td>Keeps running after you stopped it</td><td><code>abort</code> stopped the run; the interval still fires. Also <code>pause</code>.</td></tr>
+        <tr><td>No pull request</td><td><code>createPR</code> unset, or the run produced no changes.</td></tr>
+        <tr><td>Runs cost more than expected</td><td>No <code>maxRuns</code> on an interval trigger.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <DocRelated
+    links={[
+      { title: "Loops", href: "/docs/loops", description: "The loop subsystem itself, beyond the API." },
+      { title: "Orchestrating missions", href: "/docs/guides/missions", description: "The other shape: a dependency graph that runs once." },
+      { title: "Loops API", href: "/docs/api/loop", description: "Every loop endpoint and payload." },
+      { title: "Using the API", href: "/docs/guides/api", description: "The client this guide assumes." },
+    ]}
+  />
+</DocsLayout>

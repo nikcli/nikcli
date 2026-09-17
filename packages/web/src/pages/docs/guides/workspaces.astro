@@ -1,0 +1,271 @@
+---
+export const prerender = true;
+
+import DocsLayout from "../../../layouts/DocsLayout.astro";
+import DocCallout from "../../../components/docs/DocCallout.astro";
+import DocCode from "../../../components/docs/DocCode.astro";
+import DocRelated from "../../../components/docs/DocRelated.astro";
+
+const toc = [
+  { title: "Why workspaces", href: "#why", depth: 2 },
+  { title: "Worktree or container", href: "#kinds", depth: 2 },
+  { title: "Create one", href: "#create", depth: 2 },
+  { title: "Targeting a workspace", href: "#targeting", depth: 2 },
+  { title: "Warping a session", href: "#warp", depth: 2 },
+  { title: "Status and events", href: "#status", depth: 2 },
+  { title: "Cleaning up", href: "#cleanup", depth: 2 },
+  { title: "Three branches at once", href: "#complete", depth: 2 },
+  { title: "Failure modes", href: "#failure-modes", depth: 2 },
+];
+---
+
+<DocsLayout
+  title="Parallel work with workspaces"
+  subtitle="Run several sessions against the same repository at once, each in its own worktree or container — and move a session between them without losing it."
+  description="Guide to nikcli workspaces: worktree and container configurations, creating and targeting them, warping sessions, status and events, and cleanup."
+  toc={toc}
+>
+  <section id="why" class="doc-section">
+    <h2>Why workspaces</h2>
+    <p>
+      Two sessions editing one directory fight. A workspace gives a session its own checkout, so
+      several can work on the same repository at the same time without stepping on each other.
+    </p>
+    <p>
+      This is what makes parallel agent work practical: three branches in flight, each with its own
+      files, its own git state and its own session, all on one server.
+    </p>
+    <DocCallout type="warn" title="Not the same 'workspace' as an editor's">
+      <p>
+        A nikcli workspace is a sandboxed compute environment for a session — a worktree or a
+        container — not a multi-root project. The endpoints live under
+        <code>/experimental/workspace</code> and the surface is still experimental.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="kinds" class="doc-section">
+    <h2>Worktree or container</h2>
+    <table class="doc-table">
+      <thead><tr><th></th><th><code>worktree</code></th><th><code>container</code></th></tr></thead>
+      <tbody>
+        <tr><td>Isolation</td><td>Separate directory and branch</td><td>Separate filesystem and process space</td></tr>
+        <tr><td>Cost to create</td><td>Cheap</td><td>Pulls or starts an image</td></tr>
+        <tr><td>Shares your toolchain</td><td>Yes</td><td>No — the image provides it</td></tr>
+        <tr><td>Good for</td><td>Parallel branches on trusted work</td><td>Untrusted work, or a different runtime</td></tr>
+        <tr><td>Extra fields</td><td><code>strategy</code>: <code>git</code> or <code>cow</code></td><td><code>runtime</code>, <code>image</code>, <code>containerName</code></td></tr>
+      </tbody>
+    </table>
+    <p>
+      <code>cow</code> is a copy-on-write clone rather than a git worktree, which is faster on large
+      repositories where a checkout is the slow part.
+    </p>
+  </section>
+
+  <section id="create" class="doc-section">
+    <h2>Create one</h2>
+    <p>
+      The id is yours to choose — it is the handle you will pass everywhere else.
+      <code>branch</code> is the branch to check out, or <code>null</code> to stay on the current
+      one.
+    </p>
+    <DocCode language="ts">{`await client.experimental.workspace.create({
+  id: "feature-search",
+  branch: "feature/search",
+  config: {
+    type: "worktree",
+    directory: process.cwd(),
+    strategy: "git",
+  },
+})`}</DocCode>
+    <DocCode language="ts" title="container">{`await client.experimental.workspace.create({
+  id: "untrusted-pr",
+  branch: "pr/482",
+  config: {
+    type: "container",
+    directory: process.cwd(),
+    runtime: "docker",
+    image: "oven/bun:1",
+    containerName: "nikcli-pr-482",
+  },
+})`}</DocCode>
+    <p>
+      <code>client.experimental.workspace.adaptor.list()</code> reports which backends this host can
+      actually provide — check it before offering container workspaces in a UI.
+    </p>
+  </section>
+
+  <section id="targeting" class="doc-section">
+    <h2>Targeting a workspace</h2>
+    <p>
+      Every endpoint takes a <code>workspace</code> selector, exactly like <code>directory</code>.
+      Pass it per call, or bind a whole client to one.
+    </p>
+    <DocCode language="ts">{`// one call
+await client.session.list({ workspace: "feature-search" })
+
+// a client pinned to the workspace
+const inWorkspace = createNikcliClient({
+  baseUrl: "http://127.0.0.1:4096",
+  workspace: "feature-search",
+})
+
+const { data: session } = await inWorkspace.session.create({
+  title: "search work",
+  workspaceID: "feature-search",
+})`}</DocCode>
+    <DocCallout type="info" title="workspace wins over directory">
+      <p>
+        When both are present the workspace decides, and it replaces the instance directory with the
+        workspace's own. A session created with <code>workspaceID</code> stays bound to it, so later
+        calls do not have to repeat the selector.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="warp" class="doc-section">
+    <h2>Warping a session</h2>
+    <p>
+      Warp moves a session into another workspace, optionally carrying its uncommitted changes.
+      Passing <code>null</code> as the id warps it back to the host project.
+    </p>
+    <DocCode language="ts">{`// move it into a workspace, taking the working tree along
+await client.experimental.workspace.warp({
+  id: "feature-search",
+  sessionID: session.id,
+  copyChanges: true,
+})
+
+// bring it home
+await client.experimental.workspace.warp({
+  id: null,
+  sessionID: session.id,
+  copyChanges: true,
+})`}</DocCode>
+    <p>
+      This is the "I started this in the wrong place" move: a session that began in the main
+      checkout and turned into real work can be lifted into isolation without being restarted and
+      without losing its transcript.
+    </p>
+    <DocCallout type="warn" title="copyChanges is not free">
+      <p>
+        It moves the working tree, so it can take a while on a large diff and it accepts a
+        <code>timeoutMs</code>. Without it the session moves and the changes stay behind.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="status" class="doc-section">
+    <h2>Status and events</h2>
+    <DocCode language="ts">{`const { data: all } = await client.experimental.workspace.list()
+const { data: status } = await client.experimental.workspace.status()
+const { data: events } = await client.experimental.workspace.events({ id: "feature-search" })`}</DocCode>
+    <p>
+      <code>status</code> is the one to poll in a dashboard: it reports each workspace's state
+      without having to ask each one in turn.
+    </p>
+  </section>
+
+  <section id="cleanup" class="doc-section">
+    <h2>Cleaning up</h2>
+    <DocCode language="ts">{`await client.experimental.workspace.restore({ id: "feature-search" })
+await client.experimental.workspace.remove({ id: "feature-search" })`}</DocCode>
+    <p>
+      <code>restore</code> brings a workspace back to a known state;
+      <code>session.restore</code> does the same for one session inside it. Remove when the branch
+      has landed — a worktree left behind is a checkout that keeps drifting.
+    </p>
+  </section>
+
+  <section id="complete" class="doc-section">
+    <h2>Three branches at once</h2>
+    <DocCode language="ts" title="parallel.ts">{`import { createNikcliClient } from "@nikcli-ai/sdk/httpapi"
+
+const client = createNikcliClient({
+  baseUrl: "http://127.0.0.1:4096",
+  directory: process.cwd(),
+})
+
+const jobs = [
+  { id: "fix-login", branch: "fix/login", task: "Fix the login redirect loop." },
+  { id: "bump-deps", branch: "chore/deps", task: "Upgrade dependencies one major at a time." },
+  { id: "docs-pass", branch: "docs/api", task: "Document the public API surface." },
+]
+
+const started = await Promise.all(
+  jobs.map(async (job) => {
+    await client.experimental.workspace.create({
+      id: job.id,
+      branch: job.branch,
+      config: { type: "worktree", directory: process.cwd(), strategy: "git" },
+    })
+
+    const { data: session, error } = await client.session.create({
+      title: job.id,
+      workspaceID: job.id,
+    })
+    if (!session) throw error
+
+    // promptAsync so all three run at once instead of in sequence
+    await client.session.promptAsync({
+      sessionID: session.id,
+      parts: [{ type: "text", text: job.task }],
+      workspace: job.id,
+    })
+
+    return { ...job, sessionID: session.id }
+  }),
+)
+
+// one feed covers every workspace on the host
+const { stream } = await client.global.event()
+const done = new Set<string>()
+
+for await (const event of stream) {
+  if (event.type !== "session.idle") continue
+
+  const job = started.find((entry) => entry.sessionID === event.properties.sessionID)
+  if (!job) continue
+
+  const { data: diff } = await client.session.diff({
+    sessionID: job.sessionID,
+    workspace: job.id,
+  })
+  console.log(\`\\n=== \${job.id} (\${job.branch}) ===\`)
+  console.log(diff)
+
+  done.add(job.id)
+  if (done.size === started.length) break
+}`}</DocCode>
+    <p>
+      The two things that make this work: <code>promptAsync</code>, so the three run concurrently
+      rather than one after another, and <code>global.event()</code>, which spans every workspace —
+      an instance-scoped feed would only see one of them.
+    </p>
+  </section>
+
+  <section id="failure-modes" class="doc-section">
+    <h2>Failure modes</h2>
+    <table class="doc-table">
+      <thead><tr><th>Symptom</th><th>Cause</th></tr></thead>
+      <tbody>
+        <tr><td>Sessions still collide</td><td>Created without <code>workspaceID</code>, so they all landed in the host project.</td></tr>
+        <tr><td>Workspace not found</td><td>The selector names a workspace that was removed, or was never created on this host.</td></tr>
+        <tr><td>Feed shows only one job</td><td>Using <code>event.subscribe()</code> instead of <code>global.event()</code>.</td></tr>
+        <tr><td>Changes vanish after a warp</td><td><code>copyChanges</code> not set.</td></tr>
+        <tr><td>Warp times out</td><td>A large working tree; raise <code>timeoutMs</code>.</td></tr>
+        <tr><td>Container workspace never starts</td><td>The runtime is not available — check <code>adaptor.list()</code>.</td></tr>
+        <tr><td>Branch already checked out</td><td>Another worktree holds it; git allows one checkout per branch.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <DocRelated
+    links={[
+      { title: "Workspaces API", href: "/docs/api/workspace", description: "Every workspace endpoint and payload." },
+      { title: "Streaming a response", href: "/docs/guides/streaming", description: "The event feed this guide fans out over." },
+      { title: "Sessions", href: "/docs/sessions", description: "What a session is and what binds it to a workspace." },
+      { title: "Using the API", href: "/docs/guides/api", description: "The client this guide assumes." },
+    ]}
+  />
+</DocsLayout>

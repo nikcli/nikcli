@@ -1,0 +1,233 @@
+---
+export const prerender = true;
+
+import DocsLayout from "../../../layouts/DocsLayout.astro";
+import DocCallout from "../../../components/docs/DocCallout.astro";
+import DocCode from "../../../components/docs/DocCode.astro";
+import DocRelated from "../../../components/docs/DocRelated.astro";
+
+const toc = [
+  { title: "The shape of it", href: "#shape", depth: 2 },
+  { title: "Subscribe first", href: "#subscribe", depth: 2 },
+  { title: "Submit without waiting", href: "#submit", depth: 2 },
+  { title: "Print the deltas", href: "#deltas", depth: 2 },
+  { title: "Know when it is done", href: "#idle", depth: 2 },
+  { title: "The whole thing", href: "#complete", depth: 2 },
+  { title: "Useful events", href: "#events", depth: 2 },
+  { title: "Streaming with curl", href: "#curl", depth: 2 },
+  { title: "Failure modes", href: "#failure-modes", depth: 2 },
+];
+---
+
+<DocsLayout
+  title="Streaming a response"
+  subtitle="Subscribe to the event feed, submit a prompt asynchronously, print tokens as they arrive — the pattern every nikcli interface is built on."
+  description="Guide to streaming nikcli responses: the event feed, promptAsync, message.part.updated deltas, session.idle, and the same flow with curl."
+  toc={toc}
+>
+  <section id="shape" class="doc-section">
+    <h2>The shape of it</h2>
+    <p>
+      <code>session.prompt</code> returns the finished message. That is fine for a script and wrong
+      for an interface — nobody wants a blank screen for forty seconds.
+    </p>
+    <p>
+      Streaming is a different arrangement of the same endpoints: <strong>subscribe to the event
+      feed first</strong>, then submit the prompt with <code>promptAsync</code>, which returns as
+      soon as the work is accepted. Output arrives on the feed.
+    </p>
+    <table class="doc-table">
+      <thead><tr><th>Step</th><th>Call</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>1</td><td><code>client.event.subscribe()</code></td><td>Before submitting, or you miss the first tokens.</td></tr>
+        <tr><td>2</td><td><code>client.session.promptAsync(…)</code></td><td>Accepts the work and returns immediately.</td></tr>
+        <tr><td>3</td><td><code>message.part.updated</code></td><td>Carries each incremental <code>delta</code>.</td></tr>
+        <tr><td>4</td><td><code>session.idle</code></td><td>The turn is finished.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="subscribe" class="doc-section">
+    <h2>Subscribe first</h2>
+    <p>
+      Streaming methods resolve to an object holding an async iterable: you await the connection,
+      then iterate the feed.
+    </p>
+    <DocCode language="ts">{`const { stream } = await client.event.subscribe()
+
+for await (const event of stream) {
+  console.log(event.type)
+}`}</DocCode>
+    <p>
+      <code>event.subscribe()</code> is scoped to the resolved instance.
+      <code>client.global.event()</code> is the same feed across every instance the server hosts —
+      use it when one process watches several projects.
+    </p>
+    <DocCallout type="warn" title="Order matters">
+      <p>
+        Subscribing after submitting is a race you will lose on short answers. Open the feed, then
+        submit.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="submit" class="doc-section">
+    <h2>Submit without waiting</h2>
+    <DocCode language="ts">{`await client.session.promptAsync({
+  sessionID: session.id,
+  parts: [{ type: "text", text: "Explain what this repository does." }],
+})`}</DocCode>
+    <p>
+      It takes the same input as <code>session.prompt</code> — including <code>agent</code>,
+      <code>model</code> and <code>tools</code> — and differs only in returning before the work is
+      done.
+    </p>
+  </section>
+
+  <section id="deltas" class="doc-section">
+    <h2>Print the deltas</h2>
+    <p>
+      <code>message.part.updated</code> fires as a part changes. It carries the whole
+      <code>part</code> plus an optional <code>delta</code> — the text added since the last event.
+      Print the <code>delta</code>; printing <code>part.text</code> reprints the message from the
+      start every time.
+    </p>
+    <DocCode language="ts">{`for await (const event of stream) {
+  if (event.type !== "message.part.updated") continue
+  if (event.properties.part.type !== "text") continue
+
+  process.stdout.write(event.properties.delta ?? "")
+}`}</DocCode>
+    <DocCallout type="info" title="delta is optional on purpose">
+      <p>
+        A part can be replaced wholesale rather than appended to — a tool call completing, say — and
+        then there is no delta. Fall back to re-rendering from <code>part</code> when you are
+        painting a UI rather than appending to a terminal.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="idle" class="doc-section">
+    <h2>Know when it is done</h2>
+    <p>
+      <code>session.idle</code> carries the <code>sessionID</code> that finished. Filter on your own
+      session — on a shared feed, other sessions go idle too.
+    </p>
+    <DocCode language="ts">{`if (event.type === "session.idle" && event.properties.sessionID === session.id) {
+  break
+}`}</DocCode>
+    <p>
+      Watch <code>session.error</code> as well, or a failed turn looks identical to one that is
+      still thinking.
+    </p>
+  </section>
+
+  <section id="complete" class="doc-section">
+    <h2>The whole thing</h2>
+    <DocCode language="ts" title="stream.ts">{`import { createNikcliClient } from "@nikcli-ai/sdk/httpapi"
+
+const client = createNikcliClient({
+  baseUrl: "http://127.0.0.1:4096",
+  directory: process.cwd(),
+})
+
+const { data: session, error } = await client.session.create({ title: "streamed" })
+if (!session) throw error
+
+// 1. open the feed before submitting anything
+const { stream } = await client.event.subscribe()
+
+// 2. submit without waiting for the turn to finish
+await client.session.promptAsync({
+  sessionID: session.id,
+  parts: [{ type: "text", text: "Explain what this repository does." }],
+})
+
+// 3. print as it arrives, stop when the session goes idle
+for await (const event of stream) {
+  switch (event.type) {
+    case "message.part.updated":
+      if (event.properties.part.type === "text") {
+        process.stdout.write(event.properties.delta ?? "")
+      }
+      break
+
+    case "session.error":
+      console.error("\\n", event.properties.error)
+      process.exit(1)
+
+    case "session.idle":
+      if (event.properties.sessionID === session.id) process.exit(0)
+  }
+}`}</DocCode>
+  </section>
+
+  <section id="events" class="doc-section">
+    <h2>Useful events</h2>
+    <p>
+      The feed carries everything the server does, not just assistant text. These are the ones an
+      interface usually handles.
+    </p>
+    <table class="doc-table">
+      <thead><tr><th>Event</th><th>Carries</th><th>Use for</th></tr></thead>
+      <tbody>
+        <tr><td><code>message.part.updated</code></td><td><code>part</code>, <code>delta?</code></td><td>Streaming output.</td></tr>
+        <tr><td><code>message.updated</code></td><td>The message</td><td>Role, model and token counts.</td></tr>
+        <tr><td><code>message.part.removed</code></td><td>ids</td><td>Dropping a part from the view.</td></tr>
+        <tr><td><code>session.status</code></td><td>idle / busy / retry</td><td>A spinner that tells the truth.</td></tr>
+        <tr><td><code>session.idle</code></td><td><code>sessionID</code></td><td>Turn finished.</td></tr>
+        <tr><td><code>session.error</code></td><td>The error</td><td>Turn failed.</td></tr>
+        <tr><td><code>permission.asked</code></td><td>The request</td><td>Prompting, or auto-replying.</td></tr>
+        <tr><td><code>question.asked</code></td><td>The questions</td><td>The agent needs an answer to continue.</td></tr>
+        <tr><td><code>todo.updated</code></td><td>The todo list</td><td>Progress for multi-step work.</td></tr>
+        <tr><td><code>file.edited</code></td><td>The path</td><td>Refreshing an editor view.</td></tr>
+        <tr><td><code>session.diff</code></td><td>Diff summary</td><td>A live change count.</td></tr>
+      </tbody>
+    </table>
+    <p>
+      The full list is the <code>Event</code> union exported by the SDK, so your editor will
+      enumerate it and narrow <code>properties</code> per <code>type</code>.
+    </p>
+  </section>
+
+  <section id="curl" class="doc-section">
+    <h2>Streaming with curl</h2>
+    <p>
+      The feed is plain server-sent events, so nothing about this requires the SDK. Note the
+      <code>?token=</code> form — an <code>EventSource</code> cannot set headers, so the API accepts
+      the token as a query parameter.
+    </p>
+    <DocCode language="bash">{`# terminal 1 — watch the feed
+curl -N "http://127.0.0.1:4096/event?directory=$PWD"
+
+# terminal 2 — submit a prompt
+curl -s -X POST "http://127.0.0.1:4096/session/$SESSION/prompt_async?directory=$PWD" \\
+  -H 'content-type: application/json' \\
+  -d '{"parts":[{"type":"text","text":"hello"}]}'
+    `}</DocCode>
+  </section>
+
+  <section id="failure-modes" class="doc-section">
+    <h2>Failure modes</h2>
+    <table class="doc-table">
+      <thead><tr><th>Symptom</th><th>Cause</th></tr></thead>
+      <tbody>
+        <tr><td>First tokens missing</td><td>Subscribed after submitting.</td></tr>
+        <tr><td>Text repeats and grows</td><td>Printing <code>part.text</code> instead of <code>delta</code>.</td></tr>
+        <tr><td>Loop never ends</td><td>Not handling <code>session.idle</code>, or not filtering it by <code>sessionID</code>.</td></tr>
+        <tr><td>Hangs mid-turn</td><td>A permission request nobody answered. Handle <code>permission.asked</code>.</td></tr>
+        <tr><td>Events from other work</td><td>Using <code>global.event()</code>, which spans every instance, instead of <code>event.subscribe()</code>.</td></tr>
+        <tr><td>Nothing at all</td><td>Wrong <code>directory</code>, so you are watching a different instance's feed.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <DocRelated
+    links={[
+      { title: "Using the API", href: "/docs/guides/api", description: "The quickstart this guide continues from." },
+      { title: "API Reference", href: "/docs/api/events", description: "The event endpoints themselves." },
+      { title: "Client", href: "/docs/build/client", description: "Client options, errors and method naming." },
+      { title: "Sessions", href: "/docs/sessions", description: "What a session is and what it holds." },
+    ]}
+  />
+</DocsLayout>

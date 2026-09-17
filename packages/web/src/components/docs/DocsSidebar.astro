@@ -1,25 +1,30 @@
 ---
-import { docsSidebar } from "../../data/docsSidebar";
+import { activeDocsSection } from "../../data/docsSidebar";
 
 const pathname = Astro.url.pathname.replace(/\/$/, "");
+const section = activeDocsSection(pathname);
+/** A lone group has the same name as its section, so its header adds nothing. */
+const showGroupTitles = section.groups.length > 1;
 ---
 
 <aside
   id="docs-sidebar"
-  class="hidden w-full shrink-0 overflow-y-auto overflow-x-hidden custom-scrollbar border-terminal-border/60 bg-terminal-bg xl:block xl:w-[280px] xl:border-r xl:bg-transparent xl:sticky xl:top-[var(--topbar-height)] xl:max-h-[calc(100vh-var(--topbar-height))] xl:self-start z-30 dark:border-white/5"
+  class="hidden w-full shrink-0 overflow-y-auto overflow-x-hidden custom-scrollbar border-terminal-border/60 bg-terminal-bg xl:block xl:w-[280px] xl:border-r xl:bg-transparent xl:sticky xl:top-[calc(var(--topbar-height)+var(--docs-subnav-height))] xl:max-h-[calc(100vh-var(--topbar-height)-var(--docs-subnav-height))] xl:self-start z-30 dark:border-white/5"
 >
   <div class="flex flex-col gap-8 py-6 xl:py-10 xl:pr-8">
     <!-- Search Bar -->
     <div class="rounded-xl border border-terminal-border/60 bg-surface-hover px-4 py-3 shadow-inner">
       <div class="font-mono text-eyebrow uppercase text-terminal-muted">Search</div>
-      <p class="mt-2 text-body-sm leading-relaxed text-terminal-muted">Use the navigation groups for topics; use browser search for exact strings.</p>
+      <p class="mt-2 text-body-sm leading-relaxed text-terminal-muted">Showing {section.title}. Switch area above; use browser search for exact strings.</p>
     </div>
 
     <!-- Navigation Links -->
     <nav class="flex flex-col gap-8 text-sm" aria-label="Documentation">
-      {docsSidebar.map((group) => (
+      {section.groups.map((group) => (
         <div class="flex flex-col gap-3 docs-nav-group-anim">
-          <h4 class="font-display font-bold text-terminal-muted tracking-[0.18em] uppercase text-[10.5px] mb-2">{group.title}</h4>
+          {showGroupTitles && (
+            <h4 class="font-display font-bold text-terminal-muted tracking-[0.18em] uppercase text-[10.5px] mb-2">{group.title}</h4>
+          )}
           <ul class="flex flex-col gap-1">
             {group.items.map((item) => {
               const isActive = pathname === item.href;

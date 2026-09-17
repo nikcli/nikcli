@@ -1,0 +1,310 @@
+---
+export const prerender = true;
+
+import DocsLayout from "../../../layouts/DocsLayout.astro";
+import DocCallout from "../../../components/docs/DocCallout.astro";
+import DocCode from "../../../components/docs/DocCode.astro";
+import DocCard from "../../../components/docs/DocCard.astro";
+import DocRelated from "../../../components/docs/DocRelated.astro";
+import { apiGroups } from "../../../data/apiGroups";
+import { apiStats, groupPages } from "../../../lib/api-reference";
+import "../../../styles/api.css";
+
+const stats = apiStats();
+const pages = groupPages();
+const countBySlug = new Map(pages.map((page) => [page.group.slug, page.operations.length]));
+const sections = ["API Reference", "API · Mobile"] as const;
+
+const toc = [
+  { title: "Overview", href: "#overview", depth: 2 },
+  { title: "Base URL", href: "#base-url", depth: 2 },
+  { title: "Authentication", href: "#auth", depth: 2 },
+  { title: "Choosing an instance", href: "#instance", depth: 2 },
+  { title: "Conventions", href: "#conventions", depth: 2 },
+  { title: "Streaming", href: "#streaming", depth: 2 },
+  { title: "Clients", href: "#clients", depth: 2 },
+  { title: "Resources", href: "#resources", depth: 2 },
+  { title: "The OpenAPI document", href: "#openapi", depth: 2 },
+];
+---
+
+<DocsLayout
+  title="API Reference"
+  subtitle={`Every HTTP endpoint the nikcli server exposes — ${stats.operations} operations across ${stats.paths} paths, generated from the server's own OpenAPI document.`}
+  description="Complete HTTP API reference for the nikcli server: base URL, authentication, instance selection, streaming, and every endpoint grouped by resource."
+  toc={toc}
+>
+  <section id="overview" class="doc-section">
+    <h2>Overview</h2>
+    <p>
+      The nikcli server is a single <a href="/docs/server-api">Effect <code>HttpApi</code></a>.
+      Every endpoint on this page is declared as a typed <code>HttpApiEndpoint</code> with
+      schema-checked request and response bodies, so the reference below, the generated SDK and the
+      running server all come from the same declaration — not from three copies of it that drift.
+    </p>
+
+    <div class="doc-grid not-prose">
+      <DocCard title={`${stats.operations} operations`} eyebrow="Surface">
+        <p>Across {stats.paths} paths and {stats.groups} resource groups.</p>
+      </DocCard>
+      <DocCard title={`${stats.schemas} schemas`} eyebrow="Types">
+        <p>Request and response shapes, each reachable from the endpoints that use it.</p>
+      </DocCard>
+      <DocCard title={`OpenAPI ${stats.version}`} eyebrow="Contract">
+        <p>
+          Emitted by <code>nikcli generate</code> from the composed API, then consumed by the SDK
+          generator and by this page.
+        </p>
+      </DocCard>
+      <DocCard title="One surface" eyebrow="Clients">
+        <p>The CLI, TUI, web app, desktop app and mobile app all talk to these same routes.</p>
+      </DocCard>
+    </div>
+
+    <DocCallout type="note" title="This page is generated; /docs/server-api is written">
+      <p>
+        Read <a href="/docs/server-api">Server &amp; API</a> for how the server is built — the
+        request pipeline, the auth layers, why some paths are raw handlers instead of typed
+        endpoints. Read this section for the endpoints themselves.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="base-url" class="doc-section">
+    <h2>Base URL</h2>
+    <p>
+      There is no hosted nikcli API: the server runs on your machine, or on a machine you control.
+      Start one and the base URL is whatever it binds to.
+    </p>
+    <DocCode language="bash">
+# loopback, no password needed
+nikcli serve --hostname 127.0.0.1 --port 4096
+
+# reachable from the network — set a password first
+NIKCLI_SERVER_PASSWORD=secret \
+  nikcli serve --hostname 0.0.0.0 --port 4096
+    </DocCode>
+    <p>
+      <code>Server.listen()</code> falls back to an ephemeral port rather than failing when the
+      requested one is taken, so read the URL the command prints instead of assuming
+      <code>4096</code>.
+    </p>
+    <DocCallout type="warn" title="The TUI's server is not an HTTP server">
+      <p>
+        Inside the terminal UI, <code>sdk.url</code> is the synthetic origin
+        <code>http://nikcli.local</code> and requests are dispatched in process. Use
+        <code>sdk.client.*</code> there; a hand-built <code>fetch()</code> against that host fails
+        DNS resolution silently.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="auth" class="doc-section">
+    <h2>Authentication</h2>
+    <p>
+      Four credential types resolve to one principal before any route runs. Which one you use
+      depends on how the server was started; all of them are accepted on every non-public route.
+    </p>
+    <table class="doc-table">
+      <thead><tr><th>Scheme</th><th>Sent as</th><th>Used by</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>bearerAuth</code></td>
+          <td><code>Authorization: Bearer &lt;token&gt;</code></td>
+          <td>Mobile pairing tokens and <code>nku_</code> account tokens.</td>
+        </tr>
+        <tr>
+          <td><code>auth_token</code></td>
+          <td><code>?token=&lt;token&gt;</code></td>
+          <td>The same tokens, for clients that cannot set headers — <code>EventSource</code>, mostly.</td>
+        </tr>
+        <tr>
+          <td><code>basicAuth</code></td>
+          <td>Username and password</td>
+          <td>
+            <code>NIKCLI_SERVER_PASSWORD</code>, with the username defaulting to
+            <code>nikcli</code>.
+          </td>
+        </tr>
+        <tr>
+          <td>Tailscale identity</td>
+          <td><code>Tailscale-User-Login</code></td>
+          <td>
+            Trusted only on a loopback listener with
+            <code>NIKCLI_SERVER_TAILSCALE_AUTH</code> set.
+          </td>
+        </tr>
+      </tbody>
+    </table>
+    <DocCode language="bash">
+curl -s http://127.0.0.1:4096/session \
+  -H "Authorization: Bearer $NIKCLI_TOKEN"
+
+curl -s -u nikcli:$NIKCLI_SERVER_PASSWORD \
+  http://127.0.0.1:4096/session
+    </DocCode>
+    <p>
+      The share routes — <code>/s/:shareID</code>, <code>/share/:shareID</code> and
+      <code>/api/share/:shareID</code> — answer before the auth check, and
+      <code>/user/login</code>, <code>/user/register</code> and <code>/user/status</code> are public
+      so an account can be created in the first place.
+    </p>
+  </section>
+
+  <section id="instance" class="doc-section">
+    <h2>Choosing an instance</h2>
+    <p>
+      One server hosts many project instances. Every endpoint below accepts
+      <code>directory</code> and <code>workspace</code> query parameters that decide which project
+      handles the request; the same values can travel as
+      <code>x-nikcli-directory</code> and <code>x-nikcli-workspace</code> headers instead.
+    </p>
+    <DocCode language="bash">
+curl -s "http://127.0.0.1:4096/session?directory=/Users/me/project" \
+  -H "Authorization: Bearer $NIKCLI_TOKEN"
+
+curl -s http://127.0.0.1:4096/session \
+  -H "x-nikcli-directory: /Users/me/project" \
+  -H "Authorization: Bearer $NIKCLI_TOKEN"
+    </DocCode>
+    <p>
+      With neither set, a <code>/session/:sessionID/…</code> path recovers the directory from the
+      session itself, and everything else falls back to the server's working directory. The
+      <code>/global</code>, <code>/user</code> and <code>/account</code> roots never bind a
+      directory at all.
+    </p>
+    <DocCallout type="info" title="Why those parameters appear on every operation">
+      <p>
+        Instance selection is transport middleware rather than endpoint input, so the generator
+        adds <code>directory</code> and <code>workspace</code> to each operation when it writes the
+        OpenAPI document. They are optional everywhere.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="conventions" class="doc-section">
+    <h2>Conventions</h2>
+    <ul>
+      <li>
+        <strong>JSON in, JSON out.</strong> Request and response bodies are
+        <code>application/json</code> unless an operation says otherwise.
+      </li>
+      <li>
+        <strong>Operation ids are dotted.</strong> <code>session.prompt</code>,
+        <code>mobile.git.commit</code>, <code>experimental.workspace.warp</code>. They map to the
+        namespaced methods on the <a href="/docs/build/client">generated client</a> —
+        <code>session.prompt</code> is <code>client.session.prompt</code> — with a handful renamed
+        where the dotted id would collide.
+      </li>
+      <li>
+        <strong>Errors are typed too.</strong> A failure schema such as
+        <code>ConfigUpdateError</code> or <code>ProviderAuthError</code> is declared on the endpoint
+        and encoded in the response, rather than collapsing into a bare 500.
+      </li>
+      <li>
+        <strong>Schema names ending in <code>_2</code> are not duplicates.</strong> The OpenAPI
+        emitter disambiguates same-named schemas declared by different groups; the shapes differ.
+      </li>
+    </ul>
+  </section>
+
+  <section id="streaming" class="doc-section">
+    <h2>Streaming</h2>
+    <p>
+      The long-lived paths cannot round-trip through a response schema, so they are served as raw
+      handlers ahead of the typed bridge — while still being declared in the API, which is why they
+      appear in this reference at all.
+    </p>
+    <table class="doc-table">
+      <thead><tr><th>Path</th><th>Shape</th><th>Carries</th></tr></thead>
+      <tbody>
+        <tr><td><code>GET /event</code></td><td>SSE</td><td>Every event for the resolved instance.</td></tr>
+        <tr><td><code>GET /global/event</code></td><td>SSE</td><td>Every event across every instance the server hosts.</td></tr>
+        <tr><td><code>GET /sync/stream</code></td><td>SSE</td><td>Sync events; the one <code>/sync/</code> path served instance-less.</td></tr>
+        <tr><td><code>GET /session/:id/v2/events</code></td><td>SSE</td><td>Entry-level events for one session.</td></tr>
+        <tr><td><code>POST /session/:id/message</code></td><td>Streamed body</td><td>Assistant output as it is produced.</td></tr>
+        <tr><td><code>GET /pty/:ptyID/connect</code></td><td>WebSocket upgrade</td><td>Terminal input and output.</td></tr>
+      </tbody>
+    </table>
+    <DocCode language="bash">
+curl -N "http://127.0.0.1:4096/event?token=$NIKCLI_TOKEN"
+    </DocCode>
+  </section>
+
+  <section id="clients" class="doc-section">
+    <h2>Clients</h2>
+    <p>
+      <code>@nikcli-ai/sdk/httpapi</code> is generated from this same document, so every operation
+      id below is a typed method on the client. Reach for it before hand-writing requests.
+    </p>
+    <DocCode language="ts" title="@nikcli-ai/sdk/httpapi">{`import { createNikcliClient } from "@nikcli-ai/sdk/httpapi"
+
+const client = createNikcliClient({
+  baseUrl: "http://127.0.0.1:4096",
+  directory: "/Users/me/project",
+})
+
+// calls resolve with { data, error } unless throwOnError is set
+const { data: sessions } = await client.session.list()
+const { data: session } = await client.session.create({ title: "from the SDK" })`}</DocCode>
+    <p>
+      For code running inside the nikcli process — plugins, tools, the TUI —
+      <a href="/docs/build/sdk">the embedded SDK</a> binds the same client to the in-process server
+      instead of a socket.
+    </p>
+  </section>
+
+  <section id="resources" class="doc-section">
+    <h2>Resources</h2>
+    <p>
+      {stats.operations} operations, grouped the way the server declares them. The mobile surface is
+      split across five pages because it is a third of the API on its own.
+    </p>
+    {sections.map((section) => (
+      <>
+        <h3>{section === "API · Mobile" ? "Mobile" : "Core"}</h3>
+        <div class="doc-grid not-prose">
+          {apiGroups
+            .filter((group) => group.section === section)
+            .map((group) => (
+              <DocCard
+                title={group.title}
+                eyebrow={`${countBySlug.get(group.slug)} endpoints`}
+                href={`/docs/api/${group.slug}`}
+              >
+                <p>{group.summary}</p>
+              </DocCard>
+            ))}
+        </div>
+      </>
+    ))}
+  </section>
+
+  <section id="openapi" class="doc-section">
+    <h2>The OpenAPI document</h2>
+    <p>
+      The document behind this reference is served from this site and checked into the repository at
+      <code>packages/sdk/openapi.json</code>. Point a generator at it to build a client in any
+      language.
+    </p>
+    <DocCode language="bash">
+curl -s https://nikcli.store/docs/api/openapi.json -o nikcli-openapi.json
+
+# or regenerate it from a checkout
+bun run script/generate.ts
+    </DocCode>
+    <p>
+      <a href="/docs/api/openapi.json">Download the OpenAPI document</a> &middot; OpenAPI
+      {stats.version}, {stats.paths} paths, {stats.schemas} schemas.
+    </p>
+  </section>
+
+  <DocRelated
+    links={[
+      { title: "Server & API", href: "/docs/server-api", description: "The request pipeline, auth layers and route groups behind these endpoints." },
+      { title: "Sessions", href: "/docs/sessions", description: "The concepts the session endpoints operate on." },
+      { title: "Mobile", href: "/docs/mobile", description: "How the mobile host and the paired app use the /mobile surface." },
+      { title: "Packages & Suite", href: "/docs/packages", description: "Where the generated SDK clients live in the monorepo." },
+    ]}
+  />
+</DocsLayout>

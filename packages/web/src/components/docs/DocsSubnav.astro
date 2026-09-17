@@ -1,0 +1,24 @@
+---
+/**
+ * Top-level docs areas. Sits under the site navbar and scopes what the sidebar
+ * below it lists, so no single sidebar has to carry every page on the site.
+ */
+import { activeDocsSection, docsNav } from "../../data/docsSidebar";
+
+const pathname = Astro.url.pathname.replace(/\/$/, "");
+const active = activeDocsSection(pathname);
+---
+
+<div class="docs-subnav sticky top-[var(--topbar-height)] z-40 border-b border-terminal-border/60 bg-terminal-bg/90 backdrop-blur-xl dark:border-white/5 dark:bg-terminal-bg/80">
+  <nav class="page-shell flex h-[var(--docs-subnav-height)] items-center gap-1 overflow-x-auto custom-scrollbar" aria-label="Documentation areas">
+    {docsNav.map((section) => (
+      <a
+        href={section.href}
+        class="docs-subnav-link"
+        aria-current={section.id === active.id ? "page" : undefined}
+      >
+        {section.title}
+      </a>
+    ))}
+  </nav>
+</div>

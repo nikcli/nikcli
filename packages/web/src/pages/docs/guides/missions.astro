@@ -1,0 +1,286 @@
+---
+export const prerender = true;
+
+import DocsLayout from "../../../layouts/DocsLayout.astro";
+import DocCallout from "../../../components/docs/DocCallout.astro";
+import DocCode from "../../../components/docs/DocCode.astro";
+import DocRelated from "../../../components/docs/DocRelated.astro";
+
+const toc = [
+  { title: "What a mission is", href: "#what", depth: 2 },
+  { title: "The shape", href: "#shape", depth: 2 },
+  { title: "Features and dependencies", href: "#features", depth: 2 },
+  { title: "Validation gates", href: "#validation", depth: 2 },
+  { title: "Running one", href: "#running", depth: 2 },
+  { title: "Watching progress", href: "#progress", depth: 2 },
+  { title: "Intervening mid-run", href: "#intervene", depth: 2 },
+  { title: "A complete mission", href: "#complete", depth: 2 },
+  { title: "Failure modes", href: "#failure-modes", depth: 2 },
+];
+---
+
+<DocsLayout
+  title="Orchestrating missions"
+  subtitle="A mission is a dependency graph of features grouped into milestones — parallel where it can be, gated where it must be."
+  description="Guide to nikcli missions: milestones, features, dependsOn graphs, validation gates, running and pausing, and intervening in a running mission."
+  toc={toc}
+>
+  <section id="what" class="doc-section">
+    <h2>What a mission is</h2>
+    <p>
+      A mission describes a body of work as <strong>milestones</strong>, each containing
+      <strong>features</strong>. A feature names an objective and the agent that will do it; a
+      feature can declare that it depends on others, which is what turns a list into a graph.
+    </p>
+    <p>
+      The difference from a <a href="/docs/guides/loops">loop</a> is the shape, not the size. A loop
+      is a pipeline that repeats on a cadence. A mission is a graph that runs once, to completion,
+      with gates between milestones.
+    </p>
+  </section>
+
+  <section id="shape" class="doc-section">
+    <h2>The shape</h2>
+    <DocCode language="ts">{`await client.mission.upsert({
+  name: "search-v2",
+  brief: "Replace the current search with a ranked index, without changing the public API.",
+  milestones: [
+    {
+      id: "m1",
+      name: "Indexing",
+      validation: "scrutiny",
+      features: [
+        {
+          id: "schema",
+          name: "Index schema",
+          objective: "Design the index schema and write the migration. No query changes yet.",
+          agent: "plan",
+        },
+        {
+          id: "writer",
+          name: "Index writer",
+          objective: "Write documents into the index on every mutation.",
+          agent: "build",
+          dependsOn: ["schema"],
+        },
+      ],
+    },
+  ],
+})`}</DocCode>
+    <p>
+      <code>brief</code> is the whole mission's context: every feature is executed with it in scope,
+      so constraints that apply throughout — "without changing the public API" — belong there rather
+      than repeated in each objective.
+    </p>
+  </section>
+
+  <section id="features" class="doc-section">
+    <h2>Features and dependencies</h2>
+    <table class="doc-table">
+      <thead><tr><th>Field</th><th>Required</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><code>id</code></td><td>yes</td><td>What other features name in <code>dependsOn</code>.</td></tr>
+        <tr><td><code>name</code></td><td>yes</td><td>Human label in the UI and in exec history.</td></tr>
+        <tr><td><code>objective</code></td><td>yes</td><td>The prompt for this unit of work.</td></tr>
+        <tr><td><code>agent</code></td><td>yes</td><td>Which agent runs it, and so which tools and permissions apply.</td></tr>
+        <tr><td><code>model</code></td><td>no</td><td>Overrides the model for this feature.</td></tr>
+        <tr><td><code>tokenBudget</code></td><td>no</td><td>Caps this feature's spend.</td></tr>
+        <tr><td><code>dependsOn</code></td><td>no</td><td>Feature ids that must finish first.</td></tr>
+        <tr><td><code>status</code></td><td>no</td><td><code>pending</code>, <code>running</code>, <code>done</code>, <code>blocked</code>, <code>skipped</code>, <code>error</code>.</td></tr>
+      </tbody>
+    </table>
+    <p>
+      Features with no unmet dependency are free to run together. Declaring a dependency you do not
+      actually have is the most common way to make a mission needlessly serial.
+    </p>
+    <DocCallout type="note" title="Depend on outputs, not on order">
+      <p>
+        <code>dependsOn</code> should mean "this cannot be written until that exists", not "I would
+        rather this happened first". Two features touching different files usually have no
+        dependency at all, even when a human would do them in order.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="validation" class="doc-section">
+    <h2>Validation gates</h2>
+    <p>
+      A milestone can declare how it is checked before the next one starts.
+    </p>
+    <table class="doc-table">
+      <thead><tr><th>Value</th><th>Meaning</th></tr></thead>
+      <tbody>
+        <tr><td><code>scrutiny</code></td><td>The work is reviewed before the milestone is accepted.</td></tr>
+        <tr><td><code>user-test</code></td><td>A human tests it; the mission waits.</td></tr>
+        <tr><td><code>none</code></td><td>Roll straight into the next milestone.</td></tr>
+      </tbody>
+    </table>
+    <DocCallout type="warn" title="user-test blocks until someone answers">
+      <p>
+        A mission gated on <code>user-test</code> and left unattended is stopped, not failed. In
+        unattended runs use <code>scrutiny</code>, and keep <code>user-test</code> for the
+        milestones where a person really is going to look.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="running" class="doc-section">
+    <h2>Running one</h2>
+    <DocCode language="ts">{`await client.mission.start({ id: mission.id })
+await client.mission.pause({ id: mission.id })
+await client.mission.cancel({ id: mission.id })
+
+const { data: list } = await client.mission.list()
+const { data: one } = await client.mission.get({ id: mission.id })`}</DocCode>
+    <p>
+      As with loops, <code>generate</code> drafts a mission from prose and
+      <code>templates</code> returns the built-in starting points.
+    </p>
+    <DocCode language="ts">{`const { data: draft } = await client.mission.generate({
+  description: "Add OAuth login with Google and GitHub, behind a feature flag.",
+})`}</DocCode>
+  </section>
+
+  <section id="progress" class="doc-section">
+    <h2>Watching progress</h2>
+    <DocCode language="ts">{`const { data: execs } = await client.mission.execs({ id: mission.id })
+const { data: recent } = await client.mission.recentExecs({ limit: 20 })`}</DocCode>
+    <p>
+      Feature <code>status</code> is the thing to render: <code>blocked</code> means a dependency has
+      not finished, <code>skipped</code> means the mission moved past it, and <code>error</code>
+      carries the reason in <code>error</code>.
+    </p>
+  </section>
+
+  <section id="intervene" class="doc-section">
+    <h2>Intervening mid-run</h2>
+    <p>
+      A mission is editable while it runs. <code>mission.feature.mutate</code> changes one feature's
+      status, records an error, or adds a dependency that was not obvious when the graph was
+      written.
+    </p>
+    <DocCode language="ts">{`// this turned out to need the schema after all
+await client.mission.feature.mutate({
+  id: mission.id,
+  featureID: "writer",
+  appendDependsOn: ["schema"],
+})
+
+// we handled this one by hand
+await client.mission.feature.mutate({
+  id: mission.id,
+  featureID: "legacy-shim",
+  status: "skipped",
+})
+
+// unblock a feature that failed for an external reason
+await client.mission.feature.mutate({
+  id: mission.id,
+  featureID: "writer",
+  status: "pending",
+  error: undefined,
+})`}</DocCode>
+    <DocCallout type="info" title="This is the escape hatch that makes missions usable">
+      <p>
+        Graphs written up front are wrong in small ways. Being able to add a dependency or skip a
+        feature without tearing the mission down is what keeps a long-running one alive.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="complete" class="doc-section">
+    <h2>A complete mission</h2>
+    <DocCode language="ts" title="search-v2.ts">{`import { createNikcliClient } from "@nikcli-ai/sdk/httpapi"
+
+const client = createNikcliClient({
+  baseUrl: "http://127.0.0.1:4096",
+  directory: process.cwd(),
+})
+
+const { data: mission, error } = await client.mission.upsert({
+  name: "search-v2",
+  brief:
+    "Replace the current substring search with a ranked index. " +
+    "The public search API must not change shape; existing callers keep working.",
+  milestones: [
+    {
+      id: "m1",
+      name: "Indexing",
+      validation: "scrutiny",
+      features: [
+        {
+          id: "schema",
+          name: "Index schema",
+          objective: "Design the index schema and write the migration. Do not touch query code.",
+          agent: "plan",
+          tokenBudget: 40_000,
+        },
+        {
+          id: "writer",
+          name: "Index writer",
+          objective: "Write documents into the index on every mutation, with tests.",
+          agent: "build",
+          dependsOn: ["schema"],
+          tokenBudget: 120_000,
+        },
+        {
+          id: "backfill",
+          name: "Backfill",
+          objective: "Backfill the index from existing rows. Idempotent and resumable.",
+          agent: "build",
+          dependsOn: ["schema"],
+          tokenBudget: 80_000,
+        },
+      ],
+    },
+    {
+      id: "m2",
+      name: "Querying",
+      validation: "user-test",
+      features: [
+        {
+          id: "ranker",
+          name: "Ranking",
+          objective: "Rank results by relevance. Keep the response shape identical.",
+          agent: "build",
+          dependsOn: ["writer", "backfill"],
+          tokenBudget: 120_000,
+        },
+      ],
+    },
+  ],
+})
+if (!mission) throw error
+
+await client.mission.start({ id: mission.id })`}</DocCode>
+    <p>
+      <code>writer</code> and <code>backfill</code> both depend only on <code>schema</code>, so they
+      are free to run together once it lands; <code>ranker</code> waits for both. That is the whole
+      point of writing it as a graph rather than a list.
+    </p>
+  </section>
+
+  <section id="failure-modes" class="doc-section">
+    <h2>Failure modes</h2>
+    <table class="doc-table">
+      <thead><tr><th>Symptom</th><th>Cause</th></tr></thead>
+      <tbody>
+        <tr><td>Everything runs one at a time</td><td>A <code>dependsOn</code> chain that encodes preference rather than necessity.</td></tr>
+        <tr><td>Feature stuck on <code>blocked</code></td><td>A dependency errored or was never started; check its <code>status</code> and <code>error</code>.</td></tr>
+        <tr><td>Mission stops and nothing happens</td><td>A <code>user-test</code> gate waiting on a human.</td></tr>
+        <tr><td><code>dependsOn</code> appears to be ignored</td><td>It names a feature <code>name</code> instead of its <code>id</code>.</td></tr>
+        <tr><td>Features contradict each other</td><td>Shared constraints live in the objectives instead of the <code>brief</code>.</td></tr>
+        <tr><td>One feature consumes the whole budget</td><td>No <code>tokenBudget</code> on a broad objective.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <DocRelated
+    links={[
+      { title: "Missions", href: "/docs/missions", description: "The mission subsystem itself." },
+      { title: "Automating with loops", href: "/docs/guides/loops", description: "The other shape: a pipeline on a cadence." },
+      { title: "Missions API", href: "/docs/api/mission", description: "Every mission endpoint and payload." },
+      { title: "Agents", href: "/docs/agents", description: "The agents features name." },
+    ]}
+  />
+</DocsLayout>

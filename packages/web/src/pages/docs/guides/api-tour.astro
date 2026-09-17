@@ -1,0 +1,357 @@
+---
+export const prerender = true;
+
+import DocsLayout from "../../../layouts/DocsLayout.astro";
+import DocCallout from "../../../components/docs/DocCallout.astro";
+import DocCode from "../../../components/docs/DocCode.astro";
+import DocRelated from "../../../components/docs/DocRelated.astro";
+
+const toc = [
+  { title: "A throwaway server", href: "#setup", depth: 2 },
+  { title: "Is it alive", href: "#health", depth: 2 },
+  { title: "Where am I", href: "#where", depth: 2 },
+  { title: "What can it do", href: "#capabilities", depth: 2 },
+  { title: "Sessions", href: "#sessions", depth: 2 },
+  { title: "Files and search", href: "#files", depth: 2 },
+  { title: "The empty shapes", href: "#empty", depth: 2 },
+  { title: "The event feed", href: "#events", depth: 2 },
+  { title: "What errors look like", href: "#errors", depth: 2 },
+  { title: "The whole tour as a script", href: "#script", depth: 2 },
+];
+---
+
+<DocsLayout
+  title="A guided tour with real responses"
+  subtitle="Every request on this page was run against a real nikcli server, and every response is what actually came back."
+  description="A hands-on tour of the nikcli HTTP API with real captured responses: health, paths, projects, tools, sessions, files, search, the event feed and error shapes."
+  toc={toc}
+>
+  <section id="setup" class="doc-section">
+    <h2>A throwaway server</h2>
+    <p>
+      The fastest way to learn this API is to hit it. Point <code>NIKCLI_TEST_HOME</code> somewhere
+      disposable and the server keeps its sessions, config and database there instead of in your
+      real one — so you can create and delete freely.
+    </p>
+    <DocCode language="bash">{`mkdir -p ~/demo && cd ~/demo && git init -q
+printf 'export function greet(name: string) {\\n  // TODO: localise this\\n  return \`Hello, \${name}!\`\\n}\\n' > greet.ts
+printf '# demo\\n' > README.md
+git add -A && git commit -qm initial
+
+# an isolated home, so nothing here touches your real sessions or config
+NIKCLI_TEST_HOME=~/demo/.nikcli-home \\
+  nikcli serve --hostname 127.0.0.1 --port 4199`}</DocCode>
+    <DocCallout type="info" title="Everything below is copied from a real run">
+      <p>
+        The responses on this page were captured from exactly that setup. The only edit is
+        cosmetic: the long temporary paths were rewritten to <code>/Users/me/demo</code>, and two
+        very long arrays are marked where they were trimmed.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="health" class="doc-section">
+    <h2>Is it alive</h2>
+    <p>
+      Health is instance-less — it needs no project and no auth on loopback, which makes it the
+      right thing to poll while waiting for a server to come up.
+    </p>
+    <DocCode language="bash">{`curl -s http://127.0.0.1:4199/global/health`}</DocCode>
+    <DocCode language="json" title="response">{`{"healthy":true,"version":"local","revision":"local"}`}</DocCode>
+    <p>
+      <code>version</code> reads <code>local</code> here because this server was run from a source
+      checkout; an installed build reports its release.
+    </p>
+  </section>
+
+  <section id="where" class="doc-section">
+    <h2>Where am I</h2>
+    <p>
+      <code>/path</code> answers the question every integration asks first: which directories is
+      this instance actually using? Note <code>home</code> pointing at the throwaway — that is the
+      isolation working.
+    </p>
+    <DocCode language="bash">{`curl -s "http://127.0.0.1:4199/path?directory=$PWD"`}</DocCode>
+    <DocCode language="json" title="response">{`{
+  "home": "/Users/me/demo/.nikcli-home",
+  "state": "/Users/me/demo/.nikcli-home/state",
+  "config": "/Users/me/demo/.nikcli-home/config",
+  "worktree": "/Users/me/demo",
+  "directory": "/Users/me/demo"
+}`}</DocCode>
+    <p>
+      <code>/project/current</code> resolves the project for the directory you selected. The
+      <code>id</code> is a stable hash of the worktree, so it is the same on every call and across
+      restarts.
+    </p>
+    <DocCode language="bash">{`curl -s "http://127.0.0.1:4199/project/current?directory=$PWD"`}</DocCode>
+    <DocCode language="json" title="response">{`{
+  "id": "c6d9c4f98cc34c8bfb0a40b3a60eca6f624750e6",
+  "worktree": "/Users/me/demo",
+  "canonical": "/Users/me/demo",
+  "vcs": "git",
+  "time": { "created": 1789656731762, "updated": 1789656731762 },
+  "sandboxes": []
+}`}</DocCode>
+    <DocCode language="bash" title="request + response">{`curl -s "http://127.0.0.1:4199/vcs?directory=$PWD"
+{"branch":"main"}`}</DocCode>
+  </section>
+
+  <section id="capabilities" class="doc-section">
+    <h2>What can it do</h2>
+    <p>
+      The tool registry is the honest answer to "what can the agent actually do here". This is the
+      real list from a default install — and the endpoint a plugin author checks to confirm a
+      registered tool arrived.
+    </p>
+    <DocCode language="bash">{`curl -s "http://127.0.0.1:4199/experimental/tool/ids?directory=$PWD"`}</DocCode>
+    <DocCode language="json" title="response">{`["invalid","question","bash","monitor","read","tree","glob","grep","edit","write",
+ "multiedit","task","delegation","context_collect","context_related","context_diagnostics",
+ "memory_search","generate_image","artifact","webfetch","todowrite","todoread","create_goal",
+ "get_goal","update_goal","websearch","codesearch","repo_clone","repo_overview","skill",
+ "apply_patch","lsp","plan_exit","plan_enter","speak","voice","opentui","advisor","delegator",
+ "search_tools","code_mode","browser_control","computer","herdr"]`}</DocCode>
+    <p>
+      <code>/agent</code> returns each agent with its resolved permission table, which is where
+      those tools get gated. Trimmed heavily here — the real payload is long.
+    </p>
+    <DocCode language="bash">{`curl -s "http://127.0.0.1:4199/agent?directory=$PWD"`}</DocCode>
+    <DocCode language="json" title="response (trimmed)">{`[
+  {
+    "name": "build",
+    "mode": "primary",
+    "native": true,
+    "permission": [
+      { "permission": "*",             "pattern": "*",            "action": "allow" },
+      { "permission": "browser_control","pattern": "*",           "action": "ask"   },
+      { "permission": "computer",      "pattern": "*",            "action": "ask"   },
+      { "permission": "read",          "pattern": "*",            "action": "allow" },
+      { "permission": "read",          "pattern": "*.env",        "action": "ask"   },
+      { "permission": "read",          "pattern": "*.env.example","action": "allow" }
+      /* … trimmed … */
+    ]
+  }
+  /* … more agents … */
+]`}</DocCode>
+    <DocCallout type="note" title="Permission rules are ordered and last-match-wins">
+      <p>
+        Notice <code>read: *</code> allowed, then <code>read: *.env</code> set to ask, then
+        <code>read: *.env.example</code> allowed again. Reading the list top to bottom is the only
+        way to predict what a given path will do.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="sessions" class="doc-section">
+    <h2>Sessions</h2>
+    <p>A fresh project has none:</p>
+    <DocCode language="bash">{`curl -s "http://127.0.0.1:4199/session?directory=$PWD"`}</DocCode>
+    <DocCode language="json" title="response">{`[]`}</DocCode>
+    <p>Creating one returns the whole session, not just an id:</p>
+    <DocCode language="bash">{`curl -s -X POST "http://127.0.0.1:4199/session?directory=$PWD" \\
+  -H 'content-type: application/json' \\
+  -d '{"title":"api tour"}'`}</DocCode>
+    <DocCode language="json" title="response">{`{
+  "id": "ses_f50250f8fffexTvasNDaQeiLXP",
+  "slug": "swift-eagle",
+  "projectID": "c6d9c4f98cc34c8bfb0a40b3a60eca6f624750e6",
+  "directory": "/Users/me/demo",
+  "title": "api tour",
+  "version": "local",
+  "time": { "created": 1789656756337, "updated": 1789656756337 },
+  "skills": []
+}`}</DocCode>
+    <p>
+      <code>slug</code> is a human-readable handle generated alongside the id —
+      <code>swift-eagle</code> is easier to say out loud than
+      <code>ses_f50250f8fffexTvasNDaQeiLXP</code>. <code>projectID</code> matches what
+      <code>/project/current</code> returned, which is how a session stays bound to its project.
+    </p>
+  </section>
+
+  <section id="files" class="doc-section">
+    <h2>Files and search</h2>
+    <p>
+      File listing is project-relative, and carries <code>ignored</code> so a client can grey out
+      what git is not tracking.
+    </p>
+    <DocCode language="bash">{`curl -s "http://127.0.0.1:4199/file?path=.&directory=$PWD"`}</DocCode>
+    <DocCode language="json" title="response">{`[
+  { "name": "greet.ts",  "path": "greet.ts",  "absolute": "/Users/me/demo/greet.ts",  "type": "file", "ignored": false },
+  { "name": "README.md", "path": "README.md", "absolute": "/Users/me/demo/README.md", "type": "file", "ignored": false }
+]`}</DocCode>
+    <p>Reading returns content as a tagged object rather than a bare string:</p>
+    <DocCode language="bash">{`curl -s "http://127.0.0.1:4199/file/content?path=greet.ts&directory=$PWD"`}</DocCode>
+    <DocCode language="json" title="response">{`{
+  "type": "text",
+  "content": "export function greet(name: string) {\\n  // TODO: localise this\\n  return \`Hello, \${name}!\`\\n}"
+}`}</DocCode>
+    <p>
+      Text search returns ripgrep's own match structure — line number, byte offset and the span of
+      each match within the line, which is enough to highlight without re-searching client side.
+    </p>
+    <DocCode language="bash">{`curl -s "http://127.0.0.1:4199/find?pattern=TODO&directory=$PWD"`}</DocCode>
+    <DocCode language="json" title="response">{`[
+  {
+    "path":  { "text": "greet.ts" },
+    "lines": { "text": "  // TODO: localise this" },
+    "line_number": 2,
+    "absolute_offset": 38,
+    "submatches": [{ "match": { "text": "TODO" }, "start": 5, "end": 9 }]
+  }
+]`}</DocCode>
+    <p>Filename search is fuzzy, which is worth knowing before you treat it as a filter:</p>
+    <DocCode language="bash">{`curl -s "http://127.0.0.1:4199/find/file?query=greet&directory=$PWD"`}</DocCode>
+    <DocCode language="json" title="response">{`["greet.ts","README.md"]`}</DocCode>
+    <DocCallout type="warn" title="Both files matched &quot;greet&quot;">
+      <p>
+        <code>README.md</code> came back too. <code>/find/file</code> ranks by fuzzy match rather
+        than filtering by substring, so treat the order as meaningful and the tail as noise.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="empty" class="doc-section">
+    <h2>The empty shapes</h2>
+    <p>
+      Worth seeing once, because "empty" is not spelled the same way everywhere. Most collections
+      return a bare array; loops and missions return an object with the collection inside it.
+    </p>
+    <DocCode language="text" title="real responses, idle project">{`GET /session/{id}/message   ->  []
+GET /session/{id}/todo      ->  []
+GET /session/{id}/diff      ->  []
+GET /file/status            ->  []
+GET /permission             ->  []
+GET /question               ->  []
+GET /pty                    ->  []
+GET /lsp                    ->  []
+GET /experimental/workspace ->  []
+GET /loop                   ->  {"loops":[],"runtimes":[]}
+GET /mission                ->  {"missions":[],"runtimes":[]}`}</DocCode>
+    <p>
+      That asymmetry is not an accident — the loop and mission payloads carry
+      <code>runtimes</code> alongside the definitions — but it will catch you if you assume every
+      list endpoint returns an array.
+    </p>
+  </section>
+
+  <section id="events" class="doc-section">
+    <h2>The event feed</h2>
+    <p>
+      The feed is plain server-sent events. Connecting to an idle instance gets you the handshake
+      and then silence until something happens.
+    </p>
+    <DocCode language="bash">{`curl -sN "http://127.0.0.1:4199/event?directory=$PWD"`}</DocCode>
+    <DocCode language="text" title="response">{`data: {"type":"server.connected","properties":{}}`}</DocCode>
+    <p>
+      <code>server.connected</code> arriving is the confirmation your subscription is live — which
+      is exactly the moment it is safe to submit a prompt without losing the first tokens. See
+      <a href="/docs/guides/streaming">Streaming a response</a>.
+    </p>
+  </section>
+
+  <section id="errors" class="doc-section">
+    <h2>What errors look like</h2>
+    <p>A declared domain error carries its name and data:</p>
+    <DocCode language="bash">{`curl -s -w '\\nHTTP %{http_code}\\n' "http://127.0.0.1:4199/session/ses_doesnotexist?directory=$PWD"`}</DocCode>
+    <DocCode language="json" title="response">{`{"name":"NotFoundError","data":{"message":"Session not found: ses_doesnotexist"}}
+HTTP 404`}</DocCode>
+    <p>A body that fails schema validation reports the exact path that was wrong:</p>
+    <DocCode language="bash">{`curl -s -w '\\nHTTP %{http_code}\\n' \\
+  -X POST "http://127.0.0.1:4199/session/ses_x/message?directory=$PWD" \\
+  -H 'content-type: application/json' -d '{}'`}</DocCode>
+    <DocCode language="json" title="response">{`{
+  "data": {},
+  "error": [{
+    "expected": "array",
+    "code": "invalid_type",
+    "path": ["parts"],
+    "message": "Invalid input: expected array, received undefined"
+  }],
+  "success": false
+}
+HTTP 400`}</DocCode>
+    <p>
+      That error array is the schema validator's own output, so <code>path</code> points at the
+      field — here, a missing <code>parts</code> on a prompt.
+    </p>
+    <p>Two responses that are not errors, and surprise people:</p>
+    <DocCode language="bash">{`curl -s -w '\\nHTTP %{http_code}\\n' "http://127.0.0.1:4199/file/content?path=nope.ts&directory=$PWD"`}</DocCode>
+    <DocCode language="json" title="response">{`{"type":"text","content":""}
+HTTP 200`}</DocCode>
+    <DocCallout type="warn" title="A missing file reads as empty, not as 404">
+      <p>
+        <code>/file/content</code> answers 200 with <code>content: ""</code> for a path that does
+        not exist. If your code distinguishes "empty file" from "no file", check with
+        <code>/file</code> first — the status code will not tell you.
+      </p>
+    </DocCallout>
+    <DocCode language="bash">{`curl -s "http://127.0.0.1:4199/nope?directory=$PWD"`}</DocCode>
+    <DocCode language="html" title="response — HTTP 200">{`<!doctype html>
+<html lang="en">
+  <head>
+    <title>NikCLI</title>
+    ...`}</DocCode>
+    <DocCallout type="warn" title="An unknown path returns the web app, not a 404">
+      <p>
+        Unmatched non-<code>/mobile</code> paths fall through to the hosted web app so it can be
+        served from the same origin. So a typo in an endpoint gives you an HTML page with status
+        200 — if a client suddenly starts failing to parse JSON, check the path before anything
+        else.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="script" class="doc-section">
+    <h2>The whole tour as a script</h2>
+    <p>
+      Run this in the demo project with the server up, and you get every response on this page in
+      one go.
+    </p>
+    <DocCode language="bash" title="tour.sh">{`#!/usr/bin/env bash
+# tour.sh — run the whole thing against a throwaway server
+set -euo pipefail
+
+BASE="http://127.0.0.1:4199"
+DIR="$PWD"
+
+say() { printf '\\n\\033[1m== %s\\033[0m\\n' "$1"; }
+get() { curl -s -m 20 "$BASE$1"; echo; }
+
+say "health";        get "/global/health"
+say "paths";         get "/path?directory=$DIR"
+say "project";       get "/project/current?directory=$DIR"
+say "vcs";           get "/vcs?directory=$DIR"
+say "tools";         get "/experimental/tool/ids?directory=$DIR"
+say "files";         get "/file?path=.&directory=$DIR"
+say "grep TODO";     get "/find?pattern=TODO&directory=$DIR"
+
+say "create session"
+SESSION=$(curl -s -X POST "$BASE/session?directory=$DIR" \\
+  -H 'content-type: application/json' -d '{"title":"api tour"}' | jq -r .id)
+echo "$SESSION"
+
+say "session";       get "/session/$SESSION?directory=$DIR"
+say "messages";      get "/session/$SESSION/message?directory=$DIR"
+say "diff";          get "/session/$SESSION/diff?directory=$DIR"
+
+say "errors"
+curl -s -w ' <- HTTP %{http_code}\\n' "$BASE/session/ses_nope?directory=$DIR"`}</DocCode>
+    <DocCallout type="note" title="Then throw it away">
+      <p>
+        Because the server ran with <code>NIKCLI_TEST_HOME</code> pointed at
+        <code>~/demo/.nikcli-home</code>, deleting that directory removes every session and every
+        row this tour created. Nothing touched your real state.
+      </p>
+    </DocCallout>
+  </section>
+
+  <DocRelated
+    links={[
+      { title: "Using the API", href: "/docs/guides/api", description: "The same endpoints, with the SDK alongside curl." },
+      { title: "API Reference", href: "/docs/api", description: "Every endpoint, field by field." },
+      { title: "Streaming a response", href: "/docs/guides/streaming", description: "What arrives on the feed once work starts." },
+      { title: "Building an interface", href: "/docs/guides/custom-interface", description: "Turning these responses into a client." },
+    ]}
+  />
+</DocsLayout>

@@ -11,7 +11,11 @@
     "deploy": "echo '_worker.js' > dist/.assetsignore && wrangler deploy",
     "check:docs-tools": "bun run script/check-docs-tool-index.ts",
     "check:docs-index": "bun run script/check-docs-index.ts",
+    "check:api-groups": "bun run script/check-api-groups.ts",
+    "check:docs-anchors": "bun run script/check-docs-anchors.ts",
     "build:brandkit": "bun run script/build-brandkit.ts",
+    "build:social-image": "bun run script/build-social-image.ts",
+    "test:social-meta": "bun run build && bun test script/social-meta.test.ts",
     "build:world-map": "bun run script/build-world-map.ts",
     "d1:migrate:local": "wrangler d1 migrations apply nikcli-web --local",
     "d1:migrate:remote": "wrangler d1 migrations apply nikcli-web --remote"

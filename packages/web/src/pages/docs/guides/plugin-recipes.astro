@@ -1,0 +1,313 @@
+---
+export const prerender = true;
+
+import DocsLayout from "../../../layouts/DocsLayout.astro";
+import DocCallout from "../../../components/docs/DocCallout.astro";
+import DocCode from "../../../components/docs/DocCode.astro";
+import DocRelated from "../../../components/docs/DocRelated.astro";
+
+const toc = [
+  { title: "How to use these", href: "#how", depth: 2 },
+  { title: "1. A tool that runs a script", href: "#tool", depth: 2 },
+  { title: "2. A tool that streams progress", href: "#progress", depth: 2 },
+  { title: "3. Auto-deny a permission class", href: "#policy", depth: 2 },
+  { title: "4. Inject secrets into the shell", href: "#secrets", depth: 2 },
+  { title: "5. Tune model parameters", href: "#params", depth: 2 },
+  { title: "6. Redact outbound requests", href: "#redact", depth: 2 },
+  { title: "7. Append project rules", href: "#system", depth: 2 },
+  { title: "8. Notify on session idle", href: "#notify", depth: 2 },
+];
+---
+
+<DocsLayout
+  title="Plugin recipes"
+  subtitle="Eight complete plugins that each do one thing. Copy one, change the parts that are yours, point nikcli.json at the file."
+  description="Copy-pasteable nikcli plugin examples: custom tools, progress streaming, permission policy, shell secrets, model parameters, request redaction, system prompt rules and notifications."
+  toc={toc}
+>
+  <section id="how" class="doc-section">
+    <h2>How to use these</h2>
+    <p>
+      Each recipe is a whole file. Drop it in <code>.nikcli/plugins/</code>, add the path to
+      <code>plugin</code> in <code>nikcli.json</code>, and restart. If any of that is unfamiliar,
+      read <a href="/docs/guides/plugins">Writing a plugin</a> first.
+    </p>
+    <DocCode language="json" title="nikcli.json">{`{
+  "$schema": "https://nikcli.store/config.json",
+  "plugin": ["./.nikcli/plugins/deploy.ts"]
+}`}</DocCode>
+    <DocCallout type="warn" title="These run with your credentials">
+      <p>
+        A plugin has the access the agent has. Read a recipe before running it, the same way you
+        would read a shell script someone handed you.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="tool" class="doc-section">
+    <h2>1. A tool that runs a script</h2>
+    <p>
+      The most common reason to write a plugin: give the agent a verb it cannot get wrong, instead
+      of hoping it assembles the right shell command.
+    </p>
+    <DocCode language="ts" title=".nikcli/plugins/deploy.ts">{`import type { Plugin } from "@nikcli-ai/plugin"
+import { tool } from "@nikcli-ai/plugin/tool"
+
+export const Deploy: Plugin = async ({ $ }) => ({
+  tool: {
+    deploy: tool({
+      description: "Deploy a branch to staging. Use this instead of running deploy scripts by hand.",
+      args: {
+        branch: tool.schema.string().describe("branch to deploy, e.g. feature/login"),
+        dryRun: tool.schema.boolean().optional().describe("print the plan without applying it"),
+      },
+      async execute(args, ctx) {
+        ctx.metadata({ title: \`Deploying \${args.branch}\` })
+
+        const result = await $\`./script/deploy.sh \${args.branch} \${args.dryRun ? "--dry-run" : ""}\`
+          .nothrow()
+          .quiet()
+
+        if (result.exitCode !== 0) {
+          return { title: "Deploy failed", output: result.stderr.toString() }
+        }
+        return { title: \`Deployed \${args.branch}\`, output: result.stdout.toString() }
+      },
+    }),
+  },
+})`}</DocCode>
+  </section>
+
+  <section id="progress" class="doc-section">
+    <h2>2. A tool that streams progress</h2>
+    <p>
+      Long-running tools should report as they go. <code>ctx.progress</code> pushes partial results
+      before the tool returns, and <code>ctx.abort</code> lets the user cancel it.
+    </p>
+    <DocCode language="ts" title=".nikcli/plugins/migrate.ts">{`import type { Plugin } from "@nikcli-ai/plugin"
+import { tool } from "@nikcli-ai/plugin/tool"
+
+export const Migrate: Plugin = async ({ directory }) => ({
+  tool: {
+    migrate: tool({
+      description: "Run pending database migrations one at a time",
+      args: { to: tool.schema.string().optional().describe("target migration id") },
+      async execute(args, ctx) {
+        const pending = await findPending(directory, args.to)
+        const applied: string[] = []
+
+        for (const [index, migration] of pending.entries()) {
+          if (ctx.abort.aborted) break
+
+          await ctx.progress({
+            structured: { done: index, total: pending.length, current: migration },
+            content: [{ type: "text", text: \`Applying \${migration}…\` }],
+          })
+
+          await apply(migration, { signal: ctx.abort })
+          applied.push(migration)
+        }
+
+        return {
+          title: \`\${applied.length} migration(s) applied\`,
+          output: applied.join("\\n") || "nothing to do",
+          metadata: { applied },
+        }
+      },
+    }),
+  },
+})`}</DocCode>
+  </section>
+
+  <section id="policy" class="doc-section">
+    <h2>3. Auto-deny a permission class</h2>
+    <p>
+      <code>permission.ask</code> runs before the user is prompted. Setting
+      <code>output.status</code> decides it without them: <code>deny</code> refuses,
+      <code>allow</code> approves silently, and leaving it as <code>ask</code> falls through to the
+      normal prompt.
+    </p>
+    <DocCode language="ts" title=".nikcli/plugins/policy.ts">{`import type { Plugin } from "@nikcli-ai/plugin"
+
+const FORBIDDEN = [/\\bgit\\s+push\\s+--force/, /\\brm\\s+-rf\\s+\\//, /\\bcurl\\b.*\\|\\s*sh/]
+
+export const Policy: Plugin = async () => ({
+  async "permission.ask"(request, output) {
+    const target = (request.patterns ?? []).join(" ")
+
+    if (FORBIDDEN.some((pattern) => pattern.test(target))) {
+      output.status = "deny"
+      return
+    }
+
+    // read-only lookups never need a prompt
+    if (request.permission === "webfetch") output.status = "allow"
+  },
+})`}</DocCode>
+    <DocCallout type="info" title="This composes with permission modes">
+      <p>
+        The hook narrows what config already allows — it cannot widen past a mode that denies
+        outright. See <a href="/docs/permissions">Permissions</a>.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="secrets" class="doc-section">
+    <h2>4. Inject secrets into the shell</h2>
+    <p>
+      <code>shell.env</code> adds environment variables to every PTY and shell the server creates,
+      so commands can authenticate without the value ever appearing in a transcript.
+    </p>
+    <DocCode language="ts" title=".nikcli/plugins/shell-env.ts">{`import type { Plugin } from "@nikcli-ai/plugin"
+
+export const ShellEnv: Plugin = async () => ({
+  async "shell.env"(input, output) {
+    output.env.NPM_TOKEN = process.env.CI_NPM_TOKEN ?? ""
+    output.env.DATABASE_URL = \`postgres://localhost/app_dev\`
+
+    // only inside the infra checkout
+    if (input.cwd.includes("/infra")) {
+      output.env.AWS_PROFILE = "staging"
+    }
+  },
+})`}</DocCode>
+    <p>
+      Values are merged over the caller's environment, then terminal invariants such as
+      <code>TERM</code> and <code>NIKCLI_TERMINAL</code> are re-applied, so you cannot break the
+      terminal by accident.
+    </p>
+  </section>
+
+  <section id="params" class="doc-section">
+    <h2>5. Tune model parameters</h2>
+    <p>
+      <code>chat.params</code> runs before every model call and knows which agent is running, so
+      sampling can differ per role.
+    </p>
+    <DocCode language="ts" title=".nikcli/plugins/sampling.ts">{`import type { Plugin } from "@nikcli-ai/plugin"
+
+export const Sampling: Plugin = async () => ({
+  async "chat.params"(input, output) {
+    // deterministic for review work, looser for brainstorming
+    if (input.agent === "review") {
+      output.temperature = 0
+      output.topP = 1
+      return
+    }
+    if (input.agent === "plan") output.temperature = 0.7
+
+    // provider-specific knobs go in options
+    if (input.provider.info.id === "anthropic") {
+      output.options.max_tokens = 8192
+    }
+  },
+})`}</DocCode>
+  </section>
+
+  <section id="redact" class="doc-section">
+    <h2>6. Redact outbound requests</h2>
+    <p>
+      <code>chat.request</code> is the last hook before the HTTP request leaves the process. It sees
+      the serialized <code>url</code>, <code>headers</code> and <code>body</code> — which makes it
+      the right place for a redaction pass, and the wrong place for anything slow.
+    </p>
+    <DocCode language="ts" title=".nikcli/plugins/redact.ts">{`import type { Plugin } from "@nikcli-ai/plugin"
+
+const PATTERNS: Array<[RegExp, string]> = [
+  [/sk-[A-Za-z0-9]{20,}/g, "[redacted-api-key]"],
+  [/-----BEGIN [A-Z ]*PRIVATE KEY-----[\\s\\S]*?-----END [A-Z ]*PRIVATE KEY-----/g, "[redacted-key]"],
+]
+
+export const Redact: Plugin = async () => ({
+  async "chat.request"(_input, output) {
+    if (!output.body) return
+    let body = output.body
+    for (const [pattern, replacement] of PATTERNS) body = body.replace(pattern, replacement)
+    output.body = body
+  },
+})`}</DocCode>
+    <DocCallout type="warn" title="Redaction here is a net, not a wall">
+      <p>
+        It catches what its patterns match on the way out. Keep secrets out of the context in the
+        first place — this is the last line, not the only one.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="system" class="doc-section">
+    <h2>7. Append project rules</h2>
+    <p>
+      <code>experimental.chat.system.transform</code> receives the system prompt as an array of
+      blocks. Pushing onto it adds house rules to every turn without editing a prompt file.
+    </p>
+    <DocCode language="ts" title=".nikcli/plugins/house-rules.ts">{`import type { Plugin } from "@nikcli-ai/plugin"
+import { readFile } from "node:fs/promises"
+import path from "node:path"
+
+export const HouseRules: Plugin = async ({ directory }) => {
+  const rules = await readFile(path.join(directory, "RULES.md"), "utf8").catch(() => "")
+
+  return {
+    async "experimental.chat.system.transform"(_input, output) {
+      if (rules) output.system.push(rules)
+    },
+  }
+}`}</DocCode>
+    <p>
+      Reading the file once at load rather than per turn matters: this hook is on the hot path of
+      every model call.
+    </p>
+  </section>
+
+  <section id="notify" class="doc-section">
+    <h2>8. Notify on session idle</h2>
+    <p>
+      The <code>event</code> hook sees every server event. <code>session.idle</code> is the one that
+      means a turn finished — useful when a long task is running in another window.
+    </p>
+    <DocCode language="ts" title=".nikcli/plugins/slack-notify.ts">{`import type { Plugin } from "@nikcli-ai/plugin"
+
+type Options = { webhook?: string }
+
+export const SlackNotify: Plugin = async ({ client }, options) => {
+  const webhook = (options as Options | undefined)?.webhook ?? process.env.SLACK_WEBHOOK
+  if (!webhook) return {}
+
+  return {
+    async event({ event }) {
+      if (event.type !== "session.idle") return
+
+      const { data: session } = await client.session.get({
+        sessionID: event.properties.sessionID,
+      })
+
+      await fetch(webhook, {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ text: \`nikcli finished: \${session?.title ?? "session"}\` }),
+      })
+    },
+  }
+}`}</DocCode>
+    <p>
+      Every event type is listed in the <code>Event</code> union the SDK exports — among them
+      <code>session.error</code>, <code>permission.asked</code>, <code>question.asked</code>,
+      <code>file.edited</code> and <code>todo.updated</code>.
+    </p>
+    <DocCallout type="note" title="nikcli already ships notifications">
+      <p>
+        Before writing this one, check <a href="/docs/plugins#notifications">the built-in notify
+        plugin</a> — it covers macOS, Slack and Discord with rate limiting and a circuit breaker.
+      </p>
+    </DocCallout>
+  </section>
+
+  <DocRelated
+    links={[
+      { title: "Writing a plugin", href: "/docs/guides/plugins", description: "The guide these recipes assume you have read." },
+      { title: "Permissions", href: "/docs/permissions", description: "What permission.ask composes with." },
+      { title: "Tools", href: "/docs/tools", description: "The built-in tools, and how gating decides what the model sees." },
+      { title: "API Reference", href: "/docs/api", description: "Everything the plugin's client can call." },
+    ]}
+  />
+</DocsLayout>

@@ -1,0 +1,65 @@
+---
+/**
+ * Connection settings for the "Try it" panels on this page.
+ *
+ * The docs are static, so every request is made from the reader's own browser
+ * to their own nikcli server. That works because the server's CORS allowlist
+ * already includes `*.nikcli.store` and permits exactly the headers used here
+ * (`Authorization`, `Content-Type`, `x-nikcli-directory`, `x-nikcli-workspace`)
+ * — see `server-router.ts`. Nothing is proxied through this site, and no value
+ * entered below ever leaves the browser.
+ */
+---
+
+<section class="api-pg not-prose" data-api-playground>
+  <header class="api-pg-head">
+    <div>
+      <div class="api-pg-title">Playground</div>
+      <p class="api-pg-sub">
+        Send these requests to your own running server. Values stay in this browser.
+      </p>
+    </div>
+    <div class="api-pg-state" data-pg-state="idle">
+      <span class="api-pg-dot" aria-hidden="true"></span>
+      <span data-pg-state-label>Not connected</span>
+    </div>
+  </header>
+
+  <div class="api-pg-grid">
+    <label class="api-pg-field">
+      <span>Base URL</span>
+      <input type="url" data-pg-input="baseUrl" placeholder="http://127.0.0.1:4096" spellcheck="false" />
+    </label>
+    <label class="api-pg-field">
+      <span>Directory <em>optional</em></span>
+      <input type="text" data-pg-input="directory" placeholder="/Users/me/project" spellcheck="false" />
+    </label>
+    <label class="api-pg-field">
+      <span>Bearer token <em>optional</em></span>
+      <input type="password" data-pg-input="token" placeholder="paste to send Authorization" spellcheck="false" autocomplete="off" />
+    </label>
+    <div class="api-pg-actions">
+      <button type="button" class="api-btn api-btn-primary" data-pg-connect>Check connection</button>
+      <button type="button" class="api-btn" data-pg-clear>Clear</button>
+    </div>
+  </div>
+
+  <p class="api-pg-hint" data-pg-hint hidden></p>
+
+  <details class="api-details api-pg-details">
+    <summary>How this works</summary>
+    <div class="api-details-body">
+      <p class="api-pg-sub">
+        Start a server with <code>nikcli serve --hostname 127.0.0.1 --port 4096</code>. Requests go
+        straight from this page to that address — the browser allows it because loopback counts as a
+        secure origin, and the server allows it because <code>nikcli.store</code> is in its CORS
+        allowlist.
+      </p>
+      <p class="api-pg-sub">
+        To try things without touching your real sessions or config, start the server with
+        <code>NIKCLI_TEST_HOME</code> pointed at a throwaway directory — see
+        <a href="/docs/guides/api-tour">the guided tour</a>.
+      </p>
+    </div>
+  </details>
+</section>

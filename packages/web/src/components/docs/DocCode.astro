@@ -1,4 +1,14 @@
 ---
+/**
+ * A code block with window chrome, a language badge, line numbers and copy.
+ *
+ * Highlighting runs at build time through Astro's bundled Shiki, in dual-theme
+ * mode: each token carries a `--shiki-light` and `--shiki-dark` custom property
+ * and the stylesheet picks one, so a theme switch needs no re-render and no
+ * client-side highlighter ships to the browser.
+ */
+import { Code } from "astro:components";
+
 interface Props {
   language?: string;
   title?: string;
@@ -48,6 +58,35 @@ const rawCode = Astro.slots.has("default") ? await Astro.slots.render("default")
 const code = normalizeCodeBlock(rawCode);
 const lineCount = code.split("\n").length;
 const isShell = language === "bash" || language === "sh" || language === "shell" || language === "zsh";
+
+/**
+ * Shiki throws on a language it does not know, which would fail the build for a
+ * typo in one page. Anything unmapped falls back to plain text.
+ */
+const SHIKI_LANGS: Record<string, string> = {
+  bash: "bash",
+  sh: "bash",
+  shell: "bash",
+  zsh: "bash",
+  ts: "ts",
+  typescript: "ts",
+  tsx: "tsx",
+  js: "js",
+  javascript: "js",
+  json: "json",
+  jsonc: "jsonc",
+  yaml: "yaml",
+  yml: "yaml",
+  html: "html",
+  css: "css",
+  astro: "astro",
+  powershell: "powershell",
+  toml: "toml",
+  diff: "diff",
+  md: "markdown",
+  markdown: "markdown",
+};
+const shikiLang = SHIKI_LANGS[(language ?? "").toLowerCase()] ?? "text";
 ---
 
 <div class="doc-code-block group relative my-7 overflow-hidden rounded-[var(--radius-card)] border border-terminal-window-border bg-terminal-window-bg shadow-soft not-prose transition-[border-color,box-shadow] duration-200 ease-out hover:border-terminal-border hover:shadow-strong">
@@ -117,7 +156,9 @@ const isShell = language === "bash" || language === "sh" || language === "shell"
     )}
 
     <!-- Code content — no radius, no border, flush background -->
-    <pre class="code-pre flex-1 overflow-x-auto p-5 text-[13px] leading-[1.75] text-terminal-window-text md:text-[13.5px]"><code class="doc-code-content block min-w-fit whitespace-pre font-mono">{code}</code></pre>
+    <div class="doc-code-content flex-1 overflow-x-auto p-5 text-[13px] leading-[1.75] md:text-[13.5px]">
+      <Code code={code} lang={shikiLang} themes={{ light: "github-light", dark: "github-dark" }} defaultColor={false} />
+    </div>
   </div>
 
   <!-- Shell prompt indicator strip -->
@@ -129,24 +170,52 @@ const isShell = language === "bash" || language === "sh" || language === "shell"
   )}
 </div>
 
-<style>
-  /* Strip all inherited prose/global styles from pre and code inside doc blocks */
-  .doc-code-block .code-pre {
+<style is:global>
+  /* Strip all inherited prose/global styles, and Shiki's own <pre> chrome, so
+     the block keeps this component's window frame instead of two frames. */
+  .doc-code-block .doc-code-content pre,
+  .doc-code-block .doc-code-content pre.astro-code {
     border: none !important;
     border-radius: 0 !important;
     background: transparent !important;
+    background-color: transparent !important;
     margin: 0 !important;
+    padding: 0 !important;
     box-shadow: none !important;
+    overflow: visible !important;
+    font-size: inherit !important;
+    line-height: inherit !important;
   }
 
-  .doc-code-block .code-pre code,
-  .doc-code-block .doc-code-content {
+  .doc-code-block .doc-code-content code {
+    display: block;
+    min-width: fit-content;
+    white-space: pre;
     border: none !important;
     border-radius: 0 !important;
     background: transparent !important;
     padding: 0 !important;
+    font-family: "JetBrains Mono", ui-monospace, monospace;
     font-size: inherit !important;
-    color: inherit !important;
+  }
+
+  /* Dual-theme tokens: Shiki emits both colours as custom properties and the
+     active theme picks one. No highlighter runs in the browser. */
+  .doc-code-block .doc-code-content code,
+  .doc-code-block .doc-code-content code span {
+    color: var(--shiki-light);
+  }
+
+  [data-theme="dark"] .doc-code-block .doc-code-content code,
+  [data-theme="dark"] .doc-code-block .doc-code-content code span {
+    color: var(--shiki-dark);
+  }
+
+  /* Shiki already terminates each line with a newline character, and the block
+     is `white-space: pre`. Making `.line` a block as well renders every line
+     twice its height, which silently desynchronises the line-number column. */
+  .doc-code-block .doc-code-content .line {
+    display: inline;
   }
 </style>
 
@@ -162,7 +231,7 @@ const isShell = language === "bash" || language === "sh" || language === "shell"
       const iconCopy = newBtn.querySelector(".icon-copy") as HTMLElement | null;
       const iconOk   = newBtn.querySelector(".icon-ok") as HTMLElement | null;
       const lbl      = newBtn.querySelector(".copy-label") as HTMLElement | null;
-      const codeEl   = block.querySelector<HTMLElement>(".doc-code-content");
+      const codeEl   = block.querySelector<HTMLElement>(".doc-code-content code") ?? block.querySelector<HTMLElement>(".doc-code-content");
 
       newBtn.addEventListener("click", async () => {
         const text = codeEl?.textContent?.trim() ?? "";

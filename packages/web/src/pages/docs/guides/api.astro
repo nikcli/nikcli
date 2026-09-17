@@ -1,0 +1,311 @@
+---
+export const prerender = true;
+
+import DocsLayout from "../../../layouts/DocsLayout.astro";
+import DocCallout from "../../../components/docs/DocCallout.astro";
+import DocCode from "../../../components/docs/DocCode.astro";
+import DocRelated from "../../../components/docs/DocRelated.astro";
+
+const toc = [
+  { title: "Start a server", href: "#start", depth: 2 },
+  { title: "Your first request", href: "#first", depth: 2 },
+  { title: "Authenticate", href: "#auth", depth: 2 },
+  { title: "Pick the project", href: "#directory", depth: 2 },
+  { title: "Create a session and prompt it", href: "#prompt", depth: 2 },
+  { title: "Read what changed", href: "#diff", depth: 2 },
+  { title: "Read and write files", href: "#files", depth: 2 },
+  { title: "Search the project", href: "#search", depth: 2 },
+  { title: "Run a shell command", href: "#shell", depth: 2 },
+  { title: "Answer a permission request", href: "#permissions", depth: 2 },
+  { title: "A complete script", href: "#script", depth: 2 },
+  { title: "Where to go next", href: "#next", depth: 2 },
+];
+---
+
+<DocsLayout
+  title="Using the API"
+  subtitle="Start a server and drive it — with curl and the typed client side by side, one task at a time."
+  description="Quickstart guide for the nikcli HTTP API: starting a server, authenticating, selecting a project, creating sessions, prompting, reading diffs, files, search, shell commands and permissions."
+  toc={toc}
+>
+  <section id="start" class="doc-section">
+    <h2>Start a server</h2>
+    <p>
+      There is no hosted API. nikcli runs on your machine and the API is how everything else talks
+      to it — the web app, the desktop app and the mobile app are all clients of these endpoints.
+    </p>
+    <DocCode language="bash">
+nikcli serve --hostname 127.0.0.1 --port 4096
+    </DocCode>
+    <DocCallout type="warn" title="Read the port it prints">
+      <p>
+        If <code>4096</code> is taken the server falls back to an ephemeral port rather than
+        failing. Take the URL from the output instead of hardcoding it.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="first" class="doc-section">
+    <h2>Your first request</h2>
+    <p>Health is instance-less, so it answers before anything else is configured.</p>
+    <DocCode language="bash">
+curl -s http://127.0.0.1:4096/global/health
+    </DocCode>
+    <p>Then install the client, which is generated from the same contract this guide describes.</p>
+    <DocCode language="bash">
+npm install @nikcli-ai/sdk
+    </DocCode>
+    <DocCode language="ts">{`import { createNikcliClient } from "@nikcli-ai/sdk/httpapi"
+
+const client = createNikcliClient({
+  baseUrl: "http://127.0.0.1:4096",
+  directory: process.cwd(),
+})
+
+const { data } = await client.global.health()
+console.log(data)`}</DocCode>
+    <DocCallout type="info" title="Calls resolve with { data, error }">
+      <p>
+        They do not reject by default. Guard on <code>data</code> — not on <code>error</code>,
+        which is typed <code>unknown</code> and so does not narrow. Full explanation in
+        <a href="/docs/build/client#results">the result envelope</a>.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="auth" class="doc-section">
+    <h2>Authenticate</h2>
+    <p>
+      On loopback with no password set, nothing is required. Once the server is reachable from
+      elsewhere, it is.
+    </p>
+    <DocCode language="bash">
+NIKCLI_SERVER_PASSWORD=secret nikcli serve --hostname 0.0.0.0 --port 4096
+
+curl -s -u nikcli:secret http://127.0.0.1:4096/session
+curl -s -H "Authorization: Bearer $NIKCLI_TOKEN" http://127.0.0.1:4096/session
+
+# for clients that cannot set headers, such as EventSource
+curl -s "http://127.0.0.1:4096/session?token=$NIKCLI_TOKEN"
+    </DocCode>
+    <DocCode language="ts">{`const client = createNikcliClient({
+  baseUrl: "http://127.0.0.1:4096",
+  headers: { Authorization: \`Bearer \${process.env.NIKCLI_TOKEN}\` },
+})`}</DocCode>
+  </section>
+
+  <section id="directory" class="doc-section">
+    <h2>Pick the project</h2>
+    <p>
+      One server hosts many projects, so most endpoints need to know which. Pass
+      <code>directory</code> as a query parameter or as the <code>x-nikcli-directory</code> header —
+      the client sets the header for you from its own <code>directory</code> option.
+    </p>
+    <DocCode language="bash">
+curl -s "http://127.0.0.1:4096/project/current?directory=$PWD"
+curl -s http://127.0.0.1:4096/project/current -H "x-nikcli-directory: $PWD"
+    </DocCode>
+    <DocCode language="ts">{`// the client default
+await client.project.current()
+
+// override for one call
+await client.session.list({ directory: "/Users/me/other-project" })`}</DocCode>
+  </section>
+
+  <section id="prompt" class="doc-section">
+    <h2>Create a session and prompt it</h2>
+    <p>
+      A session holds the conversation and the changes made in it. Create one, then send prompts to
+      its id.
+    </p>
+    <DocCode language="bash" title="curl">{`SESSION=$(curl -s -X POST "http://127.0.0.1:4096/session?directory=$PWD" \\
+  -H 'content-type: application/json' \\
+  -d '{"title":"triage"}' | jq -r .id)
+
+curl -s -X POST "http://127.0.0.1:4096/session/$SESSION/message?directory=$PWD" \\
+  -H 'content-type: application/json' \\
+  -d '{"parts":[{"type":"text","text":"Which tests are failing, and why?"}]}'
+    `}</DocCode>
+    <DocCode language="ts" title="SDK">{`const { data: session } = await client.session.create({ title: "triage" })
+
+const { data: reply } = await client.session.prompt({
+  sessionID: session!.id,
+  parts: [{ type: "text", text: "Which tests are failing, and why?" }],
+})
+
+for (const part of reply!.parts) {
+  if (part.type === "text") console.log(part.text)
+}`}</DocCode>
+    <p>
+      <code>session.prompt</code> waits for the whole turn. To get output as it is produced, use
+      <code>promptAsync</code> and the event feed — see
+      <a href="/docs/guides/streaming">Streaming a response</a>.
+    </p>
+    <DocCallout type="note" title="parts, not a string">
+      <p>
+        A prompt is an array of parts, so one message can mix text with file attachments, an agent
+        reference or a subtask. <code>{'{ type: "text", text }'}</code> is the common case.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="diff" class="doc-section">
+    <h2>Read what changed</h2>
+    <p>
+      Sessions edit files. Ask the session what it changed rather than diffing the working tree
+      yourself — this scopes the answer to that session's work.
+    </p>
+    <DocCode language="bash">
+curl -s "http://127.0.0.1:4096/session/$SESSION/diff?directory=$PWD"
+curl -s "http://127.0.0.1:4096/session/$SESSION/message?directory=$PWD"
+    </DocCode>
+    <DocCode language="ts">{`const { data: diff } = await client.session.diff({ sessionID: session!.id })
+const { data: messages } = await client.session.messages({ sessionID: session!.id, limit: 20 })`}</DocCode>
+  </section>
+
+  <section id="files" class="doc-section">
+    <h2>Read and write files</h2>
+    <p>
+      File access goes through the instance, so paths are resolved inside the selected project
+      rather than against the server's own working directory.
+    </p>
+    <DocCode language="bash">{`curl -s "http://127.0.0.1:4096/file/content?path=src/index.ts&directory=$PWD"
+
+curl -s -X PUT "http://127.0.0.1:4096/file/content?directory=$PWD" \\
+  -H 'content-type: application/json' \\
+  -d '{"path":"NOTES.md","content":"# Notes\\n"}'
+
+curl -s "http://127.0.0.1:4096/file/status?directory=$PWD"
+    `}</DocCode>
+    <DocCode language="ts">{`const { data: file } = await client.file.read({ path: "src/index.ts" })
+await client.file.write({ path: "NOTES.md", content: "# Notes\\n" })
+const { data: status } = await client.file.status()`}</DocCode>
+  </section>
+
+  <section id="search" class="doc-section">
+    <h2>Search the project</h2>
+    <p>Three searches, matching what the agent's own tools use: text, filenames and symbols.</p>
+    <DocCode language="bash">
+curl -s "http://127.0.0.1:4096/find?pattern=TODO&directory=$PWD"
+curl -s "http://127.0.0.1:4096/find/file?query=router&directory=$PWD"
+curl -s "http://127.0.0.1:4096/find/symbol?query=createNikcliClient&directory=$PWD"
+    </DocCode>
+    <DocCode language="ts">{`const { data: matches } = await client.find.text({ pattern: "TODO" })
+const { data: files } = await client.find.files({ query: "router" })
+const { data: symbols } = await client.find.symbols({ query: "createNikcliClient" })`}</DocCode>
+  </section>
+
+  <section id="shell" class="doc-section">
+    <h2>Run a shell command</h2>
+    <p>
+      Running a command <em>inside</em> a session records it in the transcript, so the agent sees
+      the result on the next turn. That is usually what you want over shelling out yourself.
+    </p>
+    <DocCode language="ts">{`const { data: result } = await client.session.shell({
+  sessionID: session!.id,
+  agent: "build",
+  command: "bun test",
+})`}</DocCode>
+    <DocCallout type="warn" title="agent is required here">
+      <p>
+        <code>session.shell</code> takes an <code>agent</code>, because the command runs under that
+        agent's permissions rather than unconditionally.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="permissions" class="doc-section">
+    <h2>Answer a permission request</h2>
+    <p>
+      If the agent asks for approval and nothing answers, the turn waits. An automated client has to
+      decide — which is exactly why the endpoints exist.
+    </p>
+    <DocCode language="ts">{`const { data: pending } = await client.permission.list()
+
+for (const request of pending ?? []) {
+  await client.permission.reply({
+    requestID: request.id,
+    reply: "once", // "once" | "always" | "reject"
+  })
+}`}</DocCode>
+    <p>
+      Watching <code>permission.asked</code> on the event feed is the reactive version of the same
+      thing, and is how the TUI and the mobile app do it.
+    </p>
+  </section>
+
+  <section id="script" class="doc-section">
+    <h2>A complete script</h2>
+    <p>
+      Putting it together: open a session, ask it to do something, approve whatever it asks for, and
+      print the resulting diff.
+    </p>
+    <DocCode language="ts" title="review.ts">{`import { createNikcliClient } from "@nikcli-ai/sdk/httpapi"
+
+const client = createNikcliClient({
+  baseUrl: process.env.NIKCLI_URL ?? "http://127.0.0.1:4096",
+  directory: process.cwd(),
+  headers: process.env.NIKCLI_TOKEN
+    ? { Authorization: \`Bearer \${process.env.NIKCLI_TOKEN}\` }
+    : undefined,
+})
+
+const { data: session, error } = await client.session.create({ title: "automated review" })
+if (!session) throw error
+
+// approve anything this session asks for while it works
+const approve = setInterval(async () => {
+  const { data: pending } = await client.permission.list()
+  for (const request of pending ?? []) {
+    await client.permission.reply({ requestID: request.id, reply: "once" })
+  }
+}, 1000)
+
+try {
+  const { data: reply } = await client.session.prompt({
+    sessionID: session.id,
+    parts: [{ type: "text", text: "Review the staged changes and fix anything obviously broken." }],
+  })
+
+  for (const part of reply?.parts ?? []) {
+    if (part.type === "text") console.log(part.text)
+  }
+
+  const { data: diff } = await client.session.diff({ sessionID: session.id })
+  console.log(diff)
+} finally {
+  clearInterval(approve)
+}`}</DocCode>
+    <DocCallout type="warn" title="Approving everything is a choice, not a default">
+      <p>
+        The loop above says yes to every request. That is reasonable in a sandbox or a throwaway CI
+        container, and not reasonable on a machine that holds credentials. Filter on
+        <code>request.permission</code> if the script runs anywhere real.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="next" class="doc-section">
+    <h2>Where to go next</h2>
+    <table class="doc-table">
+      <thead><tr><th>You want</th><th>Go to</th></tr></thead>
+      <tbody>
+        <tr><td>To see what these actually return</td><td><a href="/docs/guides/api-tour">A guided tour with real responses</a></td></tr>
+        <tr><td>Output as it is produced</td><td><a href="/docs/guides/streaming">Streaming a response</a></td></tr>
+        <tr><td>The exact shape of a request or response</td><td><a href="/docs/api">API Reference</a></td></tr>
+        <tr><td>Client options, errors and method naming</td><td><a href="/docs/build/client">Client</a></td></tr>
+        <tr><td>To run nikcli in your own process</td><td><a href="/docs/build/sdk">Embedded SDK</a></td></tr>
+        <tr><td>A client in another language</td><td><a href="/docs/api/openapi.json">The OpenAPI document</a></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <DocRelated
+    links={[
+      { title: "Streaming a response", href: "/docs/guides/streaming", description: "The event feed, and printing tokens as they arrive." },
+      { title: "API Reference", href: "/docs/api", description: "Every endpoint, generated from the server contract." },
+      { title: "Client", href: "/docs/build/client", description: "The typed client in depth." },
+      { title: "Server & API", href: "/docs/server-api", description: "What happens to a request inside the server." },
+    ]}
+  />
+</DocsLayout>

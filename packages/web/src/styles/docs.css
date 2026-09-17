@@ -2,14 +2,15 @@
 
 html {
   scroll-behavior: smooth;
-  /* Below xl the sticky docs "Browse" bar stacks under the navbar, so anchor
-     targets must clear both to avoid landing hidden behind them on mobile. */
-  scroll-padding-top: calc(var(--topbar-height) + var(--docs-mobilebar-height) + 1rem);
+  /* Below xl the sticky docs "Browse" bar stacks under the navbar and the area
+     sub-navbar, so anchor targets must clear all three to avoid landing hidden
+     behind them on mobile. */
+  scroll-padding-top: calc(var(--topbar-height) + var(--docs-subnav-height) + var(--docs-mobilebar-height) + 1rem);
 }
 
 @media (min-width: 1280px) {
   html {
-    scroll-padding-top: calc(var(--topbar-height) + 1.5rem);
+    scroll-padding-top: calc(var(--topbar-height) + var(--docs-subnav-height) + 1.5rem);
   }
 }
 
@@ -106,7 +107,7 @@ html {
 .prose h2,
 .prose h3,
 .prose h4 {
-  scroll-margin-top: calc(var(--topbar-height) + 1.5rem);
+  scroll-margin-top: calc(var(--topbar-height) + var(--docs-subnav-height) + 1.5rem);
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -983,4 +984,47 @@ html {
 
 #visual-tour h3 + p {
   margin: 0 0 0.5rem;
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Docs area sub-navbar
+───────────────────────────────────────────────────────────── */
+
+.docs-subnav-link {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  height: 100%;
+  padding: 0 0.875rem;
+  font-size: 13.5px;
+  font-weight: 500;
+  white-space: nowrap;
+  color: rgb(var(--terminal-muted));
+  text-decoration: none;
+  transition: color 120ms ease-out;
+}
+
+.docs-subnav-link:hover {
+  color: rgb(var(--terminal-text));
+}
+
+.docs-subnav-link[aria-current="page"] {
+  color: rgb(var(--terminal-text));
+  font-weight: 600;
+}
+
+.docs-subnav-link[aria-current="page"]::after {
+  content: "";
+  position: absolute;
+  inset-inline: 0.5rem;
+  bottom: -1px;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: rgb(var(--terminal-accent));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .docs-subnav-link {
+    transition: none;
+  }
 }

@@ -41,6 +41,7 @@
 
   /* Layout */
   --topbar-height: 4rem;
+  --docs-subnav-height: 3rem;
   --docs-mobilebar-height: 3.75rem;
   --page-gutter: clamp(1rem, 2vw + 0.5rem, 1.5rem);
   --section-y: clamp(4.5rem, 7vw, 7rem);

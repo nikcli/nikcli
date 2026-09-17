@@ -1,0 +1,343 @@
+---
+/**
+ * Behaviour for the playground bar and every "Try it" panel on the page.
+ *
+ * One delegated script per page rather than one per operation: a group page can
+ * carry 40 operations, and 40 copies of this would be 40 copies in the HTML.
+ */
+---
+
+<script>
+  type Settings = { baseUrl: string; directory: string; token: string }
+
+  const STORAGE_KEY = "nikcli-docs-playground"
+  const DEFAULT_BASE = "http://127.0.0.1:4096"
+
+  const readSettings = (): Settings => {
+    const empty = { baseUrl: "", directory: "", token: "" }
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY)
+      if (!raw) return empty
+      const parsed = JSON.parse(raw) as Partial<Settings>
+      return {
+        baseUrl: parsed.baseUrl ?? "",
+        directory: parsed.directory ?? "",
+        token: parsed.token ?? "",
+      }
+    } catch {
+      // private windows and blocked storage both throw; the page still works
+      return empty
+    }
+  }
+
+  const writeSettings = (settings: Settings) => {
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(settings))
+    } catch {
+      /* nothing to do; the values stay in the inputs for this page view */
+    }
+  }
+
+  const baseUrlOf = (settings: Settings) => (settings.baseUrl || DEFAULT_BASE).replace(/\/$/, "")
+
+  const shellQuote = (value: string) => `'${value.replace(/'/g, `'\\''`)}'`
+
+  const initPlayground = () => {
+    const root = document.querySelector<HTMLElement>("[data-api-playground]")
+    const panels = Array.from(document.querySelectorAll<HTMLDetailsElement>("[data-api-try]"))
+    if (!root && panels.length === 0) return
+
+    let settings = readSettings()
+
+    /* ---------------------------------------------------------- settings */
+
+    if (root) {
+      const inputs = Array.from(root.querySelectorAll<HTMLInputElement>("[data-pg-input]"))
+      for (const input of inputs) {
+        const key = input.dataset.pgInput as keyof Settings
+        input.value = settings[key] ?? ""
+        input.addEventListener("input", () => {
+          settings = { ...settings, [key]: input.value.trim() }
+          writeSettings(settings)
+        })
+      }
+
+      const state = root.querySelector<HTMLElement>("[data-pg-state]")
+      const stateLabel = root.querySelector<HTMLElement>("[data-pg-state-label]")
+      const hint = root.querySelector<HTMLElement>("[data-pg-hint]")
+
+      const setState = (value: "idle" | "ok" | "error" | "busy", label: string, detail?: string) => {
+        state?.setAttribute("data-pg-state", value)
+        if (stateLabel) stateLabel.textContent = label
+        if (hint) {
+          hint.textContent = detail ?? ""
+          hint.hidden = !detail
+        }
+      }
+
+      root.querySelector("[data-pg-connect]")?.addEventListener("click", async () => {
+        const base = baseUrlOf(settings)
+        setState("busy", "Checking…")
+        try {
+          const response = await fetch(`${base}/global/health`, {
+            headers: settings.token ? { Authorization: `Bearer ${settings.token}` } : undefined,
+          })
+          if (!response.ok) {
+            setState("error", `HTTP ${response.status}`, `${base} answered ${response.status}.`)
+            return
+          }
+          const body = (await response.json()) as { version?: string }
+          setState("ok", "Connected", `${base} — nikcli ${body.version ?? "unknown"}`)
+        } catch {
+          setState(
+            "error",
+            "Unreachable",
+            `Could not reach ${base}. Start one with: nikcli serve --hostname 127.0.0.1 --port 4096`,
+          )
+        }
+      })
+
+      root.querySelector("[data-pg-clear]")?.addEventListener("click", () => {
+        settings = { baseUrl: "", directory: "", token: "" }
+        writeSettings(settings)
+        for (const input of inputs) input.value = ""
+        setState("idle", "Not connected")
+      })
+    }
+
+    /* ------------------------------------------------------- suggestions */
+
+    // One fetch per source per page, shared by every operation that needs it.
+    const suggestionCache = new Map<string, Promise<Array<{ value: string; label?: string }>>>()
+
+    const SOURCES: Record<string, { path: string; value: string; label?: string }> = {
+      session: { path: "/session", value: "id", label: "title" },
+      pty: { path: "/pty", value: "id", label: "title" },
+      provider: { path: "/provider", value: "id", label: "name" },
+      workspace: { path: "/experimental/workspace", value: "id", label: "branch" },
+      project: { path: "/project", value: "worktree", label: "worktree" },
+      agent: { path: "/agent", value: "name", label: "mode" },
+      question: { path: "/question", value: "id", label: "sessionID" },
+      permission: { path: "/permission", value: "id", label: "permission" },
+    }
+
+    const pluck = (row: unknown, key: string) => {
+      if (!row || typeof row !== "object") return undefined
+      const value = (row as Record<string, unknown>)[key]
+      return typeof value === "string" ? value : undefined
+    }
+
+    const fetchSuggestions = (source: string) => {
+      const existing = suggestionCache.get(source)
+      if (existing) return existing
+
+      const spec = SOURCES[source]
+      const promise = (async () => {
+        if (!spec) return []
+        const url = new URL(spec.path, baseUrlOf(settings))
+        if (settings.directory && spec.path !== "/project") {
+          url.searchParams.set("directory", settings.directory)
+        }
+        const response = await fetch(url, {
+          headers: settings.token ? { Authorization: `Bearer ${settings.token}` } : undefined,
+        })
+        if (!response.ok) return []
+        const body = (await response.json()) as unknown
+        const rows = Array.isArray(body)
+          ? body
+          : Array.isArray((body as { loops?: unknown[] })?.loops)
+            ? (body as { loops: unknown[] }).loops
+            : []
+        return rows
+          .map((row) => ({ value: pluck(row, spec.value), label: spec.label ? pluck(row, spec.label) : undefined }))
+          .filter((entry): entry is { value: string; label?: string } => Boolean(entry.value))
+          .slice(0, 50)
+      })().catch(() => [])
+
+      suggestionCache.set(source, promise)
+      return promise
+    }
+
+    const loadSuggestions = async (group: HTMLElement) => {
+      // `directory` is the one field worth filling in for the reader, because
+      // almost every request needs it and it is the same for all of them.
+      for (const input of group.querySelectorAll<HTMLInputElement>('[data-try-param="directory"]')) {
+        if (!input.value && settings.directory) input.value = settings.directory
+      }
+
+      for (const input of group.querySelectorAll<HTMLInputElement>("[data-try-source]")) {
+        const list = input.list
+        if (!list || list.dataset.filled === "true") continue
+        const entries = await fetchSuggestions(input.dataset.trySource!)
+        if (entries.length === 0) continue
+        list.dataset.filled = "true"
+        list.replaceChildren(
+          ...entries.map((entry) => {
+            const option = document.createElement("option")
+            option.value = entry.value
+            if (entry.label && entry.label !== entry.value) option.label = entry.label
+            return option
+          }),
+        )
+        input.placeholder = `${entries.length} available — type or pick`
+      }
+    }
+
+    /* ------------------------------------------------------------ panels */
+
+    const buildRequest = (panel: HTMLDetailsElement) => {
+      const method = (panel.dataset.method ?? "get").toUpperCase()
+      let path = panel.dataset.path ?? "/"
+      const query = new URLSearchParams()
+      const missing: string[] = []
+
+      for (const input of panel.querySelectorAll<HTMLInputElement | HTMLSelectElement>("[data-try-param]")) {
+        const name = input.dataset.tryParam!
+        const value = input.value.trim()
+
+        if (!value) {
+          if (input.dataset.tryRequired === "true") missing.push(name)
+          // an unset `directory` falls back to the shared setting below
+          if (!(name === "directory" && settings.directory)) continue
+        }
+
+        if (input.dataset.tryIn === "path") {
+          path = path.replace(`{${name}}`, encodeURIComponent(value))
+        } else {
+          query.set(name, value || settings.directory)
+        }
+      }
+
+      if (settings.directory && !query.has("directory") && path !== "/global/health") {
+        query.set("directory", settings.directory)
+      }
+
+      const headers: Record<string, string> = {}
+      if (settings.token) headers.Authorization = `Bearer ${settings.token}`
+
+      const bodyField = panel.querySelector<HTMLTextAreaElement>("[data-try-body]")
+      let body: string | undefined
+      if (bodyField && method !== "GET" && method !== "HEAD") {
+        const raw = bodyField.value.trim()
+        if (raw) {
+          body = raw
+          headers["Content-Type"] = panel.dataset.media ?? "application/json"
+        }
+      }
+
+      const url = `${baseUrlOf(settings)}${path}${query.size > 0 ? `?${query}` : ""}`
+      return { method, url, headers, body, missing }
+    }
+
+    const note = (panel: HTMLElement, message: string, tone: "error" | "ok" = "error") => {
+      const element = panel.querySelector<HTMLElement>("[data-try-note]")
+      if (!element) return
+      element.textContent = message
+      element.dataset.tone = tone
+      if (message) window.setTimeout(() => (element.textContent = ""), 4000)
+    }
+
+    for (const panel of panels) {
+      panel.addEventListener("toggle", () => {
+        if (panel.open) void loadSuggestions(panel)
+      })
+
+      panel.querySelector("[data-try-curl]")?.addEventListener("click", async () => {
+        const request = buildRequest(panel)
+        const parts = [`curl -s -X ${request.method} ${shellQuote(request.url)}`]
+        for (const [key, value] of Object.entries(request.headers)) {
+          parts.push(`  -H ${shellQuote(`${key}: ${value}`)}`)
+        }
+        if (request.body) parts.push(`  -d ${shellQuote(request.body)}`)
+        try {
+          await navigator.clipboard.writeText(parts.join(" \\\n"))
+          note(panel, "curl copied", "ok")
+        } catch {
+          note(panel, "clipboard unavailable")
+        }
+      })
+
+      panel.querySelector("[data-try-send]")?.addEventListener("click", async (event) => {
+        const button = event.currentTarget as HTMLButtonElement
+        const request = buildRequest(panel)
+
+        if (request.missing.length > 0) {
+          note(panel, `missing required: ${request.missing.join(", ")}`)
+          return
+        }
+
+        if (panel.dataset.destructive === "true") {
+          const confirmed = window.confirm(
+            `${request.method} ${request.url}\n\nThis changes server state. Send it?`,
+          )
+          if (!confirmed) return
+        }
+
+        const result = panel.querySelector<HTMLElement>("[data-try-result]")
+        const status = panel.querySelector<HTMLElement>("[data-try-status]")
+        const timing = panel.querySelector<HTMLElement>("[data-try-timing]")
+        const target = panel.querySelector<HTMLElement>("[data-try-url]")
+        const output = panel.querySelector<HTMLElement>("[data-try-output]")
+
+        button.disabled = true
+        button.dataset.busy = "true"
+        const started = performance.now()
+
+        try {
+          const response = await fetch(request.url, {
+            method: request.method,
+            headers: request.headers,
+            body: request.body,
+          })
+          const elapsed = Math.round(performance.now() - started)
+          const text = await response.text()
+
+          let pretty = text
+          try {
+            pretty = JSON.stringify(JSON.parse(text), null, 2)
+          } catch {
+            /* not JSON — an SSE frame or the web-app fallback HTML */
+          }
+
+          if (status) {
+            status.textContent = String(response.status)
+            status.className = `api-pill api-pill-status-${String(response.status).charAt(0)}`
+          }
+          if (timing) timing.textContent = `${elapsed} ms`
+          if (target) target.textContent = request.url
+          if (output) {
+            output.textContent =
+              pretty.length > 20000 ? `${pretty.slice(0, 20000)}\n… truncated` : pretty || "(empty body)"
+          }
+          if (result) result.hidden = false
+        } catch (error) {
+          if (status) {
+            status.textContent = "ERR"
+            status.className = "api-pill api-pill-status-5"
+          }
+          if (timing) timing.textContent = `${Math.round(performance.now() - started)} ms`
+          if (target) target.textContent = request.url
+          if (output) {
+            output.textContent = [
+              `Could not reach ${request.url}`,
+              "",
+              "The usual causes:",
+              "  • no server running — nikcli serve --hostname 127.0.0.1 --port 4096",
+              "  • wrong base URL in the playground bar above",
+              "  • the server is not on loopback, so the browser blocked a plain-http request",
+              "",
+              String(error),
+            ].join("\n")
+          }
+          if (result) result.hidden = false
+        } finally {
+          button.disabled = false
+          delete button.dataset.busy
+        }
+      })
+    }
+  }
+
+  initPlayground()
+  document.addEventListener("astro:page-load", initPlayground)
+</script>

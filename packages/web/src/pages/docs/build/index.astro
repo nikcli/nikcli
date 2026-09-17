@@ -1,0 +1,266 @@
+---
+export const prerender = true;
+
+import DocsLayout from "../../../layouts/DocsLayout.astro";
+import DocCallout from "../../../components/docs/DocCallout.astro";
+import DocCode from "../../../components/docs/DocCode.astro";
+import DocCard from "../../../components/docs/DocCard.astro";
+import DocRelated from "../../../components/docs/DocRelated.astro";
+
+const toc = [
+  { title: "Three ways in", href: "#paths", depth: 2 },
+  { title: "Extend — plugins", href: "#extend", depth: 2 },
+  { title: "Connect — the client", href: "#connect", depth: 2 },
+  { title: "Embed — in-process", href: "#embed", depth: 2 },
+  { title: "Which one do I want?", href: "#choosing", depth: 2 },
+  { title: "What people build", href: "#what", depth: 2 },
+  { title: "Source anchors", href: "#source-anchors", depth: 2 },
+];
+---
+
+<DocsLayout
+  title="Build"
+  subtitle="Extend nikcli with plugins, drive it from your own program over HTTP, or embed the whole agent in-process — without forking it."
+  description="How to build on nikcli: server and TUI plugins, the HTTP client SDK, and the embedded in-process host."
+  toc={toc}
+>
+  <section id="paths" class="doc-section">
+    <h2>Three ways in</h2>
+    <p>
+      nikcli is a CLI, a server and a terminal UI that all sit on the same
+      <a href="/docs/server-api">typed HTTP API</a>. That means there is no privileged inside: the
+      TUI reaches the session engine through the same endpoints your code can. Which path you take
+      depends on where your code should run.
+    </p>
+
+    <div class="doc-grid not-prose">
+      <DocCard title="Extend" eyebrow="Plugins" href="/docs/guides/plugins">
+        <p>
+          Your code runs <em>inside</em> nikcli. Add tools, intercept the model call, register a
+          provider, gate permissions, extend the TUI.
+        </p>
+      </DocCard>
+      <DocCard title="Connect" eyebrow="Client SDK" href="/docs/build/client">
+        <p>
+          Your program runs outside and drives a nikcli server over HTTP. Scripts, bots, CI jobs,
+          alternative interfaces.
+        </p>
+      </DocCard>
+      <DocCard title="Embed" eyebrow="In-process" href="/docs/build/sdk">
+        <p>
+          nikcli runs inside <em>your</em> process, with no listener and no socket. For products
+          that ship the agent rather than talk to one.
+        </p>
+      </DocCard>
+    </div>
+
+    <DocCallout type="info" title="Prefer a walkthrough?">
+      <p>
+        <a href="/docs/guides">The guides</a> take each of these paths end to end with working
+        code — <a href="/docs/guides/plugins">Writing a plugin</a>,
+        <a href="/docs/guides/plugin-recipes">Plugin recipes</a>,
+        <a href="/docs/guides/api">Using the API</a> and
+        <a href="/docs/guides/streaming">Streaming a response</a>.
+      </p>
+    </DocCallout>
+
+    <DocCallout type="note" title="None of these need a fork">
+      <p>
+        Every extension point below is a published contract. If you find yourself patching
+        <code>packages/nikcli</code> to do something on this page, that is a gap worth reporting
+        rather than a fork worth maintaining.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="extend" class="doc-section">
+    <h2>Extend — plugins</h2>
+    <p>
+      A plugin is a module nikcli loads at startup. It receives a client bound to the running
+      instance and returns a set of hooks. <code>@nikcli-ai/plugin</code> is the contract package;
+      it carries only types and the <code>tool()</code> helper, so it adds nothing to your runtime.
+    </p>
+    <DocCode language="ts" title="my-plugin.ts">{`import type { Plugin } from "@nikcli-ai/plugin"
+import { tool } from "@nikcli-ai/plugin/tool"
+
+export const MyPlugin: Plugin = async ({ client, directory, $ }) => ({
+  tool: {
+    deploy: tool({
+      description: "Deploy the current branch to staging",
+      args: { branch: tool.schema.string().describe("branch to deploy") },
+      async execute(args, ctx) {
+        ctx.metadata({ title: \`Deploying \${args.branch}\` })
+        const out = await $\`./script/deploy.sh \${args.branch}\`.text()
+        return { title: "Deployed", output: out }
+      },
+    }),
+  },
+
+  async "tool.execute.before"(input, output) {
+    if (input.tool === "bash") output.args.timeout = 120_000
+  },
+})`}</DocCode>
+    <p>
+      The hook surface is the interesting part. Beyond <code>tool</code>, a plugin can observe every
+      server <code>event</code>, rewrite the parameters and headers of the model call
+      (<code>chat.params</code>, <code>chat.headers</code>, <code>chat.request</code>), decide
+      permissions (<code>permission.ask</code>), shape the shell environment
+      (<code>shell.env</code>, <code>shell.create.before</code>), register an
+      <code>auth</code> method or a whole <code>provider</code>, and transform the messages and
+      system prompt before they reach the model.
+    </p>
+    <DocCallout type="warn" title="A shell hook cannot smuggle past approval">
+      <p>
+        <code>shell.create.before</code> runs before the permission check, and the check is
+        performed against the <em>final</em> values the hook wrote. Rewriting a command does not
+        inherit the approval granted for the original one.
+      </p>
+    </DocCallout>
+    <p>
+      TUI feature plugins are a separate runtime with its own contract
+      (<code>@nikcli-ai/plugin/tui</code>): they add routes, sidebar panels, dialogs and keybinds to
+      the terminal UI, and local ones hot-reload in place while it runs. See
+      <a href="/docs/tui-plugins">TUI Feature Plugins</a>.
+    </p>
+  </section>
+
+  <section id="connect" class="doc-section">
+    <h2>Connect — the client</h2>
+    <p>
+      <code>@nikcli-ai/sdk</code> is a typed client generated from the same OpenAPI document as the
+      <a href="/docs/api">API reference</a>, so every endpoint is a method and contract drift fails
+      generation rather than surfacing as a runtime 404.
+    </p>
+    <DocCode language="bash">
+npm install @nikcli-ai/sdk
+    </DocCode>
+    <DocCode language="ts">{`import { createNikcliClient } from "@nikcli-ai/sdk/httpapi"
+
+const client = createNikcliClient({
+  baseUrl: "http://127.0.0.1:4096",
+  directory: "/Users/me/project",
+})
+
+const { data: session } = await client.session.create({ title: "release notes" })
+await client.session.prompt({
+  sessionID: session!.id,
+  parts: [{ type: "text", text: "Summarise what changed since v1.2.0" }],
+})`}</DocCode>
+    <p>
+      Full walkthrough — auth, the result envelope, instance selection, streaming and errors — in
+      <a href="/docs/build/client">Client</a>.
+    </p>
+  </section>
+
+  <section id="embed" class="doc-section">
+    <h2>Embed — in-process</h2>
+    <p>
+      The embedded host runs the server's request handler in memory. It opens no listener and does
+      no network I/O, while keeping the same routing, middleware, handlers, codecs and errors as the
+      network client — so code written against the client works unchanged against the embedded host.
+    </p>
+    <DocCode language="ts">{`import { NikCli } from "@nikcli-ai/sdk-next"
+import { Effect } from "effect"
+
+const program = Effect.gen(function* () {
+  const nikcli = yield* NikCli.create({ directory: process.cwd() })
+  return yield* Effect.promise(() => nikcli.session.list())
+})`}</DocCode>
+    <p>
+      It also lets you register tools directly, which the HTTP path cannot do — a tool is executable
+      code and does not travel over a wire. See <a href="/docs/build/sdk">Embedded SDK</a>.
+    </p>
+  </section>
+
+  <section id="choosing" class="doc-section">
+    <h2>Which one do I want?</h2>
+    <table class="doc-table">
+      <thead>
+        <tr><th>If you want to…</th><th>Path</th><th>Package</th></tr>
+      </thead>
+      <tbody>
+        <tr><td>Give the agent a new tool</td><td>Plugin</td><td><code>@nikcli-ai/plugin</code></td></tr>
+        <tr><td>Change how the model is called</td><td>Plugin</td><td><code>@nikcli-ai/plugin</code></td></tr>
+        <tr><td>Add a panel or route to the TUI</td><td>TUI plugin</td><td><code>@nikcli-ai/plugin/tui</code></td></tr>
+        <tr><td>Script nikcli from CI or a bot</td><td>Client</td><td><code>@nikcli-ai/sdk</code></td></tr>
+        <tr><td>Build a different interface on top</td><td>Client</td><td><code>@nikcli-ai/sdk</code></td></tr>
+        <tr><td>Ship the agent inside your own app</td><td>Embedded</td><td><code>@nikcli-ai/sdk-next</code></td></tr>
+        <tr><td>Generate a client for another language</td><td>OpenAPI</td><td><a href="/docs/api/openapi.json">the document</a></td></tr>
+      </tbody>
+    </table>
+    <DocCallout type="info" title="Plugins and the client are not exclusive">
+      <p>
+        A plugin is handed a <code>client</code> bound to the instance it is running in — the same
+        <code>NikcliClient</code> the Connect path uses. Reaching for the API from inside a plugin is
+        the normal thing to do, not a workaround.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="what" class="doc-section">
+    <h2>What people build</h2>
+    <div class="doc-grid not-prose">
+      <DocCard title="Domain tools" eyebrow="Plugin">
+        <p>
+          Wrap a deploy script, a migration runner or an internal API so the agent can call it with
+          arguments it cannot get wrong.
+        </p>
+      </DocCard>
+      <DocCard title="Policy" eyebrow="Plugin">
+        <p>
+          Auto-deny a permission class, force a timeout, inject credentials into the shell
+          environment, or strip secrets before a request leaves the process.
+        </p>
+      </DocCard>
+      <DocCard title="Custom providers" eyebrow="Plugin">
+        <p>
+          Register a model provider with its own auth flow and model list — including an internal
+          gateway that is not in the public catalogue.
+        </p>
+      </DocCard>
+      <DocCard title="Automation" eyebrow="Client">
+        <p>
+          Open a session from a webhook, prompt it, wait on the event feed, and post the diff back
+          to a pull request.
+        </p>
+      </DocCard>
+      <DocCard title="Alternative interfaces" eyebrow="Client">
+        <p>
+          The web app, the desktop app and the mobile app are all just clients of these endpoints.
+          Yours can be too.
+        </p>
+      </DocCard>
+      <DocCard title="Embedded agents" eyebrow="Embedded">
+        <p>
+          A product that runs sessions on its own, with your tools registered and no server for a
+          user to start.
+        </p>
+      </DocCard>
+    </div>
+  </section>
+
+  <section id="source-anchors" class="doc-section">
+    <h2>Source anchors</h2>
+    <table class="doc-table">
+      <thead><tr><th>Need</th><th>Where</th></tr></thead>
+      <tbody>
+        <tr><td>Plugin types, hooks, <code>tool()</code></td><td><code>packages/plugin/src/index.ts</code>, <code>src/tool.ts</code></td></tr>
+        <tr><td>TUI plugin contract</td><td><code>packages/plugin/src/tui.ts</code>, <code>src/v2/</code></td></tr>
+        <tr><td>Plugin loading and hook dispatch</td><td><code>packages/nikcli/src/plugin/index.ts</code></td></tr>
+        <tr><td>Generated HTTP client</td><td><code>packages/sdk/js/src/httpapi/</code></td></tr>
+        <tr><td>Client generation</td><td><code>packages/nikcli/script/generate-httpapi-clients.ts</code></td></tr>
+        <tr><td>Embedded host</td><td><code>packages/sdk-next/src/nikcli.ts</code></td></tr>
+        <tr><td>Tool registry</td><td><code>packages/nikcli/src/tool/registry.ts</code></td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <DocRelated
+    links={[
+      { title: "Plugins & Skills", href: "/docs/plugins", description: "Installing, configuring and writing server plugins." },
+      { title: "TUI Feature Plugins", href: "/docs/tui-plugins", description: "The terminal UI plugin runtime, route by route." },
+      { title: "API Reference", href: "/docs/api", description: "Every endpoint the client wraps." },
+      { title: "Tools", href: "/docs/tools", description: "The built-in tools your own sit beside." },
+    ]}
+  />
+</DocsLayout>

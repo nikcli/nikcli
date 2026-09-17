@@ -1,0 +1,282 @@
+---
+/**
+ * One operation from the OpenAPI document: method, path, parameters, request
+ * body, responses, the generated SDK sample, and a playground panel that sends
+ * the request to the reader's own server.
+ *
+ * Schemas render as TypeScript-shaped blocks rather than raw JSON Schema —
+ * every consumer of this API reaches it through a typed client, so the shape
+ * they will actually write against is the more useful form.
+ */
+import { primaryContent, renderSchemaHtml, sampleJson, type Operation } from "../../lib/openapi";
+import { Code } from "astro:components";
+import DocCode from "./DocCode.astro";
+import { apiExamples } from "../../data/apiExamples";
+
+interface Props {
+  entry: Operation;
+  /** Schema names documented on the same page, so `$ref`s can link. */
+  linkable: Set<string>;
+}
+
+const { entry, linkable } = Astro.props;
+const { method, path, operation, id } = entry;
+
+const parameters = (operation.parameters ?? []).filter((parameter) => parameter.in !== "header");
+const pathParams = parameters.filter((parameter) => parameter.in === "path");
+const queryParams = parameters.filter((parameter) => parameter.in === "query");
+const shownParams = [...pathParams, ...queryParams];
+const requestBody = primaryContent(operation.requestBody?.content);
+const responses = Object.entries(operation.responses ?? {});
+const sample = operation["x-codeSamples"]?.[0];
+
+/** `{placeholder}` segments are tinted so the variable parts read at a glance. */
+const pathParts = path.split(/(\{[^}]+\})/).filter(Boolean);
+
+const statusClass = (status: string) => `api-pill api-pill-status-${status.charAt(0)}`;
+
+/**
+ * A concrete response for this endpoint, so the card answers "what do I get
+ * back" without the reader starting a server. A captured body is preferred; the
+ * schema-generated shape is the fallback, and the card labels which it is.
+ */
+const captured = apiExamples[`${method.toUpperCase()} ${path}`];
+const okResponse = responses.find(([status]) => status.startsWith("2"))?.[1];
+const okSchema = primaryContent(okResponse?.content)?.schema;
+const generated = captured === undefined && okSchema ? sampleJson(okSchema) : undefined;
+const example = captured ?? generated;
+const exampleJson = example === undefined ? undefined : JSON.stringify(example, null, 2);
+
+/** Prefills the playground editor so the reader edits a real shape. */
+const bodySample = requestBody?.schema ? JSON.stringify(sampleJson(requestBody.schema), null, 2) : undefined;
+const destructive = method === "delete" || path.includes("dispose");
+
+/**
+ * Where the playground can fetch real values for a parameter, so the reader
+ * picks an existing id instead of pasting one from another tab. Keyed by the
+ * parameter name the spec uses; the script fills a `<datalist>` from these.
+ */
+const SUGGESTIONS: Record<string, string> = {
+  sessionID: "session",
+  ptyID: "pty",
+  providerID: "provider",
+  workspace: "workspace",
+  directory: "project",
+  agent: "agent",
+  requestID: "question",
+  permissionID: "permission",
+};
+
+/**
+ * Playground fields, resolved here rather than in the template: an enum is a
+ * closed set and becomes a real `<select>`, a known id gets a `<datalist>` the
+ * script fills from the live server, and everything else stays free text.
+ */
+const tryFields = shownParams.map((parameter) => {
+  const schema = parameter.schema;
+  const values = schema?.enum ?? schema?.anyOf?.flatMap((member) => member.enum ?? []);
+  const choices = values && values.length > 0 ? values.map(String) : undefined;
+  const source = SUGGESTIONS[parameter.name];
+  return {
+    parameter,
+    choices,
+    source,
+    listId: source && !choices ? `${id}-${parameter.name}-list` : undefined,
+  };
+});
+---
+
+<article id={id} class="api-op not-prose">
+  <header class="api-op-head">
+    <span class={`api-method api-method-${method}`}>{method}</span>
+    <span class="api-op-path">
+      {pathParts.map((part) => (part.startsWith("{") ? <span class="api-param">{part}</span> : <span>{part}</span>))}
+    </span>
+    <a class="api-op-anchor" href={`#${id}`} aria-label={`Link to ${method.toUpperCase()} ${path}`}>#</a>
+    {operation.operationId && <code class="api-op-id">{operation.operationId}</code>}
+  </header>
+
+  <div class="api-op-body">
+    {(operation.summary || operation.description) && (
+      <p class="api-op-desc">{operation.description ?? operation.summary}</p>
+    )}
+
+    {operation.deprecated && (
+      <p class="api-op-desc api-op-deprecated">
+        Deprecated. It still answers, but it is not the path to build on.
+      </p>
+    )}
+
+    {shownParams.length > 0 && (
+      <div>
+        <div class="api-block-title">Parameters</div>
+        <table class="api-params">
+          <thead>
+            <tr>
+              <th>Name</th>
+              <th>In</th>
+              <th>Type</th>
+              <th><span class="sr-only">Required</span></th>
+            </tr>
+          </thead>
+          <tbody>
+            {shownParams.map((parameter) => (
+              <tr>
+                <td>{parameter.name}</td>
+                <td><span class="api-pill">{parameter.in}</span></td>
+                <td set:html={renderSchemaHtml(parameter.schema, { linkable, expand: 0 })} />
+                <td>
+                  {parameter.required
+                    ? <span class="api-pill api-pill-required">required</span>
+                    : <span class="api-pill">optional</span>}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    )}
+
+    {requestBody && (
+      <div>
+        <div class="api-block-title">
+          Request body{operation.requestBody?.required ? " · required" : ""} · {requestBody.mediaType}
+        </div>
+        <pre class="api-schema" set:html={renderSchemaHtml(requestBody.schema, { linkable })} />
+      </div>
+    )}
+
+    {responses.length > 0 && (
+      <div>
+        <div class="api-block-title">Responses</div>
+        {responses.map(([status, response]) => {
+          const content = primaryContent(response.content);
+          return (
+            <div class="api-response">
+              <div class="api-response-head">
+                <span class={statusClass(status)}>{status}</span>
+                {response.description && <span>{response.description}</span>}
+                {content && <span class="api-pill">{content.mediaType}</span>}
+              </div>
+              {content?.schema && (
+                <pre class="api-schema" set:html={renderSchemaHtml(content.schema, { linkable })} />
+              )}
+            </div>
+          );
+        })}
+      </div>
+    )}
+
+    {exampleJson && (
+      <details class="api-details" open>
+        <summary>
+          Example response
+          <span class="api-example-origin">{captured !== undefined ? "captured" : "from schema"}</span>
+        </summary>
+        <div class="api-details-body">
+          {captured !== undefined ? (
+            <div class="api-schema api-sample api-json api-example">
+              <Code code={exampleJson} lang="json" themes={{ light: "github-light", dark: "github-dark" }} defaultColor={false} />
+            </div>
+          ) : (
+            /* A schema skeleton is placeholder data, so it is not worth the ~40
+               inline-coloured tokens per block that highlighting it would add to
+               every page. Real captures are highlighted; these stay plain. */
+            <pre class="api-schema api-sample api-example">{exampleJson}</pre>
+          )}
+          {captured === undefined && (
+            <p class="api-panel-hint">
+              Generated from the response schema — field values are placeholders, the shape is real.
+            </p>
+          )}
+        </div>
+      </details>
+    )}
+
+    {sample && (
+      <details class="api-details">
+        <summary>SDK example</summary>
+        <div class="api-details-body [&_.doc-code-block]:my-0">
+          <DocCode language="ts" title={operation.operationId}>{sample.source}</DocCode>
+        </div>
+      </details>
+    )}
+
+    <details
+      class="api-details api-try"
+      data-api-try
+      data-method={method}
+      data-path={path}
+      data-media={requestBody?.mediaType}
+      data-destructive={destructive ? "true" : undefined}
+    >
+      <summary>Try it</summary>
+      <div class="api-details-body">
+        {tryFields.length > 0 && (
+          <div class="api-try-params">
+            {tryFields.map((field) => (
+              <label class="api-try-field">
+                <span>
+                  {field.parameter.name}
+                  <em>{field.parameter.in}{field.parameter.required ? " · required" : ""}</em>
+                </span>
+                {field.choices ? (
+                  <select
+                    data-try-param={field.parameter.name}
+                    data-try-in={field.parameter.in}
+                    data-try-required={field.parameter.required ? "true" : undefined}
+                  >
+                    {!field.parameter.required && <option value="">— unset —</option>}
+                    {field.choices.map((choice) => <option value={choice}>{choice}</option>)}
+                  </select>
+                ) : (
+                  <input
+                    type="text"
+                    spellcheck="false"
+                    list={field.listId}
+                    data-try-param={field.parameter.name}
+                    data-try-in={field.parameter.in}
+                    data-try-source={field.source}
+                    data-try-required={field.parameter.required ? "true" : undefined}
+                    placeholder={field.parameter.in === "path" ? `:${field.parameter.name}` : ""}
+                  />
+                )}
+                {field.listId && <datalist id={field.listId}></datalist>}
+              </label>
+            ))}
+          </div>
+        )}
+
+        {bodySample && (
+          <label class="api-try-field api-try-body">
+            <span>Request body <em>{requestBody?.mediaType}</em></span>
+            <textarea spellcheck="false" rows="7" data-try-body>{bodySample}</textarea>
+          </label>
+        )}
+
+        <div class="api-try-actions">
+          <button type="button" class="api-btn api-btn-primary" data-try-send>
+            Send {method.toUpperCase()}
+          </button>
+          <button type="button" class="api-btn" data-try-curl>Copy as curl</button>
+          <span class="api-try-note" data-try-note></span>
+        </div>
+
+        {destructive && (
+          <p class="api-try-warn">
+            This changes or removes server state, against whatever base URL is set above.
+          </p>
+        )}
+
+        <div class="api-try-result" data-try-result hidden>
+          <div class="api-try-result-head">
+            <span class="api-pill" data-try-status></span>
+            <span data-try-timing></span>
+            <span data-try-url></span>
+          </div>
+          <pre class="api-schema" data-try-output></pre>
+        </div>
+      </div>
+    </details>
+  </div>
+</article>

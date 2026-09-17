@@ -1,0 +1,238 @@
+---
+export const prerender = true;
+
+import DocsLayout from "../../../layouts/DocsLayout.astro";
+import DocCallout from "../../../components/docs/DocCallout.astro";
+import DocCode from "../../../components/docs/DocCode.astro";
+import DocRelated from "../../../components/docs/DocRelated.astro";
+
+const toc = [
+  { title: "Three ways to run a command", href: "#three-ways", depth: 2 },
+  { title: "Create a terminal", href: "#create", depth: 2 },
+  { title: "Attach to it", href: "#attach", depth: 2 },
+  { title: "Resizing", href: "#resize", depth: 2 },
+  { title: "Listing and closing", href: "#lifecycle", depth: 2 },
+  { title: "Injecting environment", href: "#env", depth: 2 },
+  { title: "A terminal in the browser", href: "#browser", depth: 2 },
+  { title: "Failure modes", href: "#failure-modes", depth: 2 },
+];
+---
+
+<DocsLayout
+  title="Driving terminals"
+  subtitle="Create a pseudo-terminal on the server, attach to it over a websocket, and render it wherever your interface lives."
+  description="Guide to the nikcli PTY API: creating terminals, attaching over websockets, resizing, lifecycle, environment injection, and wiring one to xterm.js in a browser."
+  toc={toc}
+>
+  <section id="three-ways" class="doc-section">
+    <h2>Three ways to run a command</h2>
+    <p>
+      Before reaching for a PTY, check that you want one — two lighter options cover most cases.
+    </p>
+    <table class="doc-table">
+      <thead><tr><th>You want</th><th>Use</th><th>Why</th></tr></thead>
+      <tbody>
+        <tr><td>The agent to run something and see the result</td><td><code>session.shell</code></td><td>Recorded in the transcript, so the next turn sees it.</td></tr>
+        <tr><td>A one-off command from your own code</td><td>Your own runtime</td><td>The API adds nothing.</td></tr>
+        <tr><td>An interactive terminal a human types into</td><td>PTY</td><td>Real tty: resizing, control characters, curses apps.</td></tr>
+      </tbody>
+    </table>
+    <p>
+      A PTY is what the TUI's terminal pane and the mobile app's terminal view are built on. If you
+      are building an interface, this is the one.
+    </p>
+  </section>
+
+  <section id="create" class="doc-section">
+    <h2>Create a terminal</h2>
+    <p>
+      Every field is optional. With no <code>command</code> you get the default shell, which is
+      usually what an interactive terminal wants.
+    </p>
+    <DocCode language="ts">{`const { data: pty, error } = await client.pty.create({
+  title: "build",
+  cwd: process.cwd(),
+  command: "bun",
+  args: ["test", "--watch"],
+  env: { FORCE_COLOR: "1" },
+})
+if (!pty) throw error`}</DocCode>
+    <DocCallout type="info" title="Terminals outlive the request that made them">
+      <p>
+        A PTY belongs to the server, not to your connection. Detaching and reattaching later picks
+        the same session back up — which is how the mobile app resumes a terminal after the phone
+        locks.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="attach" class="doc-section">
+    <h2>Attach to it</h2>
+    <p>
+      <code>GET /pty/{"{ptyID}"}/connect</code> is a websocket upgrade, not a JSON endpoint. The
+      generated client does not wrap it — a schema cannot describe a bidirectional socket — so you
+      open it yourself.
+    </p>
+    <DocCode language="ts">{`const url = new URL(\`/pty/\${pty.id}/connect\`, "http://127.0.0.1:4096")
+url.protocol = url.protocol.replace("http", "ws")
+url.searchParams.set("directory", process.cwd())
+if (token) url.searchParams.set("token", token)
+
+const socket = new WebSocket(url)
+
+socket.addEventListener("message", (event) => {
+  process.stdout.write(typeof event.data === "string" ? event.data : "")
+})
+
+// input goes the other way down the same socket
+process.stdin.on("data", (chunk) => socket.send(chunk.toString()))`}</DocCode>
+    <DocCallout type="warn" title="A websocket cannot send an Authorization header">
+      <p>
+        Browsers do not let you set headers on a <code>WebSocket</code>. That is why the API accepts
+        the credential as <code>?token=</code> — the same reason <code>EventSource</code> needs it
+        for the event feed.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="resize" class="doc-section">
+    <h2>Resizing</h2>
+    <p>
+      Resizing is an ordinary HTTP call, not a socket message. Programs inside the terminal get
+      <code>SIGWINCH</code> and re-wrap; without it, anything full-screen renders at the wrong size.
+    </p>
+    <DocCode language="ts">{`await client.pty.update({
+  ptyID: pty.id,
+  size: { rows: 40, cols: 120 },
+})`}</DocCode>
+    <p>
+      Send it once on attach and again whenever the container changes — debounced, since a drag
+      produces a resize per frame.
+    </p>
+  </section>
+
+  <section id="lifecycle" class="doc-section">
+    <h2>Listing and closing</h2>
+    <DocCode language="ts">{`const { data: terminals } = await client.pty.list()
+const { data: one } = await client.pty.get({ ptyID: pty.id })
+
+await client.pty.update({ ptyID: pty.id, title: "tests (watching)" })
+await client.pty.remove({ ptyID: pty.id })`}</DocCode>
+    <p>
+      <code>list</code> is how an interface rebuilds its tab bar after a reload, since the terminals
+      are still running on the server.
+    </p>
+  </section>
+
+  <section id="env" class="doc-section">
+    <h2>Injecting environment</h2>
+    <p>
+      Two layers add environment variables, and they compose. <code>env</code> on create is the
+      per-terminal layer. The <code>shell.env</code> plugin hook is the global one, applied to every
+      PTY the server makes.
+    </p>
+    <DocCode language="ts" title=".nikcli/plugins/shell-env.ts">{`import type { Plugin } from "@nikcli-ai/plugin"
+
+export const ShellEnv: Plugin = async () => ({
+  async "shell.env"(input, output) {
+    output.env.NPM_TOKEN = process.env.CI_NPM_TOKEN ?? ""
+    if (input.cwd.includes("/infra")) output.env.AWS_PROFILE = "staging"
+  },
+})`}</DocCode>
+    <p>
+      Plugin values are merged over the caller's, and then terminal invariants such as
+      <code>TERM</code> and <code>NIKCLI_TERMINAL</code> are re-applied — so a plugin cannot break
+      the terminal by overwriting them.
+    </p>
+  </section>
+
+  <section id="browser" class="doc-section">
+    <h2>A terminal in the browser</h2>
+    <p>
+      The whole integration is: create, attach, pipe both directions, report size. This is
+      <code>xterm.js</code>, but nothing here is specific to it.
+    </p>
+    <DocCode language="ts" title="terminal.ts">{`import { Terminal } from "@xterm/xterm"
+import { FitAddon } from "@xterm/addon-fit"
+import { createNikcliClient } from "@nikcli-ai/sdk/httpapi"
+
+const BASE = "http://127.0.0.1:4096"
+const directory = "/Users/me/project"
+
+const client = createNikcliClient({ baseUrl: BASE, directory })
+
+const { data: pty, error } = await client.pty.create({ title: "shell", cwd: directory })
+if (!pty) throw error
+
+const term = new Terminal({ convertEol: true })
+const fit = new FitAddon()
+term.loadAddon(fit)
+term.open(document.getElementById("terminal")!)
+fit.fit()
+
+const url = new URL(\`/pty/\${pty.id}/connect\`, BASE)
+url.protocol = url.protocol.replace("http", "ws")
+url.searchParams.set("directory", directory)
+
+const socket = new WebSocket(url)
+socket.binaryType = "arraybuffer"
+
+socket.addEventListener("open", () => {
+  void client.pty.update({ ptyID: pty.id, size: { rows: term.rows, cols: term.cols } })
+})
+
+socket.addEventListener("message", (event) => {
+  term.write(
+    typeof event.data === "string" ? event.data : new Uint8Array(event.data as ArrayBuffer),
+  )
+})
+
+term.onData((data) => socket.send(data))
+
+// one resize call per settled layout, not one per frame
+let pending: ReturnType<typeof setTimeout> | undefined
+const onResize = () => {
+  clearTimeout(pending)
+  pending = setTimeout(() => {
+    fit.fit()
+    void client.pty.update({ ptyID: pty.id, size: { rows: term.rows, cols: term.cols } })
+  }, 100)
+}
+window.addEventListener("resize", onResize)
+
+// closing the tab should not kill the terminal — just detach
+window.addEventListener("beforeunload", () => socket.close())`}</DocCode>
+    <DocCallout type="note" title="Closing the socket is not closing the terminal">
+      <p>
+        <code>socket.close()</code> detaches; the process keeps running server-side. Call
+        <code>pty.remove</code> when you actually mean to end it — otherwise a reload leaves an
+        orphan behind on every visit.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="failure-modes" class="doc-section">
+    <h2>Failure modes</h2>
+    <table class="doc-table">
+      <thead><tr><th>Symptom</th><th>Cause</th></tr></thead>
+      <tbody>
+        <tr><td>Socket closes immediately</td><td>Auth: a websocket cannot send headers, so pass <code>?token=</code>.</td></tr>
+        <tr><td>Output wraps wrongly, full-screen apps corrupt</td><td>Size never reported. Call <code>pty.update</code> on attach.</td></tr>
+        <tr><td>Terminals pile up</td><td>Detaching instead of removing. <code>pty.list</code> will show them.</td></tr>
+        <tr><td>Wrong working directory</td><td>No <code>cwd</code>, so it inherited the server's.</td></tr>
+        <tr><td>No colour</td><td>The program sees a non-tty downstream; try <code>FORCE_COLOR=1</code>.</td></tr>
+        <tr><td>404 on connect</td><td>Right id, wrong instance — the <code>directory</code> selector must match the one that created it.</td></tr>
+        <tr><td>Garbled output</td><td>Binary frames decoded as UTF-8 strings mid-sequence; write the bytes through.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <DocRelated
+    links={[
+      { title: "Terminals API", href: "/docs/api/pty", description: "Every PTY endpoint and payload." },
+      { title: "Terminal Control", href: "/docs/terminal-control", description: "The engine behind terminal automation." },
+      { title: "Plugin recipes", href: "/docs/guides/plugin-recipes", description: "The shell.env recipe, in full." },
+      { title: "Using the API", href: "/docs/guides/api", description: "The client this guide assumes." },
+    ]}
+  />
+</DocsLayout>

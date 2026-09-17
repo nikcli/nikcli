@@ -1,0 +1,190 @@
+---
+export const prerender = true;
+
+import DocsLayout from "../../../layouts/DocsLayout.astro";
+import DocCallout from "../../../components/docs/DocCallout.astro";
+import DocCode from "../../../components/docs/DocCode.astro";
+import DocRelated from "../../../components/docs/DocRelated.astro";
+
+const toc = [
+  { title: "Overview", href: "#overview", depth: 2 },
+  { title: "Availability", href: "#availability", depth: 2 },
+  { title: "Creating a host", href: "#create", depth: 2 },
+  { title: "As an Effect layer", href: "#layer", depth: 2 },
+  { title: "Directory binding", href: "#directory", depth: 2 },
+  { title: "Registering tools", href: "#tools", depth: 2 },
+  { title: "Shared instance state", href: "#shared-state", depth: 2 },
+  { title: "Embedded or client?", href: "#choosing", depth: 2 },
+];
+---
+
+<DocsLayout
+  title="Embedded SDK"
+  subtitle="Run the whole nikcli server in your own process — same routes, same handlers, no listener and no socket."
+  description="Embedding nikcli in-process with @nikcli-ai/sdk-next: creating a host, the Effect layer, directory binding, registering tools, and the shared instance state caveat."
+  toc={toc}
+>
+  <section id="overview" class="doc-section">
+    <h2>Overview</h2>
+    <p>
+      <code>@nikcli-ai/sdk-next</code> is an embedded host. It builds the same typed client as
+      <a href="/docs/build/client">the network SDK</a>, but hands it a <code>fetch</code> that calls
+      the server's request handler directly in memory. No port is bound, no socket is opened, and
+      nothing leaves the process.
+    </p>
+    <p>
+      Everything else is unchanged: the same routing, the same middleware, the same handlers, codecs
+      and errors. Code written against the network client works against the embedded host without
+      edits — which is the point.
+    </p>
+  </section>
+
+  <section id="availability" class="doc-section">
+    <h2>Availability</h2>
+    <DocCallout type="warn" title="In-repo today, not on npm">
+      <p>
+        <code>@nikcli-ai/sdk-next</code> is a workspace package and is not published. It is usable
+        from inside the monorepo — and it is the migration target for the generated
+        <code>@nikcli-ai/sdk</code> — but an external project cannot install it yet. If you are
+        building outside this repository, take <a href="/docs/build/client">the client path</a>.
+      </p>
+    </DocCallout>
+    <p>
+      It also depends on <code>nikcli-ai</code> itself rather than on a contract package, because
+      embedding means running the real server: the whole agent is in your process, not a stub of it.
+    </p>
+  </section>
+
+  <section id="create" class="doc-section">
+    <h2>Creating a host</h2>
+    <p>
+      <code>NikCli.create</code> returns the client surface, so the call sites look like the network
+      client with an <code>Effect</code> wrapper around construction.
+    </p>
+    <DocCode language="ts">{`import { NikCli } from "@nikcli-ai/sdk-next"
+import { Effect } from "effect"
+
+const program = Effect.gen(function* () {
+  const nikcli = yield* NikCli.create({ directory: process.cwd() })
+
+  const session = yield* Effect.promise(() =>
+    nikcli.session.create({ title: "embedded" }),
+  )
+
+  return yield* Effect.promise(() =>
+    nikcli.session.prompt({
+      sessionID: session.data!.id,
+      parts: [{ type: "text", text: "What changed in the last commit?" }],
+    }),
+  )
+})`}</DocCode>
+    <p>
+      The result envelope is the same one the network client uses — calls resolve with
+      <code>{"{ data, error }"}</code> rather than rejecting. See
+      <a href="/docs/build/client#results">The result envelope</a>.
+    </p>
+  </section>
+
+  <section id="layer" class="doc-section">
+    <h2>As an Effect layer</h2>
+    <p>
+      The same constructor is available as a service, for code that would rather take the host as a
+      dependency than build one.
+    </p>
+    <DocCode language="ts">{`import { NikCli } from "@nikcli-ai/sdk-next"
+import { Effect } from "effect"
+
+const program = Effect.gen(function* () {
+  const nikcli = yield* NikCli.Service
+  return yield* Effect.promise(() => nikcli.session.list())
+})
+
+await Effect.runPromise(program.pipe(Effect.provide(NikCli.layer)))`}</DocCode>
+    <DocCallout type="note" title="The layer is not a second implementation">
+      <p>
+        <code>NikCli.layer</code> only adapts <code>NikCli.create()</code> for dependency injection.
+        There is one host, reachable two ways.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="directory" class="doc-section">
+    <h2>Directory binding</h2>
+    <p>
+      The host binds requests to its <code>directory</code> — defaulting to
+      <code>process.cwd()</code> — by setting <code>x-nikcli-directory</code> on any call that does
+      not already carry its own <code>directory</code> query parameter or header. From there the
+      request flows through the same per-request instance middleware as network traffic.
+    </p>
+    <DocCode language="ts">{`const nikcli = yield* NikCli.create({ directory: "/Users/me/project" })
+
+// bound to the host directory
+yield* Effect.promise(() => nikcli.session.list())
+
+// explicit selection still wins
+yield* Effect.promise(() => nikcli.session.list({ directory: "/Users/me/other" }))`}</DocCode>
+  </section>
+
+  <section id="tools" class="doc-section">
+    <h2>Registering tools</h2>
+    <p>
+      The embedded host can do one thing the network client cannot: register tools directly into the
+      instance's <code>ToolRegistry</code> — the same registry sessions consult and
+      <code>GET /experimental/tool/ids</code> reports.
+    </p>
+    <DocCode language="ts">{`import { NikCli, Tool } from "@nikcli-ai/sdk-next"
+
+const program = Effect.gen(function* () {
+  const nikcli = yield* NikCli.create({ directory: process.cwd() })
+  yield* nikcli.tools.register(MyTool)
+})`}</DocCode>
+    <DocCallout type="info" title="Why this is local-only">
+      <p>
+        A tool is executable code. It cannot travel over HTTP, so there is no endpoint that could
+        offer this and no way to do it from the network client. Registration is the reason to embed
+        rather than connect.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="shared-state" class="doc-section">
+    <h2>Shared instance state</h2>
+    <DocCallout type="warn" title="Two hosts in one process are not isolated">
+      <p>
+        Unlike a network server, the embedded host shares process-global instance state. Two
+        <code>create()</code> calls in the same process observe the same projects, sessions and
+        registered tools for a given directory. Treat the host as a process-wide singleton; if you
+        need isolation, you need separate processes.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="choosing" class="doc-section">
+    <h2>Embedded or client?</h2>
+    <table class="doc-table">
+      <thead><tr><th></th><th>Embedded</th><th>Client</th></tr></thead>
+      <tbody>
+        <tr><td>Package</td><td><code>@nikcli-ai/sdk-next</code> (in-repo)</td><td><code>@nikcli-ai/sdk</code> (npm)</td></tr>
+        <tr><td>Transport</td><td>In-memory handler call</td><td>HTTP</td></tr>
+        <tr><td>Needs a running server</td><td>No</td><td>Yes</td></tr>
+        <tr><td>Register tools in code</td><td>Yes</td><td>No</td></tr>
+        <tr><td>Cross-process / cross-machine</td><td>No</td><td>Yes</td></tr>
+        <tr><td>Isolation between hosts</td><td>None — process-global</td><td>Per server</td></tr>
+        <tr><td>Auth</td><td>Not applicable</td><td>Bearer, basic, Tailscale</td></tr>
+      </tbody>
+    </table>
+    <p>
+      If your program is a script, a bot or a separate interface, connect. If your program
+      <em>is</em> the product and nikcli is a component of it, embed.
+    </p>
+  </section>
+
+  <DocRelated
+    links={[
+      { title: "Build", href: "/docs/build", description: "The three ways to build on nikcli, and which to pick." },
+      { title: "Client", href: "/docs/build/client", description: "The same surface over HTTP, installable from npm." },
+      { title: "API Reference", href: "/docs/api", description: "The endpoints the embedded host serves in memory." },
+      { title: "Tools", href: "/docs/tools", description: "The built-in tools a registered tool sits beside." },
+    ]}
+  />
+</DocsLayout>

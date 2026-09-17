@@ -4,6 +4,8 @@ import '../styles/brand.css';
 import { ClientRouter } from 'astro:transitions';
 import PostHog from '../components/posthog.astro';
 
+import SocialMeta from "../components/SocialMeta.astro";
+
 interface Props {
   title?: string;
   description?: string;
@@ -14,8 +16,6 @@ const {
   description = 'Nikcli is an open-source, provider-agnostic AI development agent for developers who want capable automation without losing terminal control.' 
 } = Astro.props;
 
-const ogImage = "https://nikcli.store/og.png";
-const pathname = Astro.url.pathname;
 ---
 
 <!DOCTYPE html>
@@ -30,22 +30,7 @@ const pathname = Astro.url.pathname;
     <meta name="author" content="Nikcli" />
     <meta name="keywords" content="nikcli, ai agent, development agent, terminal, cli, open source" />
     
-    <!-- Open Graph -->
-    <meta property="og:type" content="website" />
-    <meta property="og:url" content={`https://nikcli.store${pathname}`} />
-    <meta property="og:title" content={title} />
-    <meta property="og:description" content={description} />
-    <meta property="og:image" content={ogImage} />
-
-    <!-- Twitter -->
-    <meta property="twitter:card" content="summary_large_image" />
-    <meta property="twitter:url" content={`https://nikcli.store${pathname}`} />
-    <meta property="twitter:title" content={title} />
-    <meta property="twitter:description" content={description} />
-    <meta property="twitter:image" content={ogImage} />
-    
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <link rel="canonical" href={`https://nikcli.store${pathname}`} />
+    <SocialMeta title={title} description={description} />
 
     <!-- Fonts: Syne (display) + Figtree (body) -->
     <link rel="preconnect" href="https://fonts.googleapis.com" />

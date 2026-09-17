@@ -1,0 +1,149 @@
+---
+export const prerender = true;
+
+import DocsLayout from "../../../layouts/DocsLayout.astro";
+import DocCard from "../../../components/docs/DocCard.astro";
+import DocCallout from "../../../components/docs/DocCallout.astro";
+import DocRelated from "../../../components/docs/DocRelated.astro";
+
+const toc = [
+  { title: "Extend nikcli", href: "#extend", depth: 2 },
+  { title: "Integrate nikcli", href: "#integrate", depth: 2 },
+  { title: "Automate nikcli", href: "#automate", depth: 2 },
+  { title: "How these differ from the reference", href: "#difference", depth: 2 },
+];
+---
+
+<DocsLayout
+  title="Guides"
+  subtitle="Eleven step-by-step walkthroughs, every snippet checked against the real types: build a plugin, register a provider, drive the API, stream a response, orchestrate missions, run in CI."
+  description="Task-oriented guides for nikcli: writing plugins, plugin recipes, custom providers, using the HTTP API, streaming, building an interface, terminals, loops, missions, workspaces and CI."
+  toc={toc}
+>
+  <section id="extend" class="doc-section">
+    <h2>Extend nikcli</h2>
+    <p>Your code runs inside the agent: new tools, new policy, new providers.</p>
+    <div class="doc-grid not-prose">
+      <DocCard title="Writing a plugin" eyebrow="Start here" href="/docs/guides/plugins">
+        <p>
+          From an empty file to a loaded plugin with its own tool: the module shape, what the
+          runtime hands you, every hook, and how to ship it on npm.
+        </p>
+      </DocCard>
+      <DocCard title="Plugin recipes" eyebrow="Copy & paste" href="/docs/guides/plugin-recipes">
+        <p>
+          Eight complete plugins that each do one thing — a custom tool, a permission policy,
+          injected shell secrets, request redaction, a Slack notifier.
+        </p>
+      </DocCard>
+      <DocCard title="Custom model providers" eyebrow="Advanced" href="/docs/guides/providers">
+        <p>
+          Register a provider, its API-key or OAuth flow, and its model list — including an internal
+          gateway that will never be in the public catalogue.
+        </p>
+      </DocCard>
+    </div>
+  </section>
+
+  <section id="integrate" class="doc-section">
+    <h2>Integrate nikcli</h2>
+    <p>Your code runs outside and drives the agent over its API.</p>
+    <div class="doc-grid not-prose">
+      <DocCard title="Using the API" eyebrow="Quickstart" href="/docs/guides/api">
+        <p>
+          Start a server and drive it, with <code>curl</code> and the SDK side by side: sessions,
+          prompts, files, search, shell commands and permission replies.
+        </p>
+      </DocCard>
+      <DocCard title="Tour with real output" eyebrow="Hands-on" href="/docs/guides/api-tour">
+        <p>
+          Every request run against a real server, with the response that actually came back —
+          including the two that surprise people.
+        </p>
+      </DocCard>
+      <DocCard title="Streaming a response" eyebrow="Event feed" href="/docs/guides/streaming">
+        <p>
+          Subscribe first, submit asynchronously, print deltas as they arrive, and stop on
+          <code>session.idle</code>.
+        </p>
+      </DocCard>
+      <DocCard title="Building an interface" eyebrow="Capstone" href="/docs/guides/custom-interface">
+        <p>
+          Everything a real client owes the user — streaming parts, permission prompts, questions,
+          todos and reconnects — assembled into one working client.
+        </p>
+      </DocCard>
+      <DocCard title="Driving terminals" eyebrow="PTY" href="/docs/guides/terminals">
+        <p>
+          Create a pseudo-terminal, attach over a websocket, report its size, and wire it to
+          <code>xterm.js</code> in a browser.
+        </p>
+      </DocCard>
+    </div>
+  </section>
+
+  <section id="automate" class="doc-section">
+    <h2>Automate nikcli</h2>
+    <p>Work that runs without you sitting in front of it.</p>
+    <div class="doc-grid not-prose">
+      <DocCard title="Automating with loops" eyebrow="Cadence" href="/docs/guides/loops">
+        <p>
+          Staged, repeatable work with its own token budgets, worktree isolation and schedule —
+          including a complete nightly QA loop.
+        </p>
+      </DocCard>
+      <DocCard title="Orchestrating missions" eyebrow="Graph" href="/docs/guides/missions">
+        <p>
+          Milestones and features with real dependency graphs, validation gates, and the escape
+          hatch that lets you edit one mid-run.
+        </p>
+      </DocCard>
+      <DocCard title="Parallel workspaces" eyebrow="Concurrency" href="/docs/guides/workspaces">
+        <p>
+          Three branches at once, each in its own worktree or container, with sessions you can warp
+          between them.
+        </p>
+      </DocCard>
+      <DocCard title="Running in CI" eyebrow="Unattended" href="/docs/guides/ci">
+        <p>
+          The GitHub Action and its inputs, plus a headless API path that works on any CI — with a
+          review job that fails the build.
+        </p>
+      </DocCard>
+    </div>
+  </section>
+
+  <section id="difference" class="doc-section">
+    <h2>How these differ from the reference</h2>
+    <p>
+      A guide walks one task end to end and shows working code. The reference tells you what exists.
+      When you know what you want to do but not how, start here; when you know the shape of the call
+      and need the exact field, go to the reference.
+    </p>
+    <table class="doc-table">
+      <thead><tr><th>You want</th><th>Go to</th></tr></thead>
+      <tbody>
+        <tr><td>To get something working</td><td>These guides</td></tr>
+        <tr><td>The three ways to build on nikcli, compared</td><td><a href="/docs/build">Build</a></td></tr>
+        <tr><td>Every field of every endpoint</td><td><a href="/docs/api">API Reference</a></td></tr>
+        <tr><td>How the server itself works</td><td><a href="/docs/server-api">Server &amp; API</a></td></tr>
+        <tr><td>How plugins are installed and configured</td><td><a href="/docs/plugins">Plugins &amp; Skills</a></td></tr>
+      </tbody>
+    </table>
+    <DocCallout type="note" title="Every snippet here was checked against the real types">
+      <p>
+        The call shapes in these guides are taken from the generated client and the OpenAPI
+        document, not written from memory. Where an idiom does not typecheck, the guide says so.
+      </p>
+    </DocCallout>
+  </section>
+
+  <DocRelated
+    links={[
+      { title: "Build", href: "/docs/build", description: "The three ways to build on nikcli, and which to pick." },
+      { title: "API Reference", href: "/docs/api", description: "Every endpoint, generated from the server contract." },
+      { title: "Client", href: "/docs/build/client", description: "The typed HTTP client these guides use." },
+      { title: "Plugins & Skills", href: "/docs/plugins", description: "Installing and configuring plugins." },
+    ]}
+  />
+</DocsLayout>

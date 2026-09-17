@@ -1,0 +1,289 @@
+---
+export const prerender = true;
+
+import DocsLayout from "../../../layouts/DocsLayout.astro";
+import DocCallout from "../../../components/docs/DocCallout.astro";
+import DocCode from "../../../components/docs/DocCode.astro";
+import DocRelated from "../../../components/docs/DocRelated.astro";
+
+const toc = [
+  { title: "Overview", href: "#overview", depth: 2 },
+  { title: "Create a client", href: "#create", depth: 2 },
+  { title: "The result envelope", href: "#results", depth: 2 },
+  { title: "Choosing an instance", href: "#instance", depth: 2 },
+  { title: "Method names", href: "#methods", depth: 2 },
+  { title: "Running a session", href: "#session", depth: 2 },
+  { title: "Streams and events", href: "#streams", depth: 2 },
+  { title: "Authentication", href: "#auth", depth: 2 },
+  { title: "Errors", href: "#errors", depth: 2 },
+  { title: "Other languages", href: "#other-languages", depth: 2 },
+];
+---
+
+<DocsLayout
+  title="Client"
+  subtitle="Drive a running nikcli server from your own program with the generated, typed HTTP client."
+  description="Using @nikcli-ai/sdk to drive a nikcli server: creating a client, the result envelope, instance selection, streaming, authentication and errors."
+  toc={toc}
+>
+  <section id="overview" class="doc-section">
+    <h2>Overview</h2>
+    <p>
+      <code>@nikcli-ai/sdk</code> wraps the server's HTTP API in a typed, namespaced client. It is
+      generated from the same OpenAPI document as the <a href="/docs/api">API reference</a> by
+      <code>@nikcli-ai/httpapi-codegen</code>, so every endpoint is a method and a contract change
+      breaks generation rather than becoming a runtime 404.
+    </p>
+    <p>
+      This is the path the web app, the desktop app and the mobile app already take. Nothing about
+      them is privileged — they call the endpoints you can call.
+    </p>
+    <DocCode language="bash">
+npm install @nikcli-ai/sdk
+    </DocCode>
+    <p>You also need a server to talk to:</p>
+    <DocCode language="bash">
+nikcli serve --hostname 127.0.0.1 --port 4096
+    </DocCode>
+  </section>
+
+  <section id="create" class="doc-section">
+    <h2>Create a client</h2>
+    <DocCode language="ts">{`import { createNikcliClient } from "@nikcli-ai/sdk/httpapi"
+
+const client = createNikcliClient({
+  baseUrl: "http://127.0.0.1:4096",
+  // binds every call to one project instance
+  directory: "/Users/me/project",
+})`}</DocCode>
+    <table class="doc-table">
+      <thead><tr><th>Option</th><th>Type</th><th>Effect</th></tr></thead>
+      <tbody>
+        <tr><td><code>baseUrl</code></td><td><code>string</code></td><td>Required. Where the server is listening.</td></tr>
+        <tr><td><code>directory</code></td><td><code>string</code></td><td>Sent as <code>x-nikcli-directory</code> on every call. Non-ASCII paths are percent-encoded for you.</td></tr>
+        <tr><td><code>workspace</code></td><td><code>string</code></td><td>Sent as <code>x-nikcli-workspace</code> on every call.</td></tr>
+        <tr><td><code>headers</code></td><td><code>HeadersInit</code></td><td>Merged into every request — this is where an <code>Authorization</code> header goes.</td></tr>
+        <tr><td><code>signal</code></td><td><code>AbortSignal</code></td><td>Applied to every request, combined with any per-call signal.</td></tr>
+        <tr><td><code>fetch</code></td><td><code>typeof fetch</code></td><td>Swap the transport — a proxy, a mock, or an in-memory handler.</td></tr>
+        <tr><td><code>throwOnError</code></td><td><code>boolean</code></td><td>Reject on failure instead of resolving with <code>error</code>. See below.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <section id="results" class="doc-section">
+    <h2>The result envelope</h2>
+    <p>
+      By default calls <strong>resolve</strong> with an envelope rather than rejecting. Transport
+      failures and declared HTTP errors both arrive as <code>error</code>, so a failed call in a UI
+      event handler cannot become an unhandled rejection.
+    </p>
+    <DocCode language="ts">{`const { data, error } = await client.session.list()
+// guard on \`data\`, not on \`error\`: \`error\` is \`unknown\`, so testing it
+// does not narrow \`data\` away from \`undefined\`
+if (!data) throw error
+
+data.forEach((session) => console.log(session.id, session.title))`}</DocCode>
+    <p>
+      In a script, where an unhandled rejection is exactly what you want, opt back into throwing —
+      per call or once for the whole client:
+    </p>
+    <DocCode language="ts">{`const client = createNikcliClient({ baseUrl, throwOnError: true })
+
+// rejects on failure, so \`data\` is always present at runtime
+const { data } = await client.session.list()
+
+// or per call, on a client that does not throw by default
+const one = await client.session.get({ sessionID }, { throwOnError: true })`}</DocCode>
+    <DocCallout type="warn" title="throwOnError does not change the type">
+      <p>
+        It changes runtime behaviour only. The call still returns
+        <code>{"{ data, error }"}</code> and <code>data</code> is still typed as possibly
+        <code>undefined</code>, so you keep destructuring it — with <code>data!</code>, or a guard,
+        or a one-line <code>unwrap</code> helper of your own.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="instance" class="doc-section">
+    <h2>Choosing an instance</h2>
+    <p>
+      One server hosts many projects. The client's <code>directory</code> is the default for every
+      call, and any call can override it — useful when one process drives several checkouts.
+    </p>
+    <DocCode language="ts">{`// the client default
+await client.session.list()
+
+// inline, for one call
+await client.session.list({ directory: "/Users/me/other-project" })
+
+// a workspace within the instance
+await client.session.list({ workspace: workspaceID })`}</DocCode>
+    <p>
+      The server resolves this exactly as described in
+      <a href="/docs/api#instance">Choosing an instance</a>: the header the client sets is the same
+      one <code>curl</code> would send.
+    </p>
+  </section>
+
+  <section id="methods" class="doc-section">
+    <h2>Method names</h2>
+    <p>
+      Methods are namespaced by resource and follow the operation ids listed throughout the
+      <a href="/docs/api">API reference</a>: <code>session.prompt</code> is
+      <code>client.session.prompt</code>, <code>mobile.git.commit</code> is
+      <code>client.mobile.git.commit</code>. A handful are renamed where the dotted id would collide
+      with a JavaScript keyword or an existing namespace — <code>session.messageRemove</code> is
+      <code>client.session.messageDelete</code>, for instance — so let the types lead rather than
+      transcribing ids by hand.
+    </p>
+    <DocCode language="ts">{`await client.session.create({ title: "triage" })
+await client.session.messages({ sessionID })
+await client.file.read({ path: "src/index.ts" })
+await client.find.text({ pattern: "TODO" })
+await client.project.current()
+await client.config.get()
+await client.doctor.run()`}</DocCode>
+  </section>
+
+  <section id="session" class="doc-section">
+    <h2>Running a session</h2>
+    <p>
+      The common shape: create a session, send a prompt, read what came back. Everything else —
+      sharing, forking, reverting, todos, diffs — hangs off the same session id.
+    </p>
+    <DocCode language="ts" title="triage.ts">{`import { createNikcliClient } from "@nikcli-ai/sdk/httpapi"
+
+const client = createNikcliClient({
+  baseUrl: "http://127.0.0.1:4096",
+  directory: process.cwd(),
+  throwOnError: true,
+})
+
+const { data: session } = await client.session.create({ title: "triage" })
+
+const { data: reply } = await client.session.prompt({
+  sessionID: session!.id,
+  parts: [{ type: "text", text: "Which tests are currently failing, and why?" }],
+})
+
+for (const part of reply!.parts) {
+  if (part.type === "text") console.log(part.text)
+}
+
+const { data: diff } = await client.session.diff({ sessionID: session!.id })
+console.log(diff)`}</DocCode>
+    <p>
+      <code>session.prompt</code> waits for the assistant to finish. For fire-and-forget submission
+      — queue the work and watch the event feed instead — use
+      <code>client.session.promptAsync</code>.
+    </p>
+    <DocCallout type="note" title="Pick the model at the session, not the call">
+      <p>
+        <code>session.prompt</code> accepts an explicit <code>model</code> and <code>agent</code>,
+        but leaving them unset inherits the launching session's model, which is usually what you
+        want for background work.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="streams" class="doc-section">
+    <h2>Streams and events</h2>
+    <p>
+      Streaming endpoints resolve to an object holding an async iterable, so you await the
+      connection and then iterate the feed.
+    </p>
+    <DocCode language="ts">{`const { stream } = await client.event.subscribe()
+
+for await (const event of stream) {
+  if (event.type === "message.part.updated" && event.properties.part.type === "text") {
+    // \`delta\` is the text added since the last event; \`part.text\` is cumulative
+    process.stdout.write(event.properties.delta ?? "")
+  }
+}`}</DocCode>
+    <p>
+      <code>client.event.subscribe()</code> is scoped to the resolved instance;
+      <code>client.global.event()</code> spans every instance the server hosts, and
+      <code>client.sync.event.stream()</code> carries sync traffic. All three are the SSE feeds
+      listed under <a href="/docs/api#streaming">Streaming</a>.
+    </p>
+    <DocCallout type="info" title="Pair promptAsync with the feed">
+      <p>
+        <code>session.promptAsync</code> returns as soon as the work is accepted. Subscribe first,
+        then submit, and you see the assistant's output as it is produced instead of waiting for the
+        whole turn. <a href="/docs/guides/streaming">Streaming a response</a> walks the whole flow.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="auth" class="doc-section">
+    <h2>Authentication</h2>
+    <p>
+      On loopback with no password set, nothing is needed. Anything else goes through
+      <code>headers</code> — the client does not manage credentials for you.
+    </p>
+    <DocCode language="ts">{`// bearer token (mobile pairing token or an nku_ account token)
+const client = createNikcliClient({
+  baseUrl,
+  headers: { Authorization: \`Bearer \${process.env.NIKCLI_TOKEN}\` },
+})
+
+// basic auth, for a server started with NIKCLI_SERVER_PASSWORD
+const basic = btoa(\`nikcli:\${process.env.NIKCLI_SERVER_PASSWORD}\`)
+const client2 = createNikcliClient({
+  baseUrl,
+  headers: { Authorization: \`Basic \${basic}\` },
+})`}</DocCode>
+    <p>
+      The full scheme table is in <a href="/docs/api#auth">Authentication</a>.
+    </p>
+  </section>
+
+  <section id="errors" class="doc-section">
+    <h2>Errors</h2>
+    <p>
+      <code>ClientError</code> is what a transport or protocol failure resolves to. It folds in its
+      cause, so a server that died mid-request reports why rather than a bare
+      <code>Transport</code>.
+    </p>
+    <DocCode language="ts">{`import { ClientError, createNikcliClient } from "@nikcli-ai/sdk/httpapi"
+
+const { data, error, response } = await client.session.get({ sessionID })
+
+if (error instanceof ClientError) {
+  console.error(error.reason, error.message, error.cause)
+} else if (error) {
+  // a declared HTTP error — the schema named on the endpoint in the API reference
+  console.error(response?.status, error)
+}`}</DocCode>
+    <p>
+      Declared failures are typed on the endpoint, so a <code>ConfigUpdateError</code> or a
+      <code>ProviderAuthError</code> arrives as that shape rather than collapsing into a generic
+      500. The endpoint pages list which errors each operation can return.
+    </p>
+  </section>
+
+  <section id="other-languages" class="doc-section">
+    <h2>Other languages</h2>
+    <p>
+      There is no official client beyond JavaScript, but the contract is public. Point any OpenAPI
+      generator at the document and you get the same surface.
+    </p>
+    <DocCode language="bash">
+curl -s https://nikcli.store/docs/api/openapi.json -o nikcli-openapi.json
+    </DocCode>
+    <p>
+      Operation ids are stable and dotted (<code>session.prompt</code>,
+      <code>experimental.workspace.warp</code>), so most generators produce sensibly grouped method
+      names without extra configuration.
+    </p>
+  </section>
+
+  <DocRelated
+    links={[
+      { title: "Build", href: "/docs/build", description: "The three ways to build on nikcli, and which to pick." },
+      { title: "API Reference", href: "/docs/api", description: "Every endpoint this client wraps." },
+      { title: "Embedded SDK", href: "/docs/build/sdk", description: "The same surface, in-process, with no listener." },
+      { title: "Server & API", href: "/docs/server-api", description: "What happens to a request after it leaves the client." },
+    ]}
+  />
+</DocsLayout>

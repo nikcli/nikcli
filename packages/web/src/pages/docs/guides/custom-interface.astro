@@ -1,0 +1,386 @@
+---
+export const prerender = true;
+
+import DocsLayout from "../../../layouts/DocsLayout.astro";
+import DocCallout from "../../../components/docs/DocCallout.astro";
+import DocCode from "../../../components/docs/DocCode.astro";
+import DocRelated from "../../../components/docs/DocRelated.astro";
+
+const toc = [
+  { title: "What an interface owes the user", href: "#contract", depth: 2 },
+  { title: "State from one feed", href: "#state", depth: 2 },
+  { title: "Rendering parts", href: "#parts", depth: 2 },
+  { title: "Permissions", href: "#permissions", depth: 2 },
+  { title: "Questions", href: "#questions", depth: 2 },
+  { title: "Todos and diffs", href: "#todos", depth: 2 },
+  { title: "Reconnecting", href: "#reconnect", depth: 2 },
+  { title: "A working client", href: "#complete", depth: 2 },
+  { title: "Failure modes", href: "#failure-modes", depth: 2 },
+];
+---
+
+<DocsLayout
+  title="Building a custom interface"
+  subtitle="Everything a real nikcli client has to handle — streaming parts, permission prompts, questions, todos and reconnects — assembled once."
+  description="Capstone guide to building a nikcli interface: event-driven state, rendering message parts, answering permissions and questions, todos and diffs, and reconnecting without losing the transcript."
+  toc={toc}
+>
+  <section id="contract" class="doc-section">
+    <h2>What an interface owes the user</h2>
+    <p>
+      Streaming text is the easy half. What separates a demo from something usable is the rest: an
+      agent that asks permission must be answerable, a question must be answerable, and a reload
+      must not lose the conversation.
+    </p>
+    <table class="doc-table">
+      <thead><tr><th>Obligation</th><th>Event</th><th>Answered with</th></tr></thead>
+      <tbody>
+        <tr><td>Show output as it arrives</td><td><code>message.part.updated</code></td><td>—</td></tr>
+        <tr><td>Say whether it is working</td><td><code>session.status</code>, <code>session.idle</code></td><td>—</td></tr>
+        <tr><td>Let the user approve an action</td><td><code>permission.asked</code></td><td><code>permission.reply</code></td></tr>
+        <tr><td>Let the user answer a question</td><td><code>question.asked</code></td><td><code>question.reply</code> / <code>reject</code></td></tr>
+        <tr><td>Surface progress on long work</td><td><code>todo.updated</code></td><td>—</td></tr>
+        <tr><td>Show what changed on disk</td><td><code>session.diff</code>, <code>file.edited</code></td><td>—</td></tr>
+        <tr><td>Report failure</td><td><code>session.error</code></td><td>—</td></tr>
+        <tr><td>Survive a reload</td><td>—</td><td><code>session.messages</code></td></tr>
+      </tbody>
+    </table>
+    <DocCallout type="warn" title="An interface that ignores permission.asked hangs">
+      <p>
+        Nothing times out on the user's behalf. Drop that event and the session sits waiting forever
+        while your UI shows a spinner — the single most common bug in a first client.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="state" class="doc-section">
+    <h2>State from one feed</h2>
+    <p>
+      Do not poll. Load the transcript once, then let the event feed drive every subsequent change —
+      that is how the TUI, the desktop app and the mobile app all work, and it is why they agree
+      with each other.
+    </p>
+    <DocCode language="ts">{`type State = {
+  parts: Map<string, Part>
+  status: "idle" | "busy" | "retry"
+  permissions: PermissionRequest[]
+  questions: QuestionRequest[]
+  todos: Todo[]
+}
+
+// 1. snapshot
+const { data: messages } = await client.session.messages({ sessionID })
+for (const message of messages ?? []) {
+  for (const part of message.parts) state.parts.set(part.id, part)
+}
+
+// 2. every change after that arrives on the feed
+const { stream } = await client.event.subscribe()`}</DocCode>
+    <p>
+      Keying parts by <code>id</code> rather than appending is what makes updates idempotent: the
+      same part arrives many times as it grows, and a map absorbs that for free.
+    </p>
+  </section>
+
+  <section id="parts" class="doc-section">
+    <h2>Rendering parts</h2>
+    <p>
+      A message is an array of parts, and text is only one kind. Handle the others or a tool call
+      renders as a blank gap.
+    </p>
+    <DocCode language="ts">{`for await (const event of stream) {
+  switch (event.type) {
+    case "message.part.updated": {
+      const part = event.properties.part
+      state.parts.set(part.id, part)
+
+      // append when we can, re-render when we cannot
+      if (part.type === "text" && event.properties.delta) {
+        appendText(part.id, event.properties.delta)
+      } else {
+        rerender(part.id)
+      }
+      break
+    }
+
+    case "message.part.removed":
+      state.parts.delete(event.properties.partID)
+      break
+
+    case "session.status":
+      state.status = event.properties.status.type
+      break
+  }
+}`}</DocCode>
+    <DocCallout type="info" title="delta is an optimisation, not the source of truth">
+      <p>
+        A part can be replaced wholesale — a tool call completing, a text part being rewritten — and
+        then there is no <code>delta</code>. Keep <code>part</code> authoritative and treat
+        <code>delta</code> as the fast path for appending.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="permissions" class="doc-section">
+    <h2>Permissions</h2>
+    <p>
+      A permission request names what is being asked for and what it applies to. The reply is one of
+      three values, and <code>always</code> is what the request itself says it can be remembered as.
+    </p>
+    <DocCode language="ts">{`case "permission.asked": {
+  const request = event.properties
+  // { id, sessionID, permission, patterns, metadata, always, tool? }
+  state.permissions.push(request)
+  render()
+  break
+}
+
+case "permission.replied":
+  state.permissions = state.permissions.filter(
+    (entry) => entry.id !== event.properties.requestID,
+  )
+  render()
+  break`}</DocCode>
+    <DocCode language="ts">{`async function reply(request: PermissionRequest, reply: "once" | "always" | "reject") {
+  await client.permission.reply({ requestID: request.id, reply })
+}`}</DocCode>
+    <p>
+      Show <code>permission</code> and <code>patterns</code> in the prompt — "run
+      <code>bash</code>" is not enough information to approve; "run <code>bash</code>:
+      <code>rm -rf build</code>" is. Offer <code>always</code> only when the request carries
+      matching entries in <code>always</code>.
+    </p>
+    <p>
+      On reconnect, replay the backlog with <code>client.permission.list()</code>: requests raised
+      while you were disconnected are still waiting.
+    </p>
+  </section>
+
+  <section id="questions" class="doc-section">
+    <h2>Questions</h2>
+    <p>
+      A question is the agent asking the user to choose. One request carries several questions, each
+      with its own options — so the answer is an array of arrays, one inner array per question.
+    </p>
+    <DocCode language="ts">{`case "question.asked":
+  // { id, sessionID, questions: [{ header, question, options, multiple?, custom? }] }
+  state.questions.push(event.properties)
+  render()
+  break`}</DocCode>
+    <DocCode language="ts">{`// one answer per question, in order; inner arrays allow multi-select
+await client.question.reply({
+  requestID: request.id,
+  answers: [["postgres"], ["redis", "s3"]],
+})
+
+// the user dismissed it
+await client.question.reject({ requestID: request.id })`}</DocCode>
+    <DocCallout type="warn" title="The nesting is the part people get wrong">
+      <p>
+        <code>answers</code> is <code>string[][]</code>, not <code>string[]</code>. The outer array
+        lines up with <code>questions</code> by position; the inner one holds the selected values,
+        which is more than one only when the question sets <code>multiple</code>.
+      </p>
+    </DocCallout>
+    <p>
+      A question with <code>custom</code> accepts a value that is not in <code>options</code>, so
+      render a free-text field alongside the choices.
+    </p>
+  </section>
+
+  <section id="todos" class="doc-section">
+    <h2>Todos and diffs</h2>
+    <p>
+      For anything longer than a single answer, the todo list is the honest progress indicator — it
+      is what the agent is actually tracking, not a spinner.
+    </p>
+    <DocCode language="ts">{`case "todo.updated":
+  state.todos = event.properties.todos
+  render()
+  break
+
+case "file.edited":
+  markDirty(event.properties.path)
+  break`}</DocCode>
+    <DocCode language="ts">{`const { data: todos } = await client.session.todo({ sessionID })
+const { data: diff } = await client.session.diff({ sessionID })`}</DocCode>
+  </section>
+
+  <section id="reconnect" class="doc-section">
+    <h2>Reconnecting</h2>
+    <p>
+      The feed will drop — laptops sleep, networks change. Recovery is: resubscribe, re-fetch the
+      snapshot, and replay the pending queues. Because parts are keyed by id, re-applying the
+      snapshot over existing state is safe.
+    </p>
+    <DocCode language="ts">{`async function connect() {
+  while (true) {
+    try {
+      const { stream } = await client.event.subscribe()
+
+      // anything that happened while we were away
+      await resync()
+
+      for await (const event of stream) apply(event)
+    } catch (error) {
+      console.warn("feed dropped, reconnecting", error)
+    }
+    await new Promise((resolve) => setTimeout(resolve, 1000))
+  }
+}
+
+async function resync() {
+  const [messages, permissions, questions] = await Promise.all([
+    client.session.messages({ sessionID }),
+    client.permission.list(),
+    client.question.list(),
+  ])
+
+  for (const message of messages.data ?? []) {
+    for (const part of message.parts) state.parts.set(part.id, part)
+  }
+  state.permissions = permissions.data ?? []
+  state.questions = questions.data ?? []
+  render()
+}`}</DocCode>
+    <DocCallout type="note" title="Resync after subscribing, not before">
+      <p>
+        Subscribe first, then snapshot. The other order leaves a window where an event fires after
+        your snapshot and before your subscription, and that change is lost until something else
+        touches the same part.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="complete" class="doc-section">
+    <h2>A working client</h2>
+    <p>
+      A terminal client, complete enough to use: streams output, prompts for permissions, answers
+      questions, and survives a dropped feed.
+    </p>
+    <DocCode language="ts" title="client.ts">{`import { createNikcliClient } from "@nikcli-ai/sdk/httpapi"
+import * as readline from "node:readline/promises"
+
+const client = createNikcliClient({
+  baseUrl: process.env.NIKCLI_URL ?? "http://127.0.0.1:4096",
+  directory: process.cwd(),
+})
+
+const rl = readline.createInterface({ input: process.stdin, output: process.stdout })
+
+const { data: session, error } = await client.session.create({ title: "custom client" })
+if (!session) throw error
+
+async function handlePermission(request: { id: string; permission: string; patterns: string[] }) {
+  const answer = await rl.question(
+    \`\\n[permission] \${request.permission} \${request.patterns.join(" ")} — (y)es / (a)lways / (n)o: \`,
+  )
+  await client.permission.reply({
+    requestID: request.id,
+    reply: answer.startsWith("a") ? "always" : answer.startsWith("y") ? "once" : "reject",
+  })
+}
+
+async function handleQuestion(request: {
+  id: string
+  questions: Array<{ header: string; question: string; options: Array<{ value: string }> }>
+}) {
+  const answers: string[][] = []
+  for (const question of request.questions) {
+    console.log(\`\\n[\${question.header}] \${question.question}\`)
+    question.options.forEach((option, index) => console.log(\`  \${index + 1}. \${option.value}\`))
+    const picked = await rl.question("choose: ")
+    const option = question.options[Number(picked) - 1]
+    answers.push([option?.value ?? picked])
+  }
+  await client.question.reply({ requestID: request.id, answers })
+}
+
+async function run(prompt: string) {
+  // subscribe before submitting, or the first tokens are lost
+  const { stream } = await client.event.subscribe()
+
+  await client.session.promptAsync({
+    sessionID: session!.id,
+    parts: [{ type: "text", text: prompt }],
+  })
+
+  for await (const event of stream) {
+    switch (event.type) {
+      case "message.part.updated":
+        if (event.properties.part.type === "text") {
+          process.stdout.write(event.properties.delta ?? "")
+        }
+        break
+
+      case "permission.asked":
+        if (event.properties.sessionID === session!.id) {
+          await handlePermission(event.properties)
+        }
+        break
+
+      case "question.asked":
+        if (event.properties.sessionID === session!.id) {
+          await handleQuestion(event.properties)
+        }
+        break
+
+      case "todo.updated":
+        // a real UI would render this; a terminal one can stay quiet
+        break
+
+      case "session.error":
+        console.error("\\n[error]", event.properties.error)
+        return
+
+      case "session.idle":
+        if (event.properties.sessionID === session!.id) {
+          const { data: diff } = await client.session.diff({ sessionID: session!.id })
+          if (diff?.length) console.log("\\n\\n[changed]\\n", diff)
+          return
+        }
+    }
+  }
+}
+
+while (true) {
+  const prompt = await rl.question("\\n> ")
+  if (!prompt || prompt === "exit") break
+  await run(prompt)
+}
+rl.close()`}</DocCode>
+    <DocCallout type="info" title="Filter every event by sessionID">
+      <p>
+        Even the instance-scoped feed carries other sessions on the same project — a loop, a
+        background delegation, another window. Answering another session's permission prompt from
+        your UI is a confusing bug to track down.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="failure-modes" class="doc-section">
+    <h2>Failure modes</h2>
+    <table class="doc-table">
+      <thead><tr><th>Symptom</th><th>Cause</th></tr></thead>
+      <tbody>
+        <tr><td>Spinner forever, no output</td><td>An unanswered <code>permission.asked</code> or <code>question.asked</code>.</td></tr>
+        <tr><td>Text duplicates</td><td>Appending <code>part.text</code> as well as <code>delta</code>.</td></tr>
+        <tr><td>Parts appear twice after reconnect</td><td>Appending to a list instead of keying by <code>part.id</code>.</td></tr>
+        <tr><td>Missed the first tokens</td><td>Subscribed after <code>promptAsync</code>.</td></tr>
+        <tr><td>A change is silently lost</td><td>Snapshotted before subscribing.</td></tr>
+        <tr><td><code>question.reply</code> rejected</td><td><code>answers</code> passed as <code>string[]</code> instead of <code>string[][]</code>.</td></tr>
+        <tr><td>UI answers someone else's prompt</td><td>Not filtering events by <code>sessionID</code>.</td></tr>
+        <tr><td>Tool calls render as blanks</td><td>Only handling <code>part.type === "text"</code>.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <DocRelated
+    links={[
+      { title: "Streaming a response", href: "/docs/guides/streaming", description: "The feed mechanics in isolation." },
+      { title: "Using the API", href: "/docs/guides/api", description: "The endpoints this guide composes." },
+      { title: "Permissions", href: "/docs/permissions", description: "What the user is actually approving." },
+      { title: "API Reference", href: "/docs/api/session", description: "Every session endpoint and payload." },
+    ]}
+  />
+</DocsLayout>

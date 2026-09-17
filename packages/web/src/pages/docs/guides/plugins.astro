@@ -1,0 +1,370 @@
+---
+export const prerender = true;
+
+import DocsLayout from "../../../layouts/DocsLayout.astro";
+import DocCallout from "../../../components/docs/DocCallout.astro";
+import DocCode from "../../../components/docs/DocCode.astro";
+import DocRelated from "../../../components/docs/DocRelated.astro";
+
+const toc = [
+  { title: "What a plugin is", href: "#what", depth: 2 },
+  { title: "1. Write the file", href: "#step-1", depth: 2 },
+  { title: "2. Point config at it", href: "#step-2", depth: 2 },
+  { title: "3. Check it loaded", href: "#step-3", depth: 2 },
+  { title: "The module shape", href: "#shape", depth: 2 },
+  { title: "What you are handed", href: "#input", depth: 2 },
+  { title: "Passing options", href: "#options", depth: 2 },
+  { title: "The hook surface", href: "#hooks", depth: 2 },
+  { title: "Adding a tool", href: "#tools", depth: 2 },
+  { title: "Publishing to npm", href: "#publishing", depth: 2 },
+  { title: "Debugging", href: "#debugging", depth: 2 },
+  { title: "Failure modes", href: "#failure-modes", depth: 2 },
+];
+---
+
+<DocsLayout
+  title="Writing a plugin"
+  subtitle="From an empty file to a loaded plugin with its own tool — the module shape, the runtime input, every hook, and how to ship it."
+  description="Step-by-step guide to writing a nikcli plugin: local file, config entry, module shape, plugin input, hooks, custom tools, publishing and debugging."
+  toc={toc}
+>
+  <section id="what" class="doc-section">
+    <h2>What a plugin is</h2>
+    <p>
+      A plugin is a module nikcli imports at startup. It is called once per project instance with a
+      client bound to that instance, and it returns an object of hooks. From then on the server
+      calls those hooks at the points they name.
+    </p>
+    <p>
+      Plugins run <strong>inside</strong> the nikcli process, with the same access the agent has.
+      That is the point — a hook can change the model call, veto a permission, or add a tool — and
+      also the caution: a plugin is trusted code.
+    </p>
+    <DocCallout type="info" title="You do not need to publish anything to start">
+      <p>
+        A single local <code>.ts</code> file referenced from <code>nikcli.json</code> is a complete,
+        working plugin. npm is for sharing it later.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="step-1" class="doc-section">
+    <h2>1. Write the file</h2>
+    <p>
+      Create <code>.nikcli/plugins/hello.ts</code> in your project. The only dependency is
+      <code>@nikcli-ai/plugin</code>, which carries types and the <code>tool()</code> helper and
+      nothing else at runtime.
+    </p>
+    <DocCode language="bash">
+npm install --save-dev @nikcli-ai/plugin
+    </DocCode>
+    <DocCode language="ts" title=".nikcli/plugins/hello.ts">{`import type { Plugin } from "@nikcli-ai/plugin"
+
+export const HelloPlugin: Plugin = async ({ directory }) => {
+  console.log("[hello] loaded for", directory)
+
+  return {
+    async "tool.execute.before"(input) {
+      console.log("[hello] about to run", input.tool)
+    },
+  }
+}`}</DocCode>
+    <p>
+      That is a whole plugin. It exports one function; nikcli calls it and keeps the hooks it
+      returns.
+    </p>
+  </section>
+
+  <section id="step-2" class="doc-section">
+    <h2>2. Point config at it</h2>
+    <p>
+      Add the path to <code>plugin</code> in <code>nikcli.json</code>. Relative paths resolve
+      against the config file that declares them, so this keeps working when the project moves.
+    </p>
+    <DocCode language="json" title="nikcli.json">{`{
+  "$schema": "https://nikcli.store/config.json",
+  "plugin": ["./.nikcli/plugins/hello.ts"]
+}`}</DocCode>
+    <p>
+      An entry that is not a path is treated as an npm package specifier and installed on first use,
+      so <code>"@scope/my-plugin@1.2.3"</code> works with no separate install step. Paths are
+      imported directly and never installed.
+    </p>
+    <DocCallout type="note" title="Global instead of per project">
+      <p>
+        The same key in the global config applies the plugin to every project. Use
+        <code>nikcli plugin &lt;pkg&gt; --global</code> to patch it, or edit the file directly.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="step-3" class="doc-section">
+    <h2>3. Check it loaded</h2>
+    <p>
+      Start nikcli and watch the log. Loading is logged per plugin, and a plugin that throws during
+      init is reported rather than silently skipped.
+    </p>
+    <DocCode language="bash">
+nikcli --print-logs
+    </DocCode>
+    <p>
+      If the plugin registers a tool, the fastest confirmation is to ask the server what tools exist
+      for the instance:
+    </p>
+    <DocCode language="bash">
+curl -s "http://127.0.0.1:4096/experimental/tool/ids?directory=$PWD"
+    </DocCode>
+  </section>
+
+  <section id="shape" class="doc-section">
+    <h2>The module shape</h2>
+    <p>There are two accepted shapes, and the loader picks between them by looking at the module.</p>
+
+    <h3>Named exports (simplest)</h3>
+    <p>
+      Every exported function is treated as a plugin and called. Exporting the same function twice —
+      as a named and a default export — is deduplicated by reference, so it initialises once.
+    </p>
+    <DocCode language="ts">{`import type { Plugin } from "@nikcli-ai/plugin"
+
+export const First: Plugin = async () => ({ /* hooks */ })
+export const Second: Plugin = async () => ({ /* hooks */ })`}</DocCode>
+
+    <h3>Default-export manifest</h3>
+    <p>
+      A module whose <strong>default export</strong> is an object carrying <code>id</code>,
+      <code>server</code> or <code>tui</code> is read as a manifest instead. This is the shape to
+      use when publishing, because the <code>id</code> is what config and the plugin manager key on.
+    </p>
+    <DocCode language="ts">{`import type { PluginModule } from "@nikcli-ai/plugin"
+
+export default {
+  id: "@scope/my-plugin",
+  server: async (input, options) => ({ /* hooks */ }),
+} satisfies PluginModule`}</DocCode>
+    <DocCallout type="warn" title="server and tui are mutually exclusive">
+      <p>
+        One module declares one runtime. A default export carrying both is rejected at load —
+        a TUI plugin ships from its own entrypoint (<code>./tui</code> in
+        <code>exports</code>), not from the server one.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="input" class="doc-section">
+    <h2>What you are handed</h2>
+    <p>The first argument is the runtime input for the instance the plugin was loaded into.</p>
+    <table class="doc-table">
+      <thead><tr><th>Field</th><th>Type</th><th>What it is</th></tr></thead>
+      <tbody>
+        <tr><td><code>client</code></td><td><code>NikcliClient</code></td><td>The same typed client the <a href="/docs/build/client">Connect path</a> uses, already bound to this instance.</td></tr>
+        <tr><td><code>directory</code></td><td><code>string</code></td><td>The resolved project directory.</td></tr>
+        <tr><td><code>worktree</code></td><td><code>string</code></td><td>The worktree root.</td></tr>
+        <tr><td><code>project</code></td><td><code>{"{ id, worktree }"}</code></td><td>Project identity.</td></tr>
+        <tr><td><code>serverUrl</code></td><td><code>URL</code></td><td>Where this instance's server is reachable.</td></tr>
+        <tr><td><code>$</code></td><td>Bun shell</td><td>Run commands: <code>await $`git status`.text()</code>.</td></tr>
+      </tbody>
+    </table>
+    <DocCallout type="info" title="Calling the API from a plugin is normal">
+      <p>
+        <code>client</code> is not a limited subset. Reading sessions, writing files or replying to
+        a permission from inside a hook is the intended way to do it, not a workaround.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="options" class="doc-section">
+    <h2>Passing options</h2>
+    <p>
+      A config entry can be a <code>[specifier, options]</code> pair instead of a bare string. The
+      object arrives as the plugin function's second argument.
+    </p>
+    <DocCode language="json" title="nikcli.json">{`{
+  "plugin": [
+    ["./.nikcli/plugins/notify.ts", { "channel": "#builds", "quiet": true }]
+  ]
+}`}</DocCode>
+    <DocCode language="ts">{`import type { Plugin } from "@nikcli-ai/plugin"
+
+type Options = { channel?: string; quiet?: boolean }
+
+export const Notify: Plugin = async (input, options) => {
+  const { channel = "#general", quiet = false } = (options ?? {}) as Options
+  // ...
+  return {}
+}`}</DocCode>
+  </section>
+
+  <section id="hooks" class="doc-section">
+    <h2>The hook surface</h2>
+    <p>
+      Every hook is optional. The mutating ones take <code>(input, output)</code> and you change
+      <code>output</code> in place — the value you leave there is what nikcli uses.
+    </p>
+    <table class="doc-table">
+      <thead><tr><th>Hook</th><th>Runs when</th><th>You can change</th></tr></thead>
+      <tbody>
+        <tr><td><code>tool</code></td><td>At load</td><td>Register tools by name (see below).</td></tr>
+        <tr><td><code>event</code></td><td>Any server event</td><td>Nothing — this one observes.</td></tr>
+        <tr><td><code>config</code></td><td>Config is resolved</td><td>The config object.</td></tr>
+        <tr><td><code>auth</code></td><td>At load</td><td>Register an auth method for a provider.</td></tr>
+        <tr><td><code>provider</code></td><td>At load</td><td>Register a provider and its model list.</td></tr>
+        <tr><td><code>chat.message</code></td><td>A user message arrives</td><td>Nothing — observes the message and parts.</td></tr>
+        <tr><td><code>chat.params</code></td><td>Before the model call</td><td><code>temperature</code>, <code>topP</code>, <code>topK</code>, provider options.</td></tr>
+        <tr><td><code>chat.headers</code></td><td>Before the model call</td><td>Outbound headers.</td></tr>
+        <tr><td><code>chat.request</code></td><td>Immediately before dispatch</td><td>The serialized <code>url</code>, <code>headers</code> and <code>body</code>.</td></tr>
+        <tr><td><code>permission.ask</code></td><td>A permission is requested</td><td><code>status</code>: <code>ask</code>, <code>allow</code> or <code>deny</code>.</td></tr>
+        <tr><td><code>shell.env</code></td><td>A PTY or shell is created</td><td>Environment variables merged over the caller's.</td></tr>
+        <tr><td><code>shell.create.before</code></td><td>Before a shell invocation</td><td><code>command</code>, <code>cwd</code>, <code>timeout</code>, <code>shell</code>, <code>env</code>.</td></tr>
+        <tr><td><code>command.execute.before</code></td><td>Before a slash command</td><td>The message <code>parts</code>.</td></tr>
+        <tr><td><code>tool.execute.before</code></td><td>Before a tool runs</td><td>The tool <code>args</code>.</td></tr>
+        <tr><td><code>tool.execute.after</code></td><td>After a tool runs</td><td><code>title</code>, <code>output</code>, <code>metadata</code>.</td></tr>
+        <tr><td><code>experimental.chat.system.transform</code></td><td>Before the model call</td><td>The system prompt blocks.</td></tr>
+        <tr><td><code>experimental.chat.messages.transform</code></td><td>Before the model call</td><td>The whole message list.</td></tr>
+        <tr><td><code>experimental.session.compacting</code></td><td>Before compaction</td><td>Extra <code>context</code>, or replace the <code>prompt</code>.</td></tr>
+        <tr><td><code>experimental.text.complete</code></td><td>A text part completes</td><td>The final <code>text</code>.</td></tr>
+        <tr><td><code>dispose</code></td><td>Instance shutdown</td><td>Nothing — clean up here.</td></tr>
+      </tbody>
+    </table>
+    <DocCallout type="warn" title="A shell hook cannot smuggle past approval">
+      <p>
+        <code>shell.create.before</code> runs before the permission check, and the check is made
+        against the <em>final</em> values your hook wrote. Rewriting a command does not inherit the
+        approval the user granted for the original one.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="tools" class="doc-section">
+    <h2>Adding a tool</h2>
+    <p>
+      The <code>tool</code> hook is a map of name to definition. <code>tool()</code> is a typed
+      identity helper: it infers the argument type from the zod shape you declare, so
+      <code>execute</code> receives parsed, typed args.
+    </p>
+    <DocCode language="ts" title=".nikcli/plugins/deploy.ts">{`import type { Plugin } from "@nikcli-ai/plugin"
+import { tool } from "@nikcli-ai/plugin/tool"
+
+export const Deploy: Plugin = async ({ $ }) => ({
+  tool: {
+    deploy: tool({
+      description: "Deploy a branch to the staging environment",
+      args: {
+        branch: tool.schema.string().describe("branch name to deploy"),
+        dryRun: tool.schema.boolean().optional().describe("print the plan without applying"),
+      },
+      async execute(args, ctx) {
+        ctx.metadata({ title: \`Deploying \${args.branch}\` })
+
+        await ctx.ask({
+          permission: "deploy",
+          patterns: [args.branch],
+          always: ["deploy"],
+          metadata: { branch: args.branch },
+        })
+
+        const flag = args.dryRun ? "--dry-run" : ""
+        const output = await $\`./script/deploy.sh \${args.branch} \${flag}\`.text()
+
+        return { title: \`Deployed \${args.branch}\`, output }
+      },
+    }),
+  },
+})`}</DocCode>
+    <p>The context argument carries the session the call belongs to and three capabilities:</p>
+    <table class="doc-table">
+      <thead><tr><th>Member</th><th>Use</th></tr></thead>
+      <tbody>
+        <tr><td><code>sessionID</code>, <code>messageID</code>, <code>callID</code>, <code>agent</code></td><td>Identity of the call.</td></tr>
+        <tr><td><code>abort</code></td><td>An <code>AbortSignal</code> — pass it to anything long-running.</td></tr>
+        <tr><td><code>{"metadata({ title, metadata })"}</code></td><td>Set the label the UI shows while the tool runs.</td></tr>
+        <tr><td><code>{"progress({ structured, content })"}</code></td><td>Stream partial results before the tool returns.</td></tr>
+        <tr><td><code>{"ask({ permission, patterns, always, metadata })"}</code></td><td>Request user approval mid-execution.</td></tr>
+      </tbody>
+    </table>
+    <p>
+      Return a plain string, or an object with <code>output</code> plus optional
+      <code>title</code>, <code>metadata</code> and file <code>attachments</code>.
+    </p>
+    <DocCallout type="note" title="Describe the arguments, not just the tool">
+      <p>
+        <code>.describe()</code> on each argument is what the model reads when deciding how to call
+        it. A tool with a good description and unlabelled arguments still gets called wrong.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="publishing" class="doc-section">
+    <h2>Publishing to npm</h2>
+    <p>
+      Expose the server entrypoint under the <code>./server</code> export condition. The installer
+      reads it to detect what kind of plugin the package is, and refuses an entry that resolves
+      outside the package directory.
+    </p>
+    <DocCode language="json" title="package.json">{`{
+  "name": "@scope/my-plugin",
+  "version": "1.0.0",
+  "type": "module",
+  "exports": {
+    "./server": "./dist/server.js"
+  }
+}`}</DocCode>
+    <p>Consumers then install it with one command, which also patches their config:</p>
+    <DocCode language="bash">
+nikcli plugin @scope/my-plugin
+nikcli plugin @scope/my-plugin --global
+nikcli plugin @scope/my-plugin@1.2.3 --force
+    </DocCode>
+    <p>
+      See <a href="/docs/plugins#manifest">the plugin manifest</a> for what the installer detects
+      and how it patches config.
+    </p>
+  </section>
+
+  <section id="debugging" class="doc-section">
+    <h2>Debugging</h2>
+    <ul>
+      <li>
+        <strong>Run with logs.</strong> <code>nikcli --print-logs</code> shows each plugin as it
+        loads, with its resolved path.
+      </li>
+      <li>
+        <strong>One plugin's failure is isolated.</strong> Hooks are dispatched in a per-hook
+        try/catch, so a throwing hook does not take down the others — which also means a broken hook
+        can look like it simply did nothing. Check the log before assuming it never ran.
+      </li>
+      <li>
+        <strong>Iterate on a path, not a package.</strong> A <code>file://</code> or relative entry
+        is re-imported on restart with no install step in between.
+      </li>
+      <li>
+        <strong>Confirm tools registered</strong> with
+        <code>GET /experimental/tool/ids</code> rather than by prompting and hoping.
+      </li>
+    </ul>
+  </section>
+
+  <section id="failure-modes" class="doc-section">
+    <h2>Failure modes</h2>
+    <table class="doc-table">
+      <thead><tr><th>Symptom</th><th>Likely cause</th></tr></thead>
+      <tbody>
+        <tr><td>Plugin never logs</td><td>The config entry is in a scope that is not loaded — project config when you edited global, or the reverse.</td></tr>
+        <tr><td><code>must default export an object with server()</code></td><td>A default export exists but carries neither <code>server</code> nor <code>tui</code>. Either complete the manifest or use plain named exports.</td></tr>
+        <tr><td>Initialised twice</td><td>Two different function objects are exported that do the same thing; dedup is by reference, not by behaviour.</td></tr>
+        <tr><td>Tool missing from the model</td><td>Registered, but gated — check permission mode and the tool gating rules in <a href="/docs/tools">Tools</a>.</td></tr>
+        <tr><td>Entry resolves outside the package</td><td>The <code>./server</code> export points outside the plugin directory; the loader refuses it on purpose.</td></tr>
+        <tr><td>Hook edits are ignored</td><td>You returned a new object instead of mutating <code>output</code>.</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <DocRelated
+    links={[
+      { title: "Plugin recipes", href: "/docs/guides/plugin-recipes", description: "Eight complete plugins to copy from." },
+      { title: "Plugins & Skills", href: "/docs/plugins", description: "Installing, configuring and the plugin manifest." },
+      { title: "TUI Feature Plugins", href: "/docs/tui-plugins", description: "The other plugin runtime — routes, panels and keybinds." },
+      { title: "Tools", href: "/docs/tools", description: "The built-in tools your own sits beside." },
+    ]}
+  />
+</DocsLayout>

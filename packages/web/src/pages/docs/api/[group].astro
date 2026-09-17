@@ -1,0 +1,109 @@
+---
+export const prerender = true;
+
+import DocsLayout from "../../../layouts/DocsLayout.astro";
+import DocRelated from "../../../components/docs/DocRelated.astro";
+import ApiOperation from "../../../components/docs/ApiOperation.astro";
+import ApiPlayground from "../../../components/docs/ApiPlayground.astro";
+import ApiPlaygroundScript from "../../../components/docs/ApiPlaygroundScript.astro";
+import { apiGroups } from "../../../data/apiGroups";
+import { groupPage } from "../../../lib/api-reference";
+import { lookupSchema, renderSchemaHtml, schemaAnchor } from "../../../lib/openapi";
+import "../../../styles/api.css";
+
+export function getStaticPaths() {
+  return apiGroups.map((group) => ({ params: { group: group.slug } }));
+}
+
+const slug = Astro.params.group!;
+const page = groupPage(slug)!;
+const { group, operations, sections, schemaNames } = page;
+const linkable = new Set(schemaNames);
+
+const toc = [
+  { title: "Operations", href: "#operations", depth: 2 },
+  ...sections.map((section) => ({ title: section.title, href: `#${section.anchor}`, depth: 3 })),
+  { title: "Schemas", href: "#schemas", depth: 2 },
+];
+
+const title = group.section === "API · Mobile" ? `Mobile · ${group.title}` : group.title;
+---
+
+<DocsLayout
+  title={title}
+  subtitle={group.summary}
+  description={`HTTP API reference for the nikcli ${group.title.toLowerCase()} endpoints: ${group.summary}`}
+  toc={toc}
+>
+  <ApiPlayground />
+
+  <section id="operations" class="doc-section">
+    <h2>Operations</h2>
+    <p>
+      {operations.length} {operations.length === 1 ? "endpoint" : "endpoints"}, generated from the
+      server's own <a href="/docs/api">OpenAPI document</a>. Every path also accepts the
+      <code>directory</code> and <code>workspace</code> query parameters that select which instance
+      handles the request.
+    </p>
+
+    <table class="api-index not-prose">
+      <tbody>
+        {operations.map((entry) => (
+          <tr>
+            <td class="api-index-method"><span class={`api-method api-method-${entry.method}`}>{entry.method}</span></td>
+            <td><a href={`#${entry.id}`}>{entry.path}</a></td>
+            <td class="api-index-id">
+              {entry.operation.operationId}
+            </td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  </section>
+
+  {sections.length > 0
+    ? sections.map((section) => (
+        <section id={section.anchor} class="doc-section">
+          <h3>{section.title}</h3>
+          <div class="not-prose">
+            {section.operations.map((entry) => <ApiOperation entry={entry} linkable={linkable} />)}
+          </div>
+        </section>
+      ))
+    : (
+        <section class="doc-section">
+          <div class="not-prose">
+            {operations.map((entry) => <ApiOperation entry={entry} linkable={linkable} />)}
+          </div>
+        </section>
+      )}
+
+  <section id="schemas" class="doc-section">
+    <h2>Schemas</h2>
+    <p>
+      The {schemaNames.length} schemas reachable from these endpoints. Each is shown one level
+      deep; nested types link to their own entry below.
+      Names ending in <code>_2</code>, <code>_3</code> and so on are the OpenAPI emitter
+      disambiguating same-named schemas declared by different HttpApi groups — they are distinct
+      shapes, not duplicates.
+    </p>
+    <div class="not-prose">
+      {schemaNames.map((name) => (
+        <div id={schemaAnchor(name)} class="api-schema-entry">
+          <div class="api-schema-name">{name}</div>
+          <pre class="api-schema" set:html={renderSchemaHtml(lookupSchema(name), { linkable, expand: 0 })} />
+        </div>
+      ))}
+    </div>
+  </section>
+
+  <DocRelated
+    links={[
+      { title: "API overview", href: "/docs/api", description: "Base URL, auth, conventions and the full resource index." },
+      { title: "Server & API", href: "/docs/server-api", description: "How the Effect HttpApi server is built and how a request flows through it." },
+      { title: "Sessions", href: "/docs/sessions", description: "The concepts behind the session endpoints." },
+      { title: "Packages & Suite", href: "/docs/packages", description: "Where the generated SDK client lives." },
+    ]}
+  />
+  <ApiPlaygroundScript />
+</DocsLayout>
