@@ -67,12 +67,27 @@
   cursor: pointer;
   color: var(--ade-text-soft);
   position: relative;
-  transition: background var(--ade-dur-fast) var(--ade-ease), color var(--ade-dur-fast) var(--ade-ease);
+  /* The palette list is flipped at speed. Transform in the transition so the
+     press-scale rides the same frame as the highlight background — every
+     option reads as one motion, not a colour flash followed by a shrink. */
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
 }
 
-[data-component="palette"] [data-slot="option"]:hover {
-  background: var(--ade-hover);
-  color: var(--ade-text);
+@media (hover: hover) and (pointer: fine) {
+  [data-component="palette"] [data-slot="option"]:hover {
+    background: var(--ade-hover);
+    color: var(--ade-text);
+  }
+}
+
+/* A subtle press: rows are slim and the gesture is a directional tap. The
+   scale is small and the accent rail (already pinned to the left) stays put
+   because it is the parent pseudo, not the transforming row. */
+[data-component="palette"] [data-slot="option"]:active {
+  transform: scale(0.99);
 }
 
 [data-component="palette"] [data-slot="option"][data-selected] {
@@ -92,13 +107,24 @@
   border-radius: 0 var(--ade-radius-sm) var(--ade-radius-sm) 0;
 }
 
+/* The selected option keeps its accent rail when focused. */
+[data-component="palette"] [data-slot="option"][data-selected]:focus-visible {
+  background: var(--ade-active);
+  color: var(--ade-text);
+  font-weight: var(--ade-weight-medium);
+  box-shadow: var(--ade-focus-ring);
+}
+
 [data-component="palette"] [data-slot="option"]:focus-visible {
+  outline: none;
   box-shadow: var(--ade-focus-ring);
 }
 
 [data-component="palette"] [data-slot="option"][aria-disabled="true"] {
   opacity: 0.5;
   cursor: not-allowed;
+  /* Disabled options must not respond to press — the gesture is not theirs. */
+  transform: none;
 }
 
 [data-component="palette"] [data-slot="option-title"] {
@@ -112,7 +138,7 @@
 }
 
 [data-component="palette"] [data-slot="option-shortcut"] {
-  font-family: var(--ade-sans);
+  font-family: var(--ade-mono);
   font-size: var(--ade-font-xs);
   color: var(--ade-text-weak);
   background: var(--ade-raised);

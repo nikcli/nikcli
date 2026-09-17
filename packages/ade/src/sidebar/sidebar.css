@@ -12,6 +12,9 @@
   flex: 0 0 auto;
   padding: var(--ade-space-5) var(--ade-space-6);
   border-bottom: 1px solid var(--ade-border);
+  /* A whisper of background lift so the project header reads as a header, not
+     another row. */
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--ade-text) 2%, transparent), transparent 60%);
 }
 
 /*
@@ -85,11 +88,23 @@
   display: inline-flex;
   align-items: center;
   gap: var(--ade-space-3);
-  padding: 1px var(--ade-space-4);
+  padding: var(--ade-space-1) var(--ade-space-4);
   border-radius: var(--ade-radius-full);
   font-family: var(--ade-sans);
   font-size: var(--ade-font-xs);
   font-variant-numeric: tabular-nums;
+  font-weight: var(--ade-weight-medium);
+  line-height: var(--ade-leading);
+  /* Subtle scale on hover — pills are metrics, not buttons, but a tiny
+     response makes them feel alive. */
+  transition:
+    transform var(--ade-dur-fast) var(--ade-ease),
+    filter var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="sidebar-pill"]:hover {
+  transform: scale(1.02);
+  filter: brightness(1.05);
 }
 
 [data-slot="sidebar-pill-dot"] {
@@ -100,9 +115,18 @@
   background: currentColor;
 }
 
-[data-slot="sidebar-pill"][data-tone="working"] { background: var(--ade-working-bg); color: var(--ade-working); }
-[data-slot="sidebar-pill"][data-tone="waiting"] { background: var(--ade-waiting-bg); color: var(--ade-waiting); }
-[data-slot="sidebar-pill"][data-tone="error"]   { background: var(--ade-error-bg);   color: var(--ade-error); }
+[data-slot="sidebar-pill"][data-tone="working"] {
+  background: var(--ade-working-bg);
+  color: var(--ade-working);
+}
+[data-slot="sidebar-pill"][data-tone="waiting"] {
+  background: var(--ade-waiting-bg);
+  color: var(--ade-waiting);
+}
+[data-slot="sidebar-pill"][data-tone="error"] {
+  background: var(--ade-error-bg);
+  color: var(--ade-error);
+}
 
 /* ── sections ─────────────────────────────────────────────────────────────── */
 
@@ -191,11 +215,14 @@
   user-select: none;
   -webkit-user-select: none;
   position: relative;
-  transition: background var(--ade-dur-fast) var(--ade-ease);
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
 }
 
 [data-slot="file-result"]:active {
   cursor: grabbing;
+  transform: scale(0.99);
 }
 
 [data-slot="file-result"]:hover {
@@ -253,6 +280,8 @@
   font-family: var(--ade-sans);
   font-size: var(--ade-font-md);
   line-height: var(--ade-leading);
+  text-align: left;
+  font-style: italic;
 }
 
 /*
@@ -264,12 +293,20 @@
  * 260px rail, and the odd one out reads as a different kind of thing.
  * The plugin and shot-tray headers are pulled into this shape further down.
  */
+/*
+ * A section header in the column.
+ *
+ * 24px of vertical padding is what makes the headers read as section
+ * boundaries rather than as another row. The 6px of horizontal padding
+ * (instead of the 12px the rest of the column uses) is what keeps the
+ * count and the chevron aligned with the rows beneath them.
+ */
 [data-slot="section-header"] {
   display: flex;
   align-items: center;
   gap: var(--ade-space-4);
   width: 100%;
-  padding: var(--ade-space-4) var(--ade-space-6);
+  padding: var(--ade-space-4) var(--ade-space-3) var(--ade-space-2);
   font-family: var(--ade-sans);
   font-size: var(--ade-font-xs);
   font-weight: var(--ade-weight-medium);
@@ -279,10 +316,21 @@
   background: transparent;
   border: none;
   cursor: pointer;
-  transition: color var(--ade-dur-fast) var(--ade-ease);
+  transition:
+    color var(--ade-dur-fast) var(--ade-ease),
+    background var(--ade-dur-fast) var(--ade-ease),
+    transform 120ms var(--ade-ease-out);
 }
 
-[data-slot="section-header"]:hover { color: var(--ade-text-soft); }
+@media (hover: hover) and (pointer: fine) {
+  [data-slot="section-header"]:hover {
+    color: var(--ade-text-soft);
+  }
+}
+
+[data-slot="section-header"]:active {
+  transform: scale(0.99);
+}
 
 [data-slot="section-header"]:focus-visible {
   outline: none;
@@ -313,8 +361,9 @@
 [data-slot="section-chevron"] {
   flex: 0 0 auto;
   color: var(--ade-text-weak);
-  transform: rotate(-90deg);
-  transition: transform var(--ade-dur-fast) var(--ade-ease);
+  width: 16px;
+  height: 16px;
+  transition: transform var(--ade-dur) var(--ade-spring);
 }
 
 [data-slot="sidebar-section"][data-open] [data-slot="section-chevron"] {
@@ -322,7 +371,9 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
-  [data-slot="section-chevron"] { transition: none; }
+  [data-slot="section-chevron"] {
+    transition: transform var(--ade-dur-fast) var(--ade-ease);
+  }
 }
 
 /*
@@ -414,7 +465,11 @@
   color: var(--ade-text-weak);
   cursor: pointer;
   opacity: 0;
-  transition: opacity var(--ade-dur-fast) var(--ade-ease);
+  transition:
+    opacity var(--ade-dur-fast) var(--ade-ease),
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
 }
 
 [data-slot="section-header-row"]:hover [data-slot="section-add"],
@@ -425,6 +480,10 @@
 [data-slot="section-add"]:hover {
   background: var(--ade-hover);
   color: var(--ade-text);
+}
+
+[data-slot="section-add"]:active {
+  transform: scale(0.92);
 }
 
 [data-slot="section-add"]:focus-visible {
@@ -456,7 +515,9 @@
 
 /* A closed section is a header and nothing else, with no border doubling up
    against the next one. */
-[data-slot="sidebar-section"]:last-of-type { border-bottom: 0; }
+[data-slot="sidebar-section"]:last-of-type {
+  border-bottom: 0;
+}
 
 [data-slot="search-box"] {
   padding: var(--ade-space-3) var(--ade-space-6);
@@ -507,6 +568,8 @@
   text-overflow: ellipsis;
   margin-left: var(--ade-space-8);
   font-variant-numeric: tabular-nums;
+  line-height: var(--ade-leading);
+  padding-top: var(--ade-space-1);
 }
 
 /* Highlight match */
@@ -595,9 +658,26 @@
  * modifica.
  */
 
-/* ── il fondo e la testata ── */
-[data-component="ade-sidebar"] {
-  background: var(--ade-sunken);
+/* The selection veil — a subtle accent tint, slightly translucent so the
+   resting state bleeds through softly. A stronger tint reads as a button. */
+[data-component="ade-sidebar"] [data-slot="tree-row"][data-selected],
+[data-component="ade-sidebar"] [data-slot="file-result"][data-selected],
+[data-component="ade-sidebar"] [data-slot="workspace-header"][data-active],
+[data-component="ade-sidebar"] [data-slot="session-row"][data-selected],
+[data-component="ade-sidebar"] [data-slot="active-agent-card"][data-selected] {
+  background: var(--ade-accent-soft);
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--ade-text);
+  font-weight: var(--ade-weight-medium);
+}
+
+/* On the accent veil, the status dot and its halo would muddy together —
+   a hairline of the panel colour cuts them back out. */
+[data-slot="session-row"][data-selected] [data-slot="agent-status-dot"],
+[data-slot="active-agent-card"][data-selected] [data-slot="agent-status-dot"] {
+  outline: 2px solid var(--ade-raised);
+  outline-offset: 1px;
 }
 /* Non più una carta: il nome del progetto è il titolo della colonna, e un
    titolo non ha bisogno di un riquadro per farsi riconoscere. */
@@ -686,7 +766,7 @@
 [data-component="ade-sidebar"] [data-slot="tree-row"],
 [data-component="ade-sidebar"] [data-slot="workspace-header"] {
   line-height: 16px;
-  border-radius: 6px;
+  border-radius: var(--ade-radius-sm);
   padding-inline: var(--ade-space-4);
 }
 [data-slot="tree-row"][data-selected] {
@@ -708,7 +788,11 @@
 }
 /* Anche la riga di un risultato di ricerca perde la striscia colorata. */
 [data-slot="file-result"] {
-  border-radius: 6px;
+  border-radius: var(--ade-radius-sm);
+}
+
+[data-slot="file-result"][data-selected]::before {
+  content: none;
 }
 [data-slot="file-result"][data-selected]::before {
   content: none;
@@ -731,10 +815,13 @@
   opacity: 0;
   background-image: radial-gradient(circle, var(--ade-text-weak) 0.9px, transparent 1px);
   background-size: 3px 3px;
-  transition: opacity var(--ade-dur-fast) var(--ade-ease);
+  transition:
+    opacity var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
 }
 [data-slot="tree-row"]:hover [data-slot="row-grip"] {
   opacity: 0.9;
+  transform: scale(1.05);
 }
 [data-slot="workspace-count"] {
   background: transparent;
@@ -766,16 +853,18 @@
   height: 28px;
   padding: 0 var(--ade-space-4);
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: var(--ade-radius-md);
   background: var(--ade-active);
   transition:
     border-color var(--ade-dur-fast) var(--ade-ease),
+    background var(--ade-dur-fast) var(--ade-ease),
     box-shadow var(--ade-dur-fast) var(--ade-ease);
 }
 /* Il fuoco in inchiostro, non in tinta: il contorno è già il segnale, e
    l'alone colorato era l'unico verde rimasto in fondo alla colonna. */
 [data-slot="search-field"]:focus-within {
   border-color: var(--ade-text);
+  background: var(--ade-raised);
   box-shadow: 0 0 0 1px var(--ade-text);
 }
 [data-slot="search-input"] {
@@ -809,7 +898,7 @@
   align-items: stretch;
   gap: var(--ade-space-2);
   flex: 0 0 auto;
-  padding: var(--ade-space-3) var(--ade-space-4);
+  padding: var(--ade-space-3) var(--ade-space-4) var(--ade-space-4);
   border-top: 1px solid var(--ade-border);
   background: var(--ade-sunken);
 }
@@ -833,9 +922,9 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: var(--ade-space-2);
+  gap: var(--ade-space-3);
   flex: 0 0 auto;
-  padding-top: var(--ade-space-2);
+  padding-top: var(--ade-space-3);
   border-top: 1px solid var(--ade-border-subtle);
 }
 
@@ -872,7 +961,9 @@
   cursor: pointer;
   transition:
     background var(--ade-dur-fast) var(--ade-ease),
-    color var(--ade-dur-fast) var(--ade-ease);
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform 120ms var(--ade-ease-out);
 }
 
 [data-slot="sidebar-settings"] svg {
@@ -886,9 +977,16 @@
   white-space: nowrap;
 }
 
-[data-slot="sidebar-settings"]:hover {
-  background: var(--ade-hover);
-  color: var(--ade-text);
+@media (hover: hover) and (pointer: fine) {
+  [data-slot="sidebar-settings"]:hover {
+    background: var(--ade-hover);
+    color: var(--ade-text);
+  }
+}
+
+[data-slot="sidebar-settings"]:active {
+  transform: scale(0.92);
+  transition: transform 80ms var(--ade-ease-out);
 }
 
 [data-slot="sidebar-settings"]:focus-visible {
@@ -922,9 +1020,17 @@
   color: var(--ade-text);
 }
 
-/* Look and tone from `Badge` in `ui/layout`; here only where it sits in the row. */
+/* Look and tone from `Badge` in `ui/layout`; here only where it sits in the row.
+   The chip sits between name and count, so a touch of left margin reads as a
+   separator without drawing a line. */
 [data-slot="space-badge"] {
   margin-left: var(--ade-space-2);
+  flex: 0 0 auto;
+  transition: filter var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="space-badge"]:hover {
+  filter: brightness(1.05);
 }
 
 [data-slot="session-mark-wrap"] {
@@ -932,8 +1038,26 @@
   align-items: center;
   justify-content: center;
   flex: 0 0 auto;
-  width: 18px;
-  height: 18px;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--ade-radius-full);
+  /* Subtle gradient ring as the avatar's ground; the mark sits over it. */
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ade-text) 12%, transparent),
+    color-mix(in srgb, var(--ade-text) 4%, transparent)
+  );
+  transition:
+    transform var(--ade-dur-fast) var(--ade-ease),
+    background var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="session-mark-wrap"]:hover {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ade-text) 18%, transparent),
+    color-mix(in srgb, var(--ade-text) 8%, transparent)
+  );
 }
 
 [data-slot="session-main"] {
@@ -941,7 +1065,7 @@
   flex-direction: column;
   flex: 1 1 auto;
   min-width: 0;
-  gap: 1px;
+  gap: var(--ade-space-1);
 }
 
 [data-component="ade-sidebar"] [data-slot="session-row"][data-selected]::before {
@@ -949,30 +1073,46 @@
   content: none !important;
 }
 
+/*
+ * A session card in the active-agents list.
+ *
+ * The card is a card: full border, raised fill, radius-sm. It sits inside a
+ * list (Rule B from the panels), and the margin-block: 1px 4px is what makes
+ * one card visibly end and the next visibly begin without a separator line.
+ */
 [data-slot="session-row"],
 [data-slot="active-agent-card"] {
   display: flex;
   align-items: center;
   gap: var(--ade-space-3);
   width: 100%;
-  padding: 6px var(--ade-space-3);
-  margin-block: 2px;
+  padding: var(--ade-space-3) var(--ade-space-4);
+  margin-block: var(--ade-space-1);
   box-sizing: border-box;
   background: var(--ade-surface);
   border: 1px solid var(--ade-border-subtle);
-  border-radius: 6px;
+  border-radius: var(--ade-radius-sm);
   color: var(--ade-text);
   text-align: left;
   cursor: pointer;
-  transition: background var(--ade-dur-fast) var(--ade-ease),
-              border-color var(--ade-dur-fast) var(--ade-ease),
-              box-shadow var(--ade-dur-fast) var(--ade-ease);
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    box-shadow var(--ade-dur-fast) var(--ade-ease),
+    transform 120ms var(--ade-ease-out);
 }
 
-[data-slot="session-row"]:hover,
-[data-slot="active-agent-card"]:hover {
-  background: var(--ade-hover);
-  border-color: var(--ade-border);
+@media (hover: hover) and (pointer: fine) {
+  [data-slot="session-row"]:hover,
+  [data-slot="active-agent-card"]:hover {
+    background: var(--ade-hover);
+    border-color: var(--ade-border);
+  }
+}
+
+[data-slot="session-row"]:active,
+[data-slot="active-agent-card"]:active {
+  transform: scale(0.99);
 }
 
 [data-slot="session-row"][data-selected],
@@ -990,7 +1130,7 @@
   flex: 0 0 26px;
   width: 26px;
   height: 26px;
-  border-radius: 6px;
+  border-radius: var(--ade-radius-sm);
   background: var(--ade-sunken);
   border: 1px solid var(--ade-border-subtle);
   padding: 2px;
@@ -1003,7 +1143,7 @@
   flex-direction: column;
   flex: 1 1 auto;
   min-width: 0;
-  gap: 3px;
+  gap: var(--ade-space-1);
 }
 
 [data-slot="session-top"],
@@ -1017,7 +1157,7 @@
 
 [data-slot="session-title"],
 [data-slot="active-agent-title"] {
-  font-size: 12.5px;
+  font-size: var(--ade-font-md-half);
   font-weight: var(--ade-weight-medium);
   color: var(--ade-text);
   white-space: nowrap;
@@ -1026,36 +1166,50 @@
   flex: 1 1 auto;
   min-width: 0;
   line-height: 1.25;
+  letter-spacing: -0.005em;
+  transition: color var(--ade-dur-fast) var(--ade-ease);
+}
+
+/* On the accent veil, the title needs slightly tighter tracking to keep its
+   visual weight close to what it had at the resting size. */
+[data-component="ade-sidebar"] [data-slot="session-row"][data-selected] [data-slot="session-title"],
+[data-component="ade-sidebar"] [data-slot="active-agent-card"][data-selected] [data-slot="active-agent-title"] {
+  color: var(--ade-text);
+  font-weight: var(--ade-weight-semibold);
+  letter-spacing: -0.01em;
 }
 
 /* ── Status Dot Only ── */
 
 [data-slot="agent-status-dot"] {
   display: inline-block;
-  width: 7px;
-  height: 7px;
+  width: 8px;
+  height: 8px;
   border-radius: 50%;
-  flex: 0 0 7px;
+  flex: 0 0 8px;
   margin-left: auto;
-  transition: transform var(--ade-dur-fast) var(--ade-ease), background-color var(--ade-dur-fast) var(--ade-ease);
+  transition:
+    transform var(--ade-dur-fast) var(--ade-ease),
+    background-color var(--ade-dur-fast) var(--ade-ease),
+    box-shadow var(--ade-dur-fast) var(--ade-ease);
 }
 
 /* 1. Disponibile (Green / Idle) */
 [data-slot="agent-status-dot"][data-agent-status="disponibile"] {
   background-color: #22c55e;
-  box-shadow: 0 0 5px rgba(34, 197, 94, 0.55);
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.65);
 }
 
 /* 2. A lavoro (Yellow / Working con pulse) */
 [data-slot="agent-status-dot"][data-agent-status="a lavoro"] {
   background-color: #facc15;
-  box-shadow: 0 0 5px rgba(250, 204, 21, 0.55);
+  box-shadow: 0 0 6px rgba(250, 204, 21, 0.65);
 }
 
 /* 3. In attesa di input (Orange / Blocked-Waiting con pulse) */
 [data-slot="agent-status-dot"][data-agent-status="in attesa di input"] {
   background-color: #f97316;
-  box-shadow: 0 0 5px rgba(249, 115, 22, 0.55);
+  box-shadow: 0 0 6px rgba(249, 115, 22, 0.65);
 }
 
 /*
@@ -1123,7 +1277,8 @@
 }
 
 @keyframes ade-agent-pulse-yellow {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
   }
@@ -1134,7 +1289,8 @@
 }
 
 @keyframes ade-agent-pulse-amber {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
   }
@@ -1146,7 +1302,8 @@
 
 /* The ring of the two pulses above; see the comment on the rules that use it. */
 @keyframes ade-agent-ripple {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 1;
     transform: scale(1);
   }
@@ -1163,17 +1320,31 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 6px;
-  font-size: 11px;
+  gap: var(--ade-space-3);
+  font-size: var(--ade-font-sm);
   color: var(--ade-text-weak);
   min-width: 0;
-  line-height: 1.2;
+  line-height: var(--ade-leading);
+  padding-top: var(--ade-space-1);
+  /* The meta is read on squinting — give it a touch more air between the two halves. */
+  letter-spacing: 0.01em;
+}
+
+/* The separator between folder and branch — a hairline dot, kept narrow so it
+   never reads as its own character. */
+[data-slot="agent-card-sep"] {
+  color: var(--ade-border-strong);
+  flex-shrink: 0;
+  font-size: 8px;
+  margin-inline: var(--ade-space-1);
+  opacity: 0.8;
+  line-height: 1;
 }
 
 [data-slot="agent-card-loc"] {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: var(--ade-space-2);
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1185,8 +1356,8 @@
   display: inline-flex;
   align-items: center;
   color: var(--ade-text-soft);
-  font-weight: 450;
-  font-size: 11px;
+  font-weight: var(--ade-weight-medium);
+  font-size: var(--ade-font-sm);
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1197,8 +1368,8 @@
 [data-slot="agent-card-sep"] {
   color: var(--ade-border);
   flex-shrink: 0;
-  font-size: 9px;
-  margin-inline: 1px;
+  font-size: var(--ade-font-xs);
+  margin-inline: var(--ade-space-1);
   opacity: 0.7;
 }
 
@@ -1207,7 +1378,7 @@
   align-items: center;
   color: var(--ade-text-weak);
   font-family: var(--ade-mono);
-  font-size: 10.5px;
+  font-size: var(--ade-font-sm);
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1216,7 +1387,7 @@
 }
 
 [data-slot="agent-card-icon"] {
-  flex: 0 0 11px;
+  flex: 0 0 auto;
   width: 11px;
   height: 11px;
   opacity: 0.65;
@@ -1225,7 +1396,7 @@
 [data-slot="agent-card-time"] {
   flex: 0 0 auto;
   margin-left: auto;
-  font-size: 10px;
+  font-size: var(--ade-font-xs);
   font-family: var(--ade-mono);
   color: var(--ade-text-weak);
   font-variant-numeric: tabular-nums;
@@ -1236,8 +1407,8 @@
 [data-slot="active-agents-list"] {
   display: flex;
   flex-direction: column;
-  gap: 3px;
-  padding: 2px var(--ade-space-3) var(--ade-space-4);
+  gap: var(--ade-space-1);
+  padding: var(--ade-space-1) var(--ade-space-3) var(--ade-space-4);
 }
 
 [data-slot="active-agents-empty"] {
@@ -1253,20 +1424,32 @@
   display: inline-flex;
   align-items: center;
   gap: var(--ade-space-2);
-  padding: 4px 10px;
-  border-radius: 5px;
+  padding: var(--ade-space-2) var(--ade-space-4);
+  border-radius: var(--ade-radius-sm);
   font-size: var(--ade-font-xs);
   font-weight: var(--ade-weight-medium);
   background: var(--ade-active);
   color: var(--ade-text);
   border: 1px solid var(--ade-border);
   cursor: pointer;
-  transition: background var(--ade-dur-fast) var(--ade-ease);
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
 }
 
 [data-slot="empty-action-btn"]:hover {
   background: var(--ade-hover);
   border-color: var(--ade-text-weak);
+}
+
+[data-slot="empty-action-btn"]:active {
+  transform: scale(0.97);
+}
+
+[data-slot="empty-action-btn"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
 }
 
 /* ══ Conchiglia · C2 "Perla" ══════════════════════════════════════════════════
@@ -1329,23 +1512,23 @@ aside[data-component="ade-sidebar"] {
    * proprio la riga dritta che l'ombra doveva evitare. 3+10 stanno comodi nel
    * varco, quindi la sfumatura finisce dove finisce lo spazio.
    */
-  box-shadow: 0 3px 10px light-dark(rgba(0, 0, 0, 0.10), rgba(0, 0, 0, 0.50));
+  box-shadow: 0 3px 10px light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.5));
 }
 
 /* ── la testata, senza linea sotto ── */
 [data-slot="sidebar-header-project"] {
-  padding: 12px 14px 8px;
+  padding: var(--ade-space-6) var(--ade-space-7) var(--ade-space-4);
   border-bottom: 0;
 }
 
 [data-slot="project-name-text"] {
-  font-size: 14px;
+  font-size: var(--ade-font-lg);
 }
 
 /* ── i gruppi: nessun divisore, solo due pixel d'aria ── */
 [data-slot="sidebar-sections"] {
-  padding: 2px 6px 6px;
-  gap: 2px;
+  padding: var(--ade-space-1) var(--ade-space-3) var(--ade-space-3);
+  gap: var(--ade-space-1);
 }
 
 [data-slot="sidebar-section"] + [data-slot="sidebar-section"] {
@@ -1359,18 +1542,25 @@ aside[data-component="ade-sidebar"] {
 /* L'etichetta del gruppo è una pillola come le righe sotto di lei: la stessa
    forma per la stessa cosa, qualcosa che si preme. */
 [data-slot="section-header"] {
-  padding: 5px 10px;
+  padding: var(--ade-space-3) var(--ade-space-5);
   border-radius: var(--ade-radius-full);
   transition:
     background var(--ade-dur-fast) var(--ade-ease),
-    color var(--ade-dur-fast) var(--ade-ease);
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
 }
 
 [data-slot="section-header"]:hover {
   background: var(--ade-hover);
 }
 
+[data-slot="section-header"]:active {
+  transform: scale(0.99);
+}
+
 [data-slot="section-header"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
   border-radius: var(--ade-radius-full);
 }
 
@@ -1381,12 +1571,14 @@ aside[data-component="ade-sidebar"] {
   min-width: 24px;
   box-sizing: border-box;
   text-align: center;
-  padding: 0 7px;
+  padding: 0 var(--ade-space-4);
   border-radius: var(--ade-radius-full);
   background: var(--ade-active);
   color: var(--ade-text-soft);
-  font-size: 10px;
-  line-height: 16px;
+  font-size: var(--ade-font-xs);
+  line-height: var(--ade-space-8);
+  font-variant-numeric: tabular-nums;
+  font-family: var(--ade-mono);
 }
 
 [data-slot="section-content"] {
@@ -1400,7 +1592,9 @@ aside[data-component="ade-sidebar"] {
 }
 
 [data-slot="search-field"] {
-  margin: 2px 2px 6px;
+  /* 4px margin lets the focus ring sit *around* the field without being
+     cropped by the column's own border-radius. */
+  margin: var(--ade-space-1) var(--ade-space-1) var(--ade-space-3);
   border-radius: var(--ade-radius-full);
   background: var(--ade-sunken);
 }
@@ -1408,13 +1602,13 @@ aside[data-component="ade-sidebar"] {
 /* ── le righe: tutto è una pillola ── */
 [data-component="ade-sidebar"] [data-slot="workspace-header"],
 [data-component="ade-sidebar"] [data-slot="tree-row"] {
-  padding: 4px 10px;
+  padding: var(--ade-space-2) var(--ade-space-5);
   border-radius: var(--ade-radius-full);
 }
 
 [data-component="ade-sidebar"] [data-slot="file-result"] {
-  padding: 4px 10px;
-  border-radius: 12px;
+  padding: var(--ade-space-2) var(--ade-space-5);
+  border-radius: var(--ade-radius-lg);
 }
 
 /*
@@ -1430,12 +1624,15 @@ aside[data-component="ade-sidebar"] {
  */
 [data-component="ade-sidebar"] [data-slot="session-row"],
 [data-component="ade-sidebar"] [data-slot="active-agent-card"] {
-  padding: 7px 11px;
-  margin-block: 0 2px;
-  border-radius: 16px;
+  padding: var(--ade-space-3) var(--ade-space-4);
+  margin-block: 0 var(--ade-space-1);
+  border-radius: var(--ade-radius-lg);
   background: transparent;
   border-color: transparent;
   box-shadow: none;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
 }
 
 [data-slot="active-agents-list"] {
@@ -1498,7 +1695,6 @@ aside[data-component="ade-sidebar"] {
   border-radius: 0 0 20px 20px;
 }
 
-
 /* ── ricerca: filtro file/cartelle, conteggio, risultati con icona ── */
 [data-slot="search-field"] {
   position: relative;
@@ -1508,14 +1704,18 @@ aside[data-component="ade-sidebar"] {
   flex: 0 0 auto;
   width: 18px;
   height: 18px;
-  margin-right: 4px;
+  margin-right: var(--ade-space-2);
   border: 0;
   border-radius: var(--ade-radius-full);
   background: transparent;
   color: var(--ade-text-weak);
-  font-size: 14px;
+  font-size: var(--ade-font-lg);
   line-height: 1;
   cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
 }
 
 [data-slot="search-clear"]:hover {
@@ -1523,36 +1723,55 @@ aside[data-component="ade-sidebar"] {
   color: var(--ade-text);
 }
 
+[data-slot="search-clear"]:active {
+  transform: scale(0.88);
+}
+
+[data-slot="search-clear"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
 [data-slot="search-kinds"] {
   display: flex;
   align-items: center;
-  gap: 4px;
-  margin: -2px 4px 6px;
+  gap: var(--ade-space-2);
+  margin: calc(var(--ade-space-1) * -1) var(--ade-space-2) var(--ade-space-3);
 }
 
 [data-slot="search-kind"] {
-  padding: 1px 9px;
-  border: 1px solid var(--ade-border-subtle);
+  padding: var(--ade-space-1) var(--ade-space-4);
+  border: 1px solid var(--ade-border);
   border-radius: var(--ade-radius-full);
   background: transparent;
-  color: var(--ade-text-weak);
+  color: var(--ade-text-soft);
   font-family: var(--ade-sans);
   font-size: var(--ade-font-xs);
-  line-height: 16px;
+  line-height: var(--ade-leading);
+  font-weight: var(--ade-weight-medium);
   cursor: pointer;
   transition:
     background var(--ade-dur-fast) var(--ade-ease),
-    color var(--ade-dur-fast) var(--ade-ease);
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
 }
 
 [data-slot="search-kind"]:hover {
   color: var(--ade-text);
+  background: var(--ade-hover);
+  border-color: var(--ade-border-strong);
+}
+
+[data-slot="search-kind"]:active {
+  transform: scale(0.95);
 }
 
 [data-slot="search-kind"][data-active] {
   border-color: transparent;
-  background: var(--ade-accent-soft);
-  color: var(--ade-text);
+  background: var(--ade-accent);
+  color: var(--ade-accent-fg);
+  font-weight: var(--ade-weight-semibold);
 }
 
 [data-slot="search-kind"]:focus-visible {
@@ -1565,12 +1784,14 @@ aside[data-component="ade-sidebar"] {
   color: var(--ade-text-weak);
   font-family: var(--ade-mono);
   font-size: var(--ade-font-xs);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
 }
 
 [data-component="ade-sidebar"] [data-slot="file-result"] {
   display: grid;
   grid-template-columns: 14px minmax(0, 1fr);
-  column-gap: 6px;
+  column-gap: var(--ade-space-3);
   row-gap: 0;
   align-items: center;
 }
@@ -1614,29 +1835,29 @@ aside[data-component="ade-sidebar"] {
 [data-slot="sidebar-settings-strip"] {
   flex-wrap: nowrap;
   justify-content: flex-start;
-  gap: 6px;
+  gap: var(--ade-space-3);
 }
 
 [data-slot="sidebar-footer-group"] {
   display: inline-flex;
   align-items: center;
-  gap: 1px;
+  gap: var(--ade-space-1);
   flex: 0 0 auto;
 }
 
 [data-slot="sidebar-footer-group"] [data-slot="sidebar-footer-actions"] {
-  gap: 1px;
+  gap: var(--ade-space-1);
 }
 
 [data-slot="sidebar-stats"] {
   display: flex;
   align-items: center;
   justify-content: flex-end;
-  gap: 7px;
+  gap: var(--ade-space-4);
   flex: 0 0 auto;
   margin-left: auto;
   font-family: var(--ade-mono);
-  font-size: 10px;
+  font-size: var(--ade-font-xs);
   font-variant-numeric: tabular-nums;
   color: var(--ade-text-soft);
   white-space: nowrap;
@@ -1645,13 +1866,15 @@ aside[data-component="ade-sidebar"] {
 [data-slot="sidebar-stat"] {
   display: inline-flex;
   align-items: center;
-  gap: 3px;
+  gap: var(--ade-space-2);
   cursor: default;
+  transition: color var(--ade-dur-fast) var(--ade-ease);
 }
 
 [data-slot="sidebar-stat-icon"] {
   flex: 0 0 auto;
   color: var(--ade-text-weak);
+  transition: color var(--ade-dur-fast) var(--ade-ease);
 }
 
 [data-slot="sidebar-stat"][data-load="busy"],
@@ -1673,10 +1896,16 @@ aside[data-component="ade-sidebar"] {
   [data-slot="sidebar-footer-actions"] [data-slot="ade-icon"] {
     width: 22px;
     height: 22px;
+    border-radius: var(--ade-radius-sm);
   }
 
   [data-slot="sidebar-stats"] {
-    gap: 5px;
+    gap: var(--ade-space-3);
+    font-size: var(--ade-font-xs);
+  }
+
+  [data-slot="sidebar-settings-strip"] {
+    gap: var(--ade-space-2);
   }
 }
 

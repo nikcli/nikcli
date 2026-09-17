@@ -163,7 +163,23 @@
   color: var(--ade-text);
   cursor: pointer;
   opacity: 0;
-  transition: opacity var(--ade-dur-fast) var(--ade-ease);
+  transition:
+    opacity var(--ade-dur-fast) var(--ade-ease),
+    background var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="shot-dismiss"]:hover {
+  background: var(--ade-surface);
+}
+
+[data-slot="shot-dismiss"]:active {
+  transform: scale(0.88);
+}
+
+[data-slot="shot-dismiss"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
 }
 
 [data-slot="shot"]:hover [data-slot="shot-dismiss"],

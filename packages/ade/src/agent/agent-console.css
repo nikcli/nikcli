@@ -124,13 +124,20 @@
   transition:
     border-color var(--ade-dur-fast) var(--ade-ease),
     background var(--ade-dur-fast) var(--ade-ease),
-    color var(--ade-dur-fast) var(--ade-ease);
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform 120ms var(--ade-ease-out);
 }
 
-[data-slot="agent-action"]:hover {
-  border-color: var(--ade-border-strong);
-  background: var(--ade-hover);
-  color: var(--ade-text);
+@media (hover: hover) and (pointer: fine) {
+  [data-slot="agent-action"]:hover {
+    border-color: var(--ade-border-strong);
+    background: var(--ade-hover);
+    color: var(--ade-text);
+  }
+}
+
+[data-slot="agent-action"]:active {
+  transform: scale(0.97);
 }
 
 [data-slot="agent-action"][data-primary] {
@@ -139,8 +146,10 @@
   color: var(--ade-accent-fg);
 }
 
-[data-slot="agent-action"][data-primary]:hover {
-  background: var(--ade-accent-strong);
+@media (hover: hover) and (pointer: fine) {
+  [data-slot="agent-action"][data-primary]:hover {
+    background: var(--ade-accent-strong);
+  }
 }
 
 [data-slot="agent-action"]:focus-visible {
@@ -456,11 +465,19 @@ body:has([data-component="agent-console"]) [data-component="voice-hud"] {
   font-size: var(--ade-font-md);
   font-weight: var(--ade-weight-medium);
   cursor: pointer;
-  transition: background var(--ade-dur-fast) var(--ade-ease);
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
 }
 
-[data-slot="agent-send"]:hover:not(:disabled) {
-  background: var(--ade-accent-strong);
+@media (hover: hover) and (pointer: fine) {
+  [data-slot="agent-send"]:hover:not(:disabled) {
+    background: var(--ade-accent-strong);
+  }
+}
+
+[data-slot="agent-send"]:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 [data-slot="agent-send"]:disabled {

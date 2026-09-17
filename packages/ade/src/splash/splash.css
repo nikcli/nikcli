@@ -14,7 +14,7 @@
   z-index: 9999;
   overflow: hidden;
   background: #07090e;
-  transition: opacity var(--splash-fade, 600ms) ease;
+  transition: opacity var(--splash-fade, var(--ade-dur-slow)) var(--ade-ease-in-out);
   opacity: 1;
   cursor: default;
   display: flex;
@@ -77,13 +77,14 @@
   height: 100%;
   z-index: 3;
   pointer-events: none;
-  background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.22) 50%),
-              radial-gradient(circle at center, transparent 65%, rgba(0, 0, 0, 0.7) 100%);
-  background-size: 100% 4px, 100% 100%;
+  background:
+    linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.22) 50%),
+    radial-gradient(circle at center, transparent 65%, rgba(0, 0, 0, 0.7) 100%);
+  background-size:
+    100% 4px,
+    100% 100%;
   opacity: 0.5;
 }
-
-
 
 @media (prefers-reduced-motion: reduce) {
   [data-component="ade-splash"] {

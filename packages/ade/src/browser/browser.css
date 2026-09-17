@@ -74,7 +74,10 @@
   background: transparent;
   color: var(--ade-text-weak);
   cursor: pointer;
-  transition: background var(--ade-dur-fast) var(--ade-ease), color var(--ade-dur-fast) var(--ade-ease);
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
 }
 
 [data-slot="browser-nav-btn"]:disabled {
@@ -87,9 +90,13 @@
   color: var(--ade-text);
 }
 
+[data-slot="browser-nav-btn"]:active:not(:disabled) {
+  transform: scale(0.92);
+}
+
 [data-slot="browser-nav-btn"]:focus-visible {
-  outline: 1px solid var(--ade-accent);
-  outline-offset: -1px;
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
 }
 
 [data-slot="browser-url-bar"] {
@@ -103,11 +110,16 @@
   background: var(--ade-bg);
   border: 1px solid var(--ade-border);
   border-radius: var(--ade-radius-sm);
-  transition: border-color var(--ade-dur-fast) var(--ade-ease);
+  /* Add box-shadow so the focus-within halo (when added) animates as the
+     same shape it would reach on blur. */
+  transition:
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    box-shadow var(--ade-dur-fast) var(--ade-ease-out);
 }
 
 [data-slot="browser-url-bar"]:focus-within {
-  border-color: var(--ade-border-strong);
+  border-color: var(--ade-accent);
+  box-shadow: var(--ade-focus-ring);
 }
 
 [data-slot="browser-status-dot"] {
@@ -175,7 +187,10 @@
   font-size: var(--ade-font-sm);
   font-weight: 500;
   cursor: pointer;
-  transition: color var(--ade-dur-fast) var(--ade-ease), background var(--ade-dur-fast) var(--ade-ease);
+  transition:
+    color var(--ade-dur-fast) var(--ade-ease),
+    background var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
 }
 
 /* Device presets and rotate are icon-only, so they sit square like the
@@ -186,11 +201,17 @@
   padding: 0;
 }
 
-[data-slot="browser-mode-btn"]:hover,
-[data-slot="browser-device-btn"]:hover,
-[data-slot="browser-rotate-btn"]:hover {
+[data-slot="browser-mode-btn"]:hover:not([data-active]),
+[data-slot="browser-device-btn"]:hover:not([data-active]),
+[data-slot="browser-rotate-btn"]:hover:not([data-active]) {
   color: var(--ade-text);
   background: var(--ade-hover);
+}
+
+[data-slot="browser-mode-btn"]:active,
+[data-slot="browser-device-btn"]:active,
+[data-slot="browser-rotate-btn"]:active {
+  transform: scale(0.95);
 }
 
 [data-slot="browser-mode-btn"][data-active],
@@ -199,6 +220,13 @@
   background: var(--ade-raised);
   color: var(--ade-text);
   font-weight: 600;
+}
+
+[data-slot="browser-mode-btn"]:focus-visible,
+[data-slot="browser-device-btn"]:focus-visible,
+[data-slot="browser-rotate-btn"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
 }
 
 /* Inspect mode changes what every click on the page does, so while it is
@@ -238,6 +266,13 @@
   overflow: hidden;
   text-overflow: ellipsis;
   cursor: pointer;
+  /* Add transform so the press-scale rides the same frame as the hover
+     background. The owner chip is a chip — its tap must answer. */
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
 }
 
 [data-slot="browser-owner"][data-state="ready"] {
@@ -253,6 +288,15 @@
 
 [data-slot="browser-owner"]:hover {
   background: var(--ade-hover);
+}
+
+[data-slot="browser-owner"]:active {
+  transform: scale(0.97);
+}
+
+[data-slot="browser-owner"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
 }
 
 [data-slot="browser-owner-menu"] {
@@ -281,10 +325,24 @@
   font: inherit;
   text-align: left;
   cursor: pointer;
+  /* Add transform so the press-scale rides the same frame as colour. */
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
 }
 
 [data-slot="browser-owner-menu"] button:hover {
   background: var(--ade-hover);
+}
+
+[data-slot="browser-owner-menu"] button:active {
+  transform: scale(0.98);
+}
+
+[data-slot="browser-owner-menu"] button:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
 }
 
 [data-slot="browser-owner-menu"] button[aria-checked="true"] {
@@ -324,10 +382,26 @@
   color: var(--ade-accent);
   font: inherit;
   cursor: pointer;
+  /* Add transform so the press-scale rides the same frame as the hover
+     background. */
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
 }
 
 [data-slot="browser-send-choice"]:hover {
   background: var(--ade-hover);
+}
+
+[data-slot="browser-send-choice"]:active {
+  transform: scale(0.97);
+}
+
+[data-slot="browser-send-choice"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
 }
 
 [data-slot="browser-actions"] {
@@ -347,12 +421,27 @@
   background: transparent;
   color: var(--ade-text-weak);
   cursor: pointer;
-  transition: background var(--ade-dur-fast) var(--ade-ease), color var(--ade-dur-fast) var(--ade-ease);
+  /* Add transform-origin so the scale shrinks around its own centre — a
+     20px icon otherwise scales off-axis because the parent has gap.
+     Switch the easing to out for snap-arrival. */
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
 }
 
 [data-slot="browser-action"]:hover {
   background: var(--ade-border);
   color: var(--ade-text);
+}
+
+[data-slot="browser-action"]:active {
+  transform: scale(0.92);
+}
+
+[data-slot="browser-action"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
 }
 
 /* ── body & viewport ──────────────────────────────────────────────────────── */
@@ -493,6 +582,13 @@
 
 /* ── popover prompt ───────────────────────────────────────────────────────── */
 
+/*
+ * The browser prompt is a floating dialog at the bottom of the viewport.
+ * One rule (the second and third were leftovers from an edit-in-progress
+ * that left a raw `rgba()` shadow and a stray `--ade-focus-ring` box-shadow).
+ * The popover elevates from the body with the design-token shadow and a
+ * thin highlight along the top edge so it reads as a material surface.
+ */
 [data-slot="browser-prompt-popover"] {
   position: absolute;
   bottom: var(--ade-space-6);
@@ -507,29 +603,7 @@
   flex-direction: column;
   overflow: hidden;
   z-index: 20;
-  /* We shouldn't use hardcoded rgba for shadow, but if we need shadow, maybe it's handled by --ade-overlay or another token. Let's use border to be safe and an outline. */
-  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.4); /* wait, rule says no # hex. rgba is not hex. But if not allowed, I'll remove it in next step. "Nessun colore ... scritti a mano" -> I'll stick to tokens */
-}
-
-/* Let's remove the rgba above, use --ade-shadow or just drop it. Let's just drop the rgba shadow and rely on border/overlay background. */
-[data-slot="browser-prompt-popover"] {
-  box-shadow: var(--ade-focus-ring); /* better to use something tokenized if shadow doesn't exist, or just leave it without shadow if we are strictly token-only. Actually, let's just use background: var(--ade-overlay) which might have its own shadow in the host, or border is enough. Let's just remove the box-shadow property here to be strictly safe. */
-}
-
-[data-slot="browser-prompt-popover"] {
-  position: absolute;
-  bottom: var(--ade-space-6);
-  left: 50%;
-  transform: translateX(-50%);
-  width: calc(100% - var(--ade-space-6) * 2);
-  max-width: 640px;
-  background: var(--ade-overlay);
-  border: 1px solid var(--ade-border-strong);
-  border-radius: var(--ade-radius-lg);
-  display: flex;
-  flex-direction: column;
-  overflow: hidden;
-  z-index: 20;
+  box-shadow: var(--ade-shadow-lg);
 }
 
 [data-slot="browser-selection-list"] {
@@ -606,12 +680,28 @@
   font-family: var(--ade-sans);
   font-size: var(--ade-font-xs);
   cursor: pointer;
+  /* Add transform so the press-scale rides the same frame as the colour
+     change — the toggle reads as one motion. */
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
 }
 
 [data-slot="browser-context-action"]:hover,
 [data-slot="browser-context-action"][aria-expanded="true"] {
   color: var(--ade-accent);
   border-color: var(--ade-accent);
+}
+
+[data-slot="browser-context-action"]:active {
+  transform: scale(0.95);
+}
+
+[data-slot="browser-context-action"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
 }
 
 [data-slot="browser-section-hint"] {
@@ -646,10 +736,17 @@
   color: var(--ade-text);
   font-family: var(--ade-mono);
   font-size: var(--ade-font-xs);
+  /* Add box-shadow so the focus-ring animates as the same shape it would
+     reach on blur, instead of popping in. */
+  transition:
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    box-shadow var(--ade-dur-fast) var(--ade-ease-out);
 }
 
 [data-slot="browser-edit-field"] input:focus {
-  outline: 1px solid var(--ade-accent);
+  outline: none;
+  border-color: var(--ade-accent);
+  box-shadow: var(--ade-focus-ring);
 }
 
 [data-slot="browser-edit-row"] {
@@ -688,12 +785,27 @@
   background: transparent;
   color: var(--ade-text-weak);
   cursor: pointer;
-  border-radius: 2px;
+  border-radius: var(--ade-radius-sm);
+  /* Add transform so the press-scale rides the same frame as colour
+     change — a 16px button needs the scale to land. */
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
 }
 
 [data-slot="browser-context-remove"]:hover {
   background: var(--ade-hover);
   color: var(--ade-text);
+}
+
+[data-slot="browser-context-remove"]:active {
+  transform: scale(0.85);
+}
+
+[data-slot="browser-context-remove"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
 }
 
 [data-slot="browser-context-code"] {
@@ -716,11 +828,26 @@
   cursor: pointer;
   padding: var(--ade-space-1) var(--ade-space-2);
   border-radius: var(--ade-radius-sm);
+  /* Add transform so the press-scale rides the same frame as colour
+     change — inline buttons still need to feel pressable. */
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
 }
 
 [data-slot="browser-clear-selection"]:hover {
   color: var(--ade-text);
   background: var(--ade-hover);
+}
+
+[data-slot="browser-clear-selection"]:active {
+  transform: scale(0.97);
+}
+
+[data-slot="browser-clear-selection"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
 }
 
 [data-slot="browser-prompt-input-row"] {
@@ -762,7 +889,13 @@
   font-size: var(--ade-font-sm);
   font-weight: 500;
   cursor: pointer;
-  transition: background var(--ade-dur-fast) var(--ade-ease), opacity var(--ade-dur-fast) var(--ade-ease);
+  /* Add transform so the press-scale rides the same frame as the colour
+     change. The Send button is the final gesture of the prompt — it must
+     answer to the press. */
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    opacity var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
   flex: 0 0 auto;
 }
 
@@ -770,9 +903,20 @@
   background: var(--ade-border);
 }
 
+[data-slot="browser-send-btn"]:not(:disabled):active {
+  transform: scale(0.97);
+}
+
+[data-slot="browser-send-btn"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
 [data-slot="browser-send-btn"]:disabled {
   opacity: 0.4;
   cursor: not-allowed;
+  /* Disabled buttons must not respond to press — the gesture is not theirs. */
+  transform: none;
 }
 
 /* ── footer ───────────────────────────────────────────────────────────────── */

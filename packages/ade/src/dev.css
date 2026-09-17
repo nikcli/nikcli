@@ -100,7 +100,9 @@
   background: transparent;
   color: var(--ade-text-subtle);
   cursor: pointer;
-  transition: background 120ms ease, color 120ms ease;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease);
 }
 
 [data-slot="ade-win-btn"]:hover {
@@ -115,6 +117,12 @@
 
 [data-slot="ade-win-btn"]:active {
   opacity: 0.8;
+  transform: scale(0.94);
+}
+
+[data-slot="ade-win-btn"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
 }
 
 /* Centred on the sessions area: `--ade-bar-offset` is the sidebar's width,
@@ -437,12 +445,17 @@
   cursor: pointer;
   transition:
     background var(--ade-dur-fast) var(--ade-ease),
-    color var(--ade-dur-fast) var(--ade-ease);
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
 }
 
 [data-slot="ade-icon"]:hover {
   background: var(--ade-hover);
   color: var(--ade-text);
+}
+
+[data-slot="ade-icon"]:active {
+  transform: scale(0.92);
 }
 
 [data-slot="ade-icon"]:focus-visible {
@@ -630,7 +643,9 @@
     box-shadow var(--ade-dur-fast) var(--ade-ease);
 }
 
-[data-slot="ade-view-tab"]:hover { color: var(--ade-text-soft); }
+[data-slot="ade-view-tab"]:hover {
+  color: var(--ade-text-soft);
+}
 
 /* Raised, not tinted: the selected cell should look like it sits above the
    track. An accent fill here would shout over the primary action in the bar. */
@@ -646,7 +661,6 @@
   box-shadow: var(--ade-focus-ring);
   color: var(--ade-text);
 }
-
 
 /* ── bar actions ──────────────────────────────────────────────────────────── */
 /*
@@ -669,7 +683,8 @@
   transition:
     background var(--ade-dur-fast) var(--ade-ease),
     color var(--ade-dur-fast) var(--ade-ease),
-    box-shadow var(--ade-dur-fast) var(--ade-ease);
+    box-shadow var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
 }
 
 [data-slot="ade-add"]:hover {
@@ -691,10 +706,12 @@
 }
 
 [data-slot="ade-add"]:active {
-  filter: brightness(0.9);
+  transform: scale(0.97);
+  filter: brightness(0.95);
 }
 
 [data-slot="ade-add"]:focus-visible {
+  outline: none;
   box-shadow: var(--ade-focus-ring);
 }
 
@@ -874,4 +891,3 @@
   border-color: var(--ade-border);
   color: var(--ade-text-weak);
 }
-

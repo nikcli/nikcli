@@ -10,26 +10,30 @@
 [data-slot="decisions-badge"] {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
+  gap: var(--ade-space-3);
   height: 24px;
   margin-left: var(--ade-space-2);
-  padding: 0 10px;
+  padding: 0 var(--ade-space-4);
   border: 1px solid var(--ade-working);
-  border-radius: 999px;
+  border-radius: var(--ade-radius-full);
   background: var(--ade-working-bg);
   color: var(--ade-working);
   font: inherit;
-  font-size: 11.5px;
-  font-weight: 600;
+  font-size: var(--ade-font-md-half);
+  font-weight: var(--ade-weight-semibold);
   white-space: nowrap;
   cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
 }
 
 [data-slot="decisions-badge"]::before {
   content: "";
   width: 6px;
   height: 6px;
-  border-radius: 50%;
+  border-radius: var(--ade-radius-full);
   background: currentColor;
 }
 
@@ -37,9 +41,13 @@
   filter: brightness(1.08);
 }
 
+[data-slot="decisions-badge"]:active {
+  transform: scale(0.97);
+}
+
 [data-slot="decisions-badge"]:focus-visible {
-  outline: 2px solid var(--ade-accent);
-  outline-offset: 2px;
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
 }
 
 /* The window. */
@@ -52,24 +60,24 @@
   align-items: center;
   gap: var(--ade-space-3);
   padding: var(--ade-space-4) var(--ade-space-5) var(--ade-space-3);
-  font-size: 14px;
+  font-size: var(--ade-font-lg);
 }
 
 [data-slot="sheet-count"] {
-  font-size: 11px;
+  font-size: var(--ade-font-sm);
   color: var(--ade-text-weak);
 }
 
 [data-slot="sheet-steps"] {
   display: flex;
-  gap: 4px;
+  gap: var(--ade-space-2);
   margin-left: auto;
 }
 
 [data-slot="sheet-steps"] i {
   width: 18px;
   height: 4px;
-  border-radius: 2px;
+  border-radius: var(--ade-radius-sm);
   background: var(--ade-border);
 }
 
@@ -87,6 +95,10 @@
   background: transparent;
   color: var(--ade-text-weak);
   cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
 }
 
 [data-slot="sheet-count"] + [data-slot="sheet-close"],
@@ -97,6 +109,15 @@
 [data-slot="sheet-close"]:hover {
   background: var(--ade-hover);
   color: var(--ade-text);
+}
+
+[data-slot="sheet-close"]:active {
+  transform: scale(0.92);
+}
+
+[data-slot="sheet-close"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
 }
 
 [data-slot="sheet-body"] {
@@ -111,7 +132,7 @@
   flex-wrap: wrap;
   gap: var(--ade-space-2) var(--ade-space-4);
   padding: var(--ade-space-3) var(--ade-space-5) var(--ade-space-4);
-  font-size: 10.5px;
+  font-size: var(--ade-font-sm);
   color: var(--ade-text-weak);
 }
 
@@ -122,58 +143,58 @@
 [data-slot="sheet-empty"] {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: var(--ade-space-2);
   padding: var(--ade-space-5) 0;
-  font-size: 12px;
+  font-size: var(--ade-font-md);
   color: var(--ade-text-soft);
 }
 
 /* The card. */
 [data-slot="decision-card"] {
-  padding: 10px 12px;
+  padding: var(--ade-space-4) var(--ade-space-6);
   border: 1px solid var(--ade-border);
   border-radius: var(--ade-radius-md);
   background: var(--ade-raised);
-  font-size: 12px;
+  font-size: var(--ade-font-md);
   color: var(--ade-text);
 }
 
 [data-slot="decision-head"] {
   display: flex;
   align-items: baseline;
-  gap: 8px;
+  gap: var(--ade-space-4);
   min-width: 0;
 }
 
 [data-slot="decision-key"] {
   flex: 0 0 auto;
-  font-family: var(--ade-font-mono, ui-monospace, monospace);
-  font-size: 11px;
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-sm);
   color: var(--ade-accent-strong);
 }
 
 [data-slot="decision-title"] {
   margin: 0;
   min-width: 0;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1.35;
+  font-size: var(--ade-font-lg);
+  font-weight: var(--ade-weight-semibold);
+  line-height: var(--ade-leading);
 }
 
 [data-slot="decision-meta"],
 [data-slot="decision-unlocks"],
 [data-slot="decision-hint"] {
-  font-size: 10.5px;
+  font-size: var(--ade-font-sm);
   color: var(--ade-text-weak);
 }
 
 [data-slot="decision-unlocks"] {
-  font-family: var(--ade-font-mono, ui-monospace, monospace);
+  font-family: var(--ade-mono);
 }
 
 [data-slot="decision-context"] {
-  margin: 6px 0 4px;
-  line-height: 1.5;
+  margin: var(--ade-space-3) 0 var(--ade-space-2);
+  line-height: var(--ade-leading);
   color: var(--ade-text-soft);
   white-space: pre-wrap;
 }
@@ -181,15 +202,15 @@
 [data-slot="decision-options"] {
   display: flex;
   flex-direction: column;
-  gap: 6px;
-  margin-top: 8px;
+  gap: var(--ade-space-3);
+  margin-top: var(--ade-space-4);
 }
 
 [data-slot="decision-option"] {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
-  padding: 7px 9px;
+  gap: var(--ade-space-4);
+  padding: var(--ade-space-3) var(--ade-space-4);
   border: 1px solid var(--ade-border);
   border-radius: var(--ade-radius-sm);
   background: var(--ade-surface);
@@ -197,13 +218,35 @@
   font: inherit;
   text-align: left;
   cursor: pointer;
+  /* Add transform so the press-scale rides the same frame as the hover
+     background — options read as one motion, not colour-then-shrink. */
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
 }
 
 [data-slot="decision-option"]:hover {
   border-color: var(--ade-border-strong);
+  background: var(--ade-hover);
+}
+
+[data-slot="decision-option"]:active {
+  transform: scale(0.99);
+}
+
+[data-slot="decision-option"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
 }
 
 [data-slot="decision-option"][data-on] {
+  border-color: var(--ade-accent);
+  background: var(--ade-accent-soft);
+}
+
+/* The chosen option keeps its accent fill when focused. */
+[data-slot="decision-option"][data-on]:focus-visible {
   border-color: var(--ade-accent);
   background: var(--ade-accent-soft);
 }
@@ -215,8 +258,8 @@
   width: 16px;
   height: 16px;
   border: 1px solid var(--ade-border-strong);
-  border-radius: 4px;
-  font-size: 10px;
+  border-radius: var(--ade-radius-sm);
+  font-size: var(--ade-font-xs);
   color: var(--ade-text-weak);
 }
 
@@ -228,11 +271,11 @@
 
 [data-slot="decision-option-text"] b {
   display: block;
-  font-weight: 600;
+  font-weight: var(--ade-weight-semibold);
 }
 
 [data-slot="decision-option-text"] small {
-  font-size: 10.5px;
+  font-size: var(--ade-font-sm);
   color: var(--ade-text-weak);
 }
 
@@ -241,20 +284,26 @@
   box-sizing: border-box;
   width: 100%;
   min-height: 40px;
-  margin-top: 8px;
-  padding: 6px 8px;
+  margin-top: var(--ade-space-4);
+  padding: var(--ade-space-3) var(--ade-space-4);
   border: 1px solid var(--ade-border);
   border-radius: var(--ade-radius-sm);
   background: var(--ade-surface);
   color: var(--ade-text);
   font: inherit;
-  font-size: 11.5px;
+  font-size: var(--ade-font-md-half);
   resize: vertical;
+  /* Add box-shadow so the focus-ring animates as the same shape it would
+     reach on blur — without it the ring pops in. */
+  transition:
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    box-shadow var(--ade-dur-fast) var(--ade-ease-out);
 }
 
 [data-slot="decision-note"]:focus {
   outline: none;
   border-color: var(--ade-accent);
+  box-shadow: var(--ade-focus-ring);
 }
 
 [data-slot="decision-actions"],
@@ -262,23 +311,34 @@
   display: flex;
   align-items: center;
   flex-wrap: wrap;
-  gap: 6px;
-  margin-top: 8px;
+  gap: var(--ade-space-3);
+  margin-top: var(--ade-space-4);
 }
 
 [data-slot="decision-submit"],
 [data-slot="decision-ghost"],
 [data-slot="decision-chip"] {
   height: 26px;
-  padding: 0 12px;
+  padding: 0 var(--ade-space-6);
   border: 1px solid var(--ade-accent);
   border-radius: var(--ade-radius-sm);
   background: var(--ade-accent);
   color: var(--ade-accent-fg);
   font: inherit;
-  font-size: 11.5px;
-  font-weight: 600;
+  font-size: var(--ade-font-md-half);
+  font-weight: var(--ade-weight-semibold);
   cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="decision-submit"]:hover:not(:disabled) {
+  background: var(--ade-accent-strong);
+}
+
+[data-slot="decision-submit"]:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 [data-slot="decision-ghost"],
@@ -286,18 +346,30 @@
   border-color: var(--ade-border);
   background: transparent;
   color: var(--ade-text-soft);
-  font-weight: 500;
+  font-weight: var(--ade-weight-medium);
 }
 
 [data-slot="decision-chip"] {
   height: 22px;
-  padding: 0 8px;
+  padding: 0 var(--ade-space-4);
 }
 
 [data-slot="decision-ghost"]:hover:not(:disabled),
 [data-slot="decision-chip"]:hover:not(:disabled) {
   background: var(--ade-hover);
   color: var(--ade-text);
+}
+
+[data-slot="decision-ghost"]:active:not(:disabled),
+[data-slot="decision-chip"]:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+[data-slot="decision-submit"]:focus-visible,
+[data-slot="decision-ghost"]:focus-visible,
+[data-slot="decision-chip"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
 }
 
 [data-slot="decision-submit"]:disabled,
@@ -309,31 +381,31 @@
 
 [data-slot="decision-date"] {
   height: 22px;
-  padding: 0 6px;
+  padding: 0 var(--ade-space-3);
   border: 1px solid var(--ade-border);
   border-radius: var(--ade-radius-sm);
   background: var(--ade-surface);
   color: var(--ade-text);
   font: inherit;
-  font-size: 11px;
+  font-size: var(--ade-font-sm);
   color-scheme: inherit;
 }
 
 [data-slot="decision-problem"] {
-  margin-top: 8px;
-  padding: 6px 8px;
+  margin-top: var(--ade-space-4);
+  padding: var(--ade-space-3) var(--ade-space-4);
   border-radius: var(--ade-radius-sm);
   background: var(--ade-error-bg, var(--ade-hover));
   color: var(--ade-error, var(--ade-text));
-  font-size: 11.5px;
+  font-size: var(--ade-font-md-half);
 }
 
 [data-slot="decision-answer"] {
-  margin-top: 6px;
-  padding: 6px 8px;
+  margin-top: var(--ade-space-3);
+  padding: var(--ade-space-3) var(--ade-space-4);
   border-radius: var(--ade-radius-sm);
   background: var(--ade-done-bg);
-  font-size: 12px;
+  font-size: var(--ade-font-md);
 }
 
 [data-slot="decision-answer"] b {
@@ -343,11 +415,11 @@
 [data-slot="decision-pill"] {
   flex: 0 0 auto;
   margin-left: auto;
-  padding: 1px 7px;
-  border-radius: 999px;
+  padding: 1px var(--ade-space-4);
+  border-radius: var(--ade-radius-full);
   background: var(--ade-working-bg);
   color: var(--ade-working);
-  font-size: 10px;
+  font-size: var(--ade-font-xs);
   white-space: nowrap;
 }
 
@@ -390,7 +462,85 @@
   flex: 1;
   min-height: 0;
   overflow: auto;
-  padding: var(--ade-space-3) var(--ade-space-4) var(--ade-space-5);
+  padding: var(--ade-space-4) var(--ade-space-5) var(--ade-space-6);
+}
+
+[data-slot="decisions-section"] {
+  display: block;
+  margin: var(--ade-space-5) 0 var(--ade-space-3);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--ade-font-xs);
+  font-weight: var(--ade-weight-medium);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ade-text-weak);
+  text-align: left;
+}
+
+[data-slot="decisions-body"] > h4[data-slot="decisions-section"]:first-of-type {
+  margin-top: 0;
+}
+
+[data-slot="decisions-section"][data-toggle] {
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  [data-slot="decisions-section"][data-toggle]:hover {
+    color: var(--ade-text);
+  }
+}
+
+[data-slot="decisions-list"] {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+[data-slot="decisions-none"] {
+  margin: 0;
+  font-size: var(--ade-font-md);
+  color: var(--ade-text-weak);
+}
+
+/*
+ * A decision row in the panel.
+ *
+ * One 1px line between rows, same shape as settings-list. The decision-card
+ * in the sheet (full card) is a different surface: a row in the panel is a
+ * name in a stream, a card in the sheet is one question with options.
+ */
+[data-slot="decision-row"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-3);
+  min-width: 0;
+  padding: var(--ade-space-3) 0;
+  border-bottom: 1px solid var(--ade-border-subtle);
+  background: transparent;
+  color: var(--ade-text);
+  font: inherit;
+  font-size: var(--ade-font-md);
+  text-align: left;
+}
+
+[data-slot="decisions-list"] [data-slot="decision-row"]:last-child {
+  border-bottom: 0;
+}
+
+button[data-slot="decision-row"] {
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  button[data-slot="decision-row"]:hover {
+    color: var(--ade-text);
+  }
 }
 
 [data-slot="decisions-section"] {
@@ -445,6 +595,12 @@
   font: inherit;
   font-size: 12px;
   text-align: left;
+  /* Add transition + transform so the press-scale rides the same frame as
+     the border hover — without it the row has colour but no weight. */
+  transition:
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    background var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
 }
 
 button[data-slot="decision-row"] {
@@ -453,6 +609,16 @@ button[data-slot="decision-row"] {
 
 button[data-slot="decision-row"]:hover {
   border-color: var(--ade-border-strong);
+}
+
+/* A subtle press — rows are slim and the gesture is a directional tap. */
+button[data-slot="decision-row"]:active {
+  transform: scale(0.99);
+}
+
+button[data-slot="decision-row"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
 }
 
 [data-slot="decision-row-title"] {

@@ -48,12 +48,26 @@
   background: transparent;
   color: var(--ade-text-weak);
   cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
 }
 
-[data-slot="sim-button"]:hover:not(:disabled),
+@media (hover: hover) and (pointer: fine) {
+  [data-slot="sim-button"]:hover:not(:disabled) {
+    background: var(--ade-hover);
+    color: var(--ade-text);
+  }
+}
+
 [data-slot="sim-button"][data-active="true"] {
   background: var(--ade-hover);
   color: var(--ade-text);
+}
+
+[data-slot="sim-button"]:active:not(:disabled) {
+  transform: scale(0.92);
 }
 
 [data-slot="sim-button"]:disabled {
@@ -79,6 +93,7 @@
   color: var(--ade-text);
   font: inherit;
   font-size: var(--ade-font-xs);
+  transition: border-color var(--ade-dur-fast) var(--ade-ease);
 }
 
 [data-slot="sim-device"] {
@@ -91,6 +106,7 @@
   color: var(--ade-text);
   font: inherit;
   font-size: var(--ade-font-xs);
+  transition: border-color var(--ade-dur-fast) var(--ade-ease);
 }
 
 [data-slot="sim-size"] {
@@ -188,7 +204,11 @@
   padding: 0 28px;
   background: #000;
   color: #fff;
-  font: 600 15px/1 -apple-system, "Segoe UI", system-ui, sans-serif;
+  font:
+    600 15px/1 -apple-system,
+    "Segoe UI",
+    system-ui,
+    sans-serif;
 }
 
 [data-slot="sim-indicators"] {
@@ -248,8 +268,17 @@
   height: 18px;
   cursor: nwse-resize;
   touch-action: none;
-  background:
-    linear-gradient(135deg, transparent 50%, var(--ade-border-strong) 50%, var(--ade-border-strong) 58%, transparent 58%, transparent 70%, var(--ade-border-strong) 70%, var(--ade-border-strong) 78%, transparent 78%);
+  background: linear-gradient(
+    135deg,
+    transparent 50%,
+    var(--ade-border-strong) 50%,
+    var(--ade-border-strong) 58%,
+    transparent 58%,
+    transparent 70%,
+    var(--ade-border-strong) 70%,
+    var(--ade-border-strong) 78%,
+    transparent 78%
+  );
 }
 
 [data-slot="sim-empty"] {
@@ -293,9 +322,11 @@
   cursor: pointer;
 }
 
-[data-slot="sim-guess"]:hover {
-  border-color: var(--ade-accent);
-  background: var(--ade-hover);
+@media (hover: hover) and (pointer: fine) {
+  [data-slot="sim-guess"]:hover {
+    border-color: var(--ade-accent);
+    background: var(--ade-hover);
+  }
 }
 
 [data-slot="sim-guess-label"] {

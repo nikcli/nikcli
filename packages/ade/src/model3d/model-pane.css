@@ -82,11 +82,26 @@
   color: var(--ade-text);
   font: inherit;
   cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease-out),
+    border-color var(--ade-dur-fast) var(--ade-ease-out),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
 }
 
-[data-slot="model-open"]:hover {
-  border-color: var(--ade-border-strong);
-  background: var(--ade-hover);
+@media (hover: hover) and (pointer: fine) {
+  [data-slot="model-open"]:hover {
+    border-color: var(--ade-border-strong);
+    background: var(--ade-hover);
+  }
+}
+
+[data-slot="model-open"]:active {
+  transform: scale(0.97);
+}
+
+[data-slot="model-open"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
 }
 
 /* Over the canvas and out of its way: the last good frame stays visible
@@ -136,11 +151,21 @@
   font: inherit;
   font-size: var(--ade-font-xs);
   cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease-out),
+    color var(--ade-dur-fast) var(--ade-ease-out),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
 }
 
-[data-slot="model-button"]:hover:not(:disabled) {
-  background: var(--ade-hover);
-  color: var(--ade-text);
+@media (hover: hover) and (pointer: fine) {
+  [data-slot="model-button"]:hover:not(:disabled) {
+    background: var(--ade-hover);
+    color: var(--ade-text);
+  }
+}
+
+[data-slot="model-button"]:active:not(:disabled) {
+  transform: scale(0.96);
 }
 
 [data-slot="model-button"]:disabled {

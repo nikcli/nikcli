@@ -115,16 +115,23 @@
   background: var(--ade-surface);
   color: var(--ade-text-soft);
   transition:
-    background var(--ade-dur-fast) var(--ade-ease),
-    color var(--ade-dur-fast) var(--ade-ease),
-    border-color var(--ade-dur-fast) var(--ade-ease),
-    box-shadow var(--ade-dur-fast) var(--ade-ease);
+    background var(--ade-dur-fast) var(--ade-ease-out),
+    color var(--ade-dur-fast) var(--ade-ease-out),
+    border-color var(--ade-dur-fast) var(--ade-ease-out),
+    box-shadow var(--ade-dur-fast) var(--ade-ease-out),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
 }
 
-[data-component="editor"] [data-slot="btn"]:hover:not(:disabled) {
-  background: var(--ade-hover);
-  color: var(--ade-text);
-  border-color: var(--ade-border-strong);
+@media (hover: hover) and (pointer: fine) {
+  [data-component="editor"] [data-slot="btn"]:hover:not(:disabled) {
+    background: var(--ade-hover);
+    color: var(--ade-text);
+    border-color: var(--ade-border-strong);
+  }
+}
+
+[data-component="editor"] [data-slot="btn"]:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 [data-component="editor"] [data-slot="btn"]:focus-visible {
@@ -139,9 +146,11 @@
   font-weight: var(--ade-weight-semibold);
 }
 
-[data-component="editor"] [data-slot="btn"][data-variant="primary"]:hover:not(:disabled) {
-  background: var(--ade-accent-strong);
-  color: var(--ade-accent-fg);
+@media (hover: hover) and (pointer: fine) {
+  [data-component="editor"] [data-slot="btn"][data-variant="primary"]:hover:not(:disabled) {
+    background: var(--ade-accent-strong);
+    color: var(--ade-accent-fg);
+  }
 }
 
 [data-component="editor"] [data-slot="btn"]:disabled {

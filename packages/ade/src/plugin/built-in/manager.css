@@ -22,27 +22,33 @@
   font-size: var(--ade-font-sm);
 }
 
+/*
+ * A plugin list: rows separated by 1px lines, same shape as settings-list.
+ * The plugin-row inside a list is data, not a card; the gap (the only
+ * chrome) is a single line that lets the row above end and the next begin.
+ */
 [data-slot="plugin-list"] {
   list-style: none;
   margin: 0;
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--ade-space-2);
 }
 
 [data-slot="plugin-row"] {
   display: flex;
   align-items: baseline;
   gap: var(--ade-space-3);
-  padding: var(--ade-space-2) var(--ade-space-3);
-  border: 1px solid var(--ade-border);
-  border-radius: var(--ade-radius-sm, 4px);
+  padding: var(--ade-space-3) 0;
+  border-bottom: 1px solid var(--ade-border-subtle);
   font-size: var(--ade-font-md);
 }
 
+[data-slot="plugin-list"] [data-slot="plugin-row"]:last-child {
+  border-bottom: 0;
+}
+
 [data-slot="plugin-list"][data-dense="true"] [data-slot="plugin-row"] {
-  border: none;
   padding: var(--ade-space-1) 0;
   font-size: var(--ade-font-sm);
 }
@@ -65,7 +71,7 @@
   min-width: 0;
   display: flex;
   flex-direction: column;
-  gap: 2px;
+  gap: var(--ade-space-1);
 }
 
 [data-slot="plugin-id"] {

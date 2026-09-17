@@ -54,7 +54,7 @@
   --ade-surface: light-dark(#faf9f8, #1a1818);
   --ade-raised: light-dark(#ffffff, #211e1e);
   --ade-overlay: light-dark(#ffffff, #2a2626);
-  --ade-scrim: light-dark(rgba(0, 0, 0, 0.30), rgba(0, 0, 0, 0.55));
+  --ade-scrim: light-dark(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.55));
 
   /* ── borders ───────────────────────────────────────────────────────────── */
   /*
@@ -66,7 +66,7 @@
   --ade-border-subtle: light-dark(#e8e5e2, #232020);
   --ade-border: light-dark(#d8d4d0, #2b2727);
   --ade-border-strong: light-dark(#c2bdb8, #3a3535);
-  --ade-highlight: light-dark(rgba(255, 255, 255, 0.60), rgba(255, 255, 255, 0.04));
+  --ade-highlight: light-dark(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.04));
 
   /* ── text ───────────────────────────────────────────────────────────────── */
   /*
@@ -87,10 +87,10 @@
    * measures 6.8:1 on raised.
    */
   --ade-accent: light-dark(#1a9e87, #7fd6c4);
-  --ade-accent-soft: light-dark(rgba(26, 158, 135, 0.10), rgba(127, 214, 196, 0.15));
+  --ade-accent-soft: light-dark(rgba(26, 158, 135, 0.1), rgba(127, 214, 196, 0.15));
   --ade-accent-strong: light-dark(#148272, #5ec4ae);
   --ade-accent-fg: light-dark(#ffffff, #0a1613);
-  --ade-accent-glow: light-dark(rgba(26, 158, 135, 0.15), rgba(127, 214, 196, 0.20));
+  --ade-accent-glow: light-dark(rgba(26, 158, 135, 0.15), rgba(127, 214, 196, 0.2));
 
   /* ── status ─────────────────────────────────────────────────────────────── */
   /*
@@ -100,13 +100,13 @@
    * for badges and tinted rows.
    */
   --ade-working: light-dark(#9a6d28, #d9a45f);
-  --ade-working-bg: light-dark(rgba(154, 109, 40, 0.10), rgba(217, 164, 95, 0.12));
+  --ade-working-bg: light-dark(rgba(154, 109, 40, 0.1), rgba(217, 164, 95, 0.12));
   --ade-waiting: light-dark(#3b6fb0, #7da9e4);
-  --ade-waiting-bg: light-dark(rgba(59, 111, 176, 0.10), rgba(125, 169, 228, 0.12));
+  --ade-waiting-bg: light-dark(rgba(59, 111, 176, 0.1), rgba(125, 169, 228, 0.12));
   --ade-done: light-dark(#2e8a50, #71c491);
-  --ade-done-bg: light-dark(rgba(46, 138, 80, 0.10), rgba(113, 196, 145, 0.12));
+  --ade-done-bg: light-dark(rgba(46, 138, 80, 0.1), rgba(113, 196, 145, 0.12));
   --ade-error: light-dark(#b74a5e, #e0879a);
-  --ade-error-bg: light-dark(rgba(183, 74, 94, 0.10), rgba(224, 135, 154, 0.12));
+  --ade-error-bg: light-dark(rgba(183, 74, 94, 0.1), rgba(224, 135, 154, 0.12));
 
   /* ── interaction fills ──────────────────────────────────────────────────── */
   /*
@@ -126,33 +126,30 @@
   /* ── elevation ──────────────────────────────────────────────────────────── */
   /* Short, low-opacity shadows: depth, not smoke. Lighter on light grounds,
      where the same opacity would read as dirt. */
-  --ade-shadow-sm: light-dark(
-    0 1px 2px rgba(0, 0, 0, 0.08),
-    0 1px 2px rgba(0, 0, 0, 0.25)
-  );
-  --ade-shadow-md: light-dark(
-    0 2px 6px rgba(0, 0, 0, 0.10),
-    0 2px 6px rgba(0, 0, 0, 0.30)
-  );
-  --ade-shadow-lg: light-dark(
-    0 4px 16px rgba(0, 0, 0, 0.14),
-    0 4px 16px rgba(0, 0, 0, 0.40)
-  );
+  --ade-shadow-sm: light-dark(0 1px 2px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.25));
+  --ade-shadow-md: light-dark(0 2px 6px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.3));
+  --ade-shadow-lg: light-dark(0 4px 16px rgba(0, 0, 0, 0.14), 0 4px 16px rgba(0, 0, 0, 0.4));
 
-  /* ── motion ─────────────────────────────────────────────────────────────── */
+  /* ── motion ───────────────────────────────────────────────────────────────
+   *
+   * Three durations for three sizes of change: `fast` for hover and inline
+   * state, `base` for entrance and reposition, `slow` for layered reveals.
+   * Three easings: a balanced `ease` for the steady majority, an `ease-out`
+   * landing curve that the Apple / Emil playbook both reach for, and a
+   * slight overshoot `spring` for the moments a gesture carried momentum.
+   */
   --ade-dur-fast: 120ms;
-  --ade-dur: 180ms;
-  --ade-dur-slow: 280ms;
-  --ade-ease: cubic-bezier(0.25, 0.1, 0.25, 1);
-  --ade-ease-out: cubic-bezier(0, 0, 0.2, 1);
-  --ade-spring: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --ade-dur: 200ms;
+  --ade-dur-slow: 320ms;
+  --ade-ease: cubic-bezier(0.2, 0, 0.2, 1);
+  --ade-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ade-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ade-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
 
   /* ── focus ──────────────────────────────────────────────────────────────── */
   /* One ring, applied everywhere through :focus-visible. The second, softer
      ring is what keeps it visible on top of an accent-filled button. */
-  --ade-focus-ring:
-    0 0 0 2px var(--ade-accent),
-    0 0 0 4px var(--ade-accent-glow);
+  --ade-focus-ring: 0 0 0 2px var(--ade-accent), 0 0 0 4px var(--ade-accent-glow);
 
   --ade-scrollbar-thumb: light-dark(rgba(0, 0, 0, 0.18), rgba(255, 255, 255, 0.14));
 
@@ -206,6 +203,8 @@
   --ade-font-xl: 16px;
   --ade-font-2xl: 18px;
   --ade-font-3xl: 24px;
+  /* Half-step used in tight chrome where the named scale skips too far. */
+  --ade-font-md-half: 12.5px;
 
   --ade-weight-normal: 400;
   --ade-weight-medium: 500;
@@ -267,10 +266,41 @@ body,
   box-shadow: var(--ade-focus-ring);
 }
 
-/* Thin, themed scrollbars everywhere. */
+/* Press feedback that survives global resets: the actual rule is per-element
+   with `transform: scale(...)`, but this smooths the transition the moment
+   any element with a non-zero transition gets touched. */
 * {
   scrollbar-width: thin;
-  scrollbar-color: var(--ade-border-strong) transparent;
+  scrollbar-color: var(--ade-scrollbar-thumb) transparent;
+}
+
+/* A scrollbar rail that does not eat layout when its track is hidden — a
+   styled scrollbar with the rail's edge kept invisible. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--ade-scrollbar-thumb);
+  border: 2px solid transparent;
+  background-clip: content-box;
+  border-radius: var(--ade-radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ade-border-strong);
+  background-clip: content-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::-webkit-scrollbar-thumb {
+    border-width: 0;
+  }
 }
 
 /* ── reduced motion ────────────────────────────────────────────────────────── */
@@ -349,8 +379,7 @@ body,
  * progress nothing inside the panes may select text or take the pointer, or a
  * terminal under the cursor swallows the move and the drop never arrives.
  */
-[data-component="session-grid"]:has(> [data-slot="grid-cell"] + [data-slot="grid-cell"])
-  [data-slot="pane-header"] {
+[data-component="session-grid"]:has(> [data-slot="grid-cell"] + [data-slot="grid-cell"]) [data-slot="pane-header"] {
   cursor: grab;
 }
 
@@ -387,21 +416,46 @@ body,
  * the other. The dashed border is dropped for the edges, because a border
  * follows the box and not the clip.
  */
-[data-slot="drop-zone"] { inset: 0; }
-[data-slot="drop-zone"][data-zone="swap"] { inset: 30%; border-radius: var(--ade-radius-lg); }
-[data-slot="drop-zone"]:not([data-zone="swap"]) { border: none; border-radius: 0; }
-[data-slot="drop-zone"][data-zone="before"] { clip-path: polygon(0 0, 30% 30%, 30% 70%, 0 100%); justify-content: flex-start; padding-left: 4%; }
-[data-slot="drop-zone"][data-zone="after"] { clip-path: polygon(100% 0, 70% 30%, 70% 70%, 100% 100%); justify-content: flex-end; padding-right: 4%; }
-[data-slot="drop-zone"][data-zone="above"] { clip-path: polygon(0 0, 100% 0, 70% 30%, 30% 30%); align-items: flex-start; padding-top: 6%; }
-[data-slot="drop-zone"][data-zone="below"] { clip-path: polygon(0 100%, 100% 100%, 70% 70%, 30% 70%); align-items: flex-end; padding-bottom: 6%; }
+[data-slot="drop-zone"] {
+  inset: 0;
+}
+[data-slot="drop-zone"][data-zone="swap"] {
+  inset: 30%;
+  border-radius: var(--ade-radius-lg);
+}
+[data-slot="drop-zone"]:not([data-zone="swap"]) {
+  border: none;
+  border-radius: 0;
+}
+[data-slot="drop-zone"][data-zone="before"] {
+  clip-path: polygon(0 0, 30% 30%, 30% 70%, 0 100%);
+  justify-content: flex-start;
+  padding-left: 4%;
+}
+[data-slot="drop-zone"][data-zone="after"] {
+  clip-path: polygon(100% 0, 70% 30%, 70% 70%, 100% 100%);
+  justify-content: flex-end;
+  padding-right: 4%;
+}
+[data-slot="drop-zone"][data-zone="above"] {
+  clip-path: polygon(0 0, 100% 0, 70% 30%, 30% 30%);
+  align-items: flex-start;
+  padding-top: 6%;
+}
+[data-slot="drop-zone"][data-zone="below"] {
+  clip-path: polygon(0 100%, 100% 100%, 70% 70%, 30% 70%);
+  align-items: flex-end;
+  padding-bottom: 6%;
+}
 
 [data-slot="drop-zone-label"] {
-  padding: 4px 10px;
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 600;
+  padding: var(--ade-space-2) var(--ade-space-4);
+  border-radius: var(--ade-radius-full);
+  font-size: var(--ade-font-md);
+  font-weight: var(--ade-weight-semibold);
   color: var(--ade-accent-fg);
   background: var(--ade-accent);
+  transition: background var(--ade-dur-fast) var(--ade-ease);
 }
 
 /* A corner grip, visible when the tile is hovered or focused, so resting
@@ -428,7 +482,9 @@ body,
 }
 
 @media (prefers-reduced-motion: reduce) {
-  [data-slot="tile-resize"] { transition: none; }
+  [data-slot="tile-resize"] {
+    transition: none;
+  }
 }
 
 /* Pane rules live in grid/pane.css — the card owns its own stylesheet. */
@@ -442,7 +498,7 @@ body,
   [data-status="working"] [data-slot="session-dot"],
   [data-status="provisioning"] [data-slot="pane-dot"],
   [data-status="provisioning"] [data-slot="session-dot"] {
-    animation: ade-dot-breathe 2.4s ease-in-out infinite;
+    animation: ade-dot-breathe 2.4s var(--ade-ease-in-out) infinite;
   }
 }
 
@@ -455,7 +511,6 @@ body,
     opacity: 0.45;
   }
 }
-
 
 /* ── sidebar ──────────────────────────────────────────────────────────────── */
 
@@ -543,7 +598,7 @@ body,
   height: 100%;
   cursor: col-resize;
   z-index: 20;
-  transition: background var(--ade-dur) var(--ade-ease);
+  transition: background var(--ade-dur-fast) var(--ade-ease);
 }
 
 [data-slot="sidebar-resize-handle"]:hover,
@@ -580,11 +635,17 @@ body,
   font-weight: var(--ade-weight-semibold);
   text-align: left;
   cursor: pointer;
-  transition: background var(--ade-dur-fast) var(--ade-ease);
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
 }
 
 [data-slot="workspace-header"]:hover {
   background: var(--ade-hover);
+}
+
+[data-slot="workspace-header"]:active {
+  transform: scale(0.99);
 }
 
 [data-slot="workspace-header"]:focus-visible {
@@ -655,7 +716,8 @@ body,
   cursor: pointer;
   transition:
     background var(--ade-dur-fast) var(--ade-ease),
-    color var(--ade-dur-fast) var(--ade-ease);
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
   position: relative;
   /* Slightly taller rows for comfortable click targets. */
   min-height: 28px;
@@ -664,6 +726,10 @@ body,
 [data-slot="session-row"]:hover {
   background: var(--ade-hover);
   color: var(--ade-text);
+}
+
+[data-slot="session-row"]:active {
+  transform: scale(0.99);
 }
 
 /*
@@ -748,13 +814,18 @@ body,
   cursor: pointer;
   transition:
     background var(--ade-dur-fast) var(--ade-ease),
-    color var(--ade-dur-fast) var(--ade-ease);
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
   position: relative;
 }
 
 [data-slot="tree-row"]:hover {
   background: var(--ade-hover);
   color: var(--ade-text);
+}
+
+[data-slot="tree-row"]:active {
+  transform: scale(0.99);
 }
 
 [data-slot="tree-row"][data-selected] {
@@ -870,7 +941,6 @@ body,
   font-family: var(--ade-sans);
 }
 
-
 /* Registrazione in corso (S36): sopra ogni cosa, perché nessuno deve filmare
    senza saperlo. Il punto pulsa solo mentre si registra davvero. Sta nella
    barra, prima dei pulsanti della finestra: fisso nell'angolo li copriva.
@@ -882,16 +952,33 @@ body,
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 4px 10px;
+  gap: var(--ade-space-3);
+  padding: var(--ade-space-2) var(--ade-space-5);
   border: 1px solid color-mix(in oklab, red 45%, var(--ade-border));
-  border-radius: 999px;
+  border-radius: var(--ade-radius-full);
   background: color-mix(in oklab, red 12%, var(--ade-surface));
   color: var(--ade-text);
   font: inherit;
-  font-size: 11px;
+  font-size: var(--ade-font-sm);
   letter-spacing: 0.08em;
   cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="ade-rec"]:hover {
+  background: color-mix(in oklab, red 18%, var(--ade-surface));
+}
+
+[data-slot="ade-rec"]:active {
+  transform: scale(0.97);
+}
+
+[data-slot="ade-rec"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
 }
 
 [data-slot="ade-rec-dot"] {
@@ -899,7 +986,7 @@ body,
   height: 8px;
   border-radius: 50%;
   background: red;
-  animation: ade-rec-pulse 1.4s ease-in-out infinite;
+  animation: ade-rec-pulse 1.4s var(--ade-ease-in-out) infinite;
 }
 
 [data-slot="ade-rec"][data-stopping] [data-slot="ade-rec-dot"] {
@@ -908,19 +995,23 @@ body,
 }
 
 @keyframes ade-rec-pulse {
-  50% { opacity: 0.25; }
+  50% {
+    opacity: 0.25;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  [data-slot="ade-rec-dot"] { animation: none; }
+  [data-slot="ade-rec-dot"] {
+    animation: none;
+  }
 }
 
 /* An agent asks to record (S36): one question, the microphone as its own switch. */
 [data-component="record-consent"] [data-slot="record-consent-body"] {
   display: grid;
-  gap: 8px;
-  padding: 12px 16px;
-  font-size: 12.5px;
+  gap: var(--ade-space-4);
+  padding: var(--ade-space-6) var(--ade-space-7);
+  font-size: var(--ade-font-md-half);
 }
 [data-component="record-consent"] [data-slot="record-consent-note"] {
   color: var(--ade-text-weak);
@@ -928,13 +1019,13 @@ body,
 [data-component="record-consent"] [data-slot="record-consent-mic"] {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: var(--ade-space-4);
 }
 [data-component="record-consent"] [data-slot="record-consent-actions"] {
   display: flex;
   justify-content: flex-end;
-  gap: 8px;
-  padding: 0 16px 14px;
+  gap: var(--ade-space-4);
+  padding: 0 var(--ade-space-7) var(--ade-space-7);
 }
 
 /*
@@ -947,7 +1038,7 @@ html[data-ade-recording] #openrouter-key-field {
   color: transparent !important;
   text-shadow: none !important;
   caret-color: transparent !important;
-  background: #2a2a2a !important;
+  background: var(--ade-active) !important;
   -webkit-text-security: disc;
 }
 html[data-ade-recording] [data-sensitive]::selection,

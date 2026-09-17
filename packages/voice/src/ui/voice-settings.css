@@ -28,8 +28,12 @@
 }
 
 @keyframes ade-voice-panel-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 /* ── Panel Dialog ──────────────────────────────────────────────────────────── */
@@ -235,8 +239,13 @@
 }
 
 @keyframes ade-voice-pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.25; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.25;
+  }
 }
 
 [data-component="voice-settings-panel"] [data-slot="close-btn"] {
@@ -250,14 +259,24 @@
   background: transparent;
   color: var(--ade-text-weak);
   cursor: pointer;
+  /* Transform in the transition so the press-scale animates from the very
+     current value — the icon shrinks in step with the color change rather
+     than after it. */
   transition:
     background var(--ade-dur-fast) var(--ade-ease),
-    color var(--ade-dur-fast) var(--ade-ease);
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
 }
 
 [data-component="voice-settings-panel"] [data-slot="close-btn"]:hover {
   background: var(--ade-hover);
   color: var(--ade-text);
+}
+
+[data-component="voice-settings-panel"] [data-slot="close-btn"]:active {
+  /* A small icon warrants a slightly larger press-scale: it has fewer pixels
+     of surface to feel, so the scale has to do more work. */
+  transform: scale(0.9);
 }
 
 [data-component="voice-settings-panel"] [data-slot="close-btn"]:focus-visible {
@@ -362,11 +381,24 @@
   white-space: nowrap;
   cursor: pointer;
   user-select: none;
+  /* Transform in the transition — the press-scale rides the same frame as
+     the colour change so the press reads as one motion, not a colour flash
+     followed by a shrink. */
   transition:
     background var(--ade-dur-fast) var(--ade-ease),
     border-color var(--ade-dur-fast) var(--ade-ease),
     color var(--ade-dur-fast) var(--ade-ease),
-    box-shadow var(--ade-dur-fast) var(--ade-ease);
+    box-shadow var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
+}
+
+/* Buttons get a clearly perceptible press. Pills would feel sluggish with
+   the same scale; cards less. This is the canonical 0.97 from Apple — large
+   enough to feel, small enough not to translate. */
+[data-component="voice-settings-panel"] [data-slot="primary-btn"]:not(:disabled):active,
+[data-component="voice-settings-panel"] [data-slot="solid-btn"]:not(:disabled):active,
+[data-component="voice-settings-panel"] [data-slot="ghost-btn"]:not(:disabled):active {
+  transform: scale(0.97);
 }
 
 [data-component="voice-settings-panel"] [data-slot="primary-btn"] {
@@ -505,9 +537,12 @@
   text-align: left;
   cursor: pointer;
   min-width: 0;
+  /* Rail rows are flipped often. Transform in the transition so the
+     press feels immediate and the active state can interrupt cleanly. */
   transition:
     background var(--ade-dur-fast) var(--ade-ease),
-    color var(--ade-dur-fast) var(--ade-ease);
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
 }
 
 [data-component="voice-settings-panel"] [data-slot="rail-row"]:hover {
@@ -515,10 +550,22 @@
   color: var(--ade-text);
 }
 
+/* The press on a rail row is a touch more pronounced than on a card: rows
+   are slim, and a 0.97 scale would be a single pixel — too small to feel. */
+[data-component="voice-settings-panel"] [data-slot="rail-row"]:active {
+  transform: scale(0.97);
+}
+
 [data-component="voice-settings-panel"] [data-slot="rail-row"][data-current="true"] {
   background: var(--ade-accent-soft);
   color: var(--ade-accent);
   font-weight: var(--ade-weight-semibold);
+}
+
+/* The armed (Ripristina) row stays readable when pressed: the colour is the
+   warning, not the scale. */
+[data-component="voice-settings-panel"] [data-slot="rail-row"][data-armed="true"]:active {
+  transform: scale(0.97);
 }
 
 [data-component="voice-settings-panel"] [data-slot="rail-row"]:focus-visible {
@@ -713,11 +760,13 @@
   box-shadow: inset 0 1px 0 0 var(--ade-highlight);
   cursor: pointer;
   user-select: none;
+  /* Scale on press, transform in transition so the response is the very
+     property that moves — colors and shadows ride along on the same frame. */
   transition:
     background var(--ade-dur-fast) var(--ade-ease),
     border-color var(--ade-dur-fast) var(--ade-ease),
     box-shadow var(--ade-dur-fast) var(--ade-ease),
-    transform var(--ade-dur-fast) var(--ade-ease);
+    transform var(--ade-dur-fast) var(--ade-ease-out);
 }
 
 [data-component="voice-settings-panel"] [data-slot="mode-card"]:hover {
@@ -725,8 +774,11 @@
   border-color: var(--ade-border-strong);
 }
 
+/* A subtle press: cards are wide and the gesture is a tap, so the scale is
+   tiny and combined with a 1px nudge — feedback on a tap that's also a
+   commit, never a translation that looks like a drag. */
 [data-component="voice-settings-panel"] [data-slot="mode-card"]:active {
-  transform: translateY(1px);
+  transform: scale(0.985) translateY(1px);
 }
 
 [data-component="voice-settings-panel"] [data-slot="mode-card"][aria-checked="true"] {
@@ -736,6 +788,18 @@
     inset 0 1px 0 0 var(--ade-highlight),
     0 0 0 1px var(--ade-accent),
     0 0 0 5px var(--ade-accent-glow);
+}
+
+/* The checked card keeps its scale on press but never compounds the glow
+   (it already has a ring); reset the box-shadow so focus takes over cleanly. */
+[data-component="voice-settings-panel"] [data-slot="mode-card"][aria-checked="true"]:focus-visible {
+  background: var(--ade-raised);
+  border-color: var(--ade-accent);
+  box-shadow:
+    inset 0 1px 0 0 var(--ade-highlight),
+    0 0 0 1px var(--ade-accent),
+    0 0 0 5px var(--ade-accent-glow),
+    var(--ade-focus-ring);
 }
 
 [data-component="voice-settings-panel"] [data-slot="mode-card"]:focus-visible {
@@ -835,19 +899,37 @@
   border: 1px solid var(--ade-border);
   background: var(--ade-surface);
   cursor: pointer;
+  /* Add transform so the press-scale rides the same frame as the colour
+     change. Sub-choice items are the most-pressed thing in this panel —
+     one per language, one per voice — and a noticeable press matters here. */
   transition:
     background var(--ade-dur-fast) var(--ade-ease),
-    border-color var(--ade-dur-fast) var(--ade-ease);
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    box-shadow var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
 }
 
 [data-component="voice-settings-panel"] [data-slot="sub-choice-item"]:hover {
   background: var(--ade-hover);
 }
 
+[data-component="voice-settings-panel"] [data-slot="sub-choice-item"]:active {
+  transform: scale(0.98);
+}
+
 [data-component="voice-settings-panel"] [data-slot="sub-choice-item"][aria-checked="true"] {
   background: var(--ade-raised);
   border-color: var(--ade-accent);
   box-shadow: 0 0 0 1px var(--ade-accent);
+}
+
+/* The checked item keeps its ring; focus must layer on top, not replace it. */
+[data-component="voice-settings-panel"] [data-slot="sub-choice-item"][aria-checked="true"]:focus-visible {
+  background: var(--ade-raised);
+  border-color: var(--ade-accent);
+  box-shadow:
+    0 0 0 1px var(--ade-accent),
+    var(--ade-focus-ring);
 }
 
 [data-component="voice-settings-panel"] [data-slot="sub-choice-item"]:focus-visible {
@@ -890,10 +972,14 @@
   border: 1px solid var(--ade-border);
   background: var(--ade-surface);
   cursor: pointer;
+  /* Add transform so the press-scale rides the same frame as colour change.
+     Activation rows are wide and singular — pressing one is a clear gesture,
+     and the scale needs to keep up. */
   transition:
     background var(--ade-dur-fast) var(--ade-ease),
     border-color var(--ade-dur-fast) var(--ade-ease),
-    box-shadow var(--ade-dur-fast) var(--ade-ease);
+    box-shadow var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
 }
 
 [data-component="voice-settings-panel"] [data-slot="activation-item"]:hover:not([aria-disabled="true"]) {
@@ -901,10 +987,23 @@
   border-color: var(--ade-border-strong);
 }
 
+[data-component="voice-settings-panel"] [data-slot="activation-item"]:not([aria-disabled="true"]):active {
+  transform: scale(0.985);
+}
+
 [data-component="voice-settings-panel"] [data-slot="activation-item"][aria-checked="true"] {
   background: var(--ade-raised);
   border-color: var(--ade-accent);
   box-shadow: 0 0 0 1px var(--ade-accent);
+}
+
+/* Focus on the already-checked item keeps its ring visible. */
+[data-component="voice-settings-panel"] [data-slot="activation-item"][aria-checked="true"]:focus-visible {
+  background: var(--ade-raised);
+  border-color: var(--ade-accent);
+  box-shadow:
+    0 0 0 1px var(--ade-accent),
+    var(--ade-focus-ring);
 }
 
 [data-component="voice-settings-panel"] [data-slot="activation-item"]:focus-visible {
@@ -917,6 +1016,8 @@
   background: var(--ade-sunken);
   border-color: var(--ade-border-subtle);
   cursor: not-allowed;
+  /* Disabled rows must not respond to press — the gesture is not theirs. */
+  transform: none;
 }
 
 [data-component="voice-settings-panel"] [data-slot="item-text-group"] {
@@ -1088,16 +1189,24 @@
   color: var(--ade-text);
   cursor: pointer;
   user-select: none;
+  /* Transform in the transition. The recording state uses the same button
+     to capture a chord, so the press-scale must not be ambiguous when the
+     user is mid-press. */
   transition:
     background var(--ade-dur-fast) var(--ade-ease),
     border-color var(--ade-dur-fast) var(--ade-ease),
     color var(--ade-dur-fast) var(--ade-ease),
-    box-shadow var(--ade-dur-fast) var(--ade-ease);
+    box-shadow var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
 }
 
 [data-component="voice-settings-panel"] [data-slot="shortcut-recorder-btn"]:hover {
   background: var(--ade-hover);
   border-color: var(--ade-accent);
+}
+
+[data-component="voice-settings-panel"] [data-slot="shortcut-recorder-btn"]:active {
+  transform: scale(0.97);
 }
 
 [data-component="voice-settings-panel"] [data-slot="shortcut-recorder-btn"]:focus-visible {
@@ -1114,8 +1223,13 @@
 }
 
 @keyframes ade-voice-recording {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.7; }
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
 }
 
 /* ── Section 4: Lingua ─────────────────────────────────────────────────────── */
@@ -1149,11 +1263,18 @@
   font-size: var(--ade-font-sm);
   font-weight: var(--ade-weight-semibold);
   cursor: pointer;
-  transition: opacity var(--ade-dur-fast) var(--ade-ease);
+  /* Add transform so the press-scale rides the same frame as opacity. */
+  transition:
+    opacity var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
 }
 
 [data-component="voice-settings-panel"] [data-slot="lang-suggest-btn"]:hover {
   opacity: 0.85;
+}
+
+[data-component="voice-settings-panel"] [data-slot="lang-suggest-btn"]:active {
+  transform: scale(0.97);
 }
 
 [data-component="voice-settings-panel"] [data-slot="lang-suggest-btn"]:focus-visible {
@@ -1178,10 +1299,13 @@
   display: flex;
   flex-direction: column;
   gap: var(--ade-space-4);
+  /* Transform rides the same transition so press feedback is one motion,
+     not colour-then-shrink. */
   transition:
     background var(--ade-dur-fast) var(--ade-ease),
     border-color var(--ade-dur-fast) var(--ade-ease),
-    box-shadow var(--ade-dur-fast) var(--ade-ease);
+    box-shadow var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
 }
 
 [data-component="voice-settings-panel"] [data-slot="backend-card"][data-checked="true"] {
@@ -1190,6 +1314,14 @@
   box-shadow:
     inset 0 1px 0 0 var(--ade-highlight),
     0 0 0 1px var(--ade-accent);
+}
+
+/* The selected card keeps its ring; focus must layer on top, not replace. */
+[data-component="voice-settings-panel"] [data-slot="backend-card"][data-checked="true"]:focus-within {
+  box-shadow:
+    inset 0 1px 0 0 var(--ade-highlight),
+    0 0 0 1px var(--ade-accent),
+    var(--ade-focus-ring);
 }
 
 [data-component="voice-settings-panel"] [data-slot="backend-card"][data-unusable="true"]:not([data-checked="true"]) {
@@ -1267,15 +1399,24 @@
   font-size: var(--ade-font-sm);
   font-weight: var(--ade-weight-medium);
   cursor: pointer;
+  /* Pills are flipped often (the engine sub-fields). Add transform so the
+     press-scale rides the same frame as the colour change. */
   transition:
     background var(--ade-dur-fast) var(--ade-ease),
     border-color var(--ade-dur-fast) var(--ade-ease),
-    color var(--ade-dur-fast) var(--ade-ease);
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
 }
 
 [data-component="voice-settings-panel"] [data-slot="pill-btn"]:hover:not(:disabled) {
   background: var(--ade-hover);
   color: var(--ade-text);
+}
+
+[data-component="voice-settings-panel"] [data-slot="pill-btn"]:not(:disabled):active {
+  /* Slightly stronger press than a card — pills are smaller and rely more on
+     the scale to communicate the gesture. */
+  transform: scale(0.96);
 }
 
 [data-component="voice-settings-panel"] [data-slot="pill-btn"]:disabled {
@@ -1293,6 +1434,15 @@
   border-color: var(--ade-accent);
   color: var(--ade-accent-strong);
   font-weight: var(--ade-weight-semibold);
+}
+
+/* The checked pill keeps its tint; focus layers on top, not over. */
+[data-component="voice-settings-panel"] [data-slot="pill-btn"][aria-checked="true"]:focus-visible {
+  background: var(--ade-accent-soft);
+  border-color: var(--ade-accent);
+  color: var(--ade-accent-strong);
+  font-weight: var(--ade-weight-semibold);
+  box-shadow: var(--ade-focus-ring);
 }
 
 /* Parakeet Model Download Progress Bar */
@@ -1359,10 +1509,20 @@
   font-size: var(--ade-font-sm);
   text-decoration: underline;
   flex: none;
+  /* Inline links rarely get a press-scale because they read as text, but
+     this one is destructive — a tiny press-scale tells the user it is
+     actionable rather than a passive description. */
+  transition:
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
 }
 
 [data-component="voice-settings-panel"] [data-slot="key-clear-btn"]:hover {
   color: var(--ade-text);
+}
+
+[data-component="voice-settings-panel"] [data-slot="key-clear-btn"]:active {
+  transform: scale(0.97);
 }
 
 [data-component="voice-settings-panel"] [data-slot="key-clear-btn"]:focus-visible {
@@ -1465,16 +1625,24 @@
   font-family: inherit;
   font-size: var(--ade-font-xs);
   cursor: pointer;
+  /* Chips are tiny — the press-scale has to do real work for the gesture
+     to register. Transform in the transition keeps the scale and colour on
+     the same frame. */
   transition:
     background var(--ade-dur-fast) var(--ade-ease),
     border-color var(--ade-dur-fast) var(--ade-ease),
-    color var(--ade-dur-fast) var(--ade-ease);
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
 }
 
 [data-component="voice-settings-panel"] [data-slot="phrase-chip"]:hover {
   background: var(--ade-accent-soft);
   border-color: var(--ade-accent);
   color: var(--ade-accent-strong);
+}
+
+[data-component="voice-settings-panel"] [data-slot="phrase-chip"]:active {
+  transform: scale(0.94);
 }
 
 [data-component="voice-settings-panel"] [data-slot="phrase-chip"]:focus-visible {

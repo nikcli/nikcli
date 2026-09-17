@@ -37,7 +37,7 @@
   left: auto;
   right: auto;
   flex: 0 0 auto;
-  margin: 6px 6px 0;
+  margin: var(--ade-space-3) var(--ade-space-3) 0;
 }
 
 [data-slot="video-header-gap"] {
@@ -98,11 +98,21 @@
   color: var(--ade-text);
   font: inherit;
   cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease-out),
+    border-color var(--ade-dur-fast) var(--ade-ease-out),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
 }
 
-[data-slot="video-open"]:hover {
-  border-color: var(--ade-border-strong);
-  background: var(--ade-hover);
+@media (hover: hover) and (pointer: fine) {
+  [data-slot="video-open"]:hover {
+    border-color: var(--ade-border-strong);
+    background: var(--ade-hover);
+  }
+}
+
+[data-slot="video-open"]:active {
+  transform: scale(0.97);
 }
 
 /* One row, and it does not wrap. `min-width: 0` on the flex children is what
@@ -129,11 +139,21 @@
   background: transparent;
   color: var(--ade-text-weak);
   cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease-out),
+    color var(--ade-dur-fast) var(--ade-ease-out),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
 }
 
-[data-slot="video-button"]:hover {
-  background: var(--ade-hover);
-  color: var(--ade-text);
+@media (hover: hover) and (pointer: fine) {
+  [data-slot="video-button"]:hover {
+    background: var(--ade-hover);
+    color: var(--ade-text);
+  }
+}
+
+[data-slot="video-button"]:active {
+  transform: scale(0.96);
 }
 
 [data-slot="video-button"]:focus-visible {

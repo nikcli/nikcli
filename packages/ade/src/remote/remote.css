@@ -15,6 +15,18 @@
   padding: var(--ade-space-3) var(--ade-space-4);
   font-family: var(--ade-sans);
   font-size: var(--ade-font-md);
+  /* Add box-shadow so the focus-ring has its own transition path and does
+     not animate as a step change with the border-colour flip. */
+  transition:
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    background var(--ade-dur-fast) var(--ade-ease),
+    box-shadow var(--ade-dur-fast) var(--ade-ease-out);
+}
+
+[data-component="remote-space"] input:focus-visible {
+  outline: none;
+  border-color: var(--ade-accent);
+  box-shadow: var(--ade-focus-ring);
 }
 
 [data-component="remote-space"] input::placeholder {
@@ -46,11 +58,26 @@
   color: var(--ade-text);
   text-align: left;
   cursor: pointer;
+  /* Add transform so the press-scale rides the same frame as the hover
+     background — the row reads as one motion, not colour then shrink. */
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
 }
 
-[data-component="remote-space"] [data-slot="host"]:hover,
+@media (hover: hover) and (pointer: fine) {
+  [data-component="remote-space"] [data-slot="host"]:hover {
+    background: var(--ade-hover);
+  }
+}
 [data-component="remote-space"] [data-slot="host"]:focus-visible {
   background: var(--ade-hover);
+}
+
+/* A subtle press: rows are slim and the gesture is a directional tap, so
+   the scale is tiny — just enough to feel. */
+[data-component="remote-space"] [data-slot="host"]:active {
+  transform: scale(0.99);
 }
 
 [data-component="remote-space"] [data-slot="alias"] {
@@ -78,6 +105,21 @@
   border: 1px solid var(--ade-border);
   background: transparent;
   color: var(--ade-text);
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-component="remote-space"] [data-slot="primary"]:active,
+[data-component="remote-space"] [data-slot="secondary"]:active {
+  transform: scale(0.97);
+}
+
+[data-component="remote-space"] [data-slot="primary"]:focus-visible,
+[data-component="remote-space"] [data-slot="secondary"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
 }
 
 [data-component="remote-space"] [data-slot="primary"] {
@@ -86,7 +128,19 @@
   color: var(--ade-accent-fg);
 }
 
-[data-component="remote-space"] [data-slot="primary"]:disabled {
+@media (hover: hover) and (pointer: fine) {
+  [data-component="remote-space"] [data-slot="primary"]:hover:not(:disabled) {
+    background: var(--ade-accent-strong);
+  }
+
+  [data-component="remote-space"] [data-slot="secondary"]:hover:not(:disabled) {
+    background: var(--ade-hover);
+    color: var(--ade-text);
+  }
+}
+
+[data-component="remote-space"] [data-slot="primary"]:disabled,
+[data-component="remote-space"] [data-slot="secondary"]:disabled {
   opacity: 0.5;
   cursor: default;
 }

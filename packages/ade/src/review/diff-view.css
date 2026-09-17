@@ -44,13 +44,22 @@
   flex-direction: column;
 }
 
+/*
+ * A file in the diff-view sidebar.
+ *
+ * Same shape as a workspace-tree row in the sidebar: bare list, no card
+ * border, no surface fill — the panel's own ground shows through and a
+ * single 1px line separates one file from the next. Selection is the
+ * accent rail on the leading edge, matching the tree.
+ */
 [data-component="diff-view"] [data-slot="file-row"] {
   display: flex;
   align-items: center;
   gap: var(--ade-space-4);
-  padding: var(--ade-space-2) var(--ade-space-6);
+  padding: var(--ade-space-3) var(--ade-space-6);
   min-height: 32px;
-  border: none;
+  border: 0;
+  border-bottom: 1px solid var(--ade-border-subtle);
   background: transparent;
   color: var(--ade-text-soft);
   text-align: left;
@@ -58,18 +67,26 @@
   font-size: var(--ade-font-md);
   font-family: var(--ade-sans);
   position: relative;
-  transition: background var(--ade-dur-fast) var(--ade-ease), color var(--ade-dur-fast) var(--ade-ease);
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease);
 }
 
-@media (prefers-reduced-motion) {
+[data-component="diff-view"] [data-slot="file-list"] [data-slot="file-row"]:last-child {
+  border-bottom: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
   [data-component="diff-view"] [data-slot="file-row"] {
     transition: none;
   }
 }
 
-[data-component="diff-view"] [data-slot="file-row"]:hover {
-  background-color: var(--ade-hover);
-  color: var(--ade-text);
+@media (hover: hover) and (pointer: fine) {
+  [data-component="diff-view"] [data-slot="file-row"]:hover {
+    background-color: var(--ade-hover);
+    color: var(--ade-text);
+  }
 }
 
 [data-component="diff-view"] [data-slot="file-row"][data-selected] {
@@ -102,10 +119,18 @@
   flex-shrink: 0;
 }
 
-[data-component="diff-view"] [data-slot="status"][data-status="added"] { background-color: var(--ade-done); }
-[data-component="diff-view"] [data-slot="status"][data-status="modified"] { background-color: var(--ade-accent); }
-[data-component="diff-view"] [data-slot="status"][data-status="deleted"] { background-color: var(--ade-error); }
-[data-component="diff-view"] [data-slot="status"][data-status="renamed"] { background-color: var(--ade-accent); }
+[data-component="diff-view"] [data-slot="status"][data-status="added"] {
+  background-color: var(--ade-done);
+}
+[data-component="diff-view"] [data-slot="status"][data-status="modified"] {
+  background-color: var(--ade-accent);
+}
+[data-component="diff-view"] [data-slot="status"][data-status="deleted"] {
+  background-color: var(--ade-error);
+}
+[data-component="diff-view"] [data-slot="status"][data-status="renamed"] {
+  background-color: var(--ade-accent);
+}
 
 [data-component="diff-view"] [data-slot="file-path"] {
   flex-grow: 1;

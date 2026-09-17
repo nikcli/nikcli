@@ -32,10 +32,12 @@
 [data-slot="new-column"] {
   width: min(880px, 100%);
   margin: 0 auto;
-  padding: 32px var(--ade-space-6) var(--ade-space-6);
+  /* 36px top: the screen reads as invitation above and as decision below,
+     and the asymmetry is what stops the column from feeling centred. */
+  padding: var(--ade-space-9) var(--ade-space-7) var(--ade-space-7);
   display: flex;
   flex-direction: column;
-  gap: var(--ade-space-6);
+  gap: var(--ade-space-7);
 }
 
 /* ── heading ───────────────────────────────────────────────────────────────── */
@@ -102,21 +104,33 @@
 [data-slot="new-close"] {
   display: grid;
   place-items: center;
-  width: 28px;
-  height: 28px;
-  border: 1px solid var(--ade-border);
+  width: 26px;
+  height: 26px;
+  border: 1px solid transparent;
   border-radius: var(--ade-radius-md);
   background: transparent;
   color: var(--ade-text-weak);
   cursor: pointer;
   transition:
     background var(--ade-dur-fast) var(--ade-ease),
-    color var(--ade-dur-fast) var(--ade-ease);
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="new-close"]:hover {
+  background: var(--ade-hover);
+  border-color: var(--ade-border);
+  color: var(--ade-text);
 }
 
 [data-slot="new-close"]:hover {
   background: var(--ade-hover);
   color: var(--ade-text);
+}
+
+[data-slot="new-close"]:active {
+  transform: scale(0.92);
 }
 
 [data-slot="new-summary"] {
@@ -137,6 +151,10 @@
   font-family: inherit;
   font-size: var(--ade-font-md);
   cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
 }
 
 [data-slot="new-cancel"]:hover {
@@ -144,11 +162,15 @@
   color: var(--ade-text);
 }
 
+[data-slot="new-cancel"]:active {
+  transform: scale(0.97);
+}
+
 [data-slot="new-foot"] {
   display: flex;
   align-items: center;
   gap: var(--ade-space-4);
-  padding: var(--ade-space-4) 0 var(--ade-space-2);
+  padding: var(--ade-space-5) 0 var(--ade-space-2);
   border-top: 1px solid var(--ade-border-subtle);
   margin-top: var(--ade-space-2);
 }
@@ -156,8 +178,9 @@
 [data-slot="new-launch-btn"] {
   display: inline-flex;
   align-items: center;
-  gap: var(--ade-space-4);
-  padding: var(--ade-space-3) var(--ade-space-6);
+  gap: var(--ade-space-3);
+  height: 32px;
+  padding: 0 var(--ade-space-6);
   border: 0;
   border-radius: var(--ade-radius-md);
   background: var(--ade-accent);
@@ -167,11 +190,23 @@
   font-weight: var(--ade-weight-semibold);
   cursor: pointer;
   white-space: nowrap;
-  transition: background var(--ade-dur-fast) var(--ade-ease);
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    box-shadow var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
 }
 
 [data-slot="new-launch-btn"]:hover {
   background: var(--ade-accent-strong);
+}
+
+[data-slot="new-launch-btn"]:active {
+  transform: scale(0.97);
+}
+
+[data-slot="new-launch-btn"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
 }
 
 [data-slot="new-launch-hint"] {
@@ -191,7 +226,7 @@
 [data-slot="new-body"] {
   display: flex;
   flex-direction: column;
-  gap: var(--ade-space-6);
+  gap: var(--ade-space-7);
 }
 
 [data-slot="new-section"] {
@@ -229,7 +264,7 @@
  */
 [data-agent-id="claude-code"] {
   --cli-color: light-dark(#c25a39, #d97757);
-  --cli-tint: light-dark(rgba(194, 90, 57, 0.10), rgba(217, 119, 87, 0.14));
+  --cli-tint: light-dark(rgba(194, 90, 57, 0.1), rgba(217, 119, 87, 0.14));
   --cli-border: light-dark(rgba(194, 90, 57, 0.28), rgba(217, 119, 87, 0.35));
   --cli-glow: light-dark(rgba(194, 90, 57, 0.18), rgba(217, 119, 87, 0.25));
   --cli-contrast: #ffffff;
@@ -237,7 +272,7 @@
 
 [data-agent-id="codex"] {
   --cli-color: light-dark(#3941ff, #7a9dff);
-  --cli-tint: light-dark(rgba(57, 65, 255, 0.10), rgba(122, 157, 255, 0.14));
+  --cli-tint: light-dark(rgba(57, 65, 255, 0.1), rgba(122, 157, 255, 0.14));
   --cli-border: light-dark(rgba(57, 65, 255, 0.28), rgba(122, 157, 255, 0.35));
   --cli-glow: light-dark(rgba(57, 65, 255, 0.18), rgba(122, 157, 255, 0.25));
   --cli-contrast: #ffffff;
@@ -245,7 +280,7 @@
 
 [data-agent-id="agy"] {
   --cli-color: light-dark(#1a6fe8, #3186ff);
-  --cli-tint: light-dark(rgba(26, 111, 232, 0.10), rgba(49, 134, 255, 0.14));
+  --cli-tint: light-dark(rgba(26, 111, 232, 0.1), rgba(49, 134, 255, 0.14));
   --cli-border: light-dark(rgba(26, 111, 232, 0.28), rgba(49, 134, 255, 0.35));
   --cli-glow: light-dark(rgba(26, 111, 232, 0.18), rgba(49, 134, 255, 0.25));
   --cli-contrast: #ffffff;
@@ -257,7 +292,7 @@
 [data-agent-id="hermes"] {
   --cli-color: light-dark(#000000, #ffffff);
   --cli-tint: light-dark(rgba(0, 0, 0, 0.08), rgba(255, 255, 255, 0.12));
-  --cli-border: light-dark(rgba(0, 0, 0, 0.25), rgba(255, 255, 255, 0.30));
+  --cli-border: light-dark(rgba(0, 0, 0, 0.25), rgba(255, 255, 255, 0.3));
   --cli-glow: light-dark(rgba(0, 0, 0, 0.15), rgba(255, 255, 255, 0.22));
   --cli-contrast: light-dark(#ffffff, #000000);
 }
@@ -265,22 +300,22 @@
 [data-agent-id="opencode"] {
   --cli-color: light-dark(#18181b, #f1ecec);
   --cli-tint: light-dark(rgba(24, 24, 27, 0.08), rgba(241, 236, 236, 0.12));
-  --cli-border: light-dark(rgba(24, 24, 27, 0.25), rgba(241, 236, 236, 0.30));
+  --cli-border: light-dark(rgba(24, 24, 27, 0.25), rgba(241, 236, 236, 0.3));
   --cli-glow: light-dark(rgba(24, 24, 27, 0.15), rgba(241, 236, 236, 0.22));
   --cli-contrast: light-dark(#ffffff, #121212);
 }
 
 [data-agent-id="nikcli"] {
   --cli-color: light-dark(#2563eb, #3b82f6);
-  --cli-tint: light-dark(rgba(37, 99, 235, 0.10), rgba(59, 130, 246, 0.15));
-  --cli-border: light-dark(rgba(37, 99, 235, 0.30), rgba(59, 130, 246, 0.40));
-  --cli-glow: light-dark(rgba(37, 99, 235, 0.20), rgba(59, 130, 246, 0.30));
+  --cli-tint: light-dark(rgba(37, 99, 235, 0.1), rgba(59, 130, 246, 0.15));
+  --cli-border: light-dark(rgba(37, 99, 235, 0.3), rgba(59, 130, 246, 0.4));
+  --cli-glow: light-dark(rgba(37, 99, 235, 0.2), rgba(59, 130, 246, 0.3));
   --cli-contrast: #ffffff;
 }
 
 [data-agent-id="kimi"] {
   --cli-color: light-dark(#0266d6, #1783ff);
-  --cli-tint: light-dark(rgba(2, 102, 214, 0.10), rgba(23, 131, 255, 0.14));
+  --cli-tint: light-dark(rgba(2, 102, 214, 0.1), rgba(23, 131, 255, 0.14));
   --cli-border: light-dark(rgba(2, 102, 214, 0.28), rgba(23, 131, 255, 0.35));
   --cli-glow: light-dark(rgba(2, 102, 214, 0.18), rgba(23, 131, 255, 0.25));
   --cli-contrast: #ffffff;
@@ -288,7 +323,7 @@
 
 [data-agent-id="ohmypi"] {
   --cli-color: light-dark(#ea580c, #f97316);
-  --cli-tint: light-dark(rgba(234, 88, 12, 0.10), rgba(249, 115, 22, 0.14));
+  --cli-tint: light-dark(rgba(234, 88, 12, 0.1), rgba(249, 115, 22, 0.14));
   --cli-border: light-dark(rgba(234, 88, 12, 0.28), rgba(249, 115, 22, 0.35));
   --cli-glow: light-dark(rgba(234, 88, 12, 0.18), rgba(249, 115, 22, 0.25));
   --cli-contrast: #ffffff;
@@ -296,7 +331,7 @@
 
 [data-agent-id="terminal"] {
   --cli-color: light-dark(#15803d, #22c55e);
-  --cli-tint: light-dark(rgba(21, 128, 61, 0.10), rgba(34, 197, 94, 0.14));
+  --cli-tint: light-dark(rgba(21, 128, 61, 0.1), rgba(34, 197, 94, 0.14));
   --cli-border: light-dark(rgba(21, 128, 61, 0.28), rgba(34, 197, 94, 0.35));
   --cli-glow: light-dark(rgba(21, 128, 61, 0.18), rgba(34, 197, 94, 0.25));
   --cli-contrast: #ffffff;
@@ -304,20 +339,31 @@
 
 [data-slot="new-agents"] {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
-  gap: var(--ade-space-2);
+  /* 148px minimum: a label like "Claude Code" + glyph + check is the
+     tightest readable size; below it the text wraps and the tile
+     stops being a tile. */
+  grid-template-columns: repeat(auto-fill, minmax(148px, 1fr));
+  gap: var(--ade-space-3);
 }
 
+/*
+ * The agent tile.
+ *
+ * 52px is two pixels above the sidebar row and one below the section header
+ * — a tile at the same height as the row beside it would feel like a copy
+ * rather than a card, and a tile at the header height feels squashed. The
+ * glyph is 32px so the mark reads from across a 4-up grid.
+ */
 [data-slot="new-agent"] {
   position: relative;
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: var(--ade-space-3);
-  height: 50px;
-  min-height: 50px;
+  height: 52px;
+  min-height: 52px;
   box-sizing: border-box;
-  padding: 6px 10px;
+  padding: 0 var(--ade-space-4);
   border: 1px solid var(--ade-border);
   border-radius: var(--ade-radius-md);
   background: var(--ade-surface);
@@ -329,7 +375,8 @@
   transition:
     background var(--ade-dur-fast) var(--ade-ease),
     border-color var(--ade-dur-fast) var(--ade-ease),
-    box-shadow var(--ade-dur-fast) var(--ade-ease);
+    box-shadow var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
 }
 
 [data-slot="new-agent"]:hover:not(:disabled):not([data-active]) {
@@ -338,11 +385,14 @@
   box-shadow: 0 2px 8px -2px var(--cli-glow, rgba(0, 0, 0, 0.25));
 }
 
+[data-slot="new-agent"]:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
 [data-slot="new-agent"][data-active] {
   border-color: var(--cli-color, var(--ade-accent));
   background:
-    radial-gradient(130% 130% at 0% 50%, var(--cli-tint, var(--ade-accent-soft)) 0%, transparent 80%),
-    var(--ade-raised);
+    radial-gradient(130% 130% at 0% 50%, var(--cli-tint, var(--ade-accent-soft)) 0%, transparent 80%), var(--ade-raised);
   box-shadow:
     0 0 0 1px var(--cli-color, var(--ade-accent)),
     0 3px 12px -3px var(--cli-glow, var(--ade-accent-glow));
@@ -393,6 +443,12 @@
   height: 18px;
 }
 
+/*
+ * The check, sized for the badge slot it lives in.
+ *
+ * Spring on the entrance, fast on the exit: arrival is a confirmation that
+ * earns a beat, dismissal is a habit the user wants out of the way.
+ */
 [data-slot="new-agent-check"] {
   display: grid;
   place-items: center;
@@ -400,15 +456,15 @@
   height: 18px;
   border-radius: var(--ade-radius-full);
   background: var(--cli-color, var(--ade-accent));
-  color: var(--cli-contrast, #ffffff);
-  font-size: 10px;
-  font-weight: 700;
+  color: var(--cli-contrast, var(--ade-accent-fg));
+  font-size: var(--ade-font-xs);
+  font-weight: var(--ade-weight-bold);
   line-height: 1;
   opacity: 0;
   transform: scale(0.75);
   transition:
     opacity var(--ade-dur-fast) var(--ade-ease),
-    transform var(--ade-dur-fast) var(--ade-ease);
+    transform var(--ade-dur) var(--ade-spring);
 }
 
 [data-slot="new-agent"][data-active] [data-slot="new-agent-check"][data-visible] {
@@ -416,13 +472,14 @@
   transform: scale(1);
 }
 
+/* "Missing" is the agent's own diagnosis: ink, not a status hue. */
 [data-slot="new-agent-missing"] {
-  padding: 1px 5px;
+  padding: var(--ade-space-1) var(--ade-space-3);
   border-radius: var(--ade-radius-full);
   background: var(--ade-active);
   color: var(--ade-text-weak);
   font-family: var(--ade-mono);
-  font-size: 9px;
+  font-size: var(--ade-font-xs);
   line-height: 1.2;
   white-space: nowrap;
 }
@@ -445,8 +502,6 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
-
-
 
 /* ── count ─────────────────────────────────────────────────────────────────── */
 
@@ -487,6 +542,10 @@
 [data-slot="new-count"]:hover {
   background: var(--ade-raised);
   color: var(--ade-text);
+}
+
+[data-slot="new-count"]:active {
+  transform: scale(0.95);
 }
 
 [data-slot="new-count"][data-active] {
@@ -579,7 +638,6 @@
     transition: none;
   }
 }
-
 
 /* ---------------------------------------------------------------------------
    The settings section for the agents' own session reporting.
@@ -676,11 +734,22 @@
   font: inherit;
   font-size: var(--ade-font-xs);
   cursor: pointer;
-  transition: background 120ms ease;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
 }
 
 [data-slot="hook-action"]:hover:not(:disabled) {
   background: var(--ade-active);
+}
+
+[data-slot="hook-action"]:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+[data-slot="hook-action"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
 }
 
 [data-slot="hook-action"]:disabled {

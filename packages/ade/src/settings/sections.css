@@ -17,10 +17,19 @@
   line-height: 1.5;
 }
 
+/*
+ * A row in a settings list.
+ *
+ * The list is a stack of rows on the panel's own ground, separated by a
+ * single 1px line. A card border around every row would double the lines
+ * the panel already draws between sections; a fill below every row would
+ * draw a strip of surface across an empty column. The list reads as one
+ * continuous stream, with the row's content — name, glyph, choice — being
+ * what stands out, not the row's frame.
+ */
 [data-slot="settings-list"] {
   display: flex;
   flex-direction: column;
-  gap: 1px;
   margin: var(--ade-space-4) 0 0;
   padding: 0;
   list-style: none;
@@ -30,9 +39,12 @@
   display: flex;
   align-items: baseline;
   gap: var(--ade-space-4);
-  padding: var(--ade-space-3) var(--ade-space-4);
-  border-radius: var(--ade-radius-sm);
-  background: var(--ade-surface);
+  padding: var(--ade-space-4) 0;
+  border-bottom: 1px solid var(--ade-border-subtle);
+}
+
+[data-slot="settings-row"]:last-child {
+  border-bottom: 0;
 }
 
 [data-slot="settings-glyph"] {
@@ -91,12 +103,17 @@
   transition:
     background var(--ade-dur-fast) var(--ade-ease),
     border-color var(--ade-dur-fast) var(--ade-ease),
-    color var(--ade-dur-fast) var(--ade-ease);
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
 }
 
 [data-slot="settings-choice"]:hover {
   background: var(--ade-hover);
   color: var(--ade-text);
+}
+
+[data-slot="settings-choice"]:active {
+  transform: scale(0.97);
 }
 
 /* Ink, not hue: the chosen value is the one that reads as solid. */
@@ -112,15 +129,22 @@
 }
 
 /*
- * One runner: its name and state on a line, whose account it uses under it,
- * and what its CLI said. The badge is ink for signed in and quiet otherwise.
+ * One provider: its name and state on a line, whose account it uses under it,
+ * and what its CLI said.
+ *
+ * Same shape as a settings-row but with two lines of content (name on top,
+ * detail below). The border is a card around the whole thing because the
+ * provider block holds credentials and the panel needs to draw a single
+ * "this is one account" frame, not a stream.
  */
 [data-slot="provider-row"] {
   display: flex;
   flex-direction: column;
-  gap: var(--ade-space-2);
-  padding: var(--ade-space-4);
-  border-radius: var(--ade-radius-sm);
+  gap: var(--ade-space-3);
+  padding: var(--ade-space-5);
+  margin-top: var(--ade-space-3);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-md);
   background: var(--ade-surface);
 }
 

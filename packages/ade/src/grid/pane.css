@@ -137,8 +137,7 @@
    * status readable from across a six-pane grid.
    */
   background:
-    linear-gradient(to bottom, color-mix(in srgb, var(--pane-status) 10%, transparent), transparent),
-    var(--ade-raised);
+    linear-gradient(to bottom, color-mix(in srgb, var(--pane-status) 10%, transparent), transparent), var(--ade-raised);
   border-bottom: 1px solid var(--ade-border-subtle);
   flex: 0 0 auto;
   min-height: 22px;
@@ -295,7 +294,8 @@
   cursor: pointer;
   transition:
     background var(--ade-dur-fast) var(--ade-ease),
-    color var(--ade-dur-fast) var(--ade-ease);
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
 }
 
 [data-slot="pane-action"]:hover {
@@ -305,6 +305,7 @@
 
 [data-slot="pane-action"]:active {
   background: var(--ade-active);
+  transform: scale(0.88);
 }
 
 [data-slot="pane-action"]:focus-visible {
@@ -452,7 +453,13 @@
   font-size: var(--ade-font-xs);
   cursor: pointer;
   box-shadow: var(--ade-shadow-md);
-  transition: color var(--ade-dur-fast) var(--ade-ease);
+  transition:
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="pane-tail"]:active {
+  transform: scale(0.97);
 }
 
 [data-slot="pane-tail"]:hover {
@@ -555,12 +562,17 @@
   transition:
     background var(--ade-dur-fast) var(--ade-ease),
     color var(--ade-dur-fast) var(--ade-ease),
-    border-color var(--ade-dur-fast) var(--ade-ease);
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
 }
 
 [data-slot="pane-answer"]:hover {
   background: var(--ade-overlay);
   color: var(--ade-text);
+}
+
+[data-slot="pane-answer"]:active {
+  transform: scale(0.97);
 }
 
 [data-slot="pane-answer"][data-tone="primary"] {

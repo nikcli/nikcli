@@ -65,12 +65,21 @@
   cursor: pointer;
   transition:
     border-color var(--ade-dur-fast) var(--ade-ease),
-    color var(--ade-dur-fast) var(--ade-ease);
+    color var(--ade-dur-fast) var(--ade-ease),
+    background var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
 }
 
-[data-slot="chat-action"]:hover {
-  border-color: var(--ade-border-strong);
-  color: var(--ade-text);
+@media (hover: hover) and (pointer: fine) {
+  [data-slot="chat-action"]:hover {
+    border-color: var(--ade-border-strong);
+    background: var(--ade-hover);
+    color: var(--ade-text);
+  }
+}
+
+[data-slot="chat-action"]:active {
+  transform: scale(0.97);
 }
 
 [data-slot="chat-action"]:focus-visible {
@@ -115,17 +124,25 @@
   min-height: 0;
   overflow-y: auto;
   overflow-x: hidden;
-  padding: var(--ade-space-8) var(--ade-space-7);
+  padding: var(--ade-space-7) var(--ade-space-7) var(--ade-space-6);
   scrollbar-width: thin;
   scrollbar-color: var(--ade-scrollbar-thumb) transparent;
 }
 
+/*
+ * A message in the column.
+ *
+ * 28px between messages — the same rhythm the sidebar uses for its rows.
+ * The asymmetry between the message gap and the chat-scroll padding
+ * (24/28/24) is what makes the conversation feel continuous, not stacked:
+ * the eye lands on the start of each message, not in the gap above it.
+ */
 [data-slot="chat-message"] {
   display: flex;
   flex-direction: column;
   gap: var(--ade-space-3);
   max-width: 720px;
-  margin: 0 auto var(--ade-space-8);
+  margin: 0 auto var(--ade-space-7);
 }
 
 [data-slot="chat-message"]:last-child {
@@ -152,6 +169,14 @@
   gap: var(--ade-space-5);
 }
 
+/*
+ * The user's bubble.
+ *
+ * One corner is sharp (the trailing-bottom): the bubble tapers toward
+ * whatever it answers, which makes the turn easier to scan when it sits
+ * in a long scroll. The other three are full-radius to match the prose
+ * card.
+ */
 [data-slot="chat-message"][data-role="user"] [data-slot="chat-body"] {
   max-width: 85%;
   padding: var(--ade-space-5) var(--ade-space-7);
@@ -244,12 +269,19 @@
   cursor: pointer;
   transition:
     color var(--ade-dur-fast) var(--ade-ease),
-    background var(--ade-dur-fast) var(--ade-ease);
+    background var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
 }
 
-[data-slot="chat-copy"]:hover {
-  background: var(--ade-hover);
-  color: var(--ade-text);
+@media (hover: hover) and (pointer: fine) {
+  [data-slot="chat-copy"]:hover {
+    background: var(--ade-hover);
+    color: var(--ade-text);
+  }
+}
+
+[data-slot="chat-copy"]:active {
+  transform: scale(0.96);
 }
 
 [data-slot="chat-copy"]:focus-visible {
@@ -344,11 +376,19 @@
   font-size: var(--ade-font-md);
   font-weight: var(--ade-weight-medium);
   cursor: pointer;
-  transition: background var(--ade-dur-fast) var(--ade-ease);
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
 }
 
-[data-slot="chat-send"]:hover:not(:disabled) {
-  background: var(--ade-accent-strong);
+@media (hover: hover) and (pointer: fine) {
+  [data-slot="chat-send"]:hover:not(:disabled) {
+    background: var(--ade-accent-strong);
+  }
+}
+
+[data-slot="chat-send"]:active:not(:disabled) {
+  transform: scale(0.97);
 }
 
 [data-slot="chat-send"]:disabled {
@@ -364,14 +404,25 @@
   color: var(--ade-text);
 }
 
-[data-slot="chat-send"][data-stop]:hover {
-  background: var(--ade-hover);
+@media (hover: hover) and (pointer: fine) {
+  [data-slot="chat-send"][data-stop]:hover {
+    background: var(--ade-hover);
+  }
 }
 
 [data-slot="chat-send"]:focus-visible {
   outline: none;
   box-shadow: var(--ade-focus-ring);
 }
+
+/* ── the conversation rhythm ──────────────────────────────────────────────── */
+
+/*
+ * A message sits 20px from the next one: a beat that reads as two thoughts
+ * without splitting the column. The first message of the conversation has
+ * the scroll's own padding above it, so 20px is what the rest of the stream
+ * lands on.
+ */
 
 /* ── narrow ───────────────────────────────────────────────────────────────── */
 
