@@ -233,6 +233,88 @@ describe("release automation", () => {
   })
 })
 
+describe("ADE release integration", () => {
+  it("attaches ADE to the validated nikcli release from live-main", async () => {
+    const pipeline = await readRoot(".github/workflows/ci-pipeline.yml")
+    const ade = pipeline.match(/^  ade:\n[\s\S]*?(?=^  \S)/m)?.[0]
+    expect(ade).toBeDefined()
+    expect(ade).toContain("needs: publish")
+    expect(ade).toContain("needs.publish.result == 'success'")
+    expect(ade).toContain("github.event_name == 'push'")
+    expect(ade).toContain("github.ref == 'refs/heads/live-main'")
+    expect(ade).toContain("github.repository == 'nikomatt69/nikcli'")
+    expect(ade).toContain("uses: ./.github/workflows/ade-release.yml")
+    expect(ade).toContain("tag: ${{ needs.publish.outputs.tag }}")
+    expect(ade).toContain("attach_only: true")
+    expect(ade).toContain("contents: write")
+    expect(ade).toContain("secrets: inherit")
+  })
+
+  it("builds all six desktop targets and gates native builds on ADE checks", async () => {
+    const [ade, desktop, checks] = await Promise.all([
+      readRoot(".github/workflows/ade-release.yml"),
+      readRoot(".github/workflows/desktop-release.yml"),
+      readRoot(".github/workflows/ade-checks.yml"),
+    ])
+    const targets = (source: string) => [...source.matchAll(/^\s+target: (\S+)$/gm)].map((x) => x[1]).sort()
+    expect(targets(ade)).toHaveLength(6)
+    expect(targets(ade)).toEqual(targets(desktop))
+    expect(ade).toContain("needs: [draft, checks]")
+    expect(ade).toContain("uses: ./.github/workflows/ade-checks.yml")
+    expect(ade).toContain("ref: ${{ inputs.tag || github.ref_name }}")
+    expect(ade).toContain("(github.repository == 'nikomatt69/nikcli' && inputs.attach_only)")
+    expect(checks).toContain("(github.repository == 'nikomatt69/nikcli' && inputs.ref != '')")
+    expect(checks).toContain("ADE typecheck")
+    expect(checks).toContain("ADE tests")
+    expect(checks).toContain("Voice typecheck")
+    expect(checks).toContain("Voice tests")
+    expect(ade).not.toContain("continue-on-error:")
+    expect(ade).toContain('echo "no bundles produced for ${{ matrix.target }}"\n            exit 1')
+  })
+
+  it("does not republish nikcli or overwrite its updater manifest", async () => {
+    const ade = await readRoot(".github/workflows/ade-release.yml")
+    expect(ade).toContain("- name: Verify existing nikcli release\n        if: inputs.attach_only")
+    expect(ade).toContain("- name: Create draft release\n        if: ${{ !inputs.attach_only }}")
+    expect(ade).toContain("  publish:\n    needs: build\n    if: ${{ !inputs.attach_only }}")
+    expect(ade).toContain(
+      'if [ "$ATTACH_ONLY" = "true" ]; then\n            # These are downloadable installers, not an ADE updater release.\n            UPDATER=false',
+    )
+    expect(ade).toContain('elif [ -z "${TAURI_SIGNING_PRIVATE_KEY:-}" ]; then')
+    expect(ade).toContain('if [ "$ATTACH_ONLY" != "true" ]; then\n                cp "$BUNDLE/macos/ADE.app.tar.gz"')
+    expect(ade).toContain('entry windows-aarch64 "ADE_${VERSION}_arm64-setup.exe"')
+    expect(ade).toContain('gh release upload "$TAG" --clobber --repo "$GITHUB_REPOSITORY"')
+  })
+
+  it("accepts only the correct version tag for each release mode", async () => {
+    const ade = await readRoot(".github/workflows/ade-release.yml")
+    const script = ade.match(
+      /          PREFIX="ade-v"\n[\s\S]*?          echo "version=\$VERSION" >> "\$GITHUB_OUTPUT"/,
+    )?.[0]
+    expect(script).toBeDefined()
+    for (const [tag, attach, valid] of [
+      ["v1.367.0", "true", true],
+      ["ade-v1.2.3", "false", true],
+      ["ade-v1.2.3", "true", false],
+      ["v1.367.0", "false", false],
+      ["1.2.3", "true", false],
+      ["v1.2.3;exit 0", "true", false],
+    ] as const) {
+      const result = Bun.spawn(["bash", "-c", script!], {
+        env: {
+          ...process.env,
+          TAG: tag,
+          ATTACH_ONLY: attach,
+          GITHUB_OUTPUT: "/dev/null",
+        },
+        stdout: "ignore",
+        stderr: "ignore",
+      })
+      expect(await result.exited).toBe(valid ? 0 : 1)
+    }
+  })
+})
+
 describe("CI pipeline", () => {
   it("has the ci-pipeline orchestrator with validate, publish, autofix, and report-failure jobs", async () => {
     const pipeline = await readRoot(".github/workflows/ci-pipeline.yml")

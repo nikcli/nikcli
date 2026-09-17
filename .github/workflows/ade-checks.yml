@@ -64,7 +64,9 @@ jobs:
           bun packages/ade/script/release-plan.ts check "$FROM..$HEAD"
 
   test:
-    if: github.repository == 'SandroHub013/nikcli'
+    if: >-
+      github.repository == 'SandroHub013/nikcli' ||
+      (github.repository == 'nikomatt69/nikcli' && inputs.ref != '')
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7

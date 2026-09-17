@@ -1,6 +1,8 @@
 name: ade-release
 
 # Releases ADE for macOS, Windows and Linux from a tag.
+# ci-pipeline also calls this with attach_only to add installers to its existing
+# v* release, without publishing or changing either app's updater manifest.
 #
 #   git tag ade-v1.2.3 && git push origin ade-v1.2.3
 #
@@ -33,6 +35,11 @@ on:
         description: "Existing tag to release, e.g. ade-v1.2.3"
         required: true
         type: string
+      attach_only:
+        description: "Attach installers to an existing nikcli v* release; leave updater feeds untouched"
+        required: false
+        type: boolean
+        default: false
   # `ade-auto-release` tags with GITHUB_TOKEN, which starts no workflow, and
   # calls this one directly.
   workflow_call:
@@ -41,6 +48,11 @@ on:
         description: "Existing tag to release, e.g. ade-v1.2.3"
         required: true
         type: string
+      attach_only:
+        description: "Attach installers to an existing nikcli v* release; leave updater feeds untouched"
+        required: false
+        type: boolean
+        default: false
 
 concurrency:
   group: ade-release-${{ inputs.tag || github.ref_name }}
@@ -54,7 +66,9 @@ env:
 
 jobs:
   draft:
-    if: github.repository == 'SandroHub013/nikcli'
+    if: >-
+      github.repository == 'SandroHub013/nikcli' ||
+      (github.repository == 'nikomatt69/nikcli' && inputs.attach_only)
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}
@@ -71,16 +85,30 @@ jobs:
       - name: Version from tag
         id: version
         shell: bash
+        env:
+          ATTACH_ONLY: ${{ inputs.attach_only }}
         run: |
           set -euo pipefail
-          VERSION="${TAG#ade-v}"
-          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "tag '$TAG' is not ade-v<major>.<minor>.<patch>"
+          PREFIX="ade-v"
+          if [ "$ATTACH_ONLY" = "true" ]; then PREFIX="v"; fi
+          VERSION="${TAG#"$PREFIX"}"
+          if [[ "$TAG" != "$PREFIX"* ]] || ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "tag '$TAG' is not ${PREFIX}<major>.<minor>.<patch>"
             exit 1
           fi
           echo "version=$VERSION" >> "$GITHUB_OUTPUT"
 
+      - name: Verify existing nikcli release
+        if: inputs.attach_only
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release view "$TAG" --repo "$GITHUB_REPOSITORY" --json isDraft --jq '.isDraft' | grep -qx false
+
       - name: Create draft release
+        if: ${{ !inputs.attach_only }}
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -100,8 +128,14 @@ jobs:
           gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --draft \
             --title "ADE ${TAG#ade-v}" --notes-file notes.md --verify-tag
 
-  build:
+  checks:
     needs: draft
+    uses: ./.github/workflows/ade-checks.yml
+    with:
+      ref: ${{ inputs.tag || github.ref_name }}
+
+  build:
+    needs: [draft, checks]
     env:
       # Authenticode signing through SignPath Foundation starts the day its API
       # token is added as a secret; until then the Windows setup ships
@@ -123,6 +157,9 @@ jobs:
             # every earlier release is, and a newer setup replaces that copy;
             # an MSI installs per machine into Program Files, beside it, as a
             # second ADE with its own shortcuts.
+            bundles: nsis
+          - os: windows-11-arm
+            target: aarch64-pc-windows-msvc
             bundles: nsis
           - os: ubuntu-22.04
             target: x86_64-unknown-linux-gnu
@@ -176,16 +213,21 @@ jobs:
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.ADE_UPDATER_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.ADE_UPDATER_PRIVATE_KEY_PASSWORD }}
+          ATTACH_ONLY: ${{ inputs.attach_only }}
         run: |
           set -euo pipefail
           VERSION="${{ needs.draft.outputs.version }}"
           # A release without updater signatures would strand every installed
           # copy on this version, so a missing key fails the build.
-          if [ -z "${TAURI_SIGNING_PRIVATE_KEY:-}" ]; then
+          UPDATER=true
+          if [ "$ATTACH_ONLY" = "true" ]; then
+            # These are downloadable installers, not an ADE updater release.
+            UPDATER=false
+          elif [ -z "${TAURI_SIGNING_PRIVATE_KEY:-}" ]; then
             echo "secret ADE_UPDATER_PRIVATE_KEY is not set"
             exit 1
           fi
-          CONFIG_JSON="{\"version\":\"$VERSION\",\"build\":{\"beforeBuildCommand\":\"\"},\"bundle\":{\"createUpdaterArtifacts\":true,\"macOS\":{\"signingIdentity\":\"-\"}}}"
+          CONFIG_JSON="{\"version\":\"$VERSION\",\"build\":{\"beforeBuildCommand\":\"\"},\"bundle\":{\"createUpdaterArtifacts\":$UPDATER,\"macOS\":{\"signingIdentity\":\"-\"}}}"
           bun x tauri build --target ${{ matrix.target }} --bundles ${{ matrix.bundles }} --config "$CONFIG_JSON"
 
       # The setup goes to SignPath, comes back with an Authenticode signature,
@@ -221,19 +263,23 @@ jobs:
         env:
           TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.ADE_UPDATER_PRIVATE_KEY }}
           TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.ADE_UPDATER_PRIVATE_KEY_PASSWORD }}
+          ATTACH_ONLY: ${{ inputs.attach_only }}
         run: |
           set -euo pipefail
           NSIS="src-tauri/target/${{ matrix.target }}/release/bundle/nsis"
           cp ../../signed/*-setup.exe "$NSIS/"
-          for setup in "$NSIS"/*-setup.exe; do
-            rm -f "$setup.sig"
-            bun x tauri signer sign "$setup"
-          done
+          if [ "$ATTACH_ONLY" != "true" ]; then
+            for setup in "$NSIS"/*-setup.exe; do
+              rm -f "$setup.sig"
+              bun x tauri signer sign "$setup"
+            done
+          fi
 
       - name: Collect and upload
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
+          ATTACH_ONLY: ${{ inputs.attach_only }}
         run: |
           set -euo pipefail
           VERSION="${{ needs.draft.outputs.version }}"
@@ -249,8 +295,10 @@ jobs:
               ln -s /Applications "$DMGROOT/Applications"
               hdiutil create -volname ADE -srcfolder "$DMGROOT" -ov -format UDZO "$STAGE/ADE_${VERSION}_${ARCH}.dmg"
               # The updater's bundle has no architecture in its name: give it one.
-              cp "$BUNDLE/macos/ADE.app.tar.gz" "$STAGE/ADE_${VERSION}_${ARCH}.app.tar.gz"
-              cp "$BUNDLE/macos/ADE.app.tar.gz.sig" "$STAGE/ADE_${VERSION}_${ARCH}.app.tar.gz.sig"
+              if [ "$ATTACH_ONLY" != "true" ]; then
+                cp "$BUNDLE/macos/ADE.app.tar.gz" "$STAGE/ADE_${VERSION}_${ARCH}.app.tar.gz"
+                cp "$BUNDLE/macos/ADE.app.tar.gz.sig" "$STAGE/ADE_${VERSION}_${ARCH}.app.tar.gz.sig"
+              fi
               ;;
             *)
               # Installers, plus the signatures of the two the updater installs:
@@ -269,6 +317,7 @@ jobs:
 
   publish:
     needs: build
+    if: ${{ !inputs.attach_only }}
     runs-on: ubuntu-latest
     steps:
       - name: Publish release
@@ -298,6 +347,7 @@ jobs:
             entry darwin-aarch64 "ADE_${VERSION}_aarch64.app.tar.gz"
             entry darwin-x86_64 "ADE_${VERSION}_x86_64.app.tar.gz"
             entry windows-x86_64 "ADE_${VERSION}_x64-setup.exe"
+            entry windows-aarch64 "ADE_${VERSION}_arm64-setup.exe"
             entry linux-x86_64 "ADE_${VERSION}_amd64.AppImage"
           } > entries.json
           if [ ! -s entries.json ]; then
