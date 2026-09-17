@@ -1,15 +1,12 @@
-import { createRequire } from "node:module";
-import { fileURLToPath } from "node:url";
+import { createRequire } from "node:module"
+import { fileURLToPath } from "node:url"
 
 // Use the image renderer already shipped with Astro; no runtime worker dependency.
-const require = createRequire(import.meta.resolve("astro"));
-const sharp = require("sharp");
-const publicDir = new URL("../public/", import.meta.url);
-const readPublic = (path: string) => fileURLToPath(new URL(path, publicDir));
-const toBase64 = async (path: string) =>
-  Buffer.from(await Bun.file(readPublic(path)).arrayBuffer()).toString(
-    "base64",
-  );
+const require = createRequire(import.meta.resolve("astro"))
+const sharp = require("sharp")
+const publicDir = new URL("../public/", import.meta.url)
+const readPublic = (path: string) => fileURLToPath(new URL(path, publicDir))
+const toBase64 = async (path: string) => Buffer.from(await Bun.file(readPublic(path)).arrayBuffer()).toString("base64")
 
 // Brand tokens mirrored from the artifact viewer shell / global.css dark palette.
 const palette = {
@@ -33,7 +30,7 @@ const palette = {
     glow: "rgba(37,99,235,0.10)",
     grid: "rgba(12,11,10,0.035)",
   },
-} as const;
+} as const
 
 function socialSvg(p: (typeof palette)["dark" | "light"], wordmark: string) {
   return `<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="630" viewBox="0 0 1200 630">
@@ -74,26 +71,18 @@ function socialSvg(p: (typeof palette)["dark" | "light"], wordmark: string) {
   <path d="M72 560H1128" stroke="${p.border}"/>
   <text x="72" y="600" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" fill="${p.text}">nikcli.store</text>
   <text x="1128" y="600" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="17" fill="${p.muted}">21+ providers · 40+ built-in tools</text>
-</svg>`;
+</svg>`
 }
 
-const wordmarkDark = await toBase64("brand/wordmark-dark.png");
-const wordmarkLight = await toBase64("brand/wordmark-light.png");
+const wordmarkDark = await toBase64("brand/wordmark-dark.png")
+const wordmarkLight = await toBase64("brand/wordmark-light.png")
 
 await sharp(Buffer.from(socialSvg(palette.dark, wordmarkDark)))
   .png()
-  .toFile(readPublic("og.png"));
+  .toFile(readPublic("og.png"))
 await sharp(Buffer.from(socialSvg(palette.light, wordmarkLight)))
   .png()
-  .toFile(readPublic("og-light.png"));
-await sharp(readPublic("brand/icon-dark.png"))
-  .resize(180, 180)
-  .png()
-  .toFile(readPublic("apple-touch-icon.png"));
-await sharp(readPublic("brand/icon-light.png"))
-  .resize(180, 180)
-  .png()
-  .toFile(readPublic("apple-touch-icon-light.png"));
-console.log(
-  "Generated og.png + og-light.png (1200×630) and apple-touch-icon(-light).png (180×180)",
-);
+  .toFile(readPublic("og-light.png"))
+await sharp(readPublic("brand/icon-dark.png")).resize(180, 180).png().toFile(readPublic("apple-touch-icon.png"))
+await sharp(readPublic("brand/icon-light.png")).resize(180, 180).png().toFile(readPublic("apple-touch-icon-light.png"))
+console.log("Generated og.png + og-light.png (1200×630) and apple-touch-icon(-light).png (180×180)")
