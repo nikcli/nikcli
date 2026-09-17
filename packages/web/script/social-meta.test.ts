@@ -74,7 +74,9 @@ describe("social sharing metadata", () => {
   test("social image and touch icon are PNGs with the advertised dimensions", async () => {
     for (const [path, width, height] of [
       ["og.png", 1200, 630],
+      ["og-light.png", 1200, 630],
       ["apple-touch-icon.png", 180, 180],
+      ["apple-touch-icon-light.png", 180, 180],
     ] as const) {
       const bytes = Buffer.from(
         await Bun.file(new URL(path, dist)).arrayBuffer(),

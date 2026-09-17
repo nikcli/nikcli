@@ -1,4 +1,6 @@
 ---
+import ThemeIcons from "./ThemeIcons.astro"
+
 interface Props {
   title: string
   description: string
@@ -30,7 +32,5 @@ const imageAlt = "nikcli — Open-source AI development agent. Your terminal. Yo
 <meta name="twitter:description" content={description} />
 <meta name="twitter:image" content={image} />
 <meta name="twitter:image:alt" content={imageAlt} />
-<link rel="icon" type="image/png" sizes="48x48" href="/brand/favicon-light.png" />
-<link rel="icon" type="image/png" sizes="48x48" href="/brand/favicon.png" media="(prefers-color-scheme: dark)" />
-<link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+<ThemeIcons />
 <link rel="canonical" href={url} />
