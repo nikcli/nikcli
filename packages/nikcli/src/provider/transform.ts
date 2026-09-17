@@ -632,6 +632,25 @@ export function isGpt6Family(apiId: string) {
   return GPT6_FAMILY_RE.test(apiId.toLowerCase())
 }
 
+// GPT-Reserve — the model a ChatGPT (Codex) plan falls back to once the main
+// models are used up. It is version-less, so it matches neither the gpt-5 nor
+// the gpt-6 family regex and needs its own entry. The Codex model manifest
+// lists low/medium/high/xhigh/max: no `none` and no `minimal` (both 400), and
+// `max` is Responses-only like on gpt-6.
+const GPT_RESERVE_RE = /(?:^|\/)gpt-reserve(?:[.-]|$)/
+
+export function isGptReserve(apiId: string) {
+  return GPT_RESERVE_RE.test(apiId.toLowerCase())
+}
+
+const OPENAI_RESERVE_CHAT_COMPLETIONS_EFFORTS = [...WIDELY_SUPPORTED_EFFORTS, "xhigh"]
+const OPENAI_RESERVE_RESPONSES_EFFORTS = [...OPENAI_RESERVE_CHAT_COMPLETIONS_EFFORTS, "max"]
+
+function gptReserveReasoningEfforts(apiId: string, responses: boolean) {
+  if (!GPT_RESERVE_RE.test(apiId)) return undefined
+  return responses ? OPENAI_RESERVE_RESPONSES_EFFORTS : OPENAI_RESERVE_CHAT_COMPLETIONS_EFFORTS
+}
+
 // Effort tiers a gpt-6 model exposes. `responses` selects the Responses-API set
 // (the only one that accepts `max`); chat-shaped gateways pass false.
 function gpt6ReasoningEfforts(apiId: string, responses: boolean) {
@@ -673,6 +692,8 @@ function openaiReasoningEfforts(apiId: string, releaseDate: string) {
   // Direct OpenAI (and cf-ai-gateway's openai/* routes) go through Responses.
   const gpt6Efforts = gpt6ReasoningEfforts(id, true)
   if (gpt6Efforts) return gpt6Efforts
+  const reserveEfforts = gptReserveReasoningEfforts(id, true)
+  if (reserveEfforts) return reserveEfforts
   const chatEfforts = gpt5ChatReasoningEfforts(id)
   if (chatEfforts) return chatEfforts
   if (GPT5_PRO_RE.test(id)) return OPENAI_GPT5_PRO_EFFORTS
@@ -695,6 +716,8 @@ function openaiCompatibleReasoningEfforts(id: string) {
   // carry the Responses-only `max` tier.
   const gpt6Efforts = gpt6ReasoningEfforts(apiId, false)
   if (gpt6Efforts) return gpt6Efforts
+  const reserveEfforts = gptReserveReasoningEfforts(apiId, false)
+  if (reserveEfforts) return reserveEfforts
   const chatEfforts = gpt5ChatReasoningEfforts(apiId)
   if (chatEfforts) return chatEfforts
   if (GPT5_PRO_RE.test(apiId)) return OPENAI_GPT5_PRO_EFFORTS
@@ -1302,7 +1325,11 @@ export function options(input: {
   // exclude, and `reasoning_effort: "none"` 400s, so it takes the same
   // medium-effort default as gpt-5.x.
   const isGpt6 = isGpt6Family(input.model.api.id)
-  if (isGpt5 || isGpt6) {
+  // GPT-Reserve is a reasoning-only model on the Responses API too: same
+  // medium default, same encrypted-reasoning include, and it accepts
+  // `text.verbosity` (the Codex manifest defaults it to "low").
+  const isReserve = isGptReserve(input.model.api.id)
+  if (isGpt5 || isGpt6 || isReserve) {
     if (!input.model.api.id.includes("gpt-5-pro")) {
       result["reasoningEffort"] = "medium"
       // Direct OpenAI accepts "detailed" (richest summary the API exposes);
@@ -1318,10 +1345,11 @@ export function options(input: {
     // gpt-6 is left out: OpenAI has not documented `text.verbosity` for Astra,
     // and an unsupported value is a 400 rather than a silent no-op.
     if (
-      isGpt5 &&
-      input.model.api.id.includes("gpt-5.") &&
-      !input.model.api.id.includes("codex") &&
-      !input.model.api.id.includes("-chat") &&
+      ((isGpt5 &&
+        input.model.api.id.includes("gpt-5.") &&
+        !input.model.api.id.includes("codex") &&
+        !input.model.api.id.includes("-chat")) ||
+        isReserve) &&
       input.model.providerID !== "azure"
     ) {
       result["textVerbosity"] = "low"

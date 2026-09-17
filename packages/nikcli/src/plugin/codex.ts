@@ -1,15 +1,28 @@
 import type { Hooks, PluginInput } from "@nikcli-ai/plugin"
+import { Flag } from "@nikcli-ai/util/flag"
 import { Log } from "@nikcli-ai/util/log"
 import { OAUTH_DUMMY_KEY } from "../auth"
 import { OpenAIWebSocketPool } from "./openai/ws-pool"
 
 export interface CodexAuthPluginOptions {
   experimentalWebSockets?: boolean
+  /**
+   * Fall back to `gpt-reserve` when the plan's main models are exhausted.
+   * Defaults to on; `NIKCLI_DISABLE_GPT_RESERVE_FALLBACK=1` opts out.
+   */
+  reserveFallback?: boolean
 }
 
 const log = Log.create({ service: "plugin.codex" })
 
 const CLIENT_ID = "app_EMoamEEZ73f0CkXaXp7hrann"
+/**
+ * The model a ChatGPT plan falls back to once its main models are used up.
+ * OpenAI hides it from the Codex model picker (`visibility: "hide"`) and only
+ * surfaces it when a usage limit is hit; nikcli does the same, plus it can be
+ * picked by hand once the OAuth session has it in the catalog.
+ */
+export const RESERVE_MODEL_ID = "gpt-reserve"
 const ISSUER = "https://auth.openai.com"
 const CODEX_API_ENDPOINT = "https://chatgpt.com/backend-api/codex/responses"
 const OAUTH_PORT = 1455
@@ -139,6 +152,9 @@ export function filterCodexOAuthModels(provider: { models: Record<string, CodexO
     "gpt-5.4",
     "gpt-5.4-mini",
     "gpt-5.5",
+    // The plan's reserve model. It is version-less, so neither the allow-list
+    // prefix rules nor the >= gpt-6 rule below would keep it.
+    RESERVE_MODEL_ID,
   ])
   for (const [modelId, model] of Object.entries(provider.models)) {
     if (modelId.includes("codex")) continue
@@ -149,6 +165,101 @@ export function filterCodexOAuthModels(provider: { models: Record<string, CodexO
     if (match && parseFloat(match[1]) > 5.4) continue
     delete provider.models[modelId]
   }
+}
+
+// ─── Reserve fallback ────────────────────────────────────────────────────────
+//
+// A ChatGPT plan meters the main models (gpt-6-astra, gpt-5.x, the codex
+// slugs) separately from `gpt-reserve`. When the main allowance runs out the
+// Codex backend answers 429 with a rate-limit-reached marker, and Codex CLI
+// nudges you onto the reserve model. nikcli does it without the prompt: the
+// exhausted model is remembered until its window resets and every request for
+// it is rewritten to `gpt-reserve` on the way out.
+//
+// State is per process and deliberately not persisted — a stale "exhausted"
+// entry would keep a recovered plan pinned to the reserve, and re-probing
+// costs at most one request per window.
+
+/** Reset horizon used when the 429 carries no hint about when the window reopens. */
+const RESERVE_LIMIT_DEFAULT_MS = 15 * 60 * 1000
+/** Upper bound on a parsed reset, so a bogus value cannot pin a session to the reserve. */
+const RESERVE_LIMIT_MAX_MS = 7 * 24 * 60 * 60 * 1000
+
+/** api id → epoch ms at which the model's plan allowance is expected back. */
+const exhausted = new Map<string, number>()
+
+/** Effort tiers `gpt-reserve` accepts; anything else 400s on the reserve. */
+const RESERVE_EFFORTS = new Set(["low", "medium", "high", "xhigh", "max"])
+
+/**
+ * Map an effort the main model accepted onto the nearest tier the reserve has.
+ * gpt-6 exposes `none`/`minimal` at the bottom and `ultra` above `max`; the
+ * reserve has neither end.
+ */
+function clampReserveEffort(effort: unknown): string | undefined {
+  if (typeof effort !== "string") return undefined
+  if (RESERVE_EFFORTS.has(effort)) return undefined
+  if (effort === "none" || effort === "minimal") return "low"
+  if (effort === "ultra") return "max"
+  return "medium"
+}
+
+export function readRequestModel(body: string): string | undefined {
+  try {
+    const parsed = JSON.parse(body)
+    return typeof parsed?.model === "string" ? parsed.model : undefined
+  } catch {
+    return undefined
+  }
+}
+
+/**
+ * Rewrite a Responses request onto the reserve model. Returns undefined when
+ * the body is not JSON we can safely rewrite, in which case the caller leaves
+ * the request alone rather than guessing.
+ */
+export function withReserveModel(body: string): string | undefined {
+  try {
+    const parsed = JSON.parse(body)
+    if (!parsed || typeof parsed !== "object") return undefined
+    parsed.model = RESERVE_MODEL_ID
+    const effort = clampReserveEffort(parsed.reasoning?.effort)
+    if (effort) parsed.reasoning.effort = effort
+    return JSON.stringify(parsed)
+  } catch {
+    return undefined
+  }
+}
+
+/**
+ * Whether a 429 means "the plan's allowance for this model is spent" rather
+ * than "you are sending too fast". Only the former should burn the fallback —
+ * a throughput throttle is retried by the session at the same model.
+ */
+export function isUsageLimitResponse(status: number, headers: Headers, body: string) {
+  if (status !== 429) return false
+  if (headers.get("x-codex-rate-limit-reached-type")) return true
+  return /usage[ _-]?limit|rate[ _-]?limit[ _-]?reached|credits[ _-]?depleted/i.test(body)
+}
+
+/** When the exhausted model is expected to be callable again. */
+export function usageLimitResetAt(headers: Headers, body: string, now: number) {
+  const bounded = (ms: number) => now + Math.min(Math.max(ms, 0), RESERVE_LIMIT_MAX_MS)
+
+  const retryAfter = Number.parseFloat(headers.get("retry-after") ?? "")
+  if (Number.isFinite(retryAfter) && retryAfter > 0) return bounded(retryAfter * 1000)
+
+  const resetsIn = /"resets?_in_seconds"\s*:\s*(\d+(?:\.\d+)?)/.exec(body)
+  if (resetsIn) return bounded(Number(resetsIn[1]) * 1000)
+
+  // `resets_at` is epoch seconds in the Codex rate-limit snapshot.
+  const resetsAt = /"resets_at"\s*:\s*(\d+(?:\.\d+)?)/.exec(body)
+  if (resetsAt) {
+    const at = Number(resetsAt[1]) * 1000
+    if (at > now) return bounded(at - now)
+  }
+
+  return bounded(RESERVE_LIMIT_DEFAULT_MS)
 }
 
 async function exchangeCodeForTokens(code: string, redirectUri: string, pkce: PkceCodes): Promise<TokenResponse> {
@@ -411,6 +522,13 @@ export async function CodexAuthPlugin(input: PluginInput, options: CodexAuthPlug
 
         filterCodexOAuthModels(provider)
 
+        // On unless explicitly disabled: without it a spent plan just errors,
+        // which is the one moment the reserve model exists for.
+        const reserveFallback =
+          (options.reserveFallback ?? true) &&
+          !Flag.NIKCLI_DISABLE_GPT_RESERVE_FALLBACK &&
+          RESERVE_MODEL_ID in provider.models
+
         for (const model of Object.values(provider.models)) {
           model.cost = {
             input: 0,
@@ -491,12 +609,68 @@ export async function CodexAuthPlugin(input: PluginInput, options: CodexAuthPlug
                 ? new URL(CODEX_API_ENDPOINT)
                 : parsed
 
-            const requestInit = {
+            const requestInit: RequestInit = {
               ...init,
               headers,
             }
-            if (websocketFetch && parsed.pathname.includes("/v1/responses")) return websocketFetch(url, requestInit)
-            return fetch(url, OpenAIWebSocketPool.withoutInternalHeaders(requestInit))
+
+            const send = (body?: string) => {
+              const next = body === undefined ? requestInit : { ...requestInit, body }
+              if (websocketFetch && parsed.pathname.includes("/v1/responses")) return websocketFetch(url, next)
+              return fetch(url, OpenAIWebSocketPool.withoutInternalHeaders(next))
+            }
+
+            // Only model calls can fall back, and only when we can read the
+            // model out of the body to rewrite it.
+            const body = requestInit.body
+            if (!reserveFallback || url.href !== CODEX_API_ENDPOINT || typeof body !== "string") return send()
+
+            const requested = readRequestModel(body)
+            if (!requested || requested === RESERVE_MODEL_ID) return send()
+
+            // Already known to be out of allowance: skip the doomed request.
+            const until = exhausted.get(requested)
+            if (until !== undefined) {
+              if (until > Date.now()) {
+                const rewritten = withReserveModel(body)
+                if (rewritten) return send(rewritten)
+              } else {
+                exhausted.delete(requested)
+              }
+            }
+
+            const response = await send()
+            if (response.status !== 429) return response
+
+            // Safe to drain: this is an error response, never the SSE stream.
+            const text = await response.text()
+            const replay = () =>
+              new Response(text, {
+                status: response.status,
+                statusText: response.statusText,
+                headers: response.headers,
+              })
+            if (!isUsageLimitResponse(response.status, response.headers, text)) return replay()
+
+            const rewritten = withReserveModel(body)
+            if (!rewritten) return replay()
+
+            const resetAt = usageLimitResetAt(response.headers, text, Date.now())
+            exhausted.set(requested, resetAt)
+            log.info("plan usage limit reached, falling back to the reserve model", {
+              model: requested,
+              reserve: RESERVE_MODEL_ID,
+              resetAt: new Date(resetAt).toISOString(),
+            })
+            input.client.tui
+              .showToast({
+                title: "Usage limit",
+                message: `${requested} is out of plan allowance — continuing on ${RESERVE_MODEL_ID}`,
+                variant: "warning",
+                duration: 8000,
+              })
+              .catch(() => {})
+            return send(rewritten)
           },
         }
       },

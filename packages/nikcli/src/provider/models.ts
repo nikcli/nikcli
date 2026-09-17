@@ -10,6 +10,12 @@ import { patchReasoningOptions } from "./variants-catalog-patch"
 import { type DeepMutable, zodObject } from "@nikcli-ai/util/effect-zod"
 import { Schema } from "effect"
 
+/**
+ * The reserve model a ChatGPT (Codex) plan falls back to when the main models
+ * are exhausted. Not a models.dev entry — see `ModelsDev.patch`.
+ */
+export const GPT_RESERVE_ID = "gpt-reserve"
+
 export namespace ModelsDev {
   const log = Log.create({ service: "models.dev" })
   const filepath = path.join(Global.Path.cache, "models.json")
@@ -215,6 +221,46 @@ export namespace ModelsDev {
       options: {},
     }
     ensureModel(database, "openai", "gpt-6-astra", gpt6Astra)
+
+    // ---- GPT-Reserve ----
+    // The model a ChatGPT (Codex) plan falls back to once the main models are
+    // used up. OpenAI ships it with `visibility: "hide"` in the Codex model
+    // manifest, so it is not in models.dev and never will be: it only exists
+    // for plan-authenticated traffic through the Codex backend. `Provider`
+    // deletes it again unless the openai auth is an OAuth credential, and
+    // `filterCodexOAuthModels` keeps it for the sessions that can reach it.
+    //
+    // Fields mirror the Codex manifest entry: 272K standard context window,
+    // low/medium/high/xhigh/max reasoning (no `none`/`minimal`), text+image in,
+    // and `medium` as the default effort. Cost is 0 because plan traffic is not
+    // metered per token — the same reason the codex plugin zeroes every other
+    // model it keeps.
+    const gptReserve: Model = {
+      id: GPT_RESERVE_ID,
+      name: "GPT-Reserve",
+      family: "gpt-reserve",
+      release_date: "2026-09-03",
+      attachment: true,
+      reasoning: true,
+      tool_call: true,
+      temperature: false,
+      cost: {
+        input: 0,
+        output: 0,
+        cache_read: 0,
+        cache_write: 0,
+      },
+      limit: {
+        context: 272_000,
+        output: 128_000,
+      },
+      modalities: {
+        input: ["text", "image"],
+        output: ["text"],
+      },
+      options: {},
+    }
+    ensureModel(database, "openai", GPT_RESERVE_ID, gptReserve)
 
     // ---- Image models (registered because models.dev does not yet list these AI SDK image factories) ----
     const imageModalities: NonNullable<Model["modalities"]> = {

@@ -263,3 +263,58 @@ describe("ProviderTransform.options — gpt-6 astra defaults", () => {
     expect(optionsFor("gpt-5.2")["textVerbosity"]).toBe("low")
   })
 })
+
+// GPT-Reserve is the model a ChatGPT plan falls back to once its main models
+// are spent. It is version-less, so it matches neither the gpt-5 nor the gpt-6
+// family rules and needs its own tier set: low/medium/high/xhigh/max, with no
+// `none`/`minimal` (both 400) and `max` Responses-only, like gpt-6.
+describe("ProviderTransform — gpt-reserve", () => {
+  function reserveModel(apiId = "gpt-reserve", npm = "@ai-sdk/openai", providerID = "openai"): Provider.Model {
+    return {
+      providerID,
+      id: apiId,
+      release_date: "2026-09-03",
+      api: { id: apiId, url: "https://api.openai.com/v1", npm },
+      capabilities: { reasoning: true },
+      limit: { context: 272_000, output: 128_000 },
+    } as unknown as Provider.Model
+  }
+
+  it("exposes low/medium/high/xhigh/max on direct OpenAI", () => {
+    expect(Object.keys(ProviderTransform.variants(reserveModel()))).toEqual(["low", "medium", "high", "xhigh", "max"])
+  })
+
+  it("never offers none or minimal", () => {
+    // Without its own branch the generic OpenAI rules would add `none` off the
+    // release date, which the reserve rejects.
+    const efforts = Object.keys(ProviderTransform.variants(reserveModel()))
+    expect(efforts).not.toContain("none")
+    expect(efforts).not.toContain("minimal")
+  })
+
+  it("drops the Responses-only max tier on chat-shaped fronts", () => {
+    expect(
+      Object.keys(ProviderTransform.variants(reserveModel("gpt-reserve", "@openrouter/ai-sdk-provider", "openrouter"))),
+    ).toEqual(["low", "medium", "high", "xhigh"])
+  })
+
+  it("matches anchored, so an unrelated id is not read as the reserve", () => {
+    expect(ProviderTransform.isGptReserve("gpt-reserve")).toBe(true)
+    expect(ProviderTransform.isGptReserve("openai/gpt-reserve")).toBe(true)
+    expect(ProviderTransform.isGptReserve("GPT-Reserve")).toBe(true)
+    expect(ProviderTransform.isGptReserve("gpt-reserved")).toBe(false)
+    expect(ProviderTransform.isGptReserve("gpt-6-astra")).toBe(false)
+  })
+
+  it("defaults to medium effort with the encrypted-reasoning include", () => {
+    const result = ProviderTransform.options({
+      sessionID: "ses_test",
+      model: reserveModel(),
+    } as unknown as Parameters<typeof ProviderTransform.options>[0])
+    expect(result["reasoningEffort"]).toBe("medium")
+    expect(result["reasoningSummary"]).toBe("detailed")
+    expect(result["include"]).toEqual(["reasoning.encrypted_content"])
+    // The Codex manifest marks the reserve as verbosity-aware, defaulting low.
+    expect(result["textVerbosity"]).toBe("low")
+  })
+})

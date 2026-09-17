@@ -71,3 +71,33 @@ describe("ModelsDev.patch — gpt-6-astra", () => {
     expect(model?.cost?.input).toBe(9)
   })
 })
+
+describe("ModelsDev.patch — gpt-reserve", () => {
+  // One patch for the whole block: `patch` walks the full catalog, and calling
+  // it per assertion pushes the file past bun's per-test timeout.
+  const patched = ModelsDev.patch(openaiDatabase())
+  const reserve = () => patched.openai?.models["gpt-reserve"]
+
+  it("seeds the reserve model into the openai provider", () => {
+    // models.dev will never list it: OpenAI ships it hidden, for ChatGPT plan
+    // traffic through the Codex backend only.
+    expect(reserve()?.id).toBe("gpt-reserve")
+    expect(reserve()?.name).toBe("GPT-Reserve")
+  })
+
+  it("carries the 272K standard context window", () => {
+    expect(reserve()?.limit).toEqual({ context: 272_000, output: 128_000 })
+  })
+
+  it("is free, because plan traffic is not metered per token", () => {
+    expect(reserve()?.cost).toEqual({ input: 0, output: 0, cache_read: 0, cache_write: 0 })
+  })
+
+  it("is a reasoning, tool-calling, image-reading model with temperature off", () => {
+    expect(reserve()?.reasoning).toBe(true)
+    expect(reserve()?.tool_call).toBe(true)
+    expect(reserve()?.attachment).toBe(true)
+    expect(reserve()?.temperature).toBe(false)
+    expect(reserve()?.modalities).toEqual({ input: ["text", "image"], output: ["text"] })
+  })
+})

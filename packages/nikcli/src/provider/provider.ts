@@ -8,7 +8,7 @@ import { Log } from "@nikcli-ai/util/log"
 import { BunProc } from "../bun"
 import { Plugin } from "../plugin"
 import type { Hooks as PluginHooks } from "@nikcli-ai/plugin"
-import { ModelsDev } from "./models"
+import { GPT_RESERVE_ID, ModelsDev } from "./models"
 import { reasoningVariants } from "./variants"
 
 import { Auth } from "../auth"
@@ -1322,6 +1322,14 @@ export namespace Provider {
     const config = await configGet(ctx)
     const modelsDev = await ModelsDev.get()
     const database = mapValues(modelsDev, fromModelsDevProvider)
+
+    // `gpt-reserve` is seeded into the openai catalog by `ModelsDev.patch`, but
+    // it only exists for ChatGPT plan traffic through the Codex backend — an
+    // api.openai.com key cannot call it. Drop it unless the openai credential is
+    // an OAuth one, so it never shows up in the picker for API-key users.
+    // (`filterCodexOAuthModels` in the codex plugin keeps it for OAuth sessions.)
+    const openaiAuth = await authGet("openai")
+    if (openaiAuth?.type !== "oauth") delete database["openai"]?.models[GPT_RESERVE_ID]
 
     const policy = Policy.statements(config)
 

@@ -29,6 +29,10 @@ export namespace Flag {
   export declare const NIKCLI_HERDR: boolean
   export const NIKCLI_DISABLE_LSP_DOWNLOAD = truthy("NIKCLI_DISABLE_LSP_DOWNLOAD")
   export const NIKCLI_ENABLE_EXPERIMENTAL_MODELS = truthy("NIKCLI_ENABLE_EXPERIMENTAL_MODELS")
+  // Opt out of falling back to `gpt-reserve` when a ChatGPT plan's main models
+  // (gpt-6-astra, gpt-5.x, the codex slugs) run out of allowance. See
+  // `plugin/codex.ts`; requests then fail with the provider's 429 instead.
+  export const NIKCLI_DISABLE_GPT_RESERVE_FALLBACK = truthy("NIKCLI_DISABLE_GPT_RESERVE_FALLBACK")
   export const NIKCLI_DISABLE_AUTOCOMPACT = truthy("NIKCLI_DISABLE_AUTOCOMPACT")
   // Opt out of the in-process config hot reload (instance reload on config
   // file changes). Reload can still be triggered explicitly via the API.
