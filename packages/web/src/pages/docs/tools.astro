@@ -34,6 +34,7 @@ const toolIndex = [
   { id: "task", file: "src/tool/task.ts", desc: "Launch a delegated subagent." },
   { id: "delegation", file: "src/tool/delegation.ts", desc: "Inspect or control background delegations." },
   { id: "delegator", file: "src/tool/delegator.ts", desc: "Monitor and supervise background delegation jobs." },
+  { id: "code_mode", file: "src/tool/code_mode.ts", desc: "Run an orchestration script in a confined interpreter that calls other tools programmatically, keeping intermediate results out of the context window." },
   { id: "context_collect", file: "src/tool/context_collect.ts", desc: "Collect workspace context from files." },
   { id: "context_related", file: "src/tool/context_related.ts", desc: "List files related to an entry file." },
   { id: "context_diagnostics", file: "src/tool/context_diagnostics.ts", desc: "List LSP diagnostics." },
@@ -48,6 +49,7 @@ const toolIndex = [
   { id: "apply_patch", file: "src/tool/apply_patch.ts", desc: "Patch files with structured diffs." },
   { id: "speak", file: "src/tool/speak.ts", desc: "Convert text to speech and play audio." },
   { id: "opentui", file: "src/tool/opentui.ts", desc: "Render terminal dashboards and rich visualizations." },
+  { id: "artifact", file: "src/tool/artifact.ts", desc: "Publish a local file as a hosted page on nikcli.store, openable in a browser or the mobile app." },
   { id: "lsp", file: "src/tool/lsp.ts", desc: "LSP tool exposed behind experimental flags." },
   { id: "batch", file: "src/tool/batch.ts", desc: "Batch tool calls behind experimental flags." },
   { id: "plan_enter", file: "src/tool/plan.ts", desc: "Enter plan mode." },
@@ -61,8 +63,8 @@ const toolIndex = [
   { id: "get_goal", file: "src/tool/goal.ts", desc: "Read the current goal state for this session." },
   { id: "update_goal", file: "src/tool/goal.ts", desc: "Mark the session goal as complete or blocked." },
   { id: "invalid", file: "src/tool/invalid.ts", desc: "Rejected invalid tool-call shape." },
-  { id: "browser", file: "src/tool/browser.ts", desc: "Drive a remote browser: navigate, snapshot, click, type, and capture the action log." },
   { id: "computer", file: "src/tool/computer.ts", desc: "Computer-use tool: capture screenshots, send mouse and keyboard input to a desktop session." },
+  { id: "browser_control", file: "src/tool/browser-control.ts", desc: "Drive a browser: navigate, snapshot, click, type, and capture the action log." },
 ];
 ---
 
@@ -165,8 +167,8 @@ const toolIndex = [
       <DocCard title="skill" eyebrow="Instruction packs">
         <p>Load a skill to bring focused instructions into the current session.</p>
       </DocCard>
-      <DocCard title="browser" eyebrow="Browser automation">
-        <p>Navigate, snapshot, click, type, and capture the action log of a remote browser session.</p>
+      <DocCard title="browser_control" eyebrow="Browser automation">
+        <p>Navigate, snapshot, click, type, and capture the action log of a browser session.</p>
       </DocCard>
       <DocCard title="computer" eyebrow="Computer use">
         <p>Capture screenshots and send mouse / keyboard input to a desktop session for computer-use workflows.</p>

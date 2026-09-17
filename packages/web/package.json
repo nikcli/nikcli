@@ -9,6 +9,7 @@
     "preview": "astro preview",
     "astro": "astro",
     "deploy": "echo '_worker.js' > dist/.assetsignore && wrangler deploy",
+    "check": "bun run check:docs-index && bun run check:docs-anchors && bun run check:api-groups && bun run check:docs-tools",
     "check:docs-tools": "bun run script/check-docs-tool-index.ts",
     "check:docs-index": "bun run script/check-docs-index.ts",
     "check:api-groups": "bun run script/check-api-groups.ts",
