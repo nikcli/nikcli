@@ -82,12 +82,6 @@ export function RouteProvider(props: ParentProps) {
           return { type: "home" } as Route
         }
       }
-      // `NIKCLI_STORY=<id>` is the storybook's entry point, expressed as a starting route rather than
-      // as a navigation from plugin setup: setup runs before this provider exists, so navigating from
-      // there raced the first render and painted nothing. An unknown id still lands on the storybook
-      // route, which lists what does exist — a typo must not look like an ordinary launch.
-      const story = process.env["NIKCLI_STORY"]?.trim()
-      if (story) return { type: "plugin", id: "storybook", data: { story } } as Route
       return { type: "home" } as Route
     })(),
   )

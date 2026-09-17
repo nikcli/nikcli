@@ -32,8 +32,8 @@ const SETTLE_MS = Number(process.env.NIKCLI_SMOKE_TIMEOUT_MS ?? 45_000)
  * Substrings that must appear in the painted output, comma-separated.
  *
  * "It painted something" is the right bar for the boot check, and too low a bar for anything that
- * claims to render a *particular* screen — a storybook story that silently falls back to the normal
- * TUI paints plenty of characters. Used by `smoke:story`.
+ * claims to render a *particular* screen — a launch that silently falls back to the normal TUI paints
+ * plenty of characters.
  */
 const EXPECT = (process.env.NIKCLI_SMOKE_EXPECT ?? "")
   .split(",")
@@ -102,8 +102,6 @@ const pty = spawnPty({
     // EOF forever, so the renderer never starts and the smoke sees no output.
     NIKCLI_TERMINAL: "1",
     TERM: "xterm-256color",
-    // Forwarded so `smoke:story` can boot straight into a storybook story.
-    ...(process.env.NIKCLI_STORY ? { NIKCLI_STORY: process.env.NIKCLI_STORY } : {}),
   },
 })
 

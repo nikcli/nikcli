@@ -42,8 +42,8 @@ export function sessionTaskChrome(kind: SessionTaskKind) {
  * Nested subtasks sit inside the turn (solid rail, SUBTASK chip). Background
  * jobs sit beside it (dashed rail, BG chip, info tint) so they read as a
  * sidecar rather than another child of the same message. Everything the card
- * needs arrives as props — same rule as `pending-input-card.tsx` — so a
- * storybook fixture can draw both kinds without an SDK.
+ * needs arrives as props — same rule as `pending-input-card.tsx` — so both
+ * kinds can be drawn without an SDK.
  */
 export function SessionTaskCard(props: {
   kind: SessionTaskKind

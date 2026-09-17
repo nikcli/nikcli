@@ -35,8 +35,7 @@
     "docs": "echo 'Generating documentation...' && find src -name '*.ts' -exec echo 'Processing: {}' \\;",
     "deploy": "echo 'Deploying application...' && bun run build && echo 'Deployment completed successfully'",
     "release": "bun run ../../script/release-github.ts",
-    "sandbox:vercel": "bun run script/vercel-sandbox-smoke.ts",
-    "smoke:story": "NIKCLI_STORY=pending-input NIKCLI_SMOKE_EXPECT='pending input,QUEUED' bun run script/tui-smoke.ts"
+    "sandbox:vercel": "bun run script/vercel-sandbox-smoke.ts"
   },
   "bin": {
     "nikcli": "./bin/nikcli"
