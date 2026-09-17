@@ -1,0 +1,1620 @@
+/*
+ * Voice settings control panel styles.
+ *
+ * Strictly adheres to the ADE design token whitelist from packages/ade/src/index.css.
+ * All non-token properties use explicit CSS literals. Supports reduced motion and narrow layouts.
+ *
+ * Structure: a fixed header and live console, a sticky step rail, one scrolling
+ * body of sections, and a fixed footer of actions. Only the body scrolls, so the
+ * panel's state — what the engine is doing, which step you are on, how to get
+ * out — is never scrolled off the screen.
+ */
+
+/* ── Overlay Layer ─────────────────────────────────────────────────────────── */
+
+[data-component="voice-settings-overlay"] {
+  position: fixed;
+  inset: 0;
+  background: var(--ade-scrim);
+  backdrop-filter: blur(3px);
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: var(--ade-space-8) var(--ade-space-6);
+  overflow-y: auto;
+  font-family: var(--ade-sans);
+  animation: ade-voice-panel-fade-in var(--ade-dur) var(--ade-ease-out);
+}
+
+@keyframes ade-voice-panel-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* ── Panel Dialog ──────────────────────────────────────────────────────────── */
+
+/*
+ * One size, whichever section is open.
+ *
+ * The panel used to be sized by its contents, and its contents are whichever
+ * of the seven sections is selected: picking "Scorciatoie" after "Comandi"
+ * collapsed it from 629px to 403px, so the rail rows the user was aiming at
+ * moved out from under the pointer and the whole dialogue jumped on screen
+ * every time they looked at something. A settings panel is a place you
+ * browse; it cannot resize on every step of the browsing.
+ *
+ * The height is chosen from the tallest section measured in the running app
+ * (462px of body, "Comandi"), plus the chrome around it and enough headroom
+ * that a section growing by a row or two does not start scrolling. It is
+ * still clamped to the viewport, because a fixed size taller than the window
+ * is a panel with its buttons off the bottom of the screen.
+ */
+[data-component="voice-settings-panel"] {
+  position: relative;
+  width: 100%;
+  max-width: 760px;
+  height: min(700px, calc(100vh - var(--ade-space-9)));
+  background: var(--ade-overlay);
+  border: 1px solid var(--ade-border-strong);
+  border-radius: var(--ade-radius-xl);
+  box-shadow: var(--ade-shadow-lg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  color: var(--ade-text);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+  line-height: var(--ade-leading);
+  animation: ade-voice-panel-scale-in var(--ade-dur) var(--ade-spring);
+}
+
+/* The lit top edge that separates a floating surface from a drawn rectangle. */
+[data-component="voice-settings-panel"]::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  background: var(--ade-highlight);
+  pointer-events: none;
+  z-index: 2;
+}
+
+[data-component="voice-settings-panel"]:focus {
+  outline: none;
+}
+
+/* Embedded in a page rather than floating over one: there it is a block in
+   a document that scrolls, so it takes the height its contents need. */
+[data-component="voice-settings-panel"][data-inline="true"] {
+  max-width: 100%;
+  height: auto;
+  background: var(--ade-surface);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-lg);
+  box-shadow: none;
+  animation: none;
+}
+
+@keyframes ade-voice-panel-scale-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-component="voice-settings-overlay"],
+  [data-component="voice-settings-panel"],
+  [data-component="voice-settings-panel"] * {
+    animation: none !important;
+    transition: none !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── Header ────────────────────────────────────────────────────────────────── */
+
+[data-component="voice-settings-panel"] [data-slot="header"] {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: var(--ade-space-6);
+  padding: var(--ade-space-6) var(--ade-space-7);
+  border-bottom: 1px solid var(--ade-border);
+  background: var(--ade-raised);
+}
+
+[data-component="voice-settings-panel"] [data-slot="header-mark"] {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: var(--ade-radius-full);
+  border: 1px solid var(--ade-border);
+  background: var(--ade-surface);
+  color: var(--ade-text-soft);
+  flex: none;
+}
+
+[data-component="voice-settings-panel"][data-status="live"] [data-slot="header-mark"],
+[data-component="voice-settings-panel"][data-status="ready"] [data-slot="header-mark"] {
+  border-color: var(--ade-accent);
+  color: var(--ade-accent);
+}
+
+[data-component="voice-settings-panel"] [data-slot="header-aura"] {
+  position: absolute;
+  inset: -3px;
+  border-radius: var(--ade-radius-full);
+  background: var(--ade-accent-glow);
+  opacity: 0;
+  transition:
+    transform var(--ade-dur-fast) var(--ade-ease-out),
+    opacity var(--ade-dur-fast) var(--ade-ease-out);
+  pointer-events: none;
+}
+
+[data-component="voice-settings-panel"] [data-slot="header-info"] {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+[data-component="voice-settings-panel"] [data-slot="title"] {
+  font-size: var(--ade-font-xl);
+  font-weight: var(--ade-weight-bold);
+  letter-spacing: -0.01em;
+  color: var(--ade-text);
+  margin: 0;
+}
+
+[data-component="voice-settings-panel"] [data-slot="subtitle"] {
+  font-size: var(--ade-font-sm);
+  color: var(--ade-text-soft);
+  margin: 0;
+}
+
+/* Status pill ─ one shape, four tones from the status token family. */
+
+[data-component="voice-settings-panel"] [data-slot="status-pill"] {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ade-space-3);
+  padding: var(--ade-space-2) var(--ade-space-5);
+  border-radius: var(--ade-radius-full);
+  border: 1px solid var(--ade-border);
+  background: var(--ade-surface);
+  color: var(--ade-text-soft);
+  font-size: var(--ade-font-sm);
+  font-weight: var(--ade-weight-semibold);
+  white-space: nowrap;
+  user-select: none;
+}
+
+[data-component="voice-settings-panel"] [data-slot="status-dot"] {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--ade-radius-full);
+  background: currentColor;
+  flex: none;
+}
+
+[data-component="voice-settings-panel"] [data-slot="status-pill"][data-tone="ready"] {
+  border-color: var(--ade-done);
+  background: var(--ade-done-bg);
+  color: var(--ade-done);
+}
+
+[data-component="voice-settings-panel"] [data-slot="status-pill"][data-tone="live"] {
+  border-color: var(--ade-accent);
+  background: var(--ade-accent-soft);
+  color: var(--ade-accent-strong);
+}
+
+[data-component="voice-settings-panel"] [data-slot="status-pill"][data-tone="live"] [data-slot="status-dot"] {
+  animation: ade-voice-pulse 1.4s var(--ade-ease) infinite;
+}
+
+[data-component="voice-settings-panel"] [data-slot="status-pill"][data-tone="warn"] {
+  border-color: var(--ade-waiting);
+  background: var(--ade-waiting-bg);
+  color: var(--ade-waiting);
+}
+
+[data-component="voice-settings-panel"] [data-slot="status-pill"][data-tone="busy"] {
+  border-color: var(--ade-working);
+  background: var(--ade-working-bg);
+  color: var(--ade-working);
+}
+
+@keyframes ade-voice-pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.25; }
+}
+
+[data-component="voice-settings-panel"] [data-slot="close-btn"] {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ade-radius-sm);
+  background: transparent;
+  color: var(--ade-text-weak);
+  cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-component="voice-settings-panel"] [data-slot="close-btn"]:hover {
+  background: var(--ade-hover);
+  color: var(--ade-text);
+}
+
+[data-component="voice-settings-panel"] [data-slot="close-btn"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+/* ── Live console ──────────────────────────────────────────────────────────── */
+
+[data-component="voice-settings-panel"] [data-slot="live"] {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--ade-space-6);
+  padding: var(--ade-space-5) var(--ade-space-7);
+  background: var(--ade-sunken);
+  /* Below the shell now, not above it: the rule that separates it from the
+     sections belongs on the edge it actually touches. */
+  border-top: 1px solid var(--ade-border);
+  flex: 0 0 auto;
+}
+
+[data-component="voice-settings-panel"] [data-slot="meter"] {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  height: 30px;
+  width: 120px;
+  flex: none;
+}
+
+[data-component="voice-settings-panel"] [data-slot="meter-bar"] {
+  flex: 1;
+  min-width: 3px;
+  border-radius: var(--ade-radius-full);
+  background: var(--ade-border-strong);
+  opacity: 0.6;
+  transition:
+    height var(--ade-dur-fast) var(--ade-ease-out),
+    background var(--ade-dur) var(--ade-ease),
+    opacity var(--ade-dur) var(--ade-ease);
+}
+
+[data-component="voice-settings-panel"] [data-slot="live"][data-running="true"] [data-slot="meter-bar"] {
+  background: var(--ade-accent);
+  opacity: 1;
+}
+
+[data-component="voice-settings-panel"] [data-slot="live-text"] {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+[data-component="voice-settings-panel"] [data-slot="live-line"] {
+  margin: 0;
+  font-size: var(--ade-font-md);
+  color: var(--ade-text-soft);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+[data-component="voice-settings-panel"] [data-slot="live-line"][data-kind="partial"] {
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-sm);
+  color: var(--ade-text);
+}
+
+[data-component="voice-settings-panel"] [data-slot="live-line"][data-kind="spoken"] {
+  color: var(--ade-accent-strong);
+}
+
+[data-component="voice-settings-panel"] [data-slot="live-error"] {
+  margin: 0;
+  font-size: var(--ade-font-sm);
+  color: var(--ade-error);
+}
+
+[data-component="voice-settings-panel"] [data-slot="live-actions"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-3);
+  flex: none;
+}
+
+/* ── Buttons ───────────────────────────────────────────────────────────────── */
+
+[data-component="voice-settings-panel"] [data-slot="primary-btn"],
+[data-component="voice-settings-panel"] [data-slot="solid-btn"],
+[data-component="voice-settings-panel"] [data-slot="ghost-btn"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ade-space-2);
+  font-family: inherit;
+  font-size: var(--ade-font-sm);
+  font-weight: var(--ade-weight-semibold);
+  white-space: nowrap;
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    box-shadow var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-component="voice-settings-panel"] [data-slot="primary-btn"] {
+  padding: var(--ade-space-3) var(--ade-space-7);
+  border: 1px solid var(--ade-accent);
+  border-radius: var(--ade-radius-full);
+  background: var(--ade-accent);
+  color: var(--ade-accent-fg);
+}
+
+[data-component="voice-settings-panel"] [data-slot="primary-btn"]:hover {
+  background: var(--ade-accent-strong);
+  border-color: var(--ade-accent-strong);
+}
+
+[data-component="voice-settings-panel"] [data-slot="primary-btn"][data-listening="true"] {
+  background: var(--ade-error-bg);
+  border-color: var(--ade-error);
+  color: var(--ade-error);
+}
+
+[data-component="voice-settings-panel"] [data-slot="solid-btn"] {
+  padding: var(--ade-space-3) var(--ade-space-6);
+  border: 1px solid var(--ade-accent);
+  border-radius: var(--ade-radius-md);
+  background: var(--ade-accent);
+  color: var(--ade-accent-fg);
+}
+
+[data-component="voice-settings-panel"] [data-slot="solid-btn"]:hover:not(:disabled) {
+  background: var(--ade-accent-strong);
+  border-color: var(--ade-accent-strong);
+}
+
+[data-component="voice-settings-panel"] [data-slot="ghost-btn"],
+[data-component="voice-settings-panel"] [data-slot="secondary-btn"] {
+  padding: var(--ade-space-3) var(--ade-space-5);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-md);
+  background: var(--ade-surface);
+  color: var(--ade-text-soft);
+}
+
+[data-component="voice-settings-panel"] [data-slot="ghost-btn"]:hover:not(:disabled),
+[data-component="voice-settings-panel"] [data-slot="secondary-btn"]:hover:not(:disabled) {
+  background: var(--ade-hover);
+  border-color: var(--ade-border-strong);
+  color: var(--ade-text);
+}
+
+[data-component="voice-settings-panel"] [data-slot="ghost-btn"][data-armed="true"] {
+  border-color: var(--ade-error);
+  background: var(--ade-error-bg);
+  color: var(--ade-error);
+}
+
+[data-component="voice-settings-panel"] [data-slot="primary-btn"]:disabled,
+[data-component="voice-settings-panel"] [data-slot="solid-btn"]:disabled,
+[data-component="voice-settings-panel"] [data-slot="ghost-btn"]:disabled,
+[data-component="voice-settings-panel"] [data-slot="secondary-btn"]:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+[data-component="voice-settings-panel"] [data-slot="primary-btn"]:focus-visible,
+[data-component="voice-settings-panel"] [data-slot="solid-btn"]:focus-visible,
+[data-component="voice-settings-panel"] [data-slot="ghost-btn"]:focus-visible,
+[data-component="voice-settings-panel"] [data-slot="secondary-btn"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+/* ── Step rail ─────────────────────────────────────────────────────────────── */
+
+/* ── The rail ──────────────────────────────────────────────────────────────── */
+
+/*
+ * Rail and page share one row, and the row is what scrolls nothing: the rail
+ * is as tall as its own list and the page beside it holds one section, so
+ * neither column decides the height of the other.
+ */
+[data-component="voice-settings-panel"] [data-slot="shell"] {
+  display: flex;
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
+}
+
+[data-component="voice-settings-panel"] [data-slot="rail"] {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  flex: 0 0 auto;
+  width: 176px;
+  padding: var(--ade-space-4) var(--ade-space-3);
+  border-right: 1px solid var(--ade-border);
+  background: var(--ade-surface);
+  overflow-y: auto;
+}
+
+/*
+ * A heading over a run of rows.
+ *
+ * Quiet and small: it is a divider that happens to have a word on it, and a
+ * heading that competed with the rows would make the rail look like two
+ * menus rather than one list with two parts. The first one has no rule above
+ * it because there is nothing above it to divide from.
+ */
+[data-component="voice-settings-panel"] [data-slot="rail-group"] {
+  padding: var(--ade-space-3) var(--ade-space-4) var(--ade-space-2);
+  color: var(--ade-text-weak);
+  font-size: var(--ade-font-xs);
+  font-weight: var(--ade-weight-semibold);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+[data-component="voice-settings-panel"] [data-slot="rail-group"] ~ [data-slot="rail-group"] {
+  margin-top: var(--ade-space-3);
+  padding-top: var(--ade-space-4);
+  border-top: 1px solid var(--ade-border-subtle);
+}
+
+[data-component="voice-settings-panel"] [data-slot="rail-row"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-4);
+  width: 100%;
+  padding: var(--ade-space-3) var(--ade-space-4);
+  border: 0;
+  border-radius: var(--ade-radius-sm);
+  background: transparent;
+  color: var(--ade-text-soft);
+  font-family: inherit;
+  font-size: var(--ade-font-md);
+  text-align: left;
+  cursor: pointer;
+  min-width: 0;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-component="voice-settings-panel"] [data-slot="rail-row"]:hover {
+  background: var(--ade-hover);
+  color: var(--ade-text);
+}
+
+[data-component="voice-settings-panel"] [data-slot="rail-row"][data-current="true"] {
+  background: var(--ade-accent-soft);
+  color: var(--ade-accent);
+  font-weight: var(--ade-weight-semibold);
+}
+
+[data-component="voice-settings-panel"] [data-slot="rail-row"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-component="voice-settings-panel"] [data-slot="rail-glyph"] {
+  flex: none;
+  width: 14px;
+  text-align: center;
+  font-size: var(--ade-font-sm);
+  opacity: 0.85;
+}
+
+[data-component="voice-settings-panel"] [data-slot="rail-label"] {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/*
+ * The current value, in mono and quiet: it is data the rail reports, not a
+ * second label. Truncated from the left, because what distinguishes two long
+ * values is almost always their end.
+ */
+[data-component="voice-settings-panel"] [data-slot="rail-value"] {
+  margin-left: auto;
+  max-width: 62px;
+  flex: 0 1 auto;
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-xs);
+  color: var(--ade-text-weak);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  direction: rtl;
+  text-align: right;
+}
+
+[data-component="voice-settings-panel"] [data-slot="rail-row"][data-current="true"] [data-slot="rail-value"] {
+  color: var(--ade-accent-strong);
+}
+
+[data-component="voice-settings-panel"] [data-slot="rail-sep"] {
+  height: 1px;
+  margin: var(--ade-space-4) var(--ade-space-4);
+  background: var(--ade-border-subtle);
+  flex: none;
+}
+
+[data-component="voice-settings-panel"] [data-slot="rail-row"][data-tone="quiet"] {
+  margin-top: auto;
+  font-size: var(--ade-font-sm);
+  color: var(--ade-text-weak);
+}
+
+/* Armed: it has been pressed once and the next press is the one that acts. */
+[data-component="voice-settings-panel"] [data-slot="rail-row"][data-armed="true"] {
+  background: var(--ade-error-bg);
+  color: var(--ade-error);
+}
+
+/* ── Body Sections ─────────────────────────────────────────────────────────── */
+
+[data-component="voice-settings-panel"] [data-slot="body"] {
+  display: flex;
+  flex-direction: column;
+  padding: var(--ade-space-7);
+  overflow-y: auto;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+[data-component="voice-settings-panel"][data-inline="true"] [data-slot="body"] {
+  max-height: none;
+}
+
+[data-component="voice-settings-panel"] [data-slot="section"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-6);
+}
+
+/*
+ * The five sections that are not open are hidden rather than unmounted.
+ *
+ * They hold state the user is in the middle of — a half-typed language filter,
+ * a command list scrolled to where they were reading — and rebuilding them on
+ * every visit to the rail would throw it away each time. `display: none` also
+ * takes them out of the accessibility tree and the tab order, so hidden here
+ * means hidden to everyone, not merely invisible.
+ */
+[data-component="voice-settings-panel"] [data-slot="section"][data-hidden] {
+  display: none;
+}
+
+[data-component="voice-settings-panel"] [data-slot="section-head"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-1);
+}
+
+[data-component="voice-settings-panel"] [data-slot="section-title"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-4);
+  font-size: var(--ade-font-lg);
+  font-weight: var(--ade-weight-bold);
+  color: var(--ade-text);
+  letter-spacing: -0.005em;
+  margin: 0;
+}
+
+[data-component="voice-settings-panel"] [data-slot="section-title"]:focus {
+  outline: none;
+}
+
+[data-component="voice-settings-panel"] [data-slot="section-title"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+  border-radius: var(--ade-radius-sm);
+}
+
+[data-component="voice-settings-panel"] [data-slot="section-desc"] {
+  font-size: var(--ade-font-sm);
+  color: var(--ade-text-soft);
+  margin: 0;
+  padding-left: calc(20px + var(--ade-space-4));
+}
+
+[data-component="voice-settings-panel"] [data-slot="sub-item-licence"] {
+  display: block;
+  margin-top: var(--ade-space-1);
+  font-size: var(--ade-font-xs, 11px);
+  color: var(--ade-text-soft);
+}
+
+[data-component="voice-settings-panel"] [data-slot="link-button"] {
+  background: none;
+  border: 0;
+  padding: 0;
+  font: inherit;
+  color: var(--ade-accent, currentColor);
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+[data-component="voice-settings-panel"] [data-slot="sub-choice-note"] {
+  font-size: var(--ade-font-sm);
+  color: var(--ade-text-soft);
+  margin: var(--ade-space-2) 0 0;
+}
+
+[data-component="voice-settings-panel"] [data-slot="stack"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-3);
+}
+
+[data-component="voice-settings-panel"] [data-slot="field-row"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-3);
+  flex-wrap: wrap;
+}
+
+[data-component="voice-settings-panel"] [data-slot="field-row"] [data-slot="input"] {
+  flex: 1 1 200px;
+  min-width: 0;
+}
+
+/* ── Section 1: Modalità (Big Cards) ───────────────────────────────────────── */
+
+[data-component="voice-settings-panel"] [data-slot="mode-grid"] {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--ade-space-5);
+}
+
+[data-component="voice-settings-panel"] [data-slot="mode-card"] {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-3);
+  padding: var(--ade-space-6);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-lg);
+  background: var(--ade-surface);
+  box-shadow: inset 0 1px 0 0 var(--ade-highlight);
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    box-shadow var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-component="voice-settings-panel"] [data-slot="mode-card"]:hover {
+  background: var(--ade-hover);
+  border-color: var(--ade-border-strong);
+}
+
+[data-component="voice-settings-panel"] [data-slot="mode-card"]:active {
+  transform: translateY(1px);
+}
+
+[data-component="voice-settings-panel"] [data-slot="mode-card"][aria-checked="true"] {
+  background: var(--ade-raised);
+  border-color: var(--ade-accent);
+  box-shadow:
+    inset 0 1px 0 0 var(--ade-highlight),
+    0 0 0 1px var(--ade-accent),
+    0 0 0 5px var(--ade-accent-glow);
+}
+
+[data-component="voice-settings-panel"] [data-slot="mode-card"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-component="voice-settings-panel"] [data-slot="mode-card-header"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-3);
+}
+
+[data-component="voice-settings-panel"] [data-slot="mode-card-icon"] {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border-radius: var(--ade-radius-sm);
+  background: var(--ade-sunken);
+  color: var(--ade-text-weak);
+  flex: none;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-component="voice-settings-panel"] [data-slot="mode-card"][aria-checked="true"] [data-slot="mode-card-icon"] {
+  background: var(--ade-accent-soft);
+  color: var(--ade-accent);
+}
+
+[data-component="voice-settings-panel"] [data-slot="mode-card-title"] {
+  font-size: var(--ade-font-lg);
+  font-weight: var(--ade-weight-bold);
+  color: var(--ade-text);
+  margin-right: auto;
+}
+
+[data-component="voice-settings-panel"] [data-slot="mode-card-badge"] {
+  font-size: var(--ade-font-xs);
+  font-weight: var(--ade-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: var(--ade-space-1) var(--ade-space-4);
+  border-radius: var(--ade-radius-full);
+  background: var(--ade-accent-soft);
+  color: var(--ade-accent-strong);
+  flex: none;
+}
+
+[data-component="voice-settings-panel"] [data-slot="mode-card-desc"] {
+  font-size: var(--ade-font-md);
+  color: var(--ade-text-soft);
+  line-height: var(--ade-leading);
+}
+
+[data-component="voice-settings-panel"] [data-slot="mode-card-chord"] {
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-xs);
+  color: var(--ade-text-weak);
+  letter-spacing: 0.02em;
+}
+
+/* Transcription Sub-choice */
+
+[data-component="voice-settings-panel"] [data-slot="sub-choice-box"] {
+  padding: var(--ade-space-5) var(--ade-space-6);
+  background: var(--ade-sunken);
+  border: 1px solid var(--ade-border-subtle);
+  border-radius: var(--ade-radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-4);
+}
+
+[data-component="voice-settings-panel"] [data-slot="sub-choice-label"] {
+  font-size: var(--ade-font-xs);
+  font-weight: var(--ade-weight-semibold);
+  color: var(--ade-text-weak);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+[data-component="voice-settings-panel"] [data-slot="sub-choice-row"] {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+  gap: var(--ade-space-3);
+}
+
+[data-component="voice-settings-panel"] [data-slot="sub-choice-item"] {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: var(--ade-space-4) var(--ade-space-5);
+  border-radius: var(--ade-radius-sm);
+  border: 1px solid var(--ade-border);
+  background: var(--ade-surface);
+  cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    border-color var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-component="voice-settings-panel"] [data-slot="sub-choice-item"]:hover {
+  background: var(--ade-hover);
+}
+
+[data-component="voice-settings-panel"] [data-slot="sub-choice-item"][aria-checked="true"] {
+  background: var(--ade-raised);
+  border-color: var(--ade-accent);
+  box-shadow: 0 0 0 1px var(--ade-accent);
+}
+
+[data-component="voice-settings-panel"] [data-slot="sub-choice-item"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-component="voice-settings-panel"] [data-slot="sub-item-title"] {
+  font-size: var(--ade-font-md);
+  font-weight: var(--ade-weight-semibold);
+  color: var(--ade-text);
+}
+
+[data-component="voice-settings-panel"] [data-slot="sub-item-desc"] {
+  font-size: var(--ade-font-sm);
+  color: var(--ade-text-soft);
+}
+
+/* ── Section 2: Come si attiva ─────────────────────────────────────────────── */
+
+[data-component="voice-settings-panel"] [data-slot="activation-list"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-3);
+}
+
+[data-component="voice-settings-panel"] [data-slot="activation-group"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-3);
+}
+
+[data-component="voice-settings-panel"] [data-slot="activation-item"] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ade-space-5);
+  padding: var(--ade-space-5) var(--ade-space-6);
+  border-radius: var(--ade-radius-md);
+  border: 1px solid var(--ade-border);
+  background: var(--ade-surface);
+  cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    box-shadow var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-component="voice-settings-panel"] [data-slot="activation-item"]:hover:not([aria-disabled="true"]) {
+  background: var(--ade-hover);
+  border-color: var(--ade-border-strong);
+}
+
+[data-component="voice-settings-panel"] [data-slot="activation-item"][aria-checked="true"] {
+  background: var(--ade-raised);
+  border-color: var(--ade-accent);
+  box-shadow: 0 0 0 1px var(--ade-accent);
+}
+
+[data-component="voice-settings-panel"] [data-slot="activation-item"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-component="voice-settings-panel"] [data-slot="activation-item"][aria-disabled="true"] {
+  opacity: 0.55;
+  background: var(--ade-sunken);
+  border-color: var(--ade-border-subtle);
+  cursor: not-allowed;
+}
+
+[data-component="voice-settings-panel"] [data-slot="item-text-group"] {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+[data-component="voice-settings-panel"] [data-slot="item-title"] {
+  font-size: var(--ade-font-md);
+  font-weight: var(--ade-weight-semibold);
+  color: var(--ade-text);
+}
+
+[data-component="voice-settings-panel"] [data-slot="item-desc"] {
+  font-size: var(--ade-font-sm);
+  color: var(--ade-text-soft);
+}
+
+[data-component="voice-settings-panel"] [data-slot="chord-chip"] {
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-xs);
+  padding: var(--ade-space-1) var(--ade-space-4);
+  border-radius: var(--ade-radius-sm);
+  border: 1px solid var(--ade-border);
+  background: var(--ade-sunken);
+  color: var(--ade-text-weak);
+  white-space: nowrap;
+  flex: none;
+}
+
+[data-component="voice-settings-panel"] [data-slot="reason-box"] {
+  font-size: var(--ade-font-sm);
+  color: var(--ade-error);
+  background: var(--ade-error-bg);
+  padding: var(--ade-space-4) var(--ade-space-5);
+  border-radius: var(--ade-radius-sm);
+  border-left: 2px solid var(--ade-error);
+}
+
+/* A caution, not a failure: the engine works, it just costs more than the
+   window has. Amber rather than the red a reason-box takes. */
+[data-component="voice-settings-panel"] [data-slot="backend-warning"] {
+  margin: 0;
+  font-size: var(--ade-font-sm);
+  line-height: 1.45;
+  color: var(--ade-text-soft);
+  background: var(--ade-sunken);
+  padding: var(--ade-space-4) var(--ade-space-5);
+  border-radius: var(--ade-radius-sm);
+  border-left: 2px solid var(--ade-working);
+}
+
+[data-component="voice-settings-panel"] [data-slot="reason-box"][data-tone="muted"] {
+  color: var(--ade-text-soft);
+  background: var(--ade-sunken);
+  border-left-color: var(--ade-border-strong);
+}
+
+[data-component="voice-settings-panel"] [data-slot="reason-box"] em {
+  font-family: var(--ade-mono);
+  font-style: normal;
+  color: var(--ade-text);
+}
+
+[data-component="voice-settings-panel"] [data-slot="wake-word-wrap"] {
+  padding: var(--ade-space-5) var(--ade-space-6);
+  background: var(--ade-raised);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-md);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-3);
+}
+
+/* ── Text Input & Form Controls ────────────────────────────────────────────── */
+
+[data-component="voice-settings-panel"] [data-slot="label"] {
+  font-size: var(--ade-font-xs);
+  font-weight: var(--ade-weight-semibold);
+  color: var(--ade-text-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+}
+
+[data-component="voice-settings-panel"] [data-slot="input"],
+[data-component="voice-settings-panel"] [data-slot="select"] {
+  width: 100%;
+  background: var(--ade-raised);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-md);
+  padding: var(--ade-space-4) var(--ade-space-5);
+  color: var(--ade-text);
+  font-family: inherit;
+  font-size: var(--ade-font-md);
+  outline: none;
+  box-sizing: border-box;
+  transition:
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    box-shadow var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-component="voice-settings-panel"] [data-slot="input"]::placeholder {
+  color: var(--ade-text-weak);
+}
+
+[data-component="voice-settings-panel"] [data-slot="input"]:focus,
+[data-component="voice-settings-panel"] [data-slot="select"]:focus {
+  border-color: var(--ade-accent);
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-component="voice-settings-panel"] [data-slot="input"]:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+[data-component="voice-settings-panel"] [data-slot="hint"] {
+  font-size: var(--ade-font-sm);
+  color: var(--ade-text-weak);
+  margin: 0;
+}
+
+[data-component="voice-settings-panel"] [data-slot="hint"] em {
+  color: var(--ade-text-soft);
+  font-family: var(--ade-mono);
+  font-style: normal;
+}
+
+/* ── Section 3: Scorciatoie ────────────────────────────────────────────────── */
+
+[data-component="voice-settings-panel"] [data-slot="shortcuts-list"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-4);
+}
+
+[data-component="voice-settings-panel"] [data-slot="shortcut-row"] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ade-space-5);
+  padding: var(--ade-space-5) var(--ade-space-6);
+  background: var(--ade-surface);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-md);
+}
+
+[data-component="voice-settings-panel"] [data-slot="shortcut-controls"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-3);
+  flex: none;
+}
+
+[data-component="voice-settings-panel"] [data-slot="shortcut-recorder-btn"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 152px;
+  padding: var(--ade-space-4) var(--ade-space-6);
+  background: var(--ade-raised);
+  border: 1px solid var(--ade-border-strong);
+  border-radius: var(--ade-radius-md);
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-sm);
+  font-weight: var(--ade-weight-semibold);
+  color: var(--ade-text);
+  cursor: pointer;
+  user-select: none;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    box-shadow var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-component="voice-settings-panel"] [data-slot="shortcut-recorder-btn"]:hover {
+  background: var(--ade-hover);
+  border-color: var(--ade-accent);
+}
+
+[data-component="voice-settings-panel"] [data-slot="shortcut-recorder-btn"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-component="voice-settings-panel"] [data-slot="shortcut-recorder-btn"][data-recording="true"] {
+  border-color: var(--ade-accent);
+  background: var(--ade-accent-soft);
+  color: var(--ade-accent-strong);
+  box-shadow: var(--ade-focus-ring);
+  animation: ade-voice-recording 1.6s var(--ade-ease) infinite;
+}
+
+@keyframes ade-voice-recording {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.7; }
+}
+
+/* ── Section 4: Lingua ─────────────────────────────────────────────────────── */
+
+[data-component="voice-settings-panel"] [data-slot="lang-warning"] {
+  background: var(--ade-waiting-bg);
+  border: 1px solid var(--ade-waiting);
+  border-radius: var(--ade-radius-md);
+  padding: var(--ade-space-5) var(--ade-space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-3);
+}
+
+[data-component="voice-settings-panel"] [data-slot="lang-warning-msg"] {
+  font-size: var(--ade-font-sm);
+  color: var(--ade-text);
+}
+
+[data-component="voice-settings-panel"] [data-slot="lang-suggest-btn"] {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ade-space-2);
+  padding: var(--ade-space-3) var(--ade-space-5);
+  background: var(--ade-waiting);
+  color: var(--ade-accent-fg);
+  border: 0;
+  border-radius: var(--ade-radius-sm);
+  font-family: inherit;
+  font-size: var(--ade-font-sm);
+  font-weight: var(--ade-weight-semibold);
+  cursor: pointer;
+  transition: opacity var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-component="voice-settings-panel"] [data-slot="lang-suggest-btn"]:hover {
+  opacity: 0.85;
+}
+
+[data-component="voice-settings-panel"] [data-slot="lang-suggest-btn"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+/* ── Section 5: Motore di riconoscimento ───────────────────────────────────── */
+
+[data-component="voice-settings-panel"] [data-slot="backend-list"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-4);
+}
+
+[data-component="voice-settings-panel"] [data-slot="backend-card"] {
+  padding: var(--ade-space-5) var(--ade-space-6);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-lg);
+  background: var(--ade-surface);
+  box-shadow: inset 0 1px 0 0 var(--ade-highlight);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-4);
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    box-shadow var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-component="voice-settings-panel"] [data-slot="backend-card"][data-checked="true"] {
+  background: var(--ade-raised);
+  border-color: var(--ade-accent);
+  box-shadow:
+    inset 0 1px 0 0 var(--ade-highlight),
+    0 0 0 1px var(--ade-accent);
+}
+
+[data-component="voice-settings-panel"] [data-slot="backend-card"][data-unusable="true"]:not([data-checked="true"]) {
+  background: var(--ade-sunken);
+  border-color: var(--ade-border-subtle);
+}
+
+[data-component="voice-settings-panel"] [data-slot="backend-header"] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ade-space-5);
+  border-radius: var(--ade-radius-sm);
+  cursor: pointer;
+}
+
+[data-component="voice-settings-panel"] [data-slot="backend-header"][aria-disabled="true"] {
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+[data-component="voice-settings-panel"] [data-slot="backend-header"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-component="voice-settings-panel"] [data-slot="ready-tag"] {
+  font-size: var(--ade-font-xs);
+  font-weight: var(--ade-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  padding: var(--ade-space-1) var(--ade-space-4);
+  border-radius: var(--ade-radius-full);
+  border: 1px solid var(--ade-border);
+  color: var(--ade-text-weak);
+  white-space: nowrap;
+  flex: none;
+}
+
+[data-component="voice-settings-panel"] [data-slot="ready-tag"][data-ready="true"] {
+  border-color: var(--ade-done);
+  background: var(--ade-done-bg);
+  color: var(--ade-done);
+}
+
+[data-component="voice-settings-panel"] [data-slot="ready-tag"][data-ready="false"] {
+  border-color: var(--ade-border-strong);
+  background: var(--ade-sunken);
+  color: var(--ade-text-weak);
+}
+
+[data-component="voice-settings-panel"] [data-slot="backend-subfields"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-5);
+  padding-top: var(--ade-space-5);
+  border-top: 1px solid var(--ade-border-subtle);
+}
+
+/* Parakeet Pill Select */
+
+[data-component="voice-settings-panel"] [data-slot="pills-row"] {
+  display: flex;
+  gap: var(--ade-space-3);
+  flex-wrap: wrap;
+}
+
+[data-component="voice-settings-panel"] [data-slot="pill-btn"] {
+  padding: var(--ade-space-2) var(--ade-space-5);
+  border-radius: var(--ade-radius-full);
+  border: 1px solid var(--ade-border);
+  background: var(--ade-surface);
+  color: var(--ade-text-soft);
+  font-family: inherit;
+  font-size: var(--ade-font-sm);
+  font-weight: var(--ade-weight-medium);
+  cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-component="voice-settings-panel"] [data-slot="pill-btn"]:hover:not(:disabled) {
+  background: var(--ade-hover);
+  color: var(--ade-text);
+}
+
+[data-component="voice-settings-panel"] [data-slot="pill-btn"]:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+[data-component="voice-settings-panel"] [data-slot="pill-btn"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-component="voice-settings-panel"] [data-slot="pill-btn"][aria-checked="true"] {
+  background: var(--ade-accent-soft);
+  border-color: var(--ade-accent);
+  color: var(--ade-accent-strong);
+  font-weight: var(--ade-weight-semibold);
+}
+
+/* Parakeet Model Download Progress Bar */
+
+[data-component="voice-settings-panel"] [data-slot="progress-box"] {
+  background: var(--ade-sunken);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-md);
+  padding: var(--ade-space-5);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-3);
+}
+
+[data-component="voice-settings-panel"] [data-slot="progress-meta"] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ade-space-4);
+  font-size: var(--ade-font-sm);
+  font-weight: var(--ade-weight-medium);
+  color: var(--ade-text-soft);
+}
+
+[data-component="voice-settings-panel"] [data-slot="progressbar-track"] {
+  width: 100%;
+  height: 6px;
+  background: var(--ade-border-strong);
+  border-radius: var(--ade-radius-full);
+  overflow: hidden;
+}
+
+[data-component="voice-settings-panel"] [data-slot="progressbar-fill"] {
+  height: 100%;
+  background: var(--ade-accent);
+  border-radius: var(--ade-radius-full);
+  transition: width var(--ade-dur) var(--ade-ease);
+}
+
+/* OpenRouter Key & Usage */
+
+[data-component="voice-settings-panel"] [data-slot="key-status-badge"] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ade-space-4);
+  padding: var(--ade-space-3) var(--ade-space-5);
+  background: var(--ade-done-bg);
+  color: var(--ade-done);
+  border: 1px solid var(--ade-done);
+  border-radius: var(--ade-radius-sm);
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-sm);
+  font-weight: var(--ade-weight-semibold);
+}
+
+[data-component="voice-settings-panel"] [data-slot="key-clear-btn"] {
+  background: transparent;
+  border: 0;
+  color: var(--ade-text-weak);
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  font-size: var(--ade-font-sm);
+  text-decoration: underline;
+  flex: none;
+}
+
+[data-component="voice-settings-panel"] [data-slot="key-clear-btn"]:hover {
+  color: var(--ade-text);
+}
+
+[data-component="voice-settings-panel"] [data-slot="key-clear-btn"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+  border-radius: var(--ade-radius-sm);
+}
+
+[data-component="voice-settings-panel"] [data-slot="cost-tag"] {
+  font-size: var(--ade-font-sm);
+  color: var(--ade-text-soft);
+  font-weight: var(--ade-weight-medium);
+}
+
+/* ── Section 6: Comandi vocali ─────────────────────────────────────────────── */
+
+[data-component="voice-settings-panel"] [data-slot="trial-row"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-3);
+}
+
+[data-component="voice-settings-panel"] [data-slot="trial-row"] [data-slot="input"] {
+  flex: 1;
+  min-width: 0;
+}
+
+[data-component="voice-settings-panel"] [data-slot="command-list"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-2);
+  max-height: 260px;
+  overflow-y: auto;
+  padding: var(--ade-space-3);
+  background: var(--ade-sunken);
+  border: 1px solid var(--ade-border-subtle);
+  border-radius: var(--ade-radius-md);
+}
+
+[data-component="voice-settings-panel"] [data-slot="command-row"] {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--ade-space-5);
+  padding: var(--ade-space-4) var(--ade-space-5);
+  border-radius: var(--ade-radius-sm);
+  background: var(--ade-surface);
+  border: 1px solid var(--ade-border-subtle);
+}
+
+[data-component="voice-settings-panel"] [data-slot="command-info"] {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+  flex: 1 1 180px;
+}
+
+[data-component="voice-settings-panel"] [data-slot="command-name"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-3);
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-sm);
+  font-weight: var(--ade-weight-semibold);
+  color: var(--ade-text);
+  word-break: break-word;
+}
+
+[data-component="voice-settings-panel"] [data-slot="command-flag"] {
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-xs);
+  font-weight: var(--ade-weight-semibold);
+  padding: 0 var(--ade-space-3);
+  border-radius: var(--ade-radius-full);
+  background: var(--ade-working-bg);
+  color: var(--ade-working);
+  white-space: nowrap;
+}
+
+[data-component="voice-settings-panel"] [data-slot="command-readback"] {
+  font-size: var(--ade-font-sm);
+  color: var(--ade-text-soft);
+}
+
+[data-component="voice-settings-panel"] [data-slot="command-phrases"] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ade-space-2);
+  justify-content: flex-end;
+  flex: 1 1 200px;
+}
+
+[data-component="voice-settings-panel"] [data-slot="phrase-chip"] {
+  padding: var(--ade-space-1) var(--ade-space-4);
+  border-radius: var(--ade-radius-full);
+  border: 1px solid var(--ade-border);
+  background: var(--ade-raised);
+  color: var(--ade-text-soft);
+  font-family: inherit;
+  font-size: var(--ade-font-xs);
+  cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-component="voice-settings-panel"] [data-slot="phrase-chip"]:hover {
+  background: var(--ade-accent-soft);
+  border-color: var(--ade-accent);
+  color: var(--ade-accent-strong);
+}
+
+[data-component="voice-settings-panel"] [data-slot="phrase-chip"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+/* ── Footer ────────────────────────────────────────────────────────────────── */
+
+[data-component="voice-settings-panel"] [data-slot="footer"] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ade-space-5);
+  padding: var(--ade-space-5) var(--ade-space-7);
+  border-top: 1px solid var(--ade-border);
+  background: var(--ade-raised);
+}
+
+[data-component="voice-settings-panel"] [data-slot="footer-hint"] {
+  font-size: var(--ade-font-xs);
+  color: var(--ade-text-weak);
+  text-align: center;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Narrow layouts ────────────────────────────────────────────────────────── */
+
+@media (max-width: 620px) {
+  [data-component="voice-settings-overlay"] {
+    padding: var(--ade-space-4);
+    align-items: flex-start;
+  }
+
+  [data-component="voice-settings-panel"] [data-slot="header"] {
+    grid-template-columns: auto minmax(0, 1fr) auto;
+    row-gap: var(--ade-space-4);
+    padding: var(--ade-space-5) var(--ade-space-6);
+  }
+
+  [data-component="voice-settings-panel"] [data-slot="status-pill"] {
+    grid-column: 1 / -1;
+    justify-self: start;
+  }
+
+  [data-component="voice-settings-panel"] [data-slot="live"] {
+    grid-template-columns: minmax(0, 1fr);
+    row-gap: var(--ade-space-4);
+    padding: var(--ade-space-5) var(--ade-space-6);
+  }
+
+  [data-component="voice-settings-panel"] [data-slot="meter"] {
+    width: 100%;
+    height: 22px;
+  }
+
+  [data-component="voice-settings-panel"] [data-slot="live-actions"] {
+    justify-content: flex-end;
+  }
+
+  [data-component="voice-settings-panel"] [data-slot="body"],
+  [data-component="voice-settings-panel"] [data-slot="footer"] {
+    padding-left: var(--ade-space-6);
+    padding-right: var(--ade-space-6);
+  }
+
+  /*
+   * Too narrow for two columns: the rail lies down across the top and scrolls
+   * sideways, which is the one place a horizontal strip of chips is the right
+   * answer rather than the leftover of a wizard.
+   */
+  [data-component="voice-settings-panel"] [data-slot="shell"] {
+    flex-direction: column;
+  }
+
+  [data-component="voice-settings-panel"] [data-slot="rail"] {
+    width: 100%;
+    flex-direction: row;
+    gap: var(--ade-space-2);
+    border-right: 0;
+    border-bottom: 1px solid var(--ade-border);
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  [data-component="voice-settings-panel"] [data-slot="rail"]::-webkit-scrollbar {
+    display: none;
+  }
+
+  [data-component="voice-settings-panel"] [data-slot="rail-row"] {
+    width: auto;
+    flex: 0 0 auto;
+    border-radius: var(--ade-radius-full);
+  }
+
+  /* The values do not fit in a row of chips, and the labels are what the
+     reader is aiming at. */
+  /* The values do not fit, and neither do the headings: in a horizontal
+     strip of chips a heading is a chip that cannot be pressed. */
+  [data-component="voice-settings-panel"] [data-slot="rail-value"],
+  [data-component="voice-settings-panel"] [data-slot="rail-group"],
+  [data-component="voice-settings-panel"] [data-slot="rail-sep"] {
+    display: none;
+  }
+
+  [data-component="voice-settings-panel"] [data-slot="rail-row"][data-tone="quiet"] {
+    margin-top: 0;
+  }
+
+  [data-component="voice-settings-panel"] [data-slot="mode-grid"],
+  [data-component="voice-settings-panel"] [data-slot="sub-choice-row"] {
+    grid-template-columns: 1fr;
+  }
+
+  [data-component="voice-settings-panel"] [data-slot="shortcut-row"],
+  [data-component="voice-settings-panel"] [data-slot="command-row"] {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  [data-component="voice-settings-panel"] [data-slot="command-phrases"] {
+    justify-content: flex-start;
+  }
+
+  [data-component="voice-settings-panel"] [data-slot="shortcut-controls"] {
+    justify-content: space-between;
+  }
+
+  [data-component="voice-settings-panel"] [data-slot="shortcut-recorder-btn"] {
+    flex: 1;
+  }
+
+  [data-component="voice-settings-panel"] [data-slot="footer"] {
+    flex-wrap: wrap;
+  }
+
+  [data-component="voice-settings-panel"] [data-slot="footer-hint"] {
+    order: 3;
+    flex-basis: 100%;
+    text-align: left;
+  }
+}

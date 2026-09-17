@@ -1,0 +1,92 @@
+/* Arrangement, scrim and panel come from `ui/layout`; these are the dialog's own looks. */
+
+[data-component="remote-space"] [data-slot="problem"] {
+  margin: 0;
+  color: var(--ade-error);
+  font-size: var(--ade-font-sm);
+}
+
+[data-component="remote-space"] input {
+  width: 100%;
+  background: var(--ade-surface);
+  color: var(--ade-text);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-md);
+  padding: var(--ade-space-3) var(--ade-space-4);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+}
+
+[data-component="remote-space"] input::placeholder {
+  color: var(--ade-text-weak);
+}
+
+[data-component="remote-space"] [data-slot="list"] {
+  padding: var(--ade-space-2) var(--ade-space-3) var(--ade-space-4);
+}
+
+[data-component="remote-space"] [data-slot="empty"] {
+  margin: 0;
+  padding: var(--ade-space-5);
+  text-align: center;
+  color: var(--ade-text-soft);
+  font-size: var(--ade-font-sm);
+}
+
+[data-component="remote-space"] [data-slot="host"] {
+  display: grid;
+  grid-template-columns: minmax(0, auto) minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--ade-space-4);
+  width: 100%;
+  padding: var(--ade-space-3) var(--ade-space-4);
+  background: transparent;
+  border: 0;
+  border-radius: var(--ade-radius-md);
+  color: var(--ade-text);
+  text-align: left;
+  cursor: pointer;
+}
+
+[data-component="remote-space"] [data-slot="host"]:hover,
+[data-component="remote-space"] [data-slot="host"]:focus-visible {
+  background: var(--ade-hover);
+}
+
+[data-component="remote-space"] [data-slot="alias"] {
+  font-weight: var(--ade-weight-semibold);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+[data-component="remote-space"] [data-slot="detail"] {
+  color: var(--ade-text-soft);
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+[data-component="remote-space"] [data-slot="primary"],
+[data-component="remote-space"] [data-slot="secondary"] {
+  border-radius: var(--ade-radius-md);
+  padding: var(--ade-space-2) var(--ade-space-5);
+  font-size: var(--ade-font-sm);
+  cursor: pointer;
+  border: 1px solid var(--ade-border);
+  background: transparent;
+  color: var(--ade-text);
+}
+
+[data-component="remote-space"] [data-slot="primary"] {
+  background: var(--ade-accent);
+  border-color: transparent;
+  color: var(--ade-accent-fg);
+}
+
+[data-component="remote-space"] [data-slot="primary"]:disabled {
+  opacity: 0.5;
+  cursor: default;
+}

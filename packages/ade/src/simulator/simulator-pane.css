@@ -1,0 +1,362 @@
+/*
+ * The app simulator.
+ *
+ * Pane chrome like every other pane; below it one toolbar row and a stage
+ * where the device sits centred on the theme's sunken ground. The device
+ * itself is drawn at its real CSS size and scaled with a transform, so the
+ * bezel, the status bar and the app shrink together.
+ */
+
+/* Frameless and filling its tile, like the browser and session panes beside it:
+   the grid's one-pixel gap is the only line between two tiles. */
+[data-component="simulator-pane"] {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  background: var(--ade-surface);
+}
+
+[data-component="simulator-pane"][data-focused] {
+  outline: 1px solid var(--ade-accent);
+  outline-offset: -1px;
+}
+
+[data-slot="sim-toolbar"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-2);
+  flex: 0 0 auto;
+  padding: var(--ade-space-2) var(--ade-space-3);
+  border-bottom: 1px solid var(--ade-border-subtle);
+  background: var(--ade-raised);
+  min-width: 0;
+}
+
+[data-slot="sim-button"] {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border: 1px solid transparent;
+  border-radius: var(--ade-radius-sm);
+  background: transparent;
+  color: var(--ade-text-weak);
+  cursor: pointer;
+}
+
+[data-slot="sim-button"]:hover:not(:disabled),
+[data-slot="sim-button"][data-active="true"] {
+  background: var(--ade-hover);
+  color: var(--ade-text);
+}
+
+[data-slot="sim-button"]:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+[data-slot="sim-button"]:focus-visible,
+[data-slot="sim-url"]:focus-visible,
+[data-slot="sim-device"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-slot="sim-url"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 24px;
+  padding: 0 var(--ade-space-3);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-sm);
+  background: var(--ade-surface);
+  color: var(--ade-text);
+  font: inherit;
+  font-size: var(--ade-font-xs);
+}
+
+[data-slot="sim-device"] {
+  flex: 0 1 auto;
+  min-width: 0;
+  height: 24px;
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-sm);
+  background: var(--ade-surface);
+  color: var(--ade-text);
+  font: inherit;
+  font-size: var(--ade-font-xs);
+}
+
+[data-slot="sim-size"] {
+  flex: 0 0 auto;
+  font-size: var(--ade-font-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--ade-text-weak);
+  white-space: nowrap;
+}
+
+[data-slot="sim-stage"] {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--ade-sunken);
+}
+
+[data-slot="sim-fit"] {
+  position: relative;
+}
+
+[data-slot="sim-device-frame"] {
+  position: absolute;
+  top: 0;
+  left: 0;
+  box-sizing: border-box;
+  transform-origin: top left;
+  background: #0b0b0c;
+  box-shadow:
+    0 0 0 1px light-dark(rgba(0, 0, 0, 0.35), rgba(255, 255, 255, 0.12)),
+    var(--ade-shadow-lg);
+}
+
+[data-slot="sim-device-frame"][data-kind="window"] {
+  display: flex;
+  flex-direction: column;
+  background: var(--ade-raised);
+  /* A shadow, not a border: a border would eat into the size the window reports. */
+  box-shadow:
+    0 0 0 1px var(--ade-border-strong),
+    var(--ade-shadow-lg);
+}
+
+[data-slot="sim-titlebar"] {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 30px;
+  flex: 0 0 30px;
+  padding: 0 12px;
+  background: var(--ade-overlay);
+  border-bottom: 1px solid var(--ade-border);
+  color: var(--ade-text-soft);
+  font-size: 12px;
+}
+
+[data-slot="sim-traffic"] {
+  display: flex;
+  gap: 6px;
+}
+
+[data-slot="sim-traffic"] i {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  background: var(--ade-border-strong);
+}
+
+[data-slot="sim-titlebar-text"] {
+  flex: 1 1 auto;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  margin-right: 45px;
+}
+
+[data-slot="sim-screen"] {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  background: #fff;
+}
+
+[data-slot="sim-statusbar"] {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex: 0 0 auto;
+  padding: 0 28px;
+  background: #000;
+  color: #fff;
+  font: 600 15px/1 -apple-system, "Segoe UI", system-ui, sans-serif;
+}
+
+[data-slot="sim-indicators"] {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+[data-slot="sim-cutout"] {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+[data-cutout="island"] [data-slot="sim-cutout"] {
+  width: 122px;
+  height: 34px;
+  border-radius: 20px;
+  background: #0b0b0c;
+  box-shadow: 0 0 0 1px #1d1d1f;
+}
+
+[data-cutout="punch"] [data-slot="sim-cutout"] {
+  width: 13px;
+  height: 13px;
+  border-radius: 50%;
+  background: #0b0b0c;
+  box-shadow: 0 0 0 1px #1d1d1f;
+}
+
+[data-slot="sim-frame"] {
+  display: block;
+  flex: 0 0 auto;
+  border: 0;
+  background: #fff;
+}
+
+/* Over the app, as on the device: it is where the swipe home begins. */
+[data-slot="sim-home"] {
+  position: absolute;
+  left: 50%;
+  bottom: 8px;
+  width: 134px;
+  height: 5px;
+  border-radius: 3px;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.55);
+  pointer-events: none;
+}
+
+[data-slot="sim-resize"] {
+  position: absolute;
+  right: -1px;
+  bottom: -1px;
+  width: 18px;
+  height: 18px;
+  cursor: nwse-resize;
+  touch-action: none;
+  background:
+    linear-gradient(135deg, transparent 50%, var(--ade-border-strong) 50%, var(--ade-border-strong) 58%, transparent 58%, transparent 70%, var(--ade-border-strong) 70%, var(--ade-border-strong) 78%, transparent 78%);
+}
+
+[data-slot="sim-empty"] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ade-space-4);
+  padding: var(--ade-space-6);
+  max-width: 420px;
+  text-align: center;
+  color: var(--ade-text-weak);
+  font-size: var(--ade-font-sm);
+}
+
+[data-slot="sim-empty-text"] {
+  margin: 0;
+}
+
+[data-slot="sim-guesses"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-2);
+  width: 100%;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+[data-slot="sim-guess"] {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 2px var(--ade-space-4);
+  width: 100%;
+  padding: var(--ade-space-3) var(--ade-space-4);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-sm);
+  background: var(--ade-raised);
+  color: var(--ade-text);
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+[data-slot="sim-guess"]:hover {
+  border-color: var(--ade-accent);
+  background: var(--ade-hover);
+}
+
+[data-slot="sim-guess-label"] {
+  font-weight: 600;
+}
+
+[data-slot="sim-guess-url"] {
+  color: var(--ade-text-soft);
+  font-size: var(--ade-font-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+[data-slot="sim-guess-command"] {
+  grid-column: 1 / -1;
+  color: var(--ade-text-weak);
+  font-family: var(--ade-font-mono, ui-monospace, monospace);
+  font-size: var(--ade-font-xs);
+}
+
+[data-slot="sim-overlay"] {
+  position: absolute;
+  left: 50%;
+  bottom: var(--ade-space-5);
+  transform: translateX(-50%);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-1);
+  max-width: calc(100% - 2 * var(--ade-space-5));
+  padding: var(--ade-space-3) var(--ade-space-5);
+  border: 1px solid var(--ade-error);
+  border-radius: var(--ade-radius-md);
+  background: var(--ade-overlay);
+  color: var(--ade-text);
+  font-size: var(--ade-font-xs);
+  box-shadow: var(--ade-shadow-md);
+}
+
+[data-slot="sim-overlay"] strong {
+  color: var(--ade-error);
+}
+
+[data-slot="sim-link"] {
+  padding: 0;
+  margin-right: var(--ade-space-3);
+  border: 0;
+  background: none;
+  color: var(--ade-accent);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+[data-slot="sim-note"] {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: var(--ade-space-2) var(--ade-space-4);
+  border-top: 1px solid var(--ade-border-subtle);
+  background: var(--ade-sunken);
+  color: var(--ade-text-weak);
+  font-size: var(--ade-font-xs);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

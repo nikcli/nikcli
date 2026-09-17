@@ -1,0 +1,202 @@
+/*
+ * The video panel.
+ *
+ * The same chrome as every other pane — header, focus ring, expand and close
+ * in the same place — because a video is a pane and not a second kind of
+ * window to learn. What is its own is below the header: a stage that gives
+ * the picture every pixel it can, and one row of controls that never wraps,
+ * because at four panes wide a control row that wraps eats the stage.
+ */
+
+[data-component="video-pane"] {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-md);
+  background: var(--ade-surface);
+  /*
+   * The header's container queries drop what does not fit, as on a session.
+   * A size container no longer takes its width from its content, so the pane
+   * has to grow into its cell (`flex: 1`), or it collapses to nothing.
+   */
+  flex: 1;
+  container-type: inline-size;
+}
+
+/*
+ * The session's header pill, in the flow rather than over the content: over a
+ * terminal it covers blank lines, over a video it would cover the picture.
+ */
+[data-component="video-pane"] > .pill.hA {
+  position: relative;
+  top: auto;
+  left: auto;
+  right: auto;
+  flex: 0 0 auto;
+  margin: 6px 6px 0;
+}
+
+[data-slot="video-header-gap"] {
+  flex: 1 1 auto;
+}
+
+[data-component="video-pane"][data-focused="true"] {
+  border-color: var(--ade-accent);
+  box-shadow: 0 0 0 1px var(--ade-accent-glow);
+}
+
+/* The stage. Black rather than the surface colour: it is the letterboxing
+   around the picture, and a video framed in grey reads as a broken one. */
+[data-slot="video-stage"] {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  place-items: center;
+  background: #000;
+  overflow: hidden;
+}
+
+[data-slot="video-element"] {
+  display: block;
+  max-width: 100%;
+  max-height: 100%;
+  /* Contained, never cropped: the whole point is watching what was made. */
+  object-fit: contain;
+}
+
+[data-slot="video-empty"] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ade-space-4);
+  padding: var(--ade-space-6);
+  text-align: center;
+  color: var(--ade-text-weak);
+  font-size: var(--ade-font-sm);
+}
+
+[data-slot="video-empty-text"] {
+  margin: 0;
+  line-height: 1.6;
+}
+
+[data-slot="video-empty-formats"] {
+  font-size: var(--ade-font-xs);
+  opacity: 0.7;
+}
+
+[data-slot="video-open"] {
+  padding: var(--ade-space-2) var(--ade-space-5);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-sm);
+  background: var(--ade-raised);
+  color: var(--ade-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+[data-slot="video-open"]:hover {
+  border-color: var(--ade-border-strong);
+  background: var(--ade-hover);
+}
+
+/* One row, and it does not wrap. `min-width: 0` on the flex children is what
+   lets the seek bar be the thing that gives way instead of the row growing
+   past the pane. */
+[data-slot="video-controls"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-3);
+  flex: 0 0 auto;
+  padding: var(--ade-space-2) var(--ade-space-4);
+  border-top: 1px solid var(--ade-border-subtle);
+  background: var(--ade-raised);
+}
+
+[data-slot="video-button"] {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 24px;
+  height: 24px;
+  border: 1px solid transparent;
+  border-radius: var(--ade-radius-sm);
+  background: transparent;
+  color: var(--ade-text-weak);
+  cursor: pointer;
+}
+
+[data-slot="video-button"]:hover {
+  background: var(--ade-hover);
+  color: var(--ade-text);
+}
+
+[data-slot="video-button"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-slot="video-seek"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  accent-color: var(--ade-accent);
+}
+
+/* Tabular figures, or the row shifts left and right as the tenths tick. */
+[data-slot="video-time"] {
+  flex: 0 0 auto;
+  font-size: var(--ade-font-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--ade-text-weak);
+  white-space: nowrap;
+}
+
+[data-slot="video-rate"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-2);
+  flex: 0 0 auto;
+  font-size: var(--ade-font-xs);
+  color: var(--ade-text-weak);
+}
+
+[data-slot="video-rate-label"] {
+  /* The word is for the screen reader and for a wide pane; the select says
+     the same thing in two characters when there is no room. */
+  display: none;
+}
+
+@media (min-width: 520px) {
+  [data-slot="video-rate-label"] {
+    display: inline;
+  }
+}
+
+[data-slot="video-rate"] select {
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-sm);
+  background: var(--ade-surface);
+  color: var(--ade-text);
+  font: inherit;
+  padding: 0 var(--ade-space-2);
+}
+
+[data-slot="video-note"] {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: var(--ade-space-2) var(--ade-space-4);
+  border-top: 1px solid var(--ade-border-subtle);
+  background: var(--ade-sunken);
+  color: var(--ade-text-weak);
+  font-size: var(--ade-font-xs);
+  /* One line: the note is a status, and a growing status box moves the
+     controls under the user's pointer. */
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

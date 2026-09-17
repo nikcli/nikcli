@@ -1,0 +1,83 @@
+/*
+ * A file pane borrows the session pane's chrome deliberately: same card, same
+ * header height, same focus treatment. Only the body differs, because only the
+ * body is a different thing.
+ */
+
+/* Frameless, like the session pane it sits beside: the grid's one-pixel gap
+   is the only line between two tiles, and a border here would double it. */
+[data-component="file-pane"] {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  background: var(--ade-surface);
+  overflow: hidden;
+}
+
+[data-component="file-pane"][data-focused] {
+  outline: 1px solid var(--ade-accent);
+  outline-offset: -1px;
+}
+
+/* Same 22px row as the session pane's: the two sit side by side in the grid,
+   and a header that is taller on one tile reads as the tile being misaligned. */
+[data-component="file-pane"] [data-slot="pane-header"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-3);
+  padding: 0 var(--ade-space-2);
+  background: var(--ade-raised);
+  border-bottom: 1px solid var(--ade-border-subtle);
+  flex: 0 0 auto;
+  min-height: 22px;
+}
+
+[data-component="file-pane"] [data-slot="pane-identity"] {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  border-radius: var(--ade-radius-sm);
+  background: var(--ade-active);
+  color: var(--ade-text-soft);
+}
+
+[data-component="file-pane"] [data-slot="pane-title"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-3);
+  margin: 0;
+  flex: 1;
+  min-width: 0;
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+  font-weight: var(--ade-weight-medium);
+  letter-spacing: -0.012em;
+  color: var(--ade-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The unsaved mark: the one thing a header must never make you hunt for. */
+[data-slot="pane-dirty"] {
+  color: var(--ade-accent);
+  font-size: var(--ade-font-xl);
+  line-height: 0;
+}
+
+[data-component="file-pane"] [data-slot="pane-editor"] {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-component="file-pane"] {
+    transition: none;
+  }
+}

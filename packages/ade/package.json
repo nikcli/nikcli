@@ -1,0 +1,69 @@
+{
+  "name": "@nikcli-ai/ade",
+  "version": "1.287.0",
+  "description": "Agent development environment: many live agent sessions, side by side.",
+  "type": "module",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "types": "./src/index.ts"
+    },
+    "./index.css": "./src/index.css",
+    "./i18n": {
+      "import": "./src/i18n/index.ts",
+      "types": "./src/i18n/index.ts"
+    },
+    "./command/match": {
+      "import": "./src/command/match.ts",
+      "types": "./src/command/match.ts"
+    },
+    "./keyboard/keymap": {
+      "import": "./src/keyboard/keymap.ts",
+      "types": "./src/keyboard/keymap.ts"
+    },
+    "./keyboard/bindings": {
+      "import": "./src/keyboard/bindings.ts",
+      "types": "./src/keyboard/bindings.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc -b",
+    "dev": "vite",
+    "build": "vite build",
+    "test": "bun run test:unit",
+    "test:unit": "bun test --conditions=browser --preload ./happydom.ts ./src",
+    "test:unit:watch": "bun test --watch --conditions=browser --preload ./happydom.ts ./src",
+    "test:app": "bun scripts/test-app.ts",
+    "native:dev":"bun scripts/medium-target.ts && tauri dev --config src-tauri/tauri.test.conf.json --features test-exe -- --bin ade-test",
+    "native:build": "tauri build",
+    "native:build:test": "tauri build --config src-tauri/tauri.test.conf.json --bundles nsis"
+  },
+  "license": "MIT",
+  "devDependencies": {
+    "@happy-dom/global-registrator": "20.10.6",
+    "@tauri-apps/cli": "^2",
+    "@tauri-apps/plugin-dialog": "^2.7.2",
+    "@tsconfig/bun": "1.0.9",
+    "@types/bun": "catalog:",
+    "@types/node": "catalog:",
+    "@types/three": "^0.186.0",
+    "typescript": "catalog:",
+    "vite": "catalog:",
+    "vite-plugin-solid": "catalog:"
+  },
+  "dependencies": {
+    "@nikcli-ai/plugin": "workspace:*",
+    "@nikcli-ai/sdk": "workspace:*",
+    "@nikcli-ai/ui": "workspace:*",
+    "@nikcli-ai/util": "workspace:*",
+    "@nikcli-ai/voice": "workspace:*",
+    "@solid-primitives/storage": "catalog:",
+    "@tauri-apps/api": "^2",
+    "@tauri-apps/plugin-shell": "~2",
+    "@xterm/addon-fit": "0.11.0",
+    "@xterm/xterm": "6.0.0",
+    "solid-js": "catalog:",
+    "three": "^0.186.0"
+  },
+  "main": "./src/index.ts"
+}

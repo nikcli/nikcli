@@ -9,6 +9,7 @@ import { instanceLessRoot } from "./httpapi/instance-less"
 import { extraRequest } from "./extra"
 import { companionResponse } from "./companion"
 import { SyncHttpApi } from "./httpapi/sync"
+import { INSPECTOR_BRIDGE_SCRIPT } from "@nikcli-ai/util/visual-editor-bridge"
 
 export namespace PublicRoutes {
   const csp =
@@ -27,6 +28,20 @@ export namespace PublicRoutes {
   export async function publicRequest(request: Request): Promise<Response | undefined> {
     if (request.method !== "GET") return
     const pathname = new URL(request.url).pathname
+
+    // Served unauthenticated and cross-origin on purpose: a dev app loads it
+    // from a plain <script> tag so the visual editor can inspect it on its own
+    // origin, instead of in a srcdoc copy where client-side routing breaks.
+    if (pathname === "/visual-editor/bridge.js") {
+      return new Response(INSPECTOR_BRIDGE_SCRIPT, {
+        headers: {
+          "content-type": "application/javascript; charset=utf-8",
+          "cache-control": "no-store",
+          "access-control-allow-origin": "*",
+        },
+      })
+    }
+
     const short = pathname.match(/^\/s\/([^/]+)$/)
     if (short) {
       return new Response(null, {

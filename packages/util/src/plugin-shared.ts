@@ -2,6 +2,7 @@ import path from "path"
 import { fileURLToPath, pathToFileURL } from "url"
 import semver from "semver"
 import { Filesystem } from "@nikcli-ai/util/filesystem"
+import { hasPluginExport, pluginExportEntry } from "@nikcli-ai/util/plugin-read"
 import { isRecord } from "@nikcli-ai/util/record"
 
 // Old npm package names for plugins that are now built-in
@@ -26,35 +27,18 @@ export function pluginSource(spec: string): PluginSource {
   return spec.startsWith("file://") ? "file" : "npm"
 }
 
-function hasEntrypoint(json: Record<string, unknown>, kind: PluginKind) {
-  if (!isRecord(json.exports)) return false
-  return `./${kind}` in json.exports
-}
-
 function resolveExportPath(raw: string, dir: string) {
   if (raw.startsWith("./") || raw.startsWith("../")) return path.resolve(dir, raw)
   if (raw.startsWith("file://")) return fileURLToPath(raw)
   return raw
 }
 
-function extractExportValue(value: unknown): string | undefined {
-  if (typeof value === "string") return value
-  if (!isRecord(value)) return undefined
-  for (const key of ["import", "default"]) {
-    const nested = value[key]
-    if (typeof nested === "string") return nested
-  }
-  return undefined
-}
-
 export async function resolvePluginEntrypoint(spec: string, target: string, kind: PluginKind) {
   const pkg = await readPluginPackage(target).catch(() => undefined)
   if (!pkg) return target
-  if (!hasEntrypoint(pkg.json, kind)) return target
+  if (!hasPluginExport(pkg.json, kind)) return target
 
-  const exports = pkg.json.exports
-  if (!isRecord(exports)) return target
-  const raw = extractExportValue(exports[`./${kind}`])
+  const raw = pluginExportEntry(pkg.json, kind)
   if (!raw) return target
 
   const resolved = resolveExportPath(raw, pkg.dir)

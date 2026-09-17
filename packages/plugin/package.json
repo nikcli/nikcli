@@ -35,6 +35,14 @@
       "import": "./src/v2/tui/*.ts",
       "types": "./src/v2/tui/*.ts"
     },
+    "./v2/ade": {
+      "import": "./src/v2/ade/index.ts",
+      "types": "./src/v2/ade/index.ts"
+    },
+    "./v2/ade/*": {
+      "import": "./src/v2/ade/*.ts",
+      "types": "./src/v2/ade/*.ts"
+    },
     "./v2/effect": {
       "import": "./src/v2/effect/index.ts",
       "types": "./src/v2/effect/index.ts"
@@ -62,6 +70,8 @@
       "./tui": "./dist/tui.js",
       "./v2/tui": "./dist/v2/tui/index.js",
       "./v2/tui/*": "./dist/v2/tui/*.js",
+      "./v2/ade": "./dist/v2/ade/index.js",
+      "./v2/ade/*": "./dist/v2/ade/*.js",
       "./v2/effect": "./dist/v2/effect/index.js",
       "./v2/effect/tool": "./dist/v2/effect/tool.js",
       "./v2/promise": "./dist/v2/promise/index.js",

@@ -1,0 +1,315 @@
+name: ade-release
+
+# Releases ADE for macOS, Windows and Linux from a tag.
+#
+#   git tag ade-v1.2.3 && git push origin ade-v1.2.3
+#
+# The release is created as a draft, every platform uploads into it, and only
+# when all of them have succeeded is it published. Publishing is what running
+# copies of ADE watch for (`packages/ade/src/update/watch.ts` reads the non-draft
+# `ade-v*` releases of this repository), so a half-built release never reaches
+# the bell.
+#
+# The version comes from the tag and is written into the Tauri config at build
+# time; `tauri.conf.json` keeps `0.0.0`, which ADE treats as a dev build that
+# is never offered updates.
+#
+# Installed copies update themselves: every build is also signed with ADE's
+# updater key (secret ADE_UPDATER_PRIVATE_KEY, public half in tauri.conf.json),
+# and once the release is published a `latest.json` listing those signed
+# bundles is uploaded to it and to the fixed `ade-updater` release, which is
+# the endpoint the app asks. The manifest is written only after publishing, so
+# no app is ever pointed at a draft's assets.
+#
+# macOS bundles are ad-hoc signed and not notarized: a downloaded copy needs
+# right-click → Open once. Windows installers are unsigned (SmartScreen asks).
+on:
+  push:
+    tags:
+      - "ade-v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to release, e.g. ade-v1.2.3"
+        required: true
+        type: string
+  # `ade-auto-release` tags with GITHUB_TOKEN, which starts no workflow, and
+  # calls this one directly.
+  workflow_call:
+    inputs:
+      tag:
+        description: "Existing tag to release, e.g. ade-v1.2.3"
+        required: true
+        type: string
+
+concurrency:
+  group: ade-release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  TAG: ${{ inputs.tag || github.ref_name }}
+
+jobs:
+  draft:
+    if: github.repository == 'SandroHub013/nikcli'
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.TAG }}
+          fetch-depth: 0
+
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version-file: package.json
+
+      - name: Version from tag
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#ade-v}"
+          if ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "tag '$TAG' is not ade-v<major>.<minor>.<patch>"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Create draft release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "release $TAG already exists; builds will upload into it"
+            exit 0
+          fi
+          PREVIOUS="$(git tag --list 'ade-v*' --sort=-v:refname | grep -vx "$TAG" | head -1 || true)"
+          if [ -n "$PREVIOUS" ]; then
+            NOTES="$(bun packages/ade/script/release-plan.ts notes "$PREVIOUS" "$TAG")"
+          else
+            NOTES="Prima release di ADE."
+          fi
+          printf '%s\n' "$NOTES" > notes.md
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --draft \
+            --title "ADE ${TAG#ade-v}" --notes-file notes.md --verify-tag
+
+  build:
+    needs: draft
+    env:
+      # Authenticode signing through SignPath Foundation starts the day its API
+      # token is added as a secret; until then the Windows setup ships
+      # unsigned, as before. See packages/ade/CODE_SIGNING.md.
+      SIGNPATH_ENABLED: ${{ secrets.SIGNPATH_API_TOKEN != '' }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14
+            target: aarch64-apple-darwin
+            bundles: app
+          - os: macos-14
+            target: x86_64-apple-darwin
+            bundles: app
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            # NSIS only. It installs per user into %LOCALAPPDATA%\ADE, where
+            # every earlier release is, and a newer setup replaces that copy;
+            # an MSI installs per machine into Program Files, beside it, as a
+            # second ADE with its own shortcuts.
+            bundles: nsis
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            bundles: deb,rpm,appimage
+          - os: ubuntu-22.04-arm
+            target: aarch64-unknown-linux-gnu
+            bundles: deb,rpm
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.TAG }}
+
+      - name: Free disk space
+        if: runner.os == 'Linux'
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+            /opt/hostedtoolcache/CodeQL /usr/local/.ghcup || true
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev \
+            librsvg2-dev patchelf libssl-dev libxdo-dev build-essential file rpm
+
+      - uses: ./.github/actions/setup-bun
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: packages/ade/src-tauri -> target
+          key: release-${{ matrix.target }}
+
+      # Outside Tauri's beforeBuildCommand, which runs with node_modules/.bin on
+      # PATH and can pick up a broken bun shim on Windows (see desktop-release).
+      - name: Build frontend
+        working-directory: packages/ade
+        run: bun x vite build
+
+      # macOS: `app` only. Tauri's dmg step drives Finder through AppleScript
+      # and fails on headless runners; the dmg is made with hdiutil below.
+      - name: Build app
+        working-directory: packages/ade
+        shell: bash
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.ADE_UPDATER_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.ADE_UPDATER_PRIVATE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          VERSION="${{ needs.draft.outputs.version }}"
+          # A release without updater signatures would strand every installed
+          # copy on this version, so a missing key fails the build.
+          if [ -z "${TAURI_SIGNING_PRIVATE_KEY:-}" ]; then
+            echo "secret ADE_UPDATER_PRIVATE_KEY is not set"
+            exit 1
+          fi
+          CONFIG_JSON="{\"version\":\"$VERSION\",\"build\":{\"beforeBuildCommand\":\"\"},\"bundle\":{\"createUpdaterArtifacts\":true,\"macOS\":{\"signingIdentity\":\"-\"}}}"
+          bun x tauri build --target ${{ matrix.target }} --bundles ${{ matrix.bundles }} --config "$CONFIG_JSON"
+
+      # The setup goes to SignPath, comes back with an Authenticode signature,
+      # and replaces the unsigned one. Its updater signature was computed over
+      # the unsigned bytes, so it is made again over the signed ones: the app
+      # checks the file it downloads against exactly this .sig.
+      - name: Upload the Windows setup for signing
+        id: unsigned
+        if: runner.os == 'Windows' && env.SIGNPATH_ENABLED == 'true'
+        uses: actions/upload-artifact@v7
+        with:
+          name: ade-unsigned-${{ matrix.target }}
+          path: packages/ade/src-tauri/target/${{ matrix.target }}/release/bundle/nsis/*-setup.exe
+          if-no-files-found: error
+          retention-days: 1
+
+      - name: Authenticode signing (SignPath)
+        if: steps.unsigned.outcome == 'success'
+        uses: signpath/github-action-submit-signing-request@v1
+        with:
+          api-token: ${{ secrets.SIGNPATH_API_TOKEN }}
+          organization-id: ${{ vars.SIGNPATH_ORGANIZATION_ID }}
+          project-slug: ${{ vars.SIGNPATH_PROJECT_SLUG }}
+          signing-policy-slug: ${{ vars.SIGNPATH_SIGNING_POLICY_SLUG }}
+          github-artifact-id: ${{ steps.unsigned.outputs.artifact-id }}
+          wait-for-completion: true
+          output-artifact-directory: signed
+
+      - name: Use the signed setup
+        if: steps.unsigned.outcome == 'success'
+        working-directory: packages/ade
+        shell: bash
+        env:
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.ADE_UPDATER_PRIVATE_KEY }}
+          TAURI_SIGNING_PRIVATE_KEY_PASSWORD: ${{ secrets.ADE_UPDATER_PRIVATE_KEY_PASSWORD }}
+        run: |
+          set -euo pipefail
+          NSIS="src-tauri/target/${{ matrix.target }}/release/bundle/nsis"
+          cp ../../signed/*-setup.exe "$NSIS/"
+          for setup in "$NSIS"/*-setup.exe; do
+            rm -f "$setup.sig"
+            bun x tauri signer sign "$setup"
+          done
+
+      - name: Collect and upload
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          VERSION="${{ needs.draft.outputs.version }}"
+          BUNDLE="packages/ade/src-tauri/target/${{ matrix.target }}/release/bundle"
+          STAGE="ade-release"
+          mkdir -p "$STAGE"
+          case "${{ matrix.target }}" in
+            *-apple-darwin)
+              ARCH="${{ matrix.target }}"; ARCH="${ARCH%%-*}"
+              ditto -c -k --keepParent "$BUNDLE/macos/ADE.app" "$STAGE/ADE_${VERSION}_${ARCH}.app.zip"
+              DMGROOT="$(mktemp -d)"
+              cp -R "$BUNDLE/macos/ADE.app" "$DMGROOT/"
+              ln -s /Applications "$DMGROOT/Applications"
+              hdiutil create -volname ADE -srcfolder "$DMGROOT" -ov -format UDZO "$STAGE/ADE_${VERSION}_${ARCH}.dmg"
+              # The updater's bundle has no architecture in its name: give it one.
+              cp "$BUNDLE/macos/ADE.app.tar.gz" "$STAGE/ADE_${VERSION}_${ARCH}.app.tar.gz"
+              cp "$BUNDLE/macos/ADE.app.tar.gz.sig" "$STAGE/ADE_${VERSION}_${ARCH}.app.tar.gz.sig"
+              ;;
+            *)
+              # Installers, plus the signatures of the two the updater installs:
+              # the NSIS setup on Windows and the AppImage on Linux.
+              find "$BUNDLE" -type f \( -name "*.exe" -o -name "*.msi" -o -name "*.deb" \
+                -o -name "*.rpm" -o -name "*.AppImage" -o -name "*-setup.exe.sig" \
+                -o -name "*.AppImage.sig" \) -exec cp {} "$STAGE/" \;
+              ;;
+          esac
+          ls -la "$STAGE"
+          if [ "$(find "$STAGE" -maxdepth 1 -type f | wc -l | tr -d '[:space:]')" = "0" ]; then
+            echo "no bundles produced for ${{ matrix.target }}"
+            exit 1
+          fi
+          find "$STAGE" -maxdepth 1 -type f -exec gh release upload "$TAG" --clobber --repo "$GITHUB_REPOSITORY" {} +
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest=false
+
+      # One entry per platform the updater can install. A platform without a
+      # signed bundle (Linux on ARM ships only deb/rpm) is left out, and the
+      # app falls back to opening the release page there.
+      - name: Updater manifest
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#ade-v}"
+          mkdir -p manifest && cd manifest
+          gh release download "$TAG" --repo "$GITHUB_REPOSITORY" --pattern '*.sig'
+          BASE="https://github.com/$GITHUB_REPOSITORY/releases/download/$TAG"
+          entry() {
+            if [ ! -f "$2.sig" ]; then echo "no $2.sig: $1 is not in the manifest" >&2; return 0; fi
+            jq -n --arg key "$1" --arg url "$BASE/$2" --rawfile sig "$2.sig" \
+              '{($key): {url: $url, signature: ($sig | rtrimstr("\n"))}}'
+          }
+          {
+            entry darwin-aarch64 "ADE_${VERSION}_aarch64.app.tar.gz"
+            entry darwin-x86_64 "ADE_${VERSION}_x86_64.app.tar.gz"
+            entry windows-x86_64 "ADE_${VERSION}_x64-setup.exe"
+            entry linux-x86_64 "ADE_${VERSION}_amd64.AppImage"
+          } > entries.json
+          if [ ! -s entries.json ]; then
+            echo "no signed bundles in $TAG"
+            exit 1
+          fi
+          jq -s --arg version "$VERSION" --arg date "$(date -u +%Y-%m-%dT%H:%M:%SZ)" \
+            '{version: $version, pub_date: $date, notes: "", platforms: add}' entries.json > latest.json
+          cat latest.json
+          gh release upload "$TAG" latest.json --clobber --repo "$GITHUB_REPOSITORY"
+          if ! gh release view ade-updater --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            gh release create ade-updater --repo "$GITHUB_REPOSITORY" --target feat/ade --prerelease --latest=false \
+              --title "ADE updater" --notes "Manifest read by installed copies of ADE to update themselves. Not a release: see the ade-v* releases."
+          fi
+          gh release upload ade-updater latest.json --clobber --repo "$GITHUB_REPOSITORY"

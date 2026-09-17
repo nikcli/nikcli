@@ -1,0 +1,21 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "default",
+  "description": "Capabilities for the ADE window. Nothing here can execute: the agents go through pty_spawn, which keeps its own allowlist, and git goes through git_run, which validates its subcommand. The shell plugin's execute and spawn permissions used to be listed with \"args\": true for eight binaries — a grant of arbitrary execution to anything running in this window, including a page loaded in the browser pane — and nothing in ADE was using them.",
+  "windows": [
+    "main"
+  ],
+  "permissions": [
+    "core:default",
+    "dialog:allow-open",
+    "dialog:allow-ask",
+    "core:window:allow-close",
+    "core:window:allow-minimize",
+    "core:window:allow-maximize",
+    "core:window:allow-unmaximize",
+    "core:window:allow-internal-toggle-maximize",
+    "core:window:allow-start-dragging",
+    "global-shortcut:default",
+    "clipboard-manager:default"
+  ]
+}

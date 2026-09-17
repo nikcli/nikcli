@@ -1,0 +1,877 @@
+/*
+ * The shell chrome: the bar above everything, and the body beneath it.
+ *
+ * The bar reads left to right as identity → where you are → what you can do.
+ * The command field sits in the middle because it is the primary way to drive
+ * ADE, not an accelerator for people who already know the shortcuts; the column
+ * chips sit at the far end because they are configuration and must never
+ * outweigh the button that starts a session.
+ */
+
+[data-component="ade-shell"] {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+  background: var(--ade-bg);
+  color: var(--ade-text);
+}
+
+/* ── top bar ──────────────────────────────────────────────────────────────── */
+/* 44px: room for a 26px field with 9px of air, which is what stops the bar from
+   reading as a toolbar crammed against the content. */
+[data-slot="ade-bar"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-5);
+  padding: 0 var(--ade-space-6);
+  height: 44px;
+  flex: 0 0 auto;
+  border-bottom: 1px solid var(--ade-border);
+  background: var(--ade-raised);
+  box-shadow: inset 0 -1px 0 var(--ade-highlight);
+}
+
+/*
+ * Three groups, and the middle one centred on the sessions area.
+ *
+ * Absolute rather than a flex third, because the section you are in must not
+ * move when a project name gets longer or a session count goes from 9 to 10.
+ * The sides stay in the flow and are allowed to shrink; the centre never is.
+ */
+[data-slot="ade-bar"] {
+  position: relative;
+}
+
+/* The native traffic lights sit over the bar's left edge on macOS. */
+[data-slot="ade-bar"][data-platform="macos"] {
+  padding-left: 80px;
+}
+
+[data-slot="ade-brand"][data-place="end"] {
+  margin-left: var(--ade-space-2);
+}
+
+[data-slot="ade-bar-side"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-4);
+  min-width: 0;
+  flex: 1 1 0;
+}
+
+[data-slot="ade-bar-side"][data-side="end"] {
+  justify-content: flex-end;
+}
+
+/* ── drag region & frameless window controls ──────────────────────────────── */
+
+[data-tauri-drag-region] {
+  -webkit-app-region: drag;
+}
+
+[data-tauri-drag-region] button,
+[data-tauri-drag-region] input,
+[data-tauri-drag-region] a,
+[data-tauri-drag-region] [data-slot="ade-views"],
+[data-tauri-drag-region] [data-slot="ade-menu-anchor"],
+[data-tauri-drag-region] [data-slot="ade-window-controls"],
+[data-tauri-drag-region] [data-slot="ade-voice-controls"] {
+  -webkit-app-region: no-drag;
+}
+
+[data-slot="ade-window-controls"] {
+  display: inline-flex;
+  align-items: stretch;
+  height: 44px;
+  margin-right: calc(-1 * var(--ade-space-6));
+  margin-left: var(--ade-space-2);
+  -webkit-app-region: no-drag;
+}
+
+[data-slot="ade-win-btn"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--ade-text-subtle);
+  cursor: pointer;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+[data-slot="ade-win-btn"]:hover {
+  background: var(--ade-hover);
+  color: var(--ade-text);
+}
+
+[data-slot="ade-win-btn"][data-win="close"]:hover {
+  background: #e81123;
+  color: #ffffff;
+}
+
+[data-slot="ade-win-btn"]:active {
+  opacity: 0.8;
+}
+
+/* Centred on the sessions area: `--ade-bar-offset` is the sidebar's width,
+   set by the workbench, and the bar spans the whole window above both. */
+[data-slot="ade-bar-center"] {
+  position: absolute;
+  left: calc(var(--ade-bar-offset, 0px) + (100% - var(--ade-bar-offset, 0px)) / 2);
+  transform: translateX(-50%);
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ade-space-2);
+  /* Above the sides, which may otherwise overlap it at narrow widths. */
+  z-index: 1;
+}
+
+/* ── menus hung off an icon ───────────────────────────────────────────────── */
+
+[data-slot="ade-menu-anchor"] {
+  position: relative;
+  display: inline-flex;
+}
+
+[data-slot="ade-menu"] {
+  position: absolute;
+  top: calc(100% + var(--ade-space-2));
+  right: 0;
+  z-index: 40;
+  display: flex;
+  flex-direction: column;
+  min-width: 220px;
+  max-height: min(60vh, 420px);
+  overflow-y: auto;
+  padding: var(--ade-space-2);
+  border: 1px solid var(--ade-border-strong);
+  border-radius: var(--ade-radius-lg);
+  background: var(--ade-raised);
+  box-shadow: var(--ade-shadow-lg, 0 12px 32px rgb(0 0 0 / 0.32));
+}
+
+[data-slot="ade-menu"][data-wide="true"] {
+  min-width: 320px;
+}
+
+/*
+ * Hung upwards, for an anchor at the foot of the window.
+ *
+ * Left-aligned rather than right: down there the button is a few pixels
+ * from the left edge, and a 320px menu ending at the button's right edge
+ * would start off the screen.
+ */
+[data-slot="ade-menu-anchor"][data-drop="up"] [data-slot="ade-menu"] {
+  top: auto;
+  bottom: calc(100% + var(--ade-space-2));
+  right: auto;
+  left: 0;
+}
+
+[data-slot="ade-menu-item"] {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ade-space-4);
+  padding: var(--ade-space-3);
+  border: 0;
+  border-radius: var(--ade-radius-md);
+  background: transparent;
+  color: var(--ade-text);
+  font-family: var(--ade-sans);
+  text-align: left;
+  cursor: pointer;
+}
+
+[data-slot="ade-menu-item"]:hover {
+  background: var(--ade-hover);
+}
+
+[data-slot="ade-menu-item"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-slot="ade-menu-glyph"] {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  color: var(--ade-text-weak);
+}
+
+[data-slot="ade-menu-text"] {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+[data-slot="ade-menu-label"] {
+  font-size: var(--ade-font-md);
+}
+
+[data-slot="ade-menu-hint"] {
+  color: var(--ade-text-weak);
+  font-size: var(--ade-font-xs);
+}
+
+[data-slot="ade-menu-empty"] {
+  margin: 0;
+  padding: var(--ade-space-4);
+  color: var(--ade-text-weak);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-sm);
+}
+
+/* An action at the top of a menu, above what the menu lists. */
+[data-slot="ade-menu-action"] {
+  display: block;
+  width: 100%;
+  padding: var(--ade-space-2) var(--ade-space-4);
+  border: 0;
+  border-bottom: 1px solid var(--ade-border);
+  background: transparent;
+  color: var(--ade-text);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-sm);
+  text-align: left;
+  cursor: pointer;
+}
+
+[data-slot="ade-menu-action"]:hover:not(:disabled) {
+  background: var(--ade-surface-hover, rgba(127, 127, 127, 0.12));
+}
+
+[data-slot="ade-menu-action"]:disabled {
+  color: var(--ade-text-weak);
+  cursor: default;
+}
+
+/* ── the voice orb ────────────────────────────────────────────────────────── */
+
+/*
+ * The orb, sized for the bar.
+ *
+ * The drawing lives in `@nikcli-ai/voice` and is one number wide; here it is
+ * 26px, which is a hair larger than the icon buttons beside it. That is
+ * deliberate — it is the only control in the bar that is *doing* something
+ * while nobody is touching it, and it gets to be the thing the eye lands on.
+ *
+ * The sphere used to be this file's job, painted onto the microphone button:
+ * the button was made round, filled with the accent when live, and the nikcli
+ * mic mark sat in the middle of it. That made one control wear two meanings.
+ * The orb is now its own component and the microphone is the microphone.
+ */
+[data-slot="ade-bar"] [data-component="voice-orb"] {
+  --orb-size: 28px;
+}
+
+/*
+ * `[data-component="voice-button"]` used to be styled here too — first as the
+ * sphere, then as a flat dictation key beside the orb. The bar carries one
+ * voice control now, so the rules went with the button. The component still
+ * ships from `@nikcli-ai/voice` for hosts that want a plain microphone
+ * toggle; ADE is not one of them.
+ */
+
+/* ── notifications ────────────────────────────────────────────────────────── */
+
+[data-slot="ade-icon"][data-action="notifications"] {
+  position: relative;
+  overflow: visible;
+}
+
+/*
+ * The count, and only when there is one.
+ *
+ * A badge showing zero is a permanent mark that says nothing, and it trains
+ * the eye to stop reading the corner where the real count will appear.
+ */
+[data-slot="ade-badge"] {
+  position: absolute;
+  top: -1px;
+  right: -1px;
+  min-width: 14px;
+  height: 14px;
+  padding: 0 3px;
+  border-radius: 7px;
+  background: var(--ade-error, #e5484d);
+  color: #fff;
+  font-family: var(--ade-sans);
+  font-size: 9px;
+  font-weight: var(--ade-weight-bold);
+  line-height: 14px;
+  text-align: center;
+}
+
+[data-slot="ade-icon"][data-tone="alert"] {
+  color: var(--ade-error, #e5484d);
+}
+
+[data-slot="ade-icon"][data-open="true"] {
+  background: var(--ade-hover);
+  color: var(--ade-text);
+}
+
+[data-slot="ade-notice-row"] {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ade-space-3);
+  padding: var(--ade-space-3);
+  border-radius: var(--ade-radius-md);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-sm);
+  color: var(--ade-text-soft);
+}
+
+[data-slot="ade-notice-row"] + [data-slot="ade-notice-row"] {
+  border-top: 1px solid var(--ade-border-subtle);
+}
+
+[data-slot="ade-notice-row"][data-kind="error"] {
+  color: var(--ade-error, #e5484d);
+}
+
+[data-slot="ade-notice-row"][data-kind="warning"] {
+  color: var(--ade-working, #d29922);
+}
+
+[data-slot="ade-notice-text"] {
+  flex: 1;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+[data-slot="ade-notice-dismiss"] {
+  flex: 0 0 auto;
+  border: 0;
+  background: transparent;
+  color: var(--ade-text-weak);
+  font-size: var(--ade-font-md);
+  line-height: 1;
+  cursor: pointer;
+}
+
+[data-slot="ade-notice-dismiss"]:hover {
+  color: var(--ade-text);
+}
+
+[data-slot="ade-notice-link"] {
+  flex: 0 0 auto;
+  padding: 2px var(--ade-space-3);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-md);
+  background: transparent;
+  color: var(--ade-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+[data-slot="ade-notice-link"]:hover {
+  background: var(--ade-surface-hover, rgba(127, 127, 127, 0.12));
+}
+
+/* ── command field ────────────────────────────────────────────────────────── */
+
+[data-slot="ade-search"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-4);
+  width: min(360px, 40vw);
+  height: 26px;
+  padding: 0 var(--ade-space-3) 0 var(--ade-space-5);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-md);
+  background: var(--ade-bg);
+  color: var(--ade-text-weak);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+  cursor: pointer;
+  transition:
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="ade-search"]:hover {
+  border-color: var(--ade-border-strong);
+  color: var(--ade-text-soft);
+}
+
+[data-slot="ade-search"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-slot="ade-search-label"] {
+  flex: 1;
+  text-align: left;
+}
+
+[data-slot="ade-kbd"] {
+  padding: 1px var(--ade-space-3);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-sm);
+  background: var(--ade-surface);
+  color: var(--ade-text-weak);
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-xs);
+  line-height: 14px;
+}
+
+/* ── icon button ──────────────────────────────────────────────────────────── */
+
+[data-slot="ade-icon"] {
+  display: grid;
+  place-items: center;
+  width: 26px;
+  height: 26px;
+  border: 0;
+  border-radius: var(--ade-radius-md);
+  background: transparent;
+  color: var(--ade-text-weak);
+  cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="ade-icon"]:hover {
+  background: var(--ade-hover);
+  color: var(--ade-text);
+}
+
+[data-slot="ade-icon"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+/*
+ * Brand mark, in ink.
+ *
+ * A box the size of the mark rather than a line of text: the mark is an
+ * inline SVG taking `currentColor`, so the colour set here is what draws it.
+ * It used to take the accent hue, on the argument that the one thing in the
+ * bar that is not a control could afford the colour. The bar is monochrome
+ * now, and a mark drawn in the text colour is the strongest thing on it
+ * anyway — black on white, white on black, and it never fights a state.
+ */
+[data-slot="ade-brand"] {
+  display: inline-flex;
+  align-items: center;
+  flex: 0 0 auto;
+  color: var(--ade-text);
+}
+
+/*
+ * ADE Test runs beside the official app. The exception to the monochrome bar
+ * is deliberate: an orange mark and a TEST badge, matching its orange icon,
+ * so a glance says which window is the one being tried out.
+ */
+:root[data-ade-build="test"] [data-slot="ade-brand"] {
+  gap: 6px;
+  color: #ff8c00;
+}
+
+:root[data-ade-build="test"] [data-slot="ade-brand"]::after {
+  /* The worktree name follows when `bun run test:app` started this instance. */
+  content: "TEST" var(--ade-test-label, "");
+  padding: 1px 5px;
+  border-radius: 3px;
+  background: #ff8c00;
+  color: #000;
+  font-family: var(--ade-sans);
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  line-height: 14px;
+}
+
+/* A hairline separates identity (left) from session state and controls. */
+[data-slot="ade-divider"] {
+  width: 1px;
+  height: 14px;
+  background: var(--ade-border-strong);
+  flex: 0 0 auto;
+}
+
+/*
+ * Session count: informational meta, not an action. Small caps + weak colour
+ * keep it out of the visual hierarchy of controls.
+ */
+[data-slot="ade-count"] {
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-xs);
+  font-weight: var(--ade-weight-medium);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--ade-text-weak);
+}
+
+[data-slot="ade-selected-file"] {
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-sm);
+  color: var(--ade-text);
+  background: var(--ade-bg);
+  padding: var(--ade-space-1) var(--ade-space-4);
+  border-radius: var(--ade-radius-sm);
+  border: 1px solid var(--ade-border);
+  max-width: 320px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-slot="ade-spacer"] {
+  flex: 1;
+}
+
+/*
+ * `ade-columns`, `ade-label` and `ade-chip` used to live here: the column
+ * selector on the right of the bar. The control moved to Impostazioni ›
+ * Codice (`GridSection`), and its rules went with it rather than staying
+ * behind as three selectors nothing matches.
+ */
+
+/* ── shell notice ─────────────────────────────────────────────────────────── */
+/*
+ * One line, above the section, for things that happened and that the user has
+ * to know about but must not be interrupted for — a save that was refused,
+ * a write that failed. It was the worktree board's status line until that
+ * section was removed; it is the shell's own now, so those messages still
+ * have somewhere to appear.
+ */
+[data-slot="ade-notice"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-5);
+  flex: 0 0 auto;
+  padding: var(--ade-space-4) var(--ade-space-5) var(--ade-space-4) var(--ade-space-7);
+  border-bottom: 1px solid var(--ade-border-subtle);
+  background: var(--ade-working-bg);
+  color: var(--ade-text);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+  line-height: var(--ade-leading);
+}
+
+[data-slot="ade-notice-text"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+[data-slot="ade-notice-close"] {
+  flex: 0 0 auto;
+  width: 22px;
+  height: 22px;
+  border: 1px solid transparent;
+  border-radius: var(--ade-radius-sm);
+  background: none;
+  color: var(--ade-text-soft);
+  font-size: var(--ade-font-sm);
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="ade-notice-close"]:hover {
+  background: var(--ade-hover);
+  color: var(--ade-text);
+}
+
+[data-slot="ade-notice-close"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+/* ── section tabs ─────────────────────────────────────────────────────────── */
+/*
+ * The four sections, as one segmented control rather than four chips.
+ *
+ * With two views loose chips were fine — a pair reads as a pair. Four of them
+ * read as four unrelated toggles, and the user's question at a glance is
+ * "which one am I in", which a shared track with a single filled cell answers
+ * and adjacent buttons do not. The track is inset so the control sits *in* the
+ * bar rather than on it, which is what keeps it from competing with the
+ * command field beside it.
+ */
+[data-slot="ade-views"] {
+  display: inline-flex;
+  align-items: center;
+  gap: 1px;
+  flex: 0 0 auto;
+  padding: 2px;
+  border: 1px solid var(--ade-border-subtle);
+  border-radius: var(--ade-radius-md);
+  background: var(--ade-sunken);
+}
+
+[data-slot="ade-view-tab"] {
+  height: 22px;
+  padding: 0 var(--ade-space-5);
+  border: 1px solid transparent;
+  border-radius: var(--ade-radius-sm);
+  background: transparent;
+  color: var(--ade-text-weak);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+  letter-spacing: 0.01em;
+  cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    box-shadow var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="ade-view-tab"]:hover { color: var(--ade-text-soft); }
+
+/* Raised, not tinted: the selected cell should look like it sits above the
+   track. An accent fill here would shout over the primary action in the bar. */
+[data-slot="ade-view-tab"][data-active] {
+  background: var(--ade-raised);
+  border-color: var(--ade-border);
+  color: var(--ade-text);
+  box-shadow: var(--ade-shadow-sm);
+}
+
+[data-slot="ade-view-tab"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+  color: var(--ade-text);
+}
+
+
+/* ── bar actions ──────────────────────────────────────────────────────────── */
+/*
+ * Two levels, and only one of them is primary. Opening a browser preview and
+ * starting an agent are not the same size of decision, and a bar with two
+ * accent-filled buttons says they are.
+ */
+[data-slot="ade-add"] {
+  height: 26px;
+  padding: 0 var(--ade-space-5);
+  border: 1px solid var(--ade-border-strong);
+  border-radius: var(--ade-radius-md);
+  background: var(--ade-surface);
+  color: var(--ade-text-soft);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+  font-weight: var(--ade-weight-medium);
+  cursor: pointer;
+  white-space: nowrap;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    box-shadow var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="ade-add"]:hover {
+  background: var(--ade-overlay);
+  color: var(--ade-text);
+}
+
+[data-slot="ade-add"][data-tone="primary"] {
+  border-color: transparent;
+  background: var(--ade-accent);
+  color: var(--ade-accent-fg);
+  font-weight: var(--ade-weight-semibold);
+}
+
+[data-slot="ade-add"][data-tone="primary"]:hover {
+  background: var(--ade-accent-strong);
+  color: var(--ade-accent-fg);
+  box-shadow: var(--ade-shadow-sm);
+}
+
+[data-slot="ade-add"]:active {
+  filter: brightness(0.9);
+}
+
+[data-slot="ade-add"]:focus-visible {
+  box-shadow: var(--ade-focus-ring);
+}
+
+/* ── project ──────────────────────────────────────────────────────────────── */
+
+[data-slot="ade-project"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-4);
+  min-width: 0;
+}
+
+[data-slot="ade-project-name"] {
+  color: var(--ade-text);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+  font-weight: var(--ade-weight-medium);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-slot="ade-project-branch"] {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ade-space-2);
+  color: var(--ade-text-weak);
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-sm);
+  max-width: 22ch;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The one warning the bar can carry, so it is allowed to look like one. */
+[data-slot="ade-project-warning"] {
+  padding: 1px var(--ade-space-3);
+  border-radius: var(--ade-radius-sm);
+  background: var(--ade-error-bg);
+  color: var(--ade-error);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-xs);
+  font-weight: var(--ade-weight-medium);
+  white-space: nowrap;
+}
+
+/* ── no project ───────────────────────────────────────────────────────────── */
+
+[data-component="ade-empty"] {
+  flex: 1;
+  display: grid;
+  place-items: center;
+  padding: var(--ade-space-9);
+  background: var(--ade-bg);
+}
+
+[data-slot="empty-card"] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ade-space-5);
+  max-width: 420px;
+  text-align: center;
+}
+
+[data-slot="empty-mark"] {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: var(--ade-radius-lg);
+  background: var(--ade-surface);
+  border: 1px solid var(--ade-border);
+  color: var(--ade-text-weak);
+}
+
+[data-slot="empty-title"] {
+  margin: 0;
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-2xl);
+  font-weight: var(--ade-weight-semibold);
+  letter-spacing: -0.015em;
+  color: var(--ade-text);
+}
+
+[data-slot="empty-text"] {
+  margin: 0;
+  color: var(--ade-text-soft);
+  font-size: var(--ade-font-lg);
+  line-height: var(--ade-leading);
+}
+
+[data-slot="empty-action"] {
+  margin-top: var(--ade-space-2);
+  padding: var(--ade-space-4) var(--ade-space-7);
+  border: 0;
+  border-radius: var(--ade-radius-md);
+  background: var(--ade-accent);
+  color: var(--ade-accent-fg);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+  font-weight: var(--ade-weight-semibold);
+  cursor: pointer;
+  transition: background var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="empty-action"]:hover {
+  background: var(--ade-accent-strong);
+}
+
+[data-slot="empty-action"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+/* ── body layout ──────────────────────────────────────────────────────────── */
+
+[data-slot="ade-body"] {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: row;
+  overflow: hidden;
+}
+
+[data-slot="ade-main"] {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  /* The screenshot tray anchors to this corner, not the window's: it belongs to
+     the grid it hands pictures to, and the sidebar is not part of that. */
+  position: relative;
+}
+
+/* ── voice controls & mode styling ────────────────────────────────────────── */
+
+[data-slot="ade-voice-controls"] {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ade-space-1);
+}
+
+/*
+ * `.mode-transcription` used to repaint the microphone button in the "waiting"
+ * blue whenever the stored mode said transcription — a colour that means "an
+ * agent is asking you something" spent on a mode indicator, and shown whether
+ * or not the microphone was even open. Both the class and the button it
+ * painted are gone; the orb says which feature has the microphone, and only
+ * while one does.
+ */
+
+[data-slot="ade-voice-mode-indicator"] {
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-xs);
+  padding: 1px var(--ade-space-2);
+  border-radius: var(--ade-radius-sm);
+  border: 1px solid var(--ade-border);
+  background: var(--ade-surface);
+  color: var(--ade-text-soft);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  user-select: none;
+}
+
+[data-slot="ade-voice-mode-indicator"][data-mode="transcription"] {
+  border-color: var(--ade-waiting);
+  background: var(--ade-waiting-bg);
+  color: var(--ade-waiting);
+  font-weight: var(--ade-weight-semibold);
+}
+
+[data-slot="ade-voice-mode-indicator"][data-mode="agent"] {
+  border-color: var(--ade-border);
+  color: var(--ade-text-weak);
+}
+

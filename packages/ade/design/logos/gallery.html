@@ -1,0 +1,944 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>NiK / ADE &bull; 3D Logo Selection Gallery</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;600;700&family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --bg: #07090e;
+      --bg-card: rgba(18, 22, 31, 0.75);
+      --bg-card-hover: rgba(24, 30, 42, 0.95);
+      --border: rgba(255, 255, 255, 0.08);
+      --border-active: #58a6ff;
+      --accent-cyan: #58a6ff;
+      --accent-green: #3fb950;
+      --accent-amber: #f0883e;
+      --accent-purple: #bc8cff;
+      --accent-pink: #f778ba;
+      --text: #f0f6fc;
+      --text-muted: #8b949e;
+      --font-sans: "Plus Jakarta Sans", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      --font-mono: "Fira Code", monospace;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-sans);
+      min-height: 100vh;
+      overflow-x: hidden;
+      background-image: 
+        radial-gradient(circle at 50% -20%, rgba(88, 166, 255, 0.15), transparent 60%),
+        radial-gradient(circle at 10% 80%, rgba(240, 136, 62, 0.06), transparent 40%),
+        linear-gradient(rgba(255, 255, 255, 0.015) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(255, 255, 255, 0.015) 1px, transparent 1px);
+      background-size: 100% 100%, 100% 100%, 48px 48px, 48px 48px;
+    }
+
+    /* Top Banner */
+    header {
+      padding: 40px 32px 20px 32px;
+      max-width: 1440px;
+      margin: 0 auto;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .top-meta {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .badge-tag {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 4px 10px;
+      border-radius: 20px;
+      background: rgba(88, 166, 255, 0.12);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(88, 166, 255, 0.3);
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .badge-tag::before {
+      content: "";
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent-cyan);
+      box-shadow: 0 0 8px var(--accent-cyan);
+    }
+
+    h1 {
+      font-size: 38px;
+      font-weight: 800;
+      letter-spacing: -0.5px;
+      background: linear-gradient(135deg, #ffffff 40%, #8b949e 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+    }
+
+    .lead-text {
+      color: var(--text-muted);
+      font-size: 16px;
+      max-width: 820px;
+      line-height: 1.6;
+    }
+
+    .action-bar {
+      display: flex;
+      flex-wrap: wrap;
+      align-items: center;
+      justify-content: space-between;
+      gap: 16px;
+      padding-top: 10px;
+      border-bottom: 1px solid var(--border);
+      padding-bottom: 24px;
+    }
+
+    .filter-tabs {
+      display: flex;
+      gap: 8px;
+      background: rgba(255, 255, 255, 0.04);
+      padding: 4px;
+      border-radius: 10px;
+      border: 1px solid var(--border);
+    }
+
+    .filter-btn {
+      background: transparent;
+      border: none;
+      color: var(--text-muted);
+      font-size: 13px;
+      font-weight: 600;
+      padding: 8px 16px;
+      border-radius: 7px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .filter-btn:hover {
+      color: #fff;
+    }
+
+    .filter-btn.active {
+      background: rgba(88, 166, 255, 0.2);
+      color: var(--accent-cyan);
+    }
+
+    .btn-3d-studio {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 10px 20px;
+      border-radius: 10px;
+      background: linear-gradient(135deg, #238636, #2ea043);
+      color: #fff;
+      font-weight: 700;
+      font-size: 13px;
+      text-decoration: none;
+      box-shadow: 0 4px 20px rgba(46, 160, 67, 0.4);
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+
+    .btn-3d-studio:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 8px 24px rgba(46, 160, 67, 0.6);
+    }
+
+    /* Main Grid */
+    main {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 24px 32px 100px 32px;
+    }
+
+    .cards-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+      gap: 28px;
+    }
+
+    /* Logo Card */
+    .card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      transition: all 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+      position: relative;
+    }
+
+    .card:hover {
+      background: var(--bg-card-hover);
+      border-color: rgba(88, 166, 255, 0.4);
+      transform: translateY(-4px);
+      box-shadow: 0 20px 48px rgba(0, 0, 0, 0.6);
+    }
+
+    .card.selected {
+      border-color: var(--accent-cyan);
+      box-shadow: 0 0 0 2px var(--accent-cyan), 0 20px 48px rgba(88, 166, 255, 0.25);
+    }
+
+    .selected-tag {
+      position: absolute;
+      top: 16px;
+      right: 16px;
+      z-index: 5;
+      background: var(--accent-cyan);
+      color: #07090e;
+      font-weight: 800;
+      font-size: 11px;
+      font-family: var(--font-mono);
+      padding: 6px 12px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      display: none;
+      box-shadow: 0 0 16px var(--accent-cyan);
+    }
+
+    .card.selected .selected-tag {
+      display: inline-block;
+    }
+
+    /* Media Area (Hero Image) */
+    .card-media {
+      position: relative;
+      width: 100%;
+      aspect-ratio: 1 / 1;
+      background: #020408;
+      overflow: hidden;
+    }
+
+    .card-img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+      display: block;
+    }
+
+    .card:hover .card-img {
+      transform: scale(1.04);
+    }
+
+    .media-overlay-badge {
+      position: absolute;
+      bottom: 14px;
+      left: 14px;
+      background: rgba(7, 9, 14, 0.8);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      padding: 6px 12px;
+      border-radius: 8px;
+      font-family: var(--font-mono);
+      font-size: 12px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .btn-zoom {
+      position: absolute;
+      top: 14px;
+      left: 14px;
+      background: rgba(7, 9, 14, 0.7);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      color: #fff;
+      padding: 6px 10px;
+      border-radius: 8px;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      cursor: pointer;
+      opacity: 0;
+      transition: opacity 0.2s;
+    }
+
+    .card:hover .btn-zoom {
+      opacity: 1;
+    }
+
+    /* Card Content */
+    .card-body {
+      padding: 24px;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      flex: 1;
+    }
+
+    .card-title-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 8px;
+    }
+
+    .card-title {
+      font-size: 22px;
+      font-weight: 800;
+      color: #fff;
+    }
+
+    .card-subtitle {
+      font-family: var(--font-mono);
+      font-size: 12px;
+      color: var(--accent-cyan);
+      font-weight: 600;
+    }
+
+    .card-desc {
+      font-size: 14px;
+      line-height: 1.6;
+      color: var(--text-muted);
+    }
+
+    /* Feature tags */
+    .tag-pills {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .tag-pill {
+      font-family: var(--font-mono);
+      font-size: 11px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: rgba(255, 255, 255, 0.05);
+      color: #cad1d9;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    /* Strengths list */
+    .strengths-box {
+      background: rgba(0, 0, 0, 0.25);
+      border-radius: 10px;
+      padding: 12px 14px;
+      border-left: 3px solid var(--accent-cyan);
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .strengths-title {
+      font-size: 11px;
+      font-family: var(--font-mono);
+      text-transform: uppercase;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .strengths-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .strengths-list li {
+      font-size: 12px;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .strengths-list li::before {
+      content: "✓";
+      color: var(--accent-green);
+      font-weight: 800;
+    }
+
+    /* Actions */
+    .card-actions {
+      margin-top: auto;
+      display: flex;
+      gap: 10px;
+      padding-top: 10px;
+    }
+
+    .btn-choose {
+      flex: 2;
+      padding: 12px 18px;
+      border-radius: 12px;
+      font-size: 13px;
+      font-weight: 700;
+      font-family: var(--font-sans);
+      background: rgba(88, 166, 255, 0.12);
+      color: var(--accent-cyan);
+      border: 1px solid rgba(88, 166, 255, 0.35);
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .btn-choose:hover {
+      background: var(--accent-cyan);
+      color: #07090e;
+      box-shadow: 0 0 20px rgba(88, 166, 255, 0.5);
+    }
+
+    .card.selected .btn-choose {
+      background: var(--accent-cyan);
+      color: #07090e;
+      border-color: var(--accent-cyan);
+    }
+
+    .btn-3d-preview {
+      flex: 1;
+      padding: 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      font-family: var(--font-mono);
+      font-weight: 600;
+      background: rgba(255, 255, 255, 0.05);
+      color: #fff;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      cursor: pointer;
+      text-decoration: none;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 6px;
+      transition: all 0.2s;
+    }
+
+    .btn-3d-preview:hover {
+      background: rgba(255, 255, 255, 0.12);
+    }
+
+    /* Selection Sticky Bar */
+    .selection-toast {
+      position: fixed;
+      bottom: 24px;
+      left: 50%;
+      transform: translateX(-50%) translateY(120px);
+      background: rgba(13, 17, 23, 0.95);
+      border: 1px solid var(--accent-cyan);
+      box-shadow: 0 16px 48px rgba(0, 0, 0, 0.8), 0 0 24px rgba(88, 166, 255, 0.3);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      padding: 16px 24px;
+      border-radius: 16px;
+      z-index: 100;
+      display: flex;
+      align-items: center;
+      gap: 24px;
+      transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+      max-width: 90vw;
+    }
+
+    .selection-toast.show {
+      transform: translateX(-50%) translateY(0);
+    }
+
+    .toast-info h4 {
+      font-size: 15px;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .toast-info p {
+      font-size: 12px;
+      font-family: var(--font-mono);
+      color: var(--accent-cyan);
+    }
+
+    .btn-confirm {
+      padding: 10px 20px;
+      background: var(--accent-cyan);
+      color: #07090e;
+      font-weight: 800;
+      font-size: 13px;
+      border-radius: 10px;
+      border: none;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+
+    .btn-confirm:hover {
+      background: #79b8ff;
+      box-shadow: 0 0 16px rgba(88, 166, 255, 0.6);
+    }
+
+    /* Image Modal / Lightbox */
+    .lightbox {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.92);
+      backdrop-filter: blur(20px);
+      z-index: 200;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 40px;
+    }
+
+    .lightbox.active {
+      display: flex;
+    }
+
+    .lightbox-img {
+      max-width: 90vw;
+      max-height: 85vh;
+      border-radius: 16px;
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.8);
+      border: 1px solid rgba(255, 255, 255, 0.15);
+    }
+
+    .lightbox-close {
+      position: absolute;
+      top: 24px;
+      right: 24px;
+      background: rgba(255, 255, 255, 0.1);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      color: #fff;
+      font-size: 20px;
+      width: 44px;
+      height: 44px;
+      border-radius: 50%;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Live 3D Embed Modal */
+    .modal-3d {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.92);
+      backdrop-filter: blur(20px);
+      z-index: 250;
+      display: none;
+      flex-direction: column;
+    }
+
+    .modal-3d.active {
+      display: flex;
+    }
+
+    .modal-header {
+      padding: 16px 24px;
+      background: rgba(13, 17, 23, 0.9);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .modal-iframe {
+      width: 100%;
+      flex: 1;
+      border: none;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="top-meta">
+      <span class="badge-tag">packages/ade &bull; Design Exploration</span>
+      <span style="font-size: 12px; color: var(--text-muted); font-family: var(--font-mono);">5 Vettori 3D &bull; Risoluzione 8K &bull; WebGL Live</span>
+    </div>
+
+    <h1>Scegli il Logo 3D per ADE</h1>
+    <p class="lead-text">
+      Esplora i 5 concept progettati su misura per l'<strong>Agent Development Environment (ADE)</strong>.
+      Puoi ingrandire i render in altissima definizione, provarli nel visualizzatore 3D interattivo e cliccare su <strong>"Scegli questo"</strong> per indicare il tuo preferito.
+    </p>
+
+    <div class="action-bar">
+      <div class="filter-tabs">
+        <button class="filter-btn active" data-filter="all">Tutti i 5 Design</button>
+        <button class="filter-btn" data-filter="n">Lettera 'N'</button>
+        <button class="filter-btn" data-filter="nik">Logotipo 'NiK'</button>
+      </div>
+
+      <a href="index.html" class="btn-3d-studio" target="_blank">
+        <span>🎮 Apri Studio 3D Completo (Tre.js & Shaders)</span>
+        <span style="font-size: 10px; opacity: 0.8;">&nearr;</span>
+      </a>
+    </div>
+  </header>
+
+  <main>
+    <div class="cards-grid">
+
+      <!-- CONCEPT 01 -->
+      <article class="card" data-category="n" data-id="01-voxel">
+        <span class="selected-tag">&check; Selezionato</span>
+        <div class="card-media">
+          <button class="btn-zoom" onclick="openLightbox('voxel_matrix_n_1789305411805.jpg', '01. Quantum Voxel Matrix (N)')">&boxplus; Ingrandisci</button>
+          <img src="voxel_matrix_n_1789305411805.jpg" alt="Quantum Voxel Matrix N" class="card-img" />
+          <span class="media-overlay-badge">CONCEPT 01 / VOXEL</span>
+        </div>
+        <div class="card-body">
+          <div class="card-title-row">
+            <h2 class="card-title">Quantum Voxel Matrix</h2>
+            <span class="card-subtitle">GLIFO "N"</span>
+          </div>
+          <p class="card-desc">
+            Fedele all'architettura a matrice 4×5 originaria di nikcli. Estrusione volumetrica modulare con blocchi in ossidiana e ceramica tecnica, con sollevamento ondulatorio continuo e bisellature retroilluminate in cyan cybernetico.
+          </p>
+          <div class="tag-pills">
+            <span class="tag-pill">#Brutalismo</span>
+            <span class="tag-pill">#IsometricVoxel</span>
+            <span class="tag-pill">#nikcliDNA</span>
+            <span class="tag-pill">#CyberNeon</span>
+          </div>
+          <div class="strengths-box">
+            <span class="strengths-title">Punti di Forza per ADE:</span>
+            <ul class="strengths-list">
+              <li>100% coerente con l'icona ufficiale SVG 4×5 del brand nikcli</li>
+              <li>Eccezionale leggibilità anche a 16px o 24px nella barra superiore</li>
+              <li>Estetica solida, ingegneristica e modulare</li>
+            </ul>
+          </div>
+          <div class="card-actions">
+            <button class="btn-choose" onclick="selectConcept(0, 'Quantum Voxel Matrix (N)')">
+              <span>👉 Scegli questo Logo</span>
+            </button>
+            <button class="btn-3d-preview" onclick="open3DModal(0)">
+              <span>🎮 Prova 3D</span>
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <!-- CONCEPT 02 -->
+      <article class="card" data-category="nik" data-id="02-ascii">
+        <span class="selected-tag">&check; Selezionato</span>
+        <div class="card-media">
+          <button class="btn-zoom" onclick="openLightbox('hyper_ascii_nik_1789305422655.jpg', '02. Hyper-ASCII Hologram (NiK)')">&boxplus; Ingrandisci</button>
+          <img src="hyper_ascii_nik_1789305422655.jpg" alt="Hyper-ASCII Hologram NiK" class="card-img" />
+          <span class="media-overlay-badge">CONCEPT 02 / ASCII</span>
+        </div>
+        <div class="card-body">
+          <div class="card-title-row">
+            <h2 class="card-title">Hyper-ASCII Hologram</h2>
+            <span class="card-subtitle">LOGOTIPO "NiK"</span>
+          </div>
+          <p class="card-desc">
+            L'anima cruda del terminale e della riga di comando. Un ologramma volumetrico 3D rasterizzato tramite shader con una matrice dinamica di glifi tipografici (@ # N i K * + .), curvatura CRT e fosfori verdi/ambra ad alta luminescenza.
+          </p>
+          <div class="tag-pills">
+            <span class="tag-pill">#RetroTerminal</span>
+            <span class="tag-pill">#ASCIIShader</span>
+            <span class="tag-pill">#PhosphorCRT</span>
+            <span class="tag-pill">#GlitchHacker</span>
+          </div>
+          <div class="strengths-box">
+            <span class="strengths-title">Punti di Forza per ADE:</span>
+            <ul class="strengths-list">
+              <li>DNA 100% developer, riga di comando e hacker culture</li>
+              <li>Perfetto come visualizzatore interattivo o splash screen terminale</li>
+              <li>Filtro ASCII in tempo reale unico nel suo genere</li>
+            </ul>
+          </div>
+          <div class="card-actions">
+            <button class="btn-choose" onclick="selectConcept(1, 'Hyper-ASCII Hologram (NiK)')">
+              <span>👉 Scegli questo Logo</span>
+            </button>
+            <button class="btn-3d-preview" onclick="open3DModal(1)">
+              <span>🎮 Prova 3D</span>
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <!-- CONCEPT 03 -->
+      <article class="card" data-category="n" data-id="03-liquid">
+        <span class="selected-tag">&check; Selezionato</span>
+        <div class="card-media">
+          <button class="btn-zoom" onclick="openLightbox('liquid_chrome_n_1789305431390.jpg', '03. Molten Chrome Mercury (N)')">&boxplus; Ingrandisci</button>
+          <img src="liquid_chrome_n_1789305431390.jpg" alt="Molten Chrome Mercury N" class="card-img" />
+          <span class="media-overlay-badge">CONCEPT 03 / LIQUID</span>
+        </div>
+        <div class="card-body">
+          <div class="card-title-row">
+            <h2 class="card-title">Molten Chrome Mercury</h2>
+            <span class="card-subtitle">GLIFO "N"</span>
+          </div>
+          <p class="card-desc">
+            Scultura fluida continua a nastro di Möbius in metallo liquido cromato. Superficie a specchio impeccabile con dispersione prismatica iridescente e respirazione volumetrica continua, con gocce di mercurio satelliti in levitazione.
+          </p>
+          <div class="tag-pills">
+            <span class="tag-pill">#LiquidChrome</span>
+            <span class="tag-pill">#NeoLuxury</span>
+            <span class="tag-pill">#PrismaticCaustics</span>
+            <span class="tag-pill">#MobiusFlow</span>
+          </div>
+          <div class="strengths-box">
+            <span class="strengths-title">Punti di Forza per ADE:</span>
+            <ul class="strengths-list">
+              <li>Design ultra-futuristico stile hardware di nuova generazione</li>
+              <li>Estetica ipnotica con riflessi luminosi ad alto impatto</li>
+              <li>Ideale per l'icona applicazione desktop Tauri</li>
+            </ul>
+          </div>
+          <div class="card-actions">
+            <button class="btn-choose" onclick="selectConcept(2, 'Molten Chrome Mercury (N)')">
+              <span>👉 Scegli questo Logo</span>
+            </button>
+            <button class="btn-3d-preview" onclick="open3DModal(2)">
+              <span>🎮 Prova 3D</span>
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <!-- CONCEPT 04 -->
+      <article class="card" data-category="nik" data-id="04-neural">
+        <span class="selected-tag">&check; Selezionato</span>
+        <div class="card-media">
+          <button class="btn-zoom" onclick="openLightbox('neural_synapse_nik_1789305441588.jpg', '04. Synaptic Agent Swarm (NiK)')">&boxplus; Ingrandisci</button>
+          <img src="neural_synapse_nik_1789305441588.jpg" alt="Synaptic Agent Swarm NiK" class="card-img" />
+          <span class="media-overlay-badge">CONCEPT 04 / NEURAL</span>
+        </div>
+        <div class="card-body">
+          <div class="card-title-row">
+            <h2 class="card-title">Synaptic Agent Swarm</h2>
+            <span class="card-subtitle">LOGOTIPO "NiK"</span>
+          </div>
+          <p class="card-desc">
+            Organismo bio-digitale generativo. Oltre 2.500 nodi luminosi interconnessi da archi sinaptici (Plexus graph) disegnano la parola 'NIK'. Rappresenta visivamente l'intelligenza collettiva dei multi-agenti operanti in parallelo su ADE.
+          </p>
+          <div class="tag-pills">
+            <span class="tag-pill">#SwarmIntelligence</span>
+            <span class="tag-pill">#NeuralPlexus</span>
+            <span class="tag-pill">#GenerativeParticles</span>
+            <span class="tag-pill">#MultiAgent</span>
+          </div>
+          <div class="strengths-box">
+            <span class="strengths-title">Punti di Forza per ADE:</span>
+            <ul class="strengths-list">
+              <li>Il concetto più vicino alla natura di ADE (Agent Development Environment)</li>
+              <li>I nodi possono animarsi in tempo reale durante le richieste agli agenti</li>
+              <li>Spettacolare interazione fisica e gravitazionale col cursore</li>
+            </ul>
+          </div>
+          <div class="card-actions">
+            <button class="btn-choose" onclick="selectConcept(3, 'Synaptic Agent Swarm (NiK)')">
+              <span>👉 Scegli questo Logo</span>
+            </button>
+            <button class="btn-3d-preview" onclick="open3DModal(3)">
+              <span>🎮 Prova 3D</span>
+            </button>
+          </div>
+        </div>
+      </article>
+
+      <!-- CONCEPT 05 -->
+      <article class="card" data-category="n" data-id="05-mecha">
+        <span class="selected-tag">&check; Selezionato</span>
+        <div class="card-media">
+          <button class="btn-zoom" onclick="openLightbox('origami_mecha_n_1789305451525.jpg', '05. Kinetic Origami Mecha (N)')">&boxplus; Ingrandisci</button>
+          <img src="origami_mecha_n_1789305451525.jpg" alt="Kinetic Origami Mecha N" class="card-img" />
+          <span class="media-overlay-badge">CONCEPT 05 / MECHA</span>
+        </div>
+        <div class="card-body">
+          <div class="card-title-row">
+            <h2 class="card-title">Kinetic Origami Mecha</h2>
+            <span class="card-subtitle">GLIFO "N"</span>
+          </div>
+          <p class="card-desc">
+            Fantascienza industriale e mecha deconstruction. 9 piastre poligonali ad incastro sfaccettato in titanio spazzolato e carbonio opaco con bisellature incandescenti hazard-orange che si aprono e chiudono rivelando un reattore a fusione interno.
+          </p>
+          <div class="tag-pills">
+            <span class="tag-pill">#SciFiMecha</span>
+            <span class="tag-pill">#OrigamiFaceted</span>
+            <span class="tag-pill">#HazardOrange</span>
+            <span class="tag-pill">#Deconstruction</span>
+          </div>
+          <div class="strengths-box">
+            <span class="strengths-title">Punti di Forza per ADE:</span>
+            <ul class="strengths-list">
+              <li>Look aggressivo, dinamico e ad alto impatto high-tech</li>
+              <li>Animazione meccanica di disassemblaggio/assemblaggio gratificante</li>
+              <li>Spettacolare per indicare il caricamento o l'esecuzione di task complessi</li>
+            </ul>
+          </div>
+          <div class="card-actions">
+            <button class="btn-choose" onclick="selectConcept(4, 'Kinetic Origami Mecha (N)')">
+              <span>👉 Scegli questo Logo</span>
+            </button>
+            <button class="btn-3d-preview" onclick="open3DModal(4)">
+              <span>🎮 Prova 3D</span>
+            </button>
+          </div>
+        </div>
+      </article>
+
+    </div>
+  </main>
+
+  <!-- Sticky Selection Toast Bar -->
+  <div class="selection-toast" id="selectionToast">
+    <div class="toast-info">
+      <h4 id="toastTitle">Nessun logo selezionato</h4>
+      <p id="toastSubtitle">Clicca su 'Scegli questo Logo' su una delle schede sopra</p>
+    </div>
+    <button class="btn-confirm" id="btnConfirmChoice" onclick="copyChoiceToClipboard()">
+      <span>📋 Copia Scelta per la Chat</span>
+    </button>
+  </div>
+
+  <!-- Lightbox Modal -->
+  <div class="lightbox" id="lightbox" onclick="closeLightbox()">
+    <button class="lightbox-close">&times;</button>
+    <img src="" alt="Preview" class="lightbox-img" id="lightboxImg" onclick="event.stopPropagation()" />
+  </div>
+
+  <!-- 3D Viewer Modal -->
+  <div class="modal-3d" id="modal3D">
+    <div class="modal-header">
+      <div style="display:flex; align-items:center; gap:12px;">
+        <span class="badge-tag">WebGL Live 3D Viewport</span>
+        <span id="modal3DTitle" style="font-size:14px; font-weight:700; color:#fff;">Concept 3D</span>
+      </div>
+      <button class="lightbox-close" style="position:static;" onclick="close3DModal()">&times;</button>
+    </div>
+    <iframe src="index.html" class="modal-iframe" id="modal3DIframe"></iframe>
+  </div>
+
+  <script>
+    let selectedIndex = null;
+    let selectedName = "";
+
+    const CONCEPTS = [
+      "Concept 01 — Quantum Voxel Matrix (N)",
+      "Concept 02 — Hyper-ASCII Hologram (NiK)",
+      "Concept 03 — Molten Chrome Mercury (N)",
+      "Concept 04 — Synaptic Agent Swarm (NiK)",
+      "Concept 05 — Kinetic Origami Mecha (N)"
+    ];
+
+    function selectConcept(index, name) {
+      selectedIndex = index;
+      selectedName = name;
+
+      document.querySelectorAll(".card").forEach((card, idx) => {
+        card.classList.toggle("selected", idx === index);
+      });
+
+      const toast = document.getElementById("selectionToast");
+      document.getElementById("toastTitle").textContent = `Hai scelto: ${name}`;
+      document.getElementById("toastSubtitle").textContent = "Ottima scelta! Clicca per copiare la conferma o scrivila nella chat.";
+      toast.classList.add("show");
+    }
+
+    function copyChoiceToClipboard() {
+      if (selectedName) {
+        const text = `Ho scelto il: ${selectedName}`;
+        navigator.clipboard.writeText(text).then(() => {
+          const btn = document.getElementById("btnConfirmChoice");
+          const orig = btn.innerHTML;
+          btn.innerHTML = "<span>&check; Copiato negli Appunti!</span>";
+          btn.style.background = "#3fb950";
+          setTimeout(() => {
+            btn.innerHTML = orig;
+            btn.style.background = "";
+          }, 2500);
+        });
+      }
+    }
+
+    // Filter Buttons
+    document.querySelectorAll(".filter-btn").forEach(btn => {
+      btn.addEventListener("click", () => {
+        document.querySelectorAll(".filter-btn").forEach(b => b.classList.remove("active"));
+        btn.classList.add("active");
+        const filter = btn.dataset.filter;
+
+        document.querySelectorAll(".card").forEach(card => {
+          if (filter === "all" || card.dataset.category === filter) {
+            card.style.display = "flex";
+          } else {
+            card.style.display = "none";
+          }
+        });
+      });
+    });
+
+    // Lightbox
+    function openLightbox(src, title) {
+      const lb = document.getElementById("lightbox");
+      const img = document.getElementById("lightboxImg");
+      img.src = src;
+      lb.classList.add("active");
+    }
+
+    function closeLightbox() {
+      document.getElementById("lightbox").classList.remove("active");
+    }
+
+    // 3D Modal
+    function open3DModal(conceptIndex) {
+      const modal = document.getElementById("modal3D");
+      const iframe = document.getElementById("modal3DIframe");
+      document.getElementById("modal3DTitle").textContent = CONCEPTS[conceptIndex];
+      modal.classList.add("active");
+
+      // PostMessage or trigger preset inside iframe once loaded
+      iframe.onload = () => {
+        try {
+          iframe.contentWindow.loadConcept(conceptIndex);
+        } catch(e) {}
+      };
+      try {
+        iframe.contentWindow.loadConcept(conceptIndex);
+      } catch(e) {}
+    }
+
+    function close3DModal() {
+      document.getElementById("modal3D").classList.remove("active");
+    }
+
+    // Escape key
+    document.addEventListener("keydown", (e) => {
+      if (e.key === "Escape") {
+        closeLightbox();
+        close3DModal();
+      }
+    });
+  </script>
+</body>
+</html>

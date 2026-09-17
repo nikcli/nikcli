@@ -58,6 +58,7 @@ import { PromptDragOverlay } from "./prompt-input/drag-overlay"
 import { promptPlaceholder } from "./prompt-input/placeholder"
 import { ImagePreview } from "@nikcli-ai/ui/image-preview"
 import { VISUAL_EDITOR_PROMPT_EVENT } from "@/components/browser/visual-editor"
+import { appendTextToPrompt } from "@/context/prompt-append"
 
 interface PromptInputProps {
   class?: string
@@ -157,17 +158,8 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
       const text = (event as CustomEvent<unknown>).detail
       if (typeof text !== "string" || !text.trim()) return
 
-      const current = prompt.current()
-      const existingText = current.map((part) => (part.type === "text" ? part.content : "")).join("")
-      const newContent = existingText.trim() ? `${existingText.trim()}\n${text}` : text
-      prompt.set([
-        {
-          type: "text",
-          content: newContent,
-          start: 0,
-          end: newContent.length,
-        },
-      ])
+      // Same append as inside a session: keep file, agent and image parts.
+      prompt.set(appendTextToPrompt(prompt.current(), text))
     }
 
     window.addEventListener(VISUAL_EDITOR_PROMPT_EVENT, handler)

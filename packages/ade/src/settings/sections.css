@@ -1,0 +1,166 @@
+/*
+ * ADE's own screens inside the settings panel.
+ *
+ * The panel supplies `section-head`, `section-title` and `section-desc`;
+ * these are only the parts those screens add. Everything here is scoped by
+ * its own slot name rather than by an ancestor, because the same rows are
+ * meant to look the same wherever a section puts them.
+ */
+
+[data-slot="settings-empty"] {
+  margin: var(--ade-space-4) 0 0;
+  padding: var(--ade-space-5);
+  border: 1px dashed var(--ade-border);
+  border-radius: var(--ade-radius-md);
+  color: var(--ade-text-weak);
+  font-size: var(--ade-font-sm);
+  line-height: 1.5;
+}
+
+[data-slot="settings-list"] {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  margin: var(--ade-space-4) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+[data-slot="settings-row"] {
+  display: flex;
+  align-items: baseline;
+  gap: var(--ade-space-4);
+  padding: var(--ade-space-3) var(--ade-space-4);
+  border-radius: var(--ade-radius-sm);
+  background: var(--ade-surface);
+}
+
+[data-slot="settings-glyph"] {
+  flex: 0 0 auto;
+  width: 16px;
+  text-align: center;
+  color: var(--ade-accent);
+}
+
+[data-slot="settings-name"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--ade-text);
+}
+
+/*
+ * The facts about a row, quiet and in mono so they line up down the column
+ * and read as data rather than as a second name.
+ */
+[data-slot="settings-meta"] {
+  flex: 0 0 auto;
+  color: var(--ade-text-weak);
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-xs);
+}
+
+/*
+ * A small set of mutually exclusive values, shown all at once.
+ *
+ * Wider and taller than the chips these replaced in the top bar: there the
+ * size was paid for in toolbar width, here there is a whole panel and the
+ * only reason to keep them small would be habit.
+ */
+[data-slot="settings-choices"] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ade-space-2);
+  margin-top: var(--ade-space-5);
+}
+
+[data-slot="settings-choice"] {
+  min-width: 46px;
+  height: 30px;
+  padding: 0 var(--ade-space-5);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-sm);
+  background: var(--ade-surface);
+  color: var(--ade-text-soft);
+  font: inherit;
+  font-size: var(--ade-font-md);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="settings-choice"]:hover {
+  background: var(--ade-hover);
+  color: var(--ade-text);
+}
+
+/* Ink, not hue: the chosen value is the one that reads as solid. */
+[data-slot="settings-choice"][data-active] {
+  border-color: var(--ade-text);
+  background: var(--ade-text);
+  color: var(--ade-bg);
+}
+
+[data-slot="settings-choice"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+/*
+ * One runner: its name and state on a line, whose account it uses under it,
+ * and what its CLI said. The badge is ink for signed in and quiet otherwise.
+ */
+[data-slot="provider-row"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-2);
+  padding: var(--ade-space-4);
+  border-radius: var(--ade-radius-sm);
+  background: var(--ade-surface);
+}
+
+[data-slot="provider-head"] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ade-space-3);
+}
+
+[data-slot="provider-head"] [data-slot="settings-choice"] {
+  height: 26px;
+  font-size: var(--ade-font-sm);
+}
+
+[data-slot="provider-badge"] {
+  padding: 1px var(--ade-space-3);
+  border: 1px solid var(--ade-border);
+  border-radius: 999px;
+  color: var(--ade-text-weak);
+  font-size: var(--ade-font-xs);
+}
+
+[data-slot="provider-row"][data-state="in"] [data-slot="provider-badge"] {
+  border-color: var(--ade-ansi-green);
+  color: var(--ade-ansi-green);
+}
+
+[data-slot="provider-row"][data-state="out"] [data-slot="provider-badge"],
+[data-slot="provider-row"][data-state="missing"] [data-slot="provider-badge"] {
+  border-color: var(--ade-ansi-yellow);
+  color: var(--ade-ansi-yellow);
+}
+
+[data-slot="provider-detail"] {
+  color: var(--ade-text-soft);
+  font-size: var(--ade-font-sm);
+}
+
+[data-slot="provider-row"] [data-slot="settings-meta"] {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}

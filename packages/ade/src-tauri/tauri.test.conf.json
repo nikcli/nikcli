@@ -1,0 +1,15 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "ADE Test",
+  "identifier": "ai.nikcli.ade.test",
+  "mainBinaryName": "ade-test",
+  "bundle": {
+    "icon": [
+      "icons/test/32x32.png",
+      "icons/test/128x128.png",
+      "icons/test/128x128@2x.png",
+      "icons/test/icon.icns",
+      "icons/test/icon.ico"
+    ]
+  }
+}

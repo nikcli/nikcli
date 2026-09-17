@@ -1,0 +1,100 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Architects+Daughter&display=swap">
+  <style>
+    body { margin: 0; background: #ffffff; color: #1a1a1a; font-family: "Helvetica Neue", Arial, sans-serif; }
+    a { color: #1d4ed8; } a:hover { color: #1e3a8a; }
+    .wf-hand { font-family: "Architects Daughter", "Comic Sans MS", cursive; }
+  </style>
+</helmet>
+
+<div style="display: flex; flex-direction: column; width: 900px; height: 640px; padding: 24px; background: #ffffff; box-sizing: border-box">
+
+  <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px">
+    <span class="wf-hand" style="font-size: 24px">D · Chrome evocato</span>
+    <span style="font-size: 12px; color: #6b6b6b">asse: pannelli sempre presenti o chiamati quando servono</span>
+  </div>
+  <div style="margin-bottom: 16px; font-size: 13px; line-height: 150%; color: #444444; max-width: 720px">
+    Niente barre permanenti. Lo schermo è contenuto; albero file, terminale, review e git si chiamano da tastiera
+    e spariscono. Quello che oggi occupa 590 pixel vuoti qui non esiste finché non lo chiedi.
+  </div>
+
+  <div style="position: relative; flex-grow: 1; min-height: 0; border: 1.5px solid #e0e0e0; border-radius: 4px; overflow: hidden">
+
+    <div style="display: flex; flex-direction: column; gap: 7px; padding: 14px">
+      <div style="height: 13px; background: #f2f2f2; border-radius: 2px; width: 45%"></div>
+      <div style="height: 11px; background: #f7f7f7; border-radius: 2px"></div>
+      <div style="height: 11px; background: #f7f7f7; border-radius: 2px"></div>
+      <div style="height: 11px; background: #f7f7f7; border-radius: 2px; width: 80%"></div>
+      <div style="height: 11px; background: #f7f7f7; border-radius: 2px"></div>
+      <div style="height: 11px; background: #f7f7f7; border-radius: 2px; width: 60%"></div>
+      <div style="height: 11px; background: #f7f7f7; border-radius: 2px"></div>
+      <div style="height: 11px; background: #f7f7f7; border-radius: 2px; width: 72%"></div>
+    </div>
+
+    <div style="position: absolute; top: 46px; left: 50%; transform: translateX(-50%); width: 440px; border: 2px solid #1d4ed8; border-radius: 6px; background: #ffffff; box-shadow: 0 10px 30px rgba(0,0,0,0.14); padding: 10px; display: flex; flex-direction: column; gap: 6px">
+      <div style="display: flex; align-items: center; gap: 8px; border-bottom: 1.5px solid #e0e0e0; padding-bottom: 7px">
+        <span class="wf-hand" style="font-size: 15px; color: #1d4ed8">&gt;</span>
+        <div style="flex-grow: 1; height: 13px; background: #ececec; border-radius: 2px"></div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; background: #eaf2ff; border-radius: 3px; padding: 5px 6px">
+        <div style="width: 12px; height: 12px; border: 1.5px solid #1d4ed8; border-radius: 2px"></div>
+        <div style="flex-grow: 1; height: 9px; background: #cfe0ff; border-radius: 2px; max-width: 190px"></div>
+        <div class="wf-hand" style="font-size: 11px; color: #6b6b6b">⌘K</div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; padding: 5px 6px">
+        <div style="width: 12px; height: 12px; border: 1.5px solid #b0b0b0; border-radius: 2px"></div>
+        <div style="flex-grow: 1; height: 9px; background: #f2f2f2; border-radius: 2px; max-width: 230px"></div>
+      </div>
+      <div style="display: flex; align-items: center; gap: 8px; padding: 5px 6px">
+        <div style="width: 12px; height: 12px; border: 1.5px solid #b0b0b0; border-radius: 2px"></div>
+        <div style="flex-grow: 1; height: 9px; background: #f2f2f2; border-radius: 2px; max-width: 160px"></div>
+      </div>
+    </div>
+
+    <div style="position: absolute; right: 0; top: 0; bottom: 0; width: 150px; border-left: 1.5px dashed #b0b0b0; background: #fbfbfb; padding: 10px; display: flex; flex-direction: column; gap: 5px">
+      <span class="wf-hand" style="font-size: 11px; color: #9a9a9a">evocato, poi sparisce</span>
+      <div style="height: 9px; background: #f0f0f0; border-radius: 2px"></div>
+      <div style="height: 9px; background: #f0f0f0; border-radius: 2px; width: 75%"></div>
+      <div style="height: 9px; background: #f0f0f0; border-radius: 2px; width: 85%"></div>
+    </div>
+
+    <div style="position: absolute; left: 14px; bottom: 12px; display: flex; align-items: center; gap: 6px">
+      <div style="width: 210px; height: 26px; border: 1.5px solid #1a1a1a; border-radius: 13px"></div>
+      <span class="wf-hand" style="font-size: 12px; color: #9a9a9a">unica cosa sempre visibile</span>
+    </div>
+  </div>
+
+  <div style="display: flex; gap: 12px; margin-top: 14px">
+    <div style="flex-grow: 1; border-left: 3px solid #1d4ed8; padding-left: 8px">
+      <div class="wf-hand" style="font-size: 13px">perché</div>
+      <div style="font-size: 12px; line-height: 150%; color: #444444">
+        Oggi tre pannelli stanno aperti sempre, anche vuoti. Qui lo schermo è del contenuto e il resto arriva a richiesta.
+      </div>
+    </div>
+    <div style="flex-grow: 1; border-left: 3px solid #b0b0b0; padding-left: 8px">
+      <div class="wf-hand" style="font-size: 13px">costo</div>
+      <div style="font-size: 12px; line-height: 150%; color: #444444">
+        Chi non impara le scorciatoie non trova più niente: quello che non si vede, per molti non esiste.
+      </div>
+    </div>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"$preview":{"width":900,"height":640}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {}
+  }
+}
+</script>
+</body>
+</html>

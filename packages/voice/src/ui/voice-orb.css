@@ -1,0 +1,28 @@
+/*
+ * The button around the orb, and nothing else.
+ *
+ * The drawing is `orb-mark.css` — one sphere, used here as a control and in
+ * the HUD as the widget's mark. This file is only what makes it pressable:
+ * no box of its own, no second ground, no hover fill. Anything that changed
+ * the orb's appearance here would be a version of the orb that exists in one
+ * place, which is exactly what having a shared drawing is for.
+ */
+
+[data-component="voice-orb"] {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  cursor: pointer;
+}
+
+[data-component="voice-orb"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring, 0 0 0 2px currentColor);
+}
+
+/* `--orb-size` set on this button reaches the drawing on its own — custom
+   properties inherit — so a host sizes the control and the sphere follows. */

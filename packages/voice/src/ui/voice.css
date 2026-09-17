@@ -1,0 +1,446 @@
+/*
+ * Voice control UI styles.
+ *
+ * Strictly adheres to the ADE design token whitelist defined in packages/ade/src/index.css.
+ * All non-whitelisted properties (e.g. typography stacks) use standard CSS literals.
+ */
+
+/* ── Voice Button ──────────────────────────────────────────────────────────── */
+
+[data-component="voice-button"] {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-full);
+  background: var(--ade-surface);
+  color: var(--ade-text-soft);
+  cursor: pointer;
+  user-select: none;
+  font-family: inherit;
+  font-size: var(--ade-font-sm);
+  font-weight: var(--ade-weight-medium);
+  box-shadow: var(--ade-shadow-sm);
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    box-shadow var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-component="voice-button"]:hover {
+  background: var(--ade-hover);
+  color: var(--ade-text);
+  border-color: var(--ade-border-strong);
+}
+
+[data-component="voice-button"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+/* Status variants */
+
+[data-component="voice-button"][data-status="asleep"] {
+  background: var(--ade-surface);
+  color: var(--ade-text-weak);
+  border-color: var(--ade-border-subtle);
+  opacity: 0.75;
+}
+
+[data-component="voice-button"][data-status="idle"],
+[data-component="voice-button"][data-status="listening"] {
+  background: var(--ade-raised);
+  color: var(--ade-accent);
+  border-color: var(--ade-accent);
+}
+
+[data-component="voice-button"][data-status="confirming"] {
+  background: var(--ade-waiting-bg);
+  color: var(--ade-waiting);
+  border-color: var(--ade-waiting);
+}
+
+[data-component="voice-button"][data-status="executing"] {
+  background: var(--ade-working-bg);
+  color: var(--ade-working);
+  border-color: var(--ade-working);
+}
+
+[data-component="voice-button"][data-status="dictating"] {
+  background: var(--ade-done-bg);
+  color: var(--ade-done);
+  border-color: var(--ade-done);
+}
+
+/* Reactive microphone volume ring */
+
+[data-component="voice-button"] [data-slot="mic-ring"] {
+  position: absolute;
+  inset: -3px;
+  border-radius: var(--ade-radius-full);
+  border: 2px solid currentColor;
+  pointer-events: none;
+  opacity: 0.5;
+  transition: transform var(--ade-dur-fast) var(--ade-ease), opacity var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-component="voice-button"][data-status="listening"] [data-slot="mic-ring"] {
+  animation: ade-voice-ring-pulse 2s var(--ade-ease) infinite;
+}
+
+[data-component="voice-button"] [data-slot="mic-icon"] {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  flex: 0 0 auto;
+}
+
+@keyframes ade-voice-ring-pulse {
+  0%, 100% {
+    opacity: 0.3;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-component="voice-button"],
+  [data-component="voice-button"] [data-slot="mic-ring"] {
+    animation: none !important;
+    transition: none !important;
+    transform: none !important;
+  }
+}
+
+/* ── Voice Overlay ─────────────────────────────────────────────────────────── */
+
+[data-component="voice-overlay"] {
+  position: fixed;
+  inset: 0;
+  background: var(--ade-scrim);
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 12vh;
+  padding-left: var(--ade-space-4);
+  padding-right: var(--ade-space-4);
+  font-family: inherit;
+  animation: ade-voice-fade-in var(--ade-dur-fast) var(--ade-ease-out);
+}
+
+[data-component="voice-overlay"] [data-slot="dialog"] {
+  width: 100%;
+  max-width: 580px;
+  background: var(--ade-overlay);
+  border: 1px solid var(--ade-border-strong);
+  border-radius: var(--ade-radius-xl);
+  box-shadow: var(--ade-shadow-lg);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  animation: ade-voice-scale-in var(--ade-dur-fast) var(--ade-ease-out);
+}
+
+@keyframes ade-voice-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes ade-voice-scale-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-component="voice-overlay"],
+  [data-component="voice-overlay"] [data-slot="dialog"] {
+    animation: none;
+  }
+}
+
+/* Header bar */
+
+[data-component="voice-overlay"] [data-slot="header"] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--ade-space-4) var(--ade-space-6);
+  border-bottom: 1px solid var(--ade-border);
+  background: var(--ade-raised);
+}
+
+[data-component="voice-overlay"] [data-slot="header-left"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-3);
+}
+
+[data-component="voice-overlay"] [data-slot="badge"] {
+  display: inline-flex;
+  align-items: center;
+  padding: var(--ade-space-1) var(--ade-space-3);
+  border-radius: var(--ade-radius-full);
+  font-size: var(--ade-font-xs);
+  font-weight: var(--ade-weight-semibold);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  background: var(--ade-active);
+  color: var(--ade-text-soft);
+}
+
+[data-component="voice-overlay"] [data-slot="badge"][data-status="listening"] {
+  background: var(--ade-accent-soft);
+  color: var(--ade-accent);
+}
+
+[data-component="voice-overlay"] [data-slot="badge"][data-status="confirming"] {
+  background: var(--ade-waiting-bg);
+  color: var(--ade-waiting);
+}
+
+[data-component="voice-overlay"] [data-slot="badge"][data-status="executing"] {
+  background: var(--ade-working-bg);
+  color: var(--ade-working);
+}
+
+[data-component="voice-overlay"] [data-slot="badge"][data-status="dictating"] {
+  background: var(--ade-done-bg);
+  color: var(--ade-done);
+}
+
+[data-component="voice-overlay"] [data-slot="close-btn"] {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ade-radius-sm);
+  background: transparent;
+  color: var(--ade-text-weak);
+  cursor: pointer;
+  transition: background var(--ade-dur-fast) var(--ade-ease), color var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-component="voice-overlay"] [data-slot="close-btn"]:hover {
+  background: var(--ade-hover);
+  color: var(--ade-text);
+}
+
+/* Body content */
+
+[data-component="voice-overlay"] [data-slot="content"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-5);
+  padding: var(--ade-space-6);
+}
+
+/* Partial transcription display */
+
+[data-component="voice-overlay"] [data-slot="partial"] {
+  font-size: var(--ade-font-2xl);
+  font-weight: var(--ade-weight-semibold);
+  color: var(--ade-text);
+  line-height: 1.35;
+  min-height: 38px;
+  word-break: break-word;
+}
+
+[data-component="voice-overlay"] [data-slot="partial"][data-empty] {
+  color: var(--ade-text-weak);
+  font-weight: var(--ade-weight-normal);
+  font-size: var(--ade-font-lg);
+  font-style: italic;
+}
+
+/* Intent readback card */
+
+[data-component="voice-overlay"] [data-slot="intent-card"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-3);
+  padding: var(--ade-space-3) var(--ade-space-4);
+  background: var(--ade-surface);
+  border: 1px solid var(--ade-border-subtle);
+  border-radius: var(--ade-radius-md);
+  font-size: var(--ade-font-md);
+  color: var(--ade-text-soft);
+}
+
+[data-component="voice-overlay"] [data-slot="intent-icon"] {
+  color: var(--ade-accent);
+  flex: 0 0 auto;
+}
+
+/* Confirmation box */
+
+[data-component="voice-overlay"] [data-slot="confirm-box"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-4);
+  padding: var(--ade-space-5);
+  background: var(--ade-waiting-bg);
+  border: 1px solid var(--ade-waiting);
+  border-radius: var(--ade-radius-lg);
+}
+
+[data-component="voice-overlay"] [data-slot="confirm-prompt"] {
+  font-size: var(--ade-font-lg);
+  font-weight: var(--ade-weight-medium);
+  color: var(--ade-text);
+}
+
+[data-component="voice-overlay"] [data-slot="confirm-hint"] {
+  font-size: var(--ade-font-md);
+  color: var(--ade-text-soft);
+}
+
+[data-component="voice-overlay"] [data-slot="confirm-hint"] strong {
+  color: var(--ade-accent-strong);
+  font-weight: var(--ade-weight-bold);
+}
+
+[data-component="voice-overlay"] [data-slot="confirm-actions"] {
+  display: flex;
+  gap: var(--ade-space-3);
+  justify-content: flex-end;
+  margin-top: var(--ade-space-2);
+}
+
+/* Ambiguity candidate list */
+
+[data-component="voice-overlay"] [data-slot="ambiguity-box"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-3);
+  padding: var(--ade-space-4);
+  background: var(--ade-surface);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-lg);
+}
+
+[data-component="voice-overlay"] [data-slot="ambiguity-title"] {
+  font-size: var(--ade-font-md);
+  font-weight: var(--ade-weight-semibold);
+  color: var(--ade-text);
+}
+
+[data-component="voice-overlay"] [data-slot="candidate-list"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-2);
+}
+
+[data-component="voice-overlay"] [data-slot="candidate-item"] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--ade-space-3) var(--ade-space-4);
+  border-radius: var(--ade-radius-md);
+  border: 1px solid var(--ade-border-subtle);
+  background: var(--ade-raised);
+  color: var(--ade-text-soft);
+  cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-component="voice-overlay"] [data-slot="candidate-item"]:hover {
+  background: var(--ade-hover);
+  color: var(--ade-text);
+}
+
+[data-component="voice-overlay"] [data-slot="candidate-ordinal"] {
+  font-size: var(--ade-font-xs);
+  font-weight: var(--ade-weight-bold);
+  color: var(--ade-accent);
+  background: var(--ade-accent-soft);
+  padding: var(--ade-space-1) var(--ade-space-2);
+  border-radius: var(--ade-radius-sm);
+}
+
+/* Action button component inside overlay */
+
+[data-component="voice-overlay"] [data-slot="btn"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ade-space-2);
+  padding: var(--ade-space-2) var(--ade-space-5);
+  border-radius: var(--ade-radius-md);
+  border: 1px solid var(--ade-border-strong);
+  background: var(--ade-raised);
+  color: var(--ade-text-soft);
+  font-family: inherit;
+  font-size: var(--ade-font-md);
+  font-weight: var(--ade-weight-medium);
+  cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    border-color var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-component="voice-overlay"] [data-slot="btn"]:hover {
+  background: var(--ade-hover);
+  color: var(--ade-text);
+}
+
+[data-component="voice-overlay"] [data-slot="btn"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-component="voice-overlay"] [data-slot="btn"][data-variant="primary"] {
+  background: var(--ade-accent);
+  color: var(--ade-accent-fg);
+  border-color: transparent;
+  font-weight: var(--ade-weight-semibold);
+}
+
+[data-component="voice-overlay"] [data-slot="btn"][data-variant="primary"]:hover {
+  background: var(--ade-accent-strong);
+}
+
+/* Error message banner */
+
+[data-component="voice-overlay"] [data-slot="error-banner"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-2);
+  padding: var(--ade-space-2) var(--ade-space-4);
+  background: var(--ade-error-bg);
+  border-left: 2px solid var(--ade-error);
+  border-radius: 0 var(--ade-radius-sm) var(--ade-radius-sm) 0;
+  color: var(--ade-error);
+  font-size: var(--ade-font-sm);
+}
+
+/* Footer note */
+
+[data-component="voice-overlay"] [data-slot="footer"] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--ade-space-3) var(--ade-space-6);
+  border-top: 1px solid var(--ade-border-subtle);
+  background: var(--ade-raised);
+  font-size: var(--ade-font-xs);
+  color: var(--ade-text-weak);
+}

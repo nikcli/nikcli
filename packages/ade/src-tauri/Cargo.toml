@@ -1,0 +1,95 @@
+[package]
+name = "ade-desktop"
+version = "0.0.0"
+description = "Agent Development Environment"
+authors = ["Nikcli"]
+edition = "2021"
+default-run = "ade-desktop"
+
+[[bin]]
+name = "ade-desktop"
+path = "src/main.rs"
+
+# ADE Test under an executable name of its own. An NSIS setup, and the updater
+# running one, closes every process of the user named like the app's binary;
+# with one shared `ade-desktop.exe` an update of the installed ADE closed every
+# ADE Test in development too, and a trial setup closed the installed ADE.
+# `tauri dev` ignores `mainBinaryName`, so development runs this target:
+#   tauri dev --config src-tauri/tauri.test.conf.json --features test-exe -- --bin ade-test
+# Behind a feature so the official bundle, which ships every enabled binary,
+# does not carry a second copy of the app.
+[[bin]]
+name = "ade-test"
+path = "src/test_main.rs"
+required-features = ["test-exe"]
+
+[lib]
+name = "ade_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[features]
+# Tauri turns the web inspector on by itself in a debug build, so naming the
+# feature unconditionally bought nothing in development and shipped an inspector
+# in the release binary — one that anything running in the browser pane's frame
+# could open over the whole application. Opt in explicitly when a release build
+# really needs it: `cargo build --release --features devtools`.
+devtools = ["tauri/devtools"]
+# Builds the `ade-test` binary; see its [[bin]] entry.
+test-exe = []
+
+[dependencies]
+tauri = { version = "2.9.5", features = [] }
+tauri-plugin-shell = "2"
+tauri-plugin-dialog = "2"
+tauri-plugin-global-shortcut = "2"
+tauri-plugin-clipboard-manager = "2"
+# In-app updates from the fork's signed `latest.json` (see ade-release.yml).
+tauri-plugin-updater = "2"
+serde = { version = "1", features = ["derive"] }
+# home_dir() is not in std anymore; this small crate is the canonical replacement.
+dirs = "6"
+serde_json = "1"
+portable-pty = "0.9.0"
+# CPU, RAM and ADE's own memory for the sidebar footer, on every platform.
+sysinfo = { version = "0.39", default-features = false, features = ["system"] }
+keyring = { version = "3", features = ["windows-native", "apple-native", "sync-secret-service", "crypto-rust"] }
+# Cropping and blanking a capture before it reaches the disk (S35); PNG only.
+image = { version = "0.25", default-features = false, features = ["png"] }
+
+[target.'cfg(windows)'.dependencies]
+# Directory junctions need no elevation, unlike symlinks. One small crate is a
+# far narrower grant than putting `cmd` on the shell allowlist, which would be
+# arbitrary execution for anything the page decides to run.
+junction = "1"
+# The WebView2 COM API Tauri already builds on (same versions as its lock), to
+# grant ADE's own page the microphone without the browser-style prompt.
+webview2-com = "0.38"
+windows-core = "0.61"
+# IStream for the window capture, same version Tauri builds with.
+windows = { version = "0.61", features = ["Win32_System_Com", "Win32_System_Com_StructuredStorage"] }
+# Windows.Graphics.Capture for S36: captures a window's composed pixels, which
+# includes the WebView2 content that a GDI grab misses, and brings its own
+# hardware H.264 encoder. MIT.
+windows-capture = "2"
+
+# windows-capture 2.0.1 with one change: the encoder can be told to use
+# software. Upstream always asks for a hardware MFT, and once the webview's
+# own H.264 encoding (the promo export) has been through this process, every
+# new take failed with 0xC00D6D60 until ADE restarted. MIT, see its LICENCE.
+[patch.crates-io]
+windows-capture = { path = "vendor/windows-capture" }
+
+[profile.release]
+# A desktop binary is built once and started many times, so the slower link
+# buys a smaller, faster executable for every launch after it.
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true
+# Not `panic = "abort"`. Every lock in `src/` is taken as `lock().map_err(..)`,
+# which only means something if a panicking thread unwinds and poisons it, and
+# a panic inside an async command is caught by the runtime as a failed task —
+# with abort it would take the whole window, and every agent in it, down.

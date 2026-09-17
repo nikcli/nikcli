@@ -1,0 +1,92 @@
+/* plugin manager: the pane and the sidebar section share one list */
+
+[data-component="plugin-overview"] {
+  padding: var(--ade-space-4) var(--ade-space-6);
+  overflow: auto;
+  height: 100%;
+}
+
+[data-component="plugin-section"] {
+  padding: var(--ade-space-2) var(--ade-space-4);
+}
+
+[data-slot="plugin-summary"] {
+  margin: 0 0 var(--ade-space-4);
+  color: var(--ade-text-weak);
+  font-size: var(--ade-font-sm);
+}
+
+[data-slot="plugin-empty"] {
+  margin: 0;
+  color: var(--ade-text-weak);
+  font-size: var(--ade-font-sm);
+}
+
+[data-slot="plugin-list"] {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-2);
+}
+
+[data-slot="plugin-row"] {
+  display: flex;
+  align-items: baseline;
+  gap: var(--ade-space-3);
+  padding: var(--ade-space-2) var(--ade-space-3);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-sm, 4px);
+  font-size: var(--ade-font-md);
+}
+
+[data-slot="plugin-list"][data-dense="true"] [data-slot="plugin-row"] {
+  border: none;
+  padding: var(--ade-space-1) 0;
+  font-size: var(--ade-font-sm);
+}
+
+/* Red until the plugin is active: the failures are what this list is for. */
+[data-slot="plugin-dot"] {
+  flex: none;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--ade-error);
+}
+
+[data-slot="plugin-row"][data-active="true"] [data-slot="plugin-dot"] {
+  background: var(--ade-done);
+}
+
+[data-slot="plugin-body"] {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+[data-slot="plugin-id"] {
+  font-family: var(--ade-mono);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+[data-slot="plugin-error"] {
+  color: var(--ade-error);
+  font-size: var(--ade-font-sm);
+}
+
+[data-slot="plugin-meta"] {
+  color: var(--ade-text-weak);
+  font-size: var(--ade-font-sm);
+}
+
+[data-slot="plugin-source"] {
+  flex: none;
+  color: var(--ade-text-weak);
+  font-size: var(--ade-font-sm);
+}

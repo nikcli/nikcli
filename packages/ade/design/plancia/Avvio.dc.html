@@ -1,0 +1,271 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+  <style>
+    body {
+      margin: 0;
+      font-family: "Inter", "Inter Fallback", -apple-system, "Segoe UI", system-ui, sans-serif;
+      font-feature-settings: "ss03" 1;
+      background: #131010;
+      color: #fdfbfbf0;
+      -webkit-font-smoothing: antialiased;
+    }
+    a { color: #89b5ff; }
+    a:hover { color: #a8c8ff; }
+    button { font: inherit; cursor: pointer; }
+    .sd-card:hover, .sd-agent:hover, .sd-count:hover { background: #edd5d516; }
+    .sd-input:focus { outline: none; box-shadow: 0 0 0 1px #f7ecec3f; }
+  </style>
+</helmet>
+
+<div style="display: flex; flex-direction: column; width: 1200px; height: 900px; background: #131010">
+
+  <div style="display: flex; align-items: center; gap: 8px; height: 40px; padding: 0 12px; border-bottom: 1px solid #f7ecec3f; background: #151313; flex: 0 0 auto">
+    <span style="display: inline-flex; align-items: center; gap: 6px; height: 22px; padding: 0 8px; border-radius: 4px; background: #edd5d516; color: #89b5ff; font-size: 11px; font-weight: 500">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M2.5 4.5h4l1.5 2h5.5v6.5a1 1 0 0 1-1 1h-10a1 1 0 0 1-1-1v-8.5z" stroke="#89b5ff" stroke-width="1.2" stroke-linejoin="round"></path>
+      </svg>
+      {{ workspace }}
+    </span>
+    <span style="font-size: 13px; font-weight: 500; color: #fdfbfbf0">Nuova sessione</span>
+    <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; color: #faf5f477">{{ path }}</span>
+    <span style="flex-grow: 1"></span>
+    <button type="button" aria-label="Chiudi" style="display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border: 0; border-radius: 4px; background: transparent; color: #fcf9f9b2">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></path>
+      </svg>
+    </button>
+  </div>
+
+  <div style="display: flex; flex-direction: column; gap: {{ sectionGap }}; flex-grow: 1; min-height: 0; overflow-y: auto; padding: 24px 32px">
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #faf5f477">Preset</div>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px">
+        <sc-for list="{{ presets }}" as="preset" hint-placeholder-count="4">
+          <button type="button" class="sd-card" onClick="{{ preset.pick }}" style="{{ preset.style }}">
+            <span style="display: flex; align-items: center; gap: 8px">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="{{ preset.d }}" stroke="{{ preset.markColor }}" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path>
+              </svg>
+              <span style="flex-grow: 1; font-size: 13px; font-weight: 500; color: #fdfbfbf0; text-align: left">{{ preset.label }}</span>
+              <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; color: #faf5f477">{{ preset.sessions }}</span>
+            </span>
+            <span style="font-size: 11px; line-height: 150%; color: #fcf9f9b2; text-align: left">{{ preset.description }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #faf5f477">Agente</div>
+      <div style="display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px">
+        <sc-for list="{{ agents }}" as="agent" hint-placeholder-count="10">
+          <button type="button" class="sd-agent" onClick="{{ agent.pick }}" style="{{ agent.style }}">
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="{{ agent.d }}" stroke="{{ agent.markColor }}" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+            <span style="flex-grow: 1; font-size: 13px; color: #fdfbfbf0; text-align: left">{{ agent.label }}</span>
+            <sc-if value="{{ agent.selected }}" hint-placeholder-val="{{ true }}">
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M3.5 8.5l3 3 6-6.5" stroke="#89b5ff" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"></path>
+              </svg>
+            </sc-if>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #faf5f477">Quante</div>
+      <div style="display: flex; align-items: center; gap: 6px">
+        <sc-for list="{{ counts }}" as="option" hint-placeholder-count="6">
+          <button type="button" class="sd-count" onClick="{{ option.pick }}" style="{{ option.style }}">{{ option.value }}</button>
+        </sc-for>
+        <span style="margin-left: 6px; font-size: 11px; color: #faf5f477">sessioni parallele</span>
+      </div>
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #faf5f477">Task — va a ogni agente, opzionale</div>
+      <input class="sd-input" type="text" value="{{ task }}" onInput="{{ setTask }}" placeholder="Su cosa devono lavorare?" style="width: 100%; box-sizing: border-box; height: 32px; padding: 2px 12px; border: 1px solid #f5e8e831; border-radius: 6px; background: #151313; color: #fdfbfbf0; font-family: inherit; font-size: 14px">
+    </div>
+
+    <div style="display: flex; flex-direction: column; gap: 8px">
+      <div style="display: flex; align-items: baseline; gap: 8px">
+        <span style="font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #faf5f477">Partirà</span>
+        <span style="font-size: 11px; color: #faf5f477">{{ launchSummary }}</span>
+      </div>
+      <div style="display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 8px">
+        <sc-for list="{{ entries }}" as="entry" hint-placeholder-count="4">
+          <div style="{{ entry.style }}">
+            <span style="font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 11px; color: #faf5f477">{{ entry.index }}</span>
+            <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="{{ entry.d }}" stroke="{{ entry.markColor }}" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path>
+            </svg>
+            <span style="flex-grow: 1; font-size: 13px; color: #fdfbfbf0">{{ entry.label }}</span>
+            <sc-if value="{{ entry.roleLabel }}" hint-placeholder-val="{{ true }}">
+              <span style="font-size: 10px; font-weight: 500; letter-spacing: 0.04em; text-transform: uppercase; color: #faf5f477">{{ entry.roleLabel }}</span>
+            </sc-if>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+  </div>
+
+  <div style="display: flex; align-items: center; gap: 8px; height: 44px; padding: 0 32px; border-top: 1px solid #f7ecec3f; background: #151313; flex: 0 0 auto">
+    <span style="font-size: 11px; color: #fcf9f9b2">{{ footer }}</span>
+    <span style="flex-grow: 1"></span>
+    <button type="button" style="display: inline-flex; align-items: center; height: 32px; padding: 0 12px; border: 1px solid transparent; border-radius: 6px; background: #151313; color: #fdfbfbf0; font-size: 13px; font-weight: 500; box-shadow: 0 0 0 1px #f7ecec3f, 0 1px 2px -1px rgba(19, 16, 16, 0.04), 0 1px 3px 0 rgba(19, 16, 16, 0.08)">
+      Annulla
+    </button>
+    <button type="button" style="display: inline-flex; align-items: center; gap: 6px; height: 32px; padding: 0 14px; border: 1px solid #f5e8e831; border-radius: 6px; background: #f1ecec; color: #131010; font-size: 13px; font-weight: 500">
+      {{ launchLabel }}
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+        <path d="M6 3.5l5 4.5-5 4.5" stroke="#131010" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"></path>
+      </svg>
+    </button>
+  </div>
+</div>
+</x-dc>
+
+<script data-dc-script data-props='{"density":{"editor":"enum","options":["comodo","compatto"],"default":"comodo","section":"Layout"},"$preview":{"width":1200,"height":900}}'>
+class Component extends DCLogic {
+  constructor(props) {
+    super(props)
+    this.state = { preset: null, agentId: "codex", count: 1, task: "" }
+  }
+
+  presets() {
+    return [
+      { id: "solo", label: "Solo", sessions: 1, description: "Un agente in un terminale.", d: "M8 3.2a2.2 2.2 0 1 1 0 4.4 2.2 2.2 0 0 1 0-4.4zM3.6 13a4.4 4.4 0 0 1 8.8 0" },
+      { id: "pair", label: "Coppia", sessions: 2, description: "Uno sviluppa, uno revisiona lo stesso albero.", d: "M5.4 3.6a2 2 0 1 1 0 4 2 2 0 0 1 0-4zM1.8 12.8a3.6 3.6 0 0 1 7.2 0M10.6 4a2 2 0 1 1 0 4M11.2 8.9a3.6 3.6 0 0 1 3 3.9" },
+      { id: "workbench", label: "Banco di lavoro", sessions: 2, description: "Un agente più una shell per git e test.", d: "M2.6 3.6h10.8v8.8H2.6zM5.2 7l1.8 1.6-1.8 1.6M8.6 10.6h2.4" },
+      { id: "swarm", label: "Sciame", sessions: 4, description: "Quattro agenti si distribuiscono su task paralleli.", d: "M8 2.4v3.4M8 10.2v3.4M2.4 8h3.4M10.2 8h3.4M4.4 4.4l2 2M9.6 9.6l2 2M11.6 4.4l-2 2M6.4 9.6l-2 2" },
+    ]
+  }
+
+  /*
+   * Neutral geometric marks stand in for the product logos on purpose: a wrong
+   * logo reads as a bug, a placeholder reads as a placeholder. Each is a single
+   * path so it can ride an attribute hole — text holes are escaped, so markup
+   * cannot be injected through a value.
+   */
+  agents() {
+    return [
+      { id: "claude-code", label: "Claude Code", d: "M8 2.6v10.8M3.4 5.3l9.2 5.4M12.6 5.3l-9.2 5.4" },
+      { id: "codex", label: "Codex", d: "M8 2.8a5.2 5.2 0 1 1 0 10.4 5.2 5.2 0 0 1 0-10.4zM8 6.4a1.6 1.6 0 1 1 0 3.2 1.6 1.6 0 0 1 0-3.2z" },
+      { id: "cursor-agent", label: "Cursor Agent", d: "M4 2.8l8.4 5-3.6 1.2-1.6 3.6z" },
+      { id: "nikcli", label: "nikcli", d: "M4.4 12.2V3.8l7.2 8.4V3.8" },
+      { id: "droid", label: "Droid", d: "M4.6 3.2h6.8a1.4 1.4 0 0 1 1.4 1.4v6.8a1.4 1.4 0 0 1-1.4 1.4H4.6a1.4 1.4 0 0 1-1.4-1.4V4.6a1.4 1.4 0 0 1 1.4-1.4zM6.4 6.6h.1M9.5 6.6h.1M6 10h4" },
+      { id: "opencode", label: "OpenCode", d: "M4.6 3.6h6.8a1.6 1.6 0 0 1 1.6 1.6v5.6a1.6 1.6 0 0 1-1.6 1.6H4.6A1.6 1.6 0 0 1 3 10.8V5.2a1.6 1.6 0 0 1 1.6-1.6zM8 3.6v8.8" },
+      { id: "deepseek", label: "DeepSeek Harness", d: "M8 2.8l5 8.8H3zM8 6.6v2.2" },
+      { id: "grok-build", label: "Grok Build", d: "M3.4 3.4l9.2 9.2M12.6 3.4l-9.2 9.2" },
+      { id: "antigravity", label: "Antigravity", d: "M8 3l4.6 8H3.4zM8 13.2v-2.6" },
+      { id: "prime-agent", label: "Prime Agent", d: "M8 2.6l5.4 5.4L8 13.4 2.6 8zM8 6.2L9.8 8 8 9.8 6.2 8z" },
+      { id: "hermes", label: "Hermes", d: "M8 3.2v9.6M4.4 6.4c1.5-1.1 2.6-1.1 3.6 0M11.6 6.4c-1.5-1.1-2.6-1.1-3.6 0M6.2 12.8h3.6" },
+      { id: "terminal", label: "Terminal", d: "M2.6 3.6h10.8v8.8H2.6zM5.2 7l1.8 1.6-1.8 1.6M8.6 10.6h2.4" },
+    ]
+  }
+
+  agentById(id) {
+    return this.agents().find((a) => a.id === id) || this.agents()[1]
+  }
+
+  cardStyle(selected) {
+    const base =
+      "display: flex; flex-direction: column; gap: 6px; padding: 12px; border-radius: 6px; text-align: left; background: #151313; "
+    return selected ? base + "border: 1px solid #89b5ff;" : base + "border: 1px solid #f5e8e831;"
+  }
+
+  rowStyle(selected) {
+    const base =
+      "display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 10px; border-radius: 6px; background: #151313; "
+    return selected ? base + "border: 1px solid #89b5ff;" : base + "border: 1px solid #f5e8e831;"
+  }
+
+  countStyle(selected) {
+    const base =
+      "min-width: 30px; height: 28px; padding: 0 8px; border-radius: 6px; font-family: 'IBM Plex Mono', ui-monospace, monospace; font-size: 13px; background: #151313; "
+    return selected
+      ? base + "border: 1px solid #89b5ff; color: #89b5ff;"
+      : base + "border: 1px solid #f5e8e831; color: #fcf9f9b2;"
+  }
+
+  /*
+   * The preset names the roles of the slots it describes and nothing beyond:
+   * raising the count past it appends plain agents, not more shells. Without
+   * this list the screen would say "4 sessions" and hide that one is a shell.
+   */
+  entries() {
+    const agent = this.agentById(this.state.agentId)
+    const terminal = this.agentById("terminal")
+    const out = []
+    for (let i = 1; i <= this.state.count; i++) {
+      const isShell = this.state.preset === "workbench" && i === 2
+      const isReviewer = this.state.preset === "pair" && i === 2
+      out.push({
+        index: i,
+        label: isShell ? terminal.label : agent.label,
+        d: isShell ? terminal.d : agent.d,
+        markColor: isShell ? "#faf5f477" : "#89b5ff",
+        roleLabel: isShell ? "shell" : isReviewer ? "revisiona" : "",
+        style:
+          "display: flex; align-items: center; gap: 8px; height: 34px; padding: 0 10px; border-radius: 6px; background: #151313; border: 1px " +
+          (isShell ? "dashed #f5e8e831;" : "solid #f5e8e831;"),
+      })
+    }
+    return out
+  }
+
+  footer() {
+    const preset = this.presets().find((p) => p.id === this.state.preset)
+    const name = preset && preset.sessions === this.state.count ? preset.label : "Personalizzata"
+    const word = this.state.count === 1 ? "sessione" : "sessioni"
+    return name + " · " + this.state.count + " " + word + " in nikcli"
+  }
+
+  renderVals() {
+    const compact = (this.props.density ?? "comodo") === "compatto"
+    const selected = this.state.agentId
+
+    return {
+      workspace: "nikcli",
+      path: "~/Favorites/nikcli",
+      sectionGap: compact ? "16px" : "24px",
+      task: this.state.task,
+      launchLabel: this.state.count === 1 ? "Avvia 1 sessione" : "Avvia " + this.state.count + " sessioni",
+      counts: [1, 2, 3, 4, 5, 6].map((value) => ({
+        value: value,
+        style: this.countStyle(this.state.count === value),
+        pick: () => this.setState({ count: value }),
+      })),
+      presets: this.presets().map((preset) => ({
+        ...preset,
+        markColor: this.state.preset === preset.id ? "#89b5ff" : "#faf5f477",
+        style: this.cardStyle(this.state.preset === preset.id),
+        pick: () => this.setState({ preset: preset.id, count: preset.sessions }),
+      })),
+      agents: this.agents().map((agent) => ({
+        ...agent,
+        markColor: selected === agent.id ? "#89b5ff" : "#faf5f477",
+        selected: selected === agent.id,
+        style: this.rowStyle(selected === agent.id),
+        pick: () => this.setState({ agentId: agent.id }),
+      })),
+      entries: this.entries(),
+      launchSummary: this.state.task ? "con il task scritto sopra" : "nessun task iniziale",
+      footer: this.footer(),
+      setTask: (event) => this.setState({ task: event.target.value }),
+    }
+  }
+}
+</script>
+</body>
+</html>

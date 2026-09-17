@@ -1,0 +1,554 @@
+/* ── the heads-up voice widget ─────────────────────────────────────────────── */
+
+/*
+ * A strip across the bottom of the window that is transparent to the pointer,
+ * carrying one pill that is not. Fixed rather than absolute: the widget belongs
+ * to the window, not to whichever pane happens to contain it, and an absolute
+ * one would be clipped by the first ancestor with `overflow: hidden`.
+ */
+[data-component="voice-hud"] {
+  position: fixed;
+  inset: auto 0 0 0;
+  z-index: 200;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ade-space-3);
+  padding: 0 var(--ade-space-7) var(--ade-space-8);
+  pointer-events: none;
+
+  /*
+   * The widget wears nikcli's colours, not ADE's.
+   *
+   * ADE's accent is a teal it chose for itself; the product's mark is
+   * monochrome — warm near-black against warm off-white, with one held-back
+   * grey for the counter — and these are the two values the logo files are
+   * actually drawn in. A widget that carries the mark and then tints
+   * everything around it a colour the mark has never contained reads as
+   * someone else's component with the logo dropped into it.
+   *
+   * Written once as light-dark(), so the pair swaps with the theme the way
+   * the two logo files do.
+   */
+  --hud-ink: light-dark(#211e1e, #f1ecec);
+  --hud-on-ink: light-dark(#f1ecec, #211e1e);
+  --hud-muted: light-dark(#bcbbbb, #4b4646);
+
+  /*
+   * Glass, as five values.
+   *
+   * The widget floats over running terminals — the one place in ADE where
+   * something is laid on top of live, moving content — so it is the one place
+   * where a material that admits what is behind it is telling the truth rather
+   * than decorating. The pill used to be an opaque plate: it hid two lines of
+   * whatever agent the user was talking about, at exactly the moment they were
+   * talking about it.
+   *
+   * `tint` is the body, thin enough that text behind it still moves and thick
+   * enough that the pill's own text stays legible over anything. `rim` is the
+   * lit top edge, `edge` the darker underside — together they are what makes a
+   * translucent shape read as having thickness rather than as opacity. `sheen`
+   * is the specular that travels across it, and `cast` is the shadow it drops.
+   *
+   * Written as light-dark() pairs like the ink above: in a dark window glass is
+   * not the same material with the alpha flipped — it lights from a different
+   * side, and the rim carries almost all of the reading.
+   */
+  --hud-tint: light-dark(rgb(252 251 250 / 0.22), rgb(26 24 24 / 0.26));
+  /*
+   * The glow that keeps the copy readable over whatever is behind the glass.
+   *
+   * This is what makes real transparency affordable. The alternative is to
+   * flatten the backdrop until the text is safe, which is the same thing as
+   * not being transparent — so instead each run of text carries a soft halo in
+   * the theme's own ground colour, and a sentence stays legible whether it
+   * happens to fall over a terminal's black or its white. It costs nothing
+   * where the backdrop is already quiet, because a halo in the ground colour
+   * on the ground colour is invisible.
+   */
+  --hud-halo: light-dark(rgb(250 249 248 / 0.92), rgb(16 14 14 / 0.92));
+  --hud-rim: light-dark(rgb(255 255 255 / 0.95), rgb(255 255 255 / 0.22));
+  --hud-edge: light-dark(rgb(0 0 0 / 0.10), rgb(255 255 255 / 0.07));
+  --hud-sheen: light-dark(rgb(255 255 255 / 0.75), rgb(255 255 255 / 0.10));
+  --hud-cast: light-dark(
+    0 12px 32px rgb(0 0 0 / 0.14),
+    0 14px 40px rgb(0 0 0 / 0.55)
+  );
+}
+
+/*
+ * One size, always.
+ *
+ * The pill used to be sized by its contents, and its contents include the
+ * name of the pane the dictation is aimed at: switching between a session
+ * called `nikcli` and one called `feat/browser-visual-editor-cursor` resized
+ * the widget under the user's eyes, and so did every state change that
+ * added or removed a button. A heads-up widget that moves while you are
+ * speaking to it is one you have to keep re-finding.
+ *
+ * So the box is fixed in both directions and the text inside it gives way
+ * instead. Nothing scrolls: every slot in here is a single line that
+ * ellipses, and the one thing that genuinely needs more room — a failure's
+ * explanation — has its own element below the pill, which is free to wrap.
+ */
+[data-slot="hud-pill"] {
+  pointer-events: auto;
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-5);
+  box-sizing: border-box;
+  width: min(720px, calc(100vw - 32px));
+  height: 56px;
+  /* The guard, not the mechanism: every child already truncates. If one
+     ever stops doing so, the widget must still not change shape. It is also
+     what keeps the sheen and the caustic inside the capsule. */
+  overflow: hidden;
+  /* The glass is painted on `isolation` of its own so the sheen composites
+     against the pill and not against whatever is running behind the window. */
+  isolation: isolate;
+  padding: var(--ade-space-3) var(--ade-space-3) var(--ade-space-3) var(--ade-space-5);
+  border: 1px solid transparent;
+  border-radius: var(--ade-radius-full);
+
+  /*
+   * The body of the glass — thin, and meant to be seen through.
+   *
+   * Two earlier cuts got this wrong in the same direction. A 58% tint made a
+   * frosted plate: technically translucent, in practice a panel with nothing
+   * visible behind it. Dropping the tint and adding `contrast(0.42)` to keep
+   * the text readable was worse — crushing the backdrop's contrast collapses
+   * it to one flat mid-tone, so the pill looked *exactly* as opaque while
+   * doing more work to get there. Legibility bought by destroying what is
+   * behind the glass is not transparency.
+   *
+   * So: a light tint, a blur soft enough to keep the shapes behind readable as
+   * shapes, and `saturate` to put back the colour the blur drains — real glass
+   * concentrates what it transmits rather than bleaching it. The pill's own
+   * text pays for its own legibility, in `--hud-halo` below.
+   */
+  background:
+    linear-gradient(
+      to bottom,
+      color-mix(in srgb, var(--hud-rim) 26%, transparent),
+      transparent 46%
+    ),
+    var(--hud-tint);
+  backdrop-filter: blur(13px) saturate(190%);
+  -webkit-backdrop-filter: blur(13px) saturate(190%);
+
+  /*
+   * Thickness, in three inset lines and one cast.
+   *
+   * The lit hairline along the top and the darker one along the bottom are the
+   * whole trick: an edge that is the same all the way round reads as a border,
+   * and an edge that is lit above and shadowed below reads as a bevel with a
+   * light source. The third inset is the glass's own faint wall, which keeps
+   * the pill's outline visible over a white pane.
+   */
+  box-shadow:
+    inset 0 1px 0 var(--hud-rim),
+    inset 0 -1px 0 var(--hud-edge),
+    inset 0 0 0 1px var(--hud-edge),
+    var(--hud-cast);
+
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+  color: var(--ade-text);
+  min-width: 0;
+
+  /* Everything written on the glass, held off whatever is behind it. Set on
+     the pill so no run of text can be added later and forget it. */
+  text-shadow:
+    0 0 3px var(--hud-halo),
+    0 0 8px var(--hud-halo);
+
+  animation: ade-hud-rise var(--ade-dur) var(--ade-ease-out);
+}
+
+/*
+ * The specular, travelling.
+ *
+ * This is the "liquid" half: a soft band of light that drifts the length of
+ * the capsule and back, the way a highlight runs along a piece of glass that
+ * is being turned. Slow — eleven seconds for a full pass — because it is a
+ * material property, not a progress indicator, and anything quick enough to
+ * notice would compete with the waveform beside it.
+ */
+[data-slot="hud-pill"]::before {
+  content: "";
+  position: absolute;
+  inset: -40% -60%;
+  z-index: -1;
+  pointer-events: none;
+  background: linear-gradient(
+    100deg,
+    transparent 36%,
+    var(--hud-sheen) 50%,
+    transparent 64%
+  );
+  opacity: 0.55;
+  animation: ade-hud-sheen 11s var(--ade-ease, ease-in-out) infinite;
+}
+
+/*
+ * The caustic: the pool of light glass gathers where it is thickest, held at
+ * the left end under the orb. Still, unlike the sheen — a highlight that moves
+ * and a body that also moves is a lava lamp.
+ */
+[data-slot="hud-pill"]::after {
+  content: "";
+  position: absolute;
+  inset: 0 auto 0 0;
+  width: 42%;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(
+    120% 140% at 12% 0%,
+    color-mix(in srgb, var(--hud-rim) 40%, transparent),
+    transparent 62%
+  );
+}
+
+@keyframes ade-hud-sheen {
+  0% {
+    transform: translateX(-38%);
+  }
+  50% {
+    transform: translateX(38%);
+  }
+  100% {
+    transform: translateX(-38%);
+  }
+}
+
+/*
+ * Where the browser cannot blur what is behind, the glass is a lie: a 22%
+ * tint over an unblurred terminal is unreadable text on top of readable text.
+ * Fall back to the plate the widget used to be.
+ */
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  [data-slot="hud-pill"] {
+    background: var(--ade-overlay);
+  }
+  [data-slot="hud-pill"]::before,
+  [data-slot="hud-pill"]::after {
+    display: none;
+  }
+}
+
+/*
+ * It arrives from just below its resting place. Short and small: the widget
+ * appears in response to a key the user is still holding, and anything longer
+ * than a frame or two reads as lag in the microphone rather than as motion.
+ */
+@keyframes ade-hud-rise {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+}
+
+/*
+ * The state is said with one hairline of colour on the border, not with a
+ * tinted background: the pill sits over running terminals, and a fill that
+ * changed hue every time the dialogue advanced would flicker over them.
+ *
+ * Only two states earn a hue, and both earn it by meaning something the ink
+ * cannot say: amber when the agent is waiting on an answer before it does
+ * something destructive, blue while it is busy doing it. Listening and
+ * understood are the ordinary course of events, so they are drawn in the
+ * product's own ink rather than in a colour that would make every sentence
+ * spoken look like an alert.
+ *
+ * On glass the hairline is held back to two thirds: a fully saturated ring
+ * around a translucent body reads as a sticker laid on the window, and the
+ * edge has a lit bevel of its own now doing half the work of separating the
+ * pill from what is behind it.
+ */
+[data-slot="hud-pill"][data-tone="listening"],
+[data-slot="hud-pill"][data-tone="done"] {
+  border-color: color-mix(in srgb, var(--hud-ink) 55%, transparent);
+}
+[data-slot="hud-pill"][data-tone="asking"] {
+  border-color: color-mix(in srgb, var(--ade-working) 70%, transparent);
+}
+[data-slot="hud-pill"][data-tone="working"] {
+  border-color: color-mix(in srgb, var(--ade-waiting) 70%, transparent);
+}
+[data-slot="hud-pill"][data-tone="armed"] {
+  border-color: color-mix(in srgb, var(--hud-muted) 70%, transparent);
+}
+/* The one state that earns the alert colour at full strength: nothing is
+   listening, and the user is owed the reason rather than a button that looked
+   pressed. */
+[data-slot="hud-pill"][data-tone="failed"] { border-color: var(--ade-error); }
+[data-slot="hud-pill"][data-tone="failed"] [data-slot="hud-label"] { color: var(--ade-error); }
+/*
+ * A failure's line stays on one line like every other.
+ *
+ * It used to wrap to 48ch, which made the pill two or three rows tall for
+ * exactly the state where the user most needs the widget to stay where they
+ * last saw it. The full sentence is in `hud-error` below, which wraps.
+ */
+[data-slot="hud-pill"][data-kind="failure"] [data-slot="hud-line"] {
+  white-space: nowrap;
+}
+
+/* ── the mark ──────────────────────────────────────────────────────────────── */
+
+/*
+ * The orb, wearing the pill's tone.
+ *
+ * This used to be a flat ink disc with the block mark laid on it, plus — in
+ * the agent pill — a ring that scaled with the level: the widget's own idea of
+ * an orb, drawn beside the toolbar's, and the two had already drifted apart.
+ * The sphere is `orb-mark.css` now and both hosts draw it; all the widget does
+ * is say how big and which two inks, so the pill's tone still reaches it.
+ *
+ * The two variables are the whole integration: the widget already keeps its
+ * own figure-and-ground pair, swapped with the theme by `light-dark()`, and
+ * the orb takes that pair instead of reaching for the ADE tokens directly. The
+ * pill's tone stays where the widget has always put it — the border and the
+ * label — rather than tinting the mark, because the tone changes with every
+ * turn of the conversation and an identity that changes colour eight times a
+ * minute stops being one.
+ */
+[data-slot="hud-mark"],
+[data-slot="hud-orb"] {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  --orb-ink: var(--hud-ink);
+  --orb-lit: var(--hud-on-ink);
+  --orb-size: 28px;
+}
+
+/* The agent pill is the widget at its fullest, and its orb is the thing being
+   addressed: four pixels wider than the one on the pills that only report. */
+[data-slot="hud-orb"] {
+  --orb-size: 32px;
+}
+
+/* ── the waveform ──────────────────────────────────────────────────────────── */
+
+[data-slot="hud-wave"] {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  height: 20px;
+  flex: 0 0 auto;
+}
+
+[data-slot="hud-wave"] i {
+  display: block;
+  width: 2px;
+  min-height: 2px;
+  border-radius: var(--ade-radius-full);
+  background: var(--hud-ink);
+  opacity: 0.7;
+  transition: height var(--ade-dur-fast) var(--ade-ease-out);
+}
+
+/* ── the agent's line ──────────────────────────────────────────────────────── */
+
+[data-slot="hud-body"] {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  flex: 1 1 auto;
+  line-height: 1.35;
+}
+
+[data-slot="hud-label"] {
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ade-text-weak);
+}
+
+[data-slot="hud-line"] {
+  font-size: var(--ade-font-lg);
+  color: var(--ade-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+/* The user's own words are set apart from the widget's: one is a transcript,
+   the other is the interface talking, and they must not read as one voice. */
+[data-slot="hud-line"][data-quoted] {
+  font-style: italic;
+  color: var(--ade-text-soft);
+}
+
+/* ── the transcript ────────────────────────────────────────────────────────── */
+
+/*
+ * Clipped from the left, not the right: the newest words are the ones being
+ * checked, so they stay against the edge the way a caret does.
+ */
+[data-slot="hud-said"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: var(--ade-font-lg);
+  color: var(--ade-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  direction: rtl;
+  text-align: left;
+  unicode-bidi: plaintext;
+}
+
+[data-slot="hud-said"][data-empty] {
+  color: var(--ade-text-weak);
+  font-style: italic;
+}
+
+[data-slot="hud-target"] {
+  flex: 0 0 auto;
+  max-width: 180px;
+  padding: 2px var(--ade-space-4);
+  border-radius: var(--ade-radius-full);
+  border: 1px solid var(--hud-muted);
+  background: transparent;
+  color: var(--ade-text-soft);
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  user-select: none;
+}
+
+button[data-slot="hud-target"]:hover {
+  border-color: var(--ade-accent, #38bdf8);
+  color: var(--ade-text, #f1f5f9);
+  background: rgba(255, 255, 255, 0.08);
+}
+
+/* ── answers ───────────────────────────────────────────────────────────────── */
+
+[data-slot="hud-actions"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-2);
+  flex: 0 0 auto;
+}
+
+/*
+ * Buttons cut from the same glass, one layer nearer.
+ *
+ * An opaque chip on a translucent pill is the one combination that cannot
+ * work: the thing in front reads as more solid than the surface holding it.
+ * These are lighter tints of the same material, with the same lit top edge at
+ * a smaller radius, so they read as pressed *out of* the pill.
+ */
+[data-slot="hud-btn"] {
+  padding: var(--ade-space-2) var(--ade-space-5);
+  border: 1px solid var(--hud-edge);
+  border-radius: var(--ade-radius-full);
+  background: color-mix(in srgb, var(--hud-rim) 30%, transparent);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--hud-rim) 60%, transparent);
+  color: var(--ade-text);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+[data-slot="hud-btn"]:hover {
+  background: color-mix(in srgb, var(--hud-rim) 55%, transparent);
+}
+
+[data-slot="hud-btn"][data-primary] {
+  border-color: var(--hud-ink);
+  background: var(--hud-ink);
+  color: var(--hud-on-ink);
+  font-weight: var(--ade-weight-semibold);
+}
+
+[data-slot="hud-btn"]:focus-visible,
+[data-slot="hud-esc"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+/* The way out, drawn as the key that also does it. */
+[data-slot="hud-esc"] {
+  flex: 0 0 auto;
+  padding: var(--ade-space-2) var(--ade-space-4);
+  border: 1px solid var(--hud-edge);
+  border-radius: var(--ade-radius-full);
+  background: transparent;
+  color: var(--ade-text-weak);
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  cursor: pointer;
+}
+
+[data-slot="hud-esc"]:hover {
+  background: color-mix(in srgb, var(--hud-rim) 40%, transparent);
+  color: var(--ade-text);
+}
+
+/* ── failure ───────────────────────────────────────────────────────────────── */
+
+[data-slot="hud-error"] {
+  pointer-events: auto;
+  margin: 0;
+  box-sizing: border-box;
+  /* The same width as the pill above it, so the two read as one object
+     rather than as a widget with a differently shaped note attached. */
+  width: min(720px, calc(100vw - 32px));
+  padding: var(--ade-space-2) var(--ade-space-5);
+  border: 1px solid var(--ade-error);
+  border-radius: var(--ade-radius-full);
+  /* Glass too, so the note and the pill are one object — but tinted with the
+     alert colour rather than plain, because this strip exists only to be
+     read once and dismissed. */
+  background: color-mix(in srgb, var(--ade-error-bg) 82%, transparent);
+  backdrop-filter: blur(18px) saturate(160%);
+  -webkit-backdrop-filter: blur(18px) saturate(160%);
+  box-shadow:
+    inset 0 1px 0 var(--hud-rim),
+    var(--hud-cast);
+  color: var(--ade-error);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-sm);
+  text-align: center;
+}
+
+/* ── narrow windows ────────────────────────────────────────────────────────── */
+
+/*
+ * Under ~520px the target chip is the first thing to go: where the text lands
+ * is worth saying, but not at the cost of the text itself.
+ */
+@media (max-width: 520px) {
+  [data-slot="hud-target"] { display: none; }
+  [data-slot="hud-pill"] { gap: var(--ade-space-4); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-slot="hud-pill"] { animation: none; }
+  /*
+   * The sheen stops and parks where it reads best: a specular frozen halfway
+   * across is still a highlight, so the glass keeps its material and loses
+   * only the travelling. The orb answers this rule for itself, in
+   * `orb-mark.css`.
+   */
+  [data-slot="hud-pill"]::before {
+    animation: none;
+    transform: translateX(-14%);
+  }
+  [data-slot="hud-wave"] i { transition: none; }
+}

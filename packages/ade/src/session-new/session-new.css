@@ -1,0 +1,695 @@
+/*
+ * The start screen.
+ *
+ * This is what an empty ADE looks like, so it is the screen that has to make
+ * the case for the product. Three decisions shape it:
+ *
+ *   1. The task field comes first and is the only element sized like an
+ *      invitation. Everything under it refines a launch that already has a
+ *      working default, so a user who types a sentence and hits Enter is done.
+ *   2. One centred column, not a full-width form. A settings sheet stretched
+ *      across 1600px reads as configuration; a column reads as a decision.
+ *   3. Choices are cards and chips with real states — chosen, available,
+ *      missing — because "which agents do I actually have" is half the question
+ *      this screen answers.
+ *
+ * Uses the shared `--ade-*` tokens only.
+ */
+
+[data-component="session-new"] {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  background:
+    radial-gradient(120% 80% at 50% 0%, color-mix(in srgb, var(--ade-accent) 5%, transparent), transparent 70%),
+    var(--ade-bg);
+  color: var(--ade-text);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+}
+
+[data-slot="new-column"] {
+  width: min(880px, 100%);
+  margin: 0 auto;
+  padding: 32px var(--ade-space-6) var(--ade-space-6);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-6);
+}
+
+/* ── heading ───────────────────────────────────────────────────────────────── */
+
+[data-slot="new-bar"] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ade-space-4);
+  padding-bottom: var(--ade-space-4);
+  border-bottom: 1px solid var(--ade-border-subtle);
+}
+
+[data-slot="new-heading"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-2);
+  min-width: 0;
+}
+
+[data-slot="new-title"] {
+  margin: 0;
+  font-size: var(--ade-font-3xl);
+  font-weight: var(--ade-weight-semibold);
+  letter-spacing: -0.02em;
+  color: var(--ade-text);
+}
+
+[data-slot="new-where"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-4);
+  min-width: 0;
+}
+
+[data-slot="new-workspace"] {
+  padding: 1px var(--ade-space-3);
+  border-radius: var(--ade-radius-sm);
+  background: var(--ade-accent-soft);
+  color: var(--ade-accent);
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-sm);
+}
+
+[data-slot="new-path"] {
+  color: var(--ade-text-weak);
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+[data-slot="new-spacer"] {
+  flex: 1;
+}
+
+[data-slot="new-actions"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-3);
+}
+
+[data-slot="new-close"] {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-md);
+  background: transparent;
+  color: var(--ade-text-weak);
+  cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="new-close"]:hover {
+  background: var(--ade-hover);
+  color: var(--ade-text);
+}
+
+[data-slot="new-summary"] {
+  color: var(--ade-text-weak);
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-sm);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+[data-slot="new-cancel"] {
+  padding: var(--ade-space-3) var(--ade-space-5);
+  border: 0;
+  border-radius: var(--ade-radius-md);
+  background: transparent;
+  color: var(--ade-text-soft);
+  font-family: inherit;
+  font-size: var(--ade-font-md);
+  cursor: pointer;
+}
+
+[data-slot="new-cancel"]:hover {
+  background: var(--ade-hover);
+  color: var(--ade-text);
+}
+
+[data-slot="new-foot"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-4);
+  padding: var(--ade-space-4) 0 var(--ade-space-2);
+  border-top: 1px solid var(--ade-border-subtle);
+  margin-top: var(--ade-space-2);
+}
+
+[data-slot="new-launch-btn"] {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ade-space-4);
+  padding: var(--ade-space-3) var(--ade-space-6);
+  border: 0;
+  border-radius: var(--ade-radius-md);
+  background: var(--ade-accent);
+  color: var(--ade-accent-fg);
+  font-family: inherit;
+  font-size: var(--ade-font-md);
+  font-weight: var(--ade-weight-semibold);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="new-launch-btn"]:hover {
+  background: var(--ade-accent-strong);
+}
+
+[data-slot="new-launch-hint"] {
+  font-family: var(--ade-mono);
+  opacity: 0.65;
+}
+
+[data-slot="new-close"]:focus-visible,
+[data-slot="new-cancel"]:focus-visible,
+[data-slot="new-launch-btn"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+/* ── refinements ───────────────────────────────────────────────────────────── */
+
+[data-slot="new-body"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-6);
+}
+
+[data-slot="new-section"] {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-4);
+}
+
+[data-slot="new-legend"] {
+  padding: 0;
+  color: var(--ade-text-weak);
+  font-size: var(--ade-font-xs);
+  font-weight: var(--ade-weight-medium);
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+}
+
+/* ── agents ────────────────────────────────────────────────────────────────── */
+
+/*
+ * Per-agent tile palettes — the one place these live.
+ *
+ * Each agent's tile is tinted with its brand colour, and the brand colour is
+ * the one its mark is drawn in (`agent-mark.tsx` names the source of every
+ * one). Codex takes the blue end of its gradient and Antigravity the blue of
+ * its largest blob — one colour has to stand for a mark that has several,
+ * and the one that covers most of it is the honest pick. Prime, pi and Nous
+ * have no colour: they ship black-on-white, so their tiles take the same
+ * ink as OpenCode's and nothing else. They used to have a hue each — teal,
+ * violet, indigo, amber, red — chosen here rather than by the vendor, and a
+ * black mark on a violet tile still reads as violet.
+ */
+[data-agent-id="claude-code"] {
+  --cli-color: light-dark(#c25a39, #d97757);
+  --cli-tint: light-dark(rgba(194, 90, 57, 0.10), rgba(217, 119, 87, 0.14));
+  --cli-border: light-dark(rgba(194, 90, 57, 0.28), rgba(217, 119, 87, 0.35));
+  --cli-glow: light-dark(rgba(194, 90, 57, 0.18), rgba(217, 119, 87, 0.25));
+  --cli-contrast: #ffffff;
+}
+
+[data-agent-id="codex"] {
+  --cli-color: light-dark(#3941ff, #7a9dff);
+  --cli-tint: light-dark(rgba(57, 65, 255, 0.10), rgba(122, 157, 255, 0.14));
+  --cli-border: light-dark(rgba(57, 65, 255, 0.28), rgba(122, 157, 255, 0.35));
+  --cli-glow: light-dark(rgba(57, 65, 255, 0.18), rgba(122, 157, 255, 0.25));
+  --cli-contrast: #ffffff;
+}
+
+[data-agent-id="agy"] {
+  --cli-color: light-dark(#1a6fe8, #3186ff);
+  --cli-tint: light-dark(rgba(26, 111, 232, 0.10), rgba(49, 134, 255, 0.14));
+  --cli-border: light-dark(rgba(26, 111, 232, 0.28), rgba(49, 134, 255, 0.35));
+  --cli-glow: light-dark(rgba(26, 111, 232, 0.18), rgba(49, 134, 255, 0.25));
+  --cli-contrast: #ffffff;
+}
+
+/* Black-and-white brands: ink, at the same strengths OpenCode's off-white gets. */
+[data-agent-id="prime"],
+[data-agent-id="pi"],
+[data-agent-id="hermes"] {
+  --cli-color: light-dark(#000000, #ffffff);
+  --cli-tint: light-dark(rgba(0, 0, 0, 0.08), rgba(255, 255, 255, 0.12));
+  --cli-border: light-dark(rgba(0, 0, 0, 0.25), rgba(255, 255, 255, 0.30));
+  --cli-glow: light-dark(rgba(0, 0, 0, 0.15), rgba(255, 255, 255, 0.22));
+  --cli-contrast: light-dark(#ffffff, #000000);
+}
+
+[data-agent-id="opencode"] {
+  --cli-color: light-dark(#18181b, #f1ecec);
+  --cli-tint: light-dark(rgba(24, 24, 27, 0.08), rgba(241, 236, 236, 0.12));
+  --cli-border: light-dark(rgba(24, 24, 27, 0.25), rgba(241, 236, 236, 0.30));
+  --cli-glow: light-dark(rgba(24, 24, 27, 0.15), rgba(241, 236, 236, 0.22));
+  --cli-contrast: light-dark(#ffffff, #121212);
+}
+
+[data-agent-id="nikcli"] {
+  --cli-color: light-dark(#2563eb, #3b82f6);
+  --cli-tint: light-dark(rgba(37, 99, 235, 0.10), rgba(59, 130, 246, 0.15));
+  --cli-border: light-dark(rgba(37, 99, 235, 0.30), rgba(59, 130, 246, 0.40));
+  --cli-glow: light-dark(rgba(37, 99, 235, 0.20), rgba(59, 130, 246, 0.30));
+  --cli-contrast: #ffffff;
+}
+
+[data-agent-id="kimi"] {
+  --cli-color: light-dark(#0266d6, #1783ff);
+  --cli-tint: light-dark(rgba(2, 102, 214, 0.10), rgba(23, 131, 255, 0.14));
+  --cli-border: light-dark(rgba(2, 102, 214, 0.28), rgba(23, 131, 255, 0.35));
+  --cli-glow: light-dark(rgba(2, 102, 214, 0.18), rgba(23, 131, 255, 0.25));
+  --cli-contrast: #ffffff;
+}
+
+[data-agent-id="ohmypi"] {
+  --cli-color: light-dark(#ea580c, #f97316);
+  --cli-tint: light-dark(rgba(234, 88, 12, 0.10), rgba(249, 115, 22, 0.14));
+  --cli-border: light-dark(rgba(234, 88, 12, 0.28), rgba(249, 115, 22, 0.35));
+  --cli-glow: light-dark(rgba(234, 88, 12, 0.18), rgba(249, 115, 22, 0.25));
+  --cli-contrast: #ffffff;
+}
+
+[data-agent-id="terminal"] {
+  --cli-color: light-dark(#15803d, #22c55e);
+  --cli-tint: light-dark(rgba(21, 128, 61, 0.10), rgba(34, 197, 94, 0.14));
+  --cli-border: light-dark(rgba(21, 128, 61, 0.28), rgba(34, 197, 94, 0.35));
+  --cli-glow: light-dark(rgba(21, 128, 61, 0.18), rgba(34, 197, 94, 0.25));
+  --cli-contrast: #ffffff;
+}
+
+[data-slot="new-agents"] {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: var(--ade-space-2);
+}
+
+[data-slot="new-agent"] {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: var(--ade-space-3);
+  height: 50px;
+  min-height: 50px;
+  box-sizing: border-box;
+  padding: 6px 10px;
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-md);
+  background: var(--ade-surface);
+  color: var(--ade-text);
+  text-align: left;
+  cursor: pointer;
+  overflow: hidden;
+  user-select: none;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    box-shadow var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="new-agent"]:hover:not(:disabled):not([data-active]) {
+  background: var(--ade-raised);
+  border-color: var(--cli-border, var(--ade-border-strong));
+  box-shadow: 0 2px 8px -2px var(--cli-glow, rgba(0, 0, 0, 0.25));
+}
+
+[data-slot="new-agent"][data-active] {
+  border-color: var(--cli-color, var(--ade-accent));
+  background:
+    radial-gradient(130% 130% at 0% 50%, var(--cli-tint, var(--ade-accent-soft)) 0%, transparent 80%),
+    var(--ade-raised);
+  box-shadow:
+    0 0 0 1px var(--cli-color, var(--ade-accent)),
+    0 3px 12px -3px var(--cli-glow, var(--ade-accent-glow));
+}
+
+/* An agent this machine does not have is shown, not hidden: knowing it exists
+   and is missing is the difference between choosing and wondering. */
+[data-slot="new-agent"]:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  filter: grayscale(0.35);
+}
+
+[data-slot="new-agent"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-slot="new-agent-glyph"] {
+  display: grid;
+  place-items: center;
+  width: 32px;
+  height: 32px;
+  min-width: 32px;
+  border-radius: var(--ade-radius-md);
+  background: var(--ade-raised, rgba(255, 255, 255, 0.04));
+  color: var(--cli-color, var(--ade-text));
+  border: 1px solid var(--ade-border-subtle);
+  flex-shrink: 0;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    box-shadow var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="new-agent"][data-active] [data-slot="new-agent-glyph"] {
+  border-color: var(--cli-border, var(--cli-color, var(--ade-accent)));
+  background: var(--cli-tint, var(--ade-active));
+  box-shadow: 0 0 8px -2px var(--cli-glow, var(--ade-accent));
+}
+
+[data-slot="new-agent-badge-slot"] {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex-shrink: 0;
+  min-width: 18px;
+  height: 18px;
+}
+
+[data-slot="new-agent-check"] {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  border-radius: var(--ade-radius-full);
+  background: var(--cli-color, var(--ade-accent));
+  color: var(--cli-contrast, #ffffff);
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  opacity: 0;
+  transform: scale(0.75);
+  transition:
+    opacity var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="new-agent"][data-active] [data-slot="new-agent-check"][data-visible] {
+  opacity: 1;
+  transform: scale(1);
+}
+
+[data-slot="new-agent-missing"] {
+  padding: 1px 5px;
+  border-radius: var(--ade-radius-full);
+  background: var(--ade-active);
+  color: var(--ade-text-weak);
+  font-family: var(--ade-mono);
+  font-size: 9px;
+  line-height: 1.2;
+  white-space: nowrap;
+}
+
+[data-slot="new-agent-body"] {
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 1px;
+  flex: 1;
+  min-width: 0;
+}
+
+[data-slot="new-agent-label"] {
+  color: var(--ade-text);
+  font-size: var(--ade-font-sm);
+  font-weight: var(--ade-weight-semibold, 600);
+  line-height: 1.2;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+
+
+/* ── count ─────────────────────────────────────────────────────────────────── */
+
+[data-slot="new-counts"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-4);
+}
+
+/* A segmented control: one enclosure, seams inside, so the choice reads as one
+   scale rather than six separate buttons. */
+[data-slot="new-count"] {
+  width: 34px;
+  height: 30px;
+  border: 1px solid var(--ade-border);
+  border-radius: 0;
+  margin-left: -1px;
+  background: var(--ade-surface);
+  color: var(--ade-text-soft);
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-md);
+  font-variant-numeric: tabular-nums;
+  cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="new-count"]:first-of-type {
+  margin-left: 0;
+  border-radius: var(--ade-radius-md) 0 0 var(--ade-radius-md);
+}
+
+[data-slot="new-count"]:last-of-type {
+  border-radius: 0 var(--ade-radius-md) var(--ade-radius-md) 0;
+}
+
+[data-slot="new-count"]:hover {
+  background: var(--ade-raised);
+  color: var(--ade-text);
+}
+
+[data-slot="new-count"][data-active] {
+  position: relative;
+  z-index: 1;
+  border-color: var(--ade-accent);
+  background: var(--ade-accent);
+  color: var(--ade-accent-fg);
+  font-weight: var(--ade-weight-semibold);
+}
+
+[data-slot="new-count"]:focus-visible {
+  outline: none;
+  position: relative;
+  z-index: 2;
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-slot="new-counts-label"] {
+  color: var(--ade-text-weak);
+  font-size: var(--ade-font-md);
+}
+
+/* ── what will launch ──────────────────────────────────────────────────────── */
+
+[data-slot="new-launch"] {
+  display: flex;
+  flex-direction: column;
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-lg);
+  background: var(--ade-surface);
+  overflow: hidden;
+}
+
+[data-slot="new-launch-row"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-4);
+  padding: var(--ade-space-3) var(--ade-space-5);
+  border-top: 1px solid var(--ade-border-subtle);
+}
+
+[data-slot="new-launch-row"]:first-child {
+  border-top: 0;
+}
+
+[data-slot="new-launch-index"] {
+  width: 16px;
+  color: var(--ade-text-weak);
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-sm);
+  font-variant-numeric: tabular-nums;
+}
+
+[data-slot="new-launch-glyph"] {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 4px;
+  background: var(--ade-raised, rgba(255, 255, 255, 0.04));
+  border: 1px solid var(--ade-border-subtle);
+  color: var(--cli-color, var(--ade-accent));
+}
+
+[data-slot="new-launch-agent"] {
+  color: var(--ade-text);
+}
+
+/* A shell in slot two is not a second agent, and the row has to say so. */
+[data-slot="new-launch-role"] {
+  padding: 0 var(--ade-space-3);
+  border-radius: var(--ade-radius-full);
+  background: var(--ade-active);
+  color: var(--ade-text-weak);
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-xs);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-slot="new-preset"],
+  [data-slot="new-agent"],
+  [data-slot="new-agent-glyph"],
+  [data-slot="new-agent-check"],
+  [data-slot="new-count"],
+  [data-slot="new-compose"],
+  [data-slot="new-launch-btn"],
+  [data-slot="new-close"],
+  [data-slot="new-cancel"] {
+    transition: none;
+  }
+}
+
+
+/* ---------------------------------------------------------------------------
+   The settings section for the agents' own session reporting.
+
+   Rendered inside the settings panel, so it borrows that panel's section
+   slots for its heading and takes over only from the list down.
+   --------------------------------------------------------------------------- */
+
+[data-slot="hook-list"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-3);
+  margin: var(--ade-space-3) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+[data-slot="hook-row"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-2);
+  padding: var(--ade-space-3);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-md);
+  background: var(--ade-surface);
+}
+
+[data-slot="hook-row-head"] {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: var(--ade-space-3);
+}
+
+[data-slot="hook-name"] {
+  color: var(--ade-text);
+  font-weight: 500;
+}
+
+[data-slot="hook-state"] {
+  padding: 0 var(--ade-space-3);
+  border-radius: var(--ade-radius-full);
+  background: var(--ade-active);
+  color: var(--ade-text-weak);
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-xs);
+}
+
+[data-slot="hook-state"][data-on="true"] {
+  color: var(--ade-accent);
+}
+
+/* Installed but not working is not the same as off, and must not look it. */
+[data-slot="hook-state"][data-broken="true"] {
+  color: var(--ade-danger, #d08770);
+}
+
+/*
+   The paths are the point of the row: these are the two files that change.
+   Wrapped rather than truncated — a path the user cannot read in full is a
+   path they have to take on trust.
+*/
+[data-slot="hook-paths"] {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+}
+
+[data-slot="hook-paths"] code {
+  color: var(--ade-text-weak);
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-xs);
+  overflow-wrap: anywhere;
+}
+
+[data-slot="hook-note"] {
+  margin: 0;
+  color: var(--ade-text-weak);
+  font-size: var(--ade-font-xs);
+}
+
+[data-slot="hook-actions"] {
+  display: flex;
+  gap: var(--ade-space-2);
+}
+
+[data-slot="hook-action"] {
+  padding: var(--ade-space-2) var(--ade-space-3);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-sm);
+  background: transparent;
+  color: var(--ade-text);
+  font: inherit;
+  font-size: var(--ade-font-xs);
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+[data-slot="hook-action"]:hover:not(:disabled) {
+  background: var(--ade-active);
+}
+
+[data-slot="hook-action"]:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-slot="hook-action"] {
+    transition: none;
+  }
+}

@@ -1,0 +1,179 @@
+/*
+ * The 3D panel.
+ *
+ * The same chrome as the video panel, on purpose. The stage's own colours are
+ * what the scene is painted with: `background-color` becomes the clear colour
+ * and `color` the floor grid, so the model sits on the theme rather than on a
+ * black rectangle, and a theme switch repaints it.
+ */
+
+/* Frameless and filling its tile, like the browser and session panes beside it:
+   the grid's one-pixel gap is the only line between two tiles. */
+[data-component="model-pane"] {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  background: var(--ade-surface);
+}
+
+[data-component="model-pane"][data-focused] {
+  outline: 1px solid var(--ade-accent);
+  outline-offset: -1px;
+}
+
+[data-slot="model-stage"] {
+  position: relative;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden;
+  background-color: var(--ade-sunken);
+  color: var(--ade-border-strong);
+}
+
+[data-slot="model-canvas"] {
+  position: absolute;
+  inset: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  /* The canvas takes every gesture: orbit, pan and wheel zoom. */
+  touch-action: none;
+  outline: none;
+}
+
+[data-slot="model-stage"][data-empty="true"] [data-slot="model-canvas"] {
+  display: none;
+}
+
+[data-slot="model-empty"] {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--ade-space-4);
+  padding: var(--ade-space-6);
+  text-align: center;
+  color: var(--ade-text-weak);
+  font-size: var(--ade-font-sm);
+}
+
+[data-slot="model-empty-text"] {
+  margin: 0;
+  line-height: 1.6;
+}
+
+[data-slot="model-empty-formats"] {
+  font-size: var(--ade-font-xs);
+  opacity: 0.7;
+}
+
+[data-slot="model-open"] {
+  padding: var(--ade-space-2) var(--ade-space-5);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-sm);
+  background: var(--ade-raised);
+  color: var(--ade-text);
+  font: inherit;
+  cursor: pointer;
+}
+
+[data-slot="model-open"]:hover {
+  border-color: var(--ade-border-strong);
+  background: var(--ade-hover);
+}
+
+/* Over the canvas and out of its way: the last good frame stays visible
+   under a reload or an error. */
+[data-slot="model-overlay"] {
+  position: absolute;
+  left: var(--ade-space-4);
+  bottom: var(--ade-space-4);
+  max-width: calc(100% - 2 * var(--ade-space-4));
+  padding: var(--ade-space-2) var(--ade-space-4);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-sm);
+  background: var(--ade-overlay);
+  color: var(--ade-text-soft);
+  font-size: var(--ade-font-xs);
+  pointer-events: none;
+}
+
+[data-slot="model-overlay"][data-tone="error"] {
+  border-color: var(--ade-error);
+  background: var(--ade-error-bg);
+  color: var(--ade-error);
+}
+
+[data-slot="model-controls"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-2);
+  flex: 0 0 auto;
+  padding: var(--ade-space-2) var(--ade-space-4);
+  border-top: 1px solid var(--ade-border-subtle);
+  background: var(--ade-raised);
+  overflow: hidden;
+}
+
+[data-slot="model-button"] {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  min-width: 24px;
+  height: 24px;
+  padding: 0 var(--ade-space-2);
+  border: 1px solid transparent;
+  border-radius: var(--ade-radius-sm);
+  background: transparent;
+  color: var(--ade-text-weak);
+  font: inherit;
+  font-size: var(--ade-font-xs);
+  cursor: pointer;
+}
+
+[data-slot="model-button"]:hover:not(:disabled) {
+  background: var(--ade-hover);
+  color: var(--ade-text);
+}
+
+[data-slot="model-button"]:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+[data-slot="model-button"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-slot="model-stats"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: right;
+  font-size: var(--ade-font-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--ade-text-weak);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+[data-slot="model-note"] {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: var(--ade-space-2) var(--ade-space-4);
+  border-top: 1px solid var(--ade-border-subtle);
+  background: var(--ade-sunken);
+  color: var(--ade-text-weak);
+  font-size: var(--ade-font-xs);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
