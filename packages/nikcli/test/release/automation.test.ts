@@ -9,6 +9,18 @@ async function readRoot(relative: string) {
 }
 
 describe("release automation", () => {
+  it("parses ADE logo HTML with the formatter used by release generation", async () => {
+    const { format } = await import("prettier")
+    const source = await readRoot("packages/ade/design/logos/index.html")
+    const formatted = await format(source, {
+      parser: "html",
+      semi: false,
+      printWidth: 120,
+    })
+    expect(formatted).toContain('id="btnWireframe"')
+    expect(formatted).toContain('id="btnSnapshot"')
+  })
+
   it("keeps the GitHub comment runner executable and mention filters exact", async () => {
     const action = await readRoot("github/action.yml")
     const command = await readRoot("packages/nikcli/src/cli/handlers/github/install.ts")
