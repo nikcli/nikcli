@@ -3,6 +3,19 @@
 <!-- UNRELEASED:START -->
 <!-- UNRELEASED:END -->
 
+## v1.367.0 (September 2026)
+
+## Core
+
+- Finish removing the storybook feature plugin (@nikomatt69)
+- Fall back to gpt-reserve when the ChatGPT plan's main models run out (@nikomatt69)
+
+**Thank you to 1 community contributor:**
+
+- @nikomatt69:
+  - feat(openai): fall back to gpt-reserve when the ChatGPT plan's main models run out
+  - chore(tui): finish removing the storybook feature plugin
+
 ## v1.365.0 (September 2026)
 
 - No notable changes
