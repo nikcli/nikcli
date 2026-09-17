@@ -620,6 +620,10 @@ Preconfigured plugins (`packages/plugin/plugins`):
 
 - `agent-memory` · `background` · `background-agents` · `context-analysis` · `direnv` · `dynamic-context-pruning` · `envsitter-guard` · `handoff` · `safety-net` · `smart-title`.
 
+Plugins in this repo:
+
+- **JEV Trader** (`packages/plugin-jev`, `@nikcli-ai/plugin-jev`) — a TUI plugin for a [JEV Trader](https://jev-trader.vercel.app/) deployment: account and P&L, open positions, watchlist quotes and the agent's signals, behind `/jev` (`/jev-trader`, `/trader`). The endpoint (default `https://jev-trader.vercel.app`, prefix `/api`), the watchlist and the display currency live in the TUI key-value store; the API key comes from `NIKCLI_JEV_API_KEY` / `JEV_API_KEY` when set, otherwise from what `/jev` stored. Read-only by design — it never places, changes or closes an order. `nikcli plug install ./packages/plugin-jev` from a checkout; see [its README](packages/plugin-jev/README.md).
+
 ### Skills
 
 Skills (above) are a lighter format: just Markdown with a description and associated tools.
@@ -633,7 +637,8 @@ Some feature-plugins own one whole feature or external integration — settings,
 - `background` — `/background` (`/bg`, `/wallpaper`) paints a real image behind the TUI.
 - `discord` — `/discord` sets up and runs the Gateway bot.
 - `herdr` — `/herdr` bridges nikcli sessions into a running Herdr server.
-- `jev` — `/jev` (`/jev-trader`, `/trader`) reads a [JEV Trader](https://jev-trader.vercel.app/) deployment: account and P&L, open positions, watchlist quotes and the agent's signals. The endpoint (default `https://jev-trader.vercel.app`, prefix `/api`) and the watchlist live in the TUI key-value store; the API key comes from `NIKCLI_JEV_API_KEY` / `JEV_API_KEY` when set, otherwise from what `/jev` stored. Read-only by design — the plugin never places, changes or closes an order.
+
+An installed plugin gets the same reach without shipping inside nikcli: see `@nikcli-ai/plugin-jev` below.
 
 ---
 

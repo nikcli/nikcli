@@ -20,7 +20,6 @@ import Observability from "../feature-plugins/observability"
 import Math from "../feature-plugins/math"
 import Island from "../feature-plugins/island"
 import Background from "../feature-plugins/background"
-import Jev from "../feature-plugins/jev"
 import Herdr from "../feature-plugins/herdr"
 import DevTools from "../feature-plugins/devtools"
 import { Flag } from "@nikcli-ai/util/flag"
@@ -59,7 +58,6 @@ export const INTERNAL_TUI_PLUGINS: InternalTuiPlugin[] = [
   Observability,
   Math,
   Background,
-  Jev,
   DevTools,
   // Herdr TUI plugin is loaded by default. It auto-enables the bridge
   // when running inside a Herdr pane and stays dormant otherwise.

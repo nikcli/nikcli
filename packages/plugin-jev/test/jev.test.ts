@@ -8,7 +8,7 @@ import {
   fetchSignals,
   request,
   ROUTES,
-} from "@tui/feature-plugins/jev/client"
+} from "../src/client"
 import {
   actionDirection,
   normalizePortfolio,
@@ -18,11 +18,10 @@ import {
   pickNumber,
   pickRows,
   sanitizeText,
-} from "@tui/feature-plugins/jev/model"
+} from "../src/model"
 import {
   cleanApiPrefix,
   cleanBaseUrl,
-  clampRefresh,
   DEFAULT_BASE_URL,
   DEFAULT_SETTINGS,
   direction,
@@ -34,13 +33,13 @@ import {
   maskApiKey,
   normalize,
   parseWatchlist,
-  refreshLabel,
+  readSettings,
   resolveApiKey,
-  stepRefresh,
   watchlistLabel,
+  writeSettings,
   type JevSettings,
-} from "@tui/feature-plugins/jev/settings"
-import { readSettings, writeSettings, type KVLike } from "@tui/feature-plugins/jev/store"
+  type KVLike,
+} from "../src/settings"
 
 function settings(patch: Partial<JevSettings> = {}): JevSettings {
   return { ...DEFAULT_SETTINGS, ...patch }
@@ -105,8 +104,9 @@ describe("jev settings", () => {
         apiKey: "  secret  ",
         enabled: false,
         watchlist: ["aapl", 7, "nvda"],
-        refreshSeconds: 99999,
         currency: "eur",
+        // A key from an older or newer plugin version must not survive.
+        refreshSeconds: 99999,
       }),
     ).toEqual({
       baseUrl: "https://jev.example.com",
@@ -114,22 +114,9 @@ describe("jev settings", () => {
       apiKey: "secret",
       enabled: false,
       watchlist: ["AAPL", "NVDA"],
-      refreshSeconds: 3600,
       currency: "EUR",
     })
     expect(normalize({ currency: "dollars" }).currency).toBe("USD")
-    expect(normalize({ refreshSeconds: Number.NaN }).refreshSeconds).toBe(DEFAULT_SETTINGS.refreshSeconds)
-  })
-
-  test("cycles the refresh interval and clamps it", () => {
-    expect(stepRefresh(0)).toBe(10)
-    expect(stepRefresh(300)).toBe(0)
-    expect(stepRefresh(7)).toBe(0)
-    expect(clampRefresh(-5)).toBe(0)
-    expect(clampRefresh(10_000)).toBe(3600)
-    expect(refreshLabel(0)).toBe("on demand")
-    expect(refreshLabel(30)).toBe("30s")
-    expect(refreshLabel(300)).toBe("5m")
   })
 
   test("the environment key wins over the stored one, and is never printed", () => {
@@ -173,9 +160,9 @@ describe("jev settings", () => {
   test("settings round-trip through the key-value store", () => {
     const kv = memoryKV()
     expect(readSettings(kv)).toEqual(DEFAULT_SETTINGS)
-    writeSettings(kv, { watchlist: parseWatchlist("aapl"), refreshSeconds: 60 })
+    writeSettings(kv, { watchlist: parseWatchlist("aapl"), currency: "EUR" })
     expect(readSettings(kv).watchlist).toEqual(["AAPL"])
-    expect(readSettings(kv).refreshSeconds).toBe(60)
+    expect(readSettings(kv).currency).toBe("EUR")
     writeSettings(kv, { enabled: false })
     expect(readSettings(kv)).toMatchObject({ enabled: false, watchlist: ["AAPL"] })
   })

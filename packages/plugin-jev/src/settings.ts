@@ -1,15 +1,19 @@
 /**
  * Settings for the JEV Trader plugin.
  *
- * Everything lives in the TUI key-value store (`Global.Path.state/kv.json`)
- * rather than in `nikcli.json`, for the same reason the background image does:
- * the endpoint and the watchlist are a personal, per-machine choice and `/jev`
- * edits them live, so a config round-trip would be noise in a shared repo.
+ * Everything lives in the TUI key-value store (`api.kv`, persisted to
+ * `Global.Path.state/kv.json`) rather than in `nikcli.json`: the endpoint and
+ * the watchlist are a personal, per-machine choice and `/jev` edits them live,
+ * so a config round-trip would be noise in a shared repo. The plugin's own
+ * entry in the config's `plugin` list stays the only thing a project commits.
  *
  * The API key is the one value that may not want to be persisted at all, so
  * `NIKCLI_JEV_API_KEY` (or `JEV_API_KEY`) wins over the stored one — that is
  * what lets a shared machine or a CI shell talk to JEV without writing a
  * secret to disk.
+ *
+ * Pure module: no host imports, so the whole thing is testable with `bun test`
+ * and none of it depends on which nikcli version loaded the plugin.
  */
 
 export const JEV_KV_KEY = "jev_trader"
@@ -35,8 +39,6 @@ export type JevSettings = {
   enabled: boolean
   /** Symbols the watchlist follows, uppercased and deduped. */
   watchlist: string[]
-  /** How often an open JEV dialog refetches. 0 means only on demand. */
-  refreshSeconds: number
   /** Currency the amounts are formatted in when JEV does not say. */
   currency: string
 }
@@ -47,14 +49,8 @@ export const DEFAULT_SETTINGS: JevSettings = {
   apiKey: "",
   enabled: true,
   watchlist: [],
-  refreshSeconds: 30,
   currency: "USD",
 }
-
-/** Refresh intervals `/jev` cycles through. `0` is "only when asked". */
-export const REFRESH_STEPS = [0, 10, 30, 60, 300] as const
-
-export const REFRESH_MAX = 3600
 
 /** A watchlist row is a ticker, not free text: keep it to what an exchange can name. */
 const SYMBOL = /^[A-Z0-9][A-Z0-9._:/-]{0,15}$/
@@ -124,19 +120,6 @@ export function maskApiKey(key: string): string {
   return `••••${key.slice(-4)}`
 }
 
-export function clampRefresh(value: number): number {
-  if (!Number.isFinite(value)) return DEFAULT_SETTINGS.refreshSeconds
-  return Math.min(REFRESH_MAX, Math.max(0, Math.round(value)))
-}
-
-/** Cycle to the next interval, wrapping at the end. */
-export function stepRefresh(value: number): number {
-  const current = clampRefresh(value)
-  const index = REFRESH_STEPS.findIndex((step) => step === current)
-  if (index === -1) return REFRESH_STEPS[0]
-  return REFRESH_STEPS[(index + 1) % REFRESH_STEPS.length]
-}
-
 export function normalize(value: unknown): JevSettings {
   // A bare string is read as the endpoint, so `kv.set("jev_trader", url)` works.
   if (typeof value === "string") {
@@ -154,10 +137,6 @@ export function normalize(value: unknown): JevSettings {
     watchlist: Array.isArray(record["watchlist"])
       ? parseWatchlist(record["watchlist"].filter((item): item is string => typeof item === "string").join(" "))
       : DEFAULT_SETTINGS.watchlist,
-    refreshSeconds:
-      typeof record["refreshSeconds"] === "number"
-        ? clampRefresh(record["refreshSeconds"])
-        : DEFAULT_SETTINGS.refreshSeconds,
     currency: /^[A-Z]{3,5}$/.test(currency) ? currency : DEFAULT_SETTINGS.currency,
   }
 }
@@ -180,13 +159,6 @@ export function endpointLabel(settings: JevSettings): string {
   } catch {
     return settings.baseUrl
   }
-}
-
-export function refreshLabel(seconds: number): string {
-  const value = clampRefresh(seconds)
-  if (value === 0) return "on demand"
-  if (value % 60 === 0) return `${value / 60}m`
-  return `${value}s`
 }
 
 export function watchlistLabel(watchlist: string[]): string {
@@ -246,4 +218,26 @@ export function formatQuantity(value: number | undefined): string {
 export function direction(value: number | undefined): "up" | "down" | "flat" {
   if (value === undefined || !Number.isFinite(value) || value === 0) return "flat"
   return value > 0 ? "up" : "down"
+}
+
+/**
+ * The slice of `api.kv` this plugin needs.
+ *
+ * Structural, not imported from the host: the plugin reads and writes one key,
+ * and typing that against a two-method shape keeps this module free of host
+ * imports (and lets the tests hand it a `Map`).
+ */
+export type KVLike = {
+  get: <Value = unknown>(key: string, fallback?: Value) => Value
+  set: (key: string, value: unknown) => void
+}
+
+export function readSettings(kv: KVLike): JevSettings {
+  return normalize(kv.get(JEV_KV_KEY))
+}
+
+export function writeSettings(kv: KVLike, patch: Partial<JevSettings>): JevSettings {
+  const next: JevSettings = { ...readSettings(kv), ...patch }
+  kv.set(JEV_KV_KEY, next)
+  return next
 }

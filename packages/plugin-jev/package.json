@@ -1,0 +1,34 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@nikcli-ai/plugin-jev",
+  "version": "1.363.0",
+  "description": "JEV Trader in the nikcli TUI: portfolio, open positions, watchlist quotes and the agent's signals, read-only, behind /jev.",
+  "license": "MIT",
+  "type": "module",
+  "main": "./src/tui.tsx",
+  "exports": {
+    "./tui": "./src/tui.tsx"
+  },
+  "oc-plugin": [
+    "tui"
+  ],
+  "files": [
+    "src",
+    "README.md"
+  ],
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "bun test"
+  },
+  "peerDependencies": {
+    "@opentui/solid": ">=0.5.11",
+    "solid-js": ">=1.9.0"
+  },
+  "devDependencies": {
+    "@nikcli-ai/plugin": "workspace:*",
+    "@opentui/solid": "0.5.11",
+    "@types/bun": "catalog:",
+    "solid-js": "catalog:",
+    "typescript": "catalog:"
+  }
+}
