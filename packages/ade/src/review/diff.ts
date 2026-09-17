@@ -118,7 +118,10 @@ export function parseGitHeaderPaths(line: string): { aPath: string; bPath: strin
   const at = equal ?? candidates[candidates.length - 1]
   if (at === undefined) return { aPath: "", bPath: "" }
 
-  return { aPath: unquotePath(rest.slice(0, at)).replace(/^a\//, ""), bPath: unquotePath(rest.slice(at + 1)).replace(/^b\//, "") }
+  return {
+    aPath: unquotePath(rest.slice(0, at)).replace(/^a\//, ""),
+    bPath: unquotePath(rest.slice(at + 1)).replace(/^b\//, ""),
+  }
 }
 
 /** Index of the quote that closes the one at position 0, or -1. */
@@ -201,7 +204,12 @@ export function parseUnifiedDiff(text: string): FileDiff[] {
 
       // Check extended headers for rename and status
       let j = i + 1
-      while (j < lines.length && !lines[j].startsWith("--- ") && !lines[j].startsWith("diff --git") && !lines[j].startsWith("Binary files")) {
+      while (
+        j < lines.length &&
+        !lines[j].startsWith("--- ") &&
+        !lines[j].startsWith("diff --git") &&
+        !lines[j].startsWith("Binary files")
+      ) {
         const extLine = lines[j]
         if (extLine.startsWith("new file mode")) {
           currentFile.status = "added"

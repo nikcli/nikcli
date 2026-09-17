@@ -23,13 +23,28 @@ const startedAt = 1_000_000
 function machine() {
   let clock = startedAt
   let rows: ProcessRow[] = [
-    { pid: 10, ppid: 1, created: startedAt + 5, cmd: `bun.exe x tauri dev --config src-tauri/tauri.test.conf.json --config ${plan.configPath}` },
+    {
+      pid: 10,
+      ppid: 1,
+      created: startedAt + 5,
+      cmd: `bun.exe x tauri dev --config src-tauri/tauri.test.conf.json --config ${plan.configPath}`,
+    },
     { pid: 11, ppid: 10, created: startedAt + 9, cmd: "cargo run --no-default-features" },
     { pid: 12, ppid: 11, created: startedAt + 20, cmd: "rustc --crate-name ade_desktop" },
-    { pid: 15, ppid: 999, created: startedAt + 7, cmd: `node "${root}\\packages\\ade\\node_modules\\vite\\bin\\vite.js" --port 5270 --strictPort` },
+    {
+      pid: 15,
+      ppid: 999,
+      created: startedAt + 7,
+      cmd: `node "${root}\\packages\\ade\\node_modules\\vite\\bin\\vite.js" --port 5270 --strictPort`,
+    },
     // Not the instance's: another session's shell, and a process older than the start naming the same profile.
     { pid: 31, ppid: 1, created: startedAt - 10_000, cmd: "powershell.exe" },
-    { pid: 40, ppid: 1, created: startedAt - 60_000, cmd: `powershell -Command "Start-Sleep 1800 # --user-data-dir=${plan.profileDir}"` },
+    {
+      pid: 40,
+      ppid: 1,
+      created: startedAt - 60_000,
+      cmd: `powershell -Command "Start-Sleep 1800 # --user-data-dir=${plan.profileDir}"`,
+    },
   ]
   let record: TestAppRecord | undefined = { port: 5270, label: plan.label, root, startedAt }
   let log = "   Compiling ade-desktop v0.0.0\n    Building [=====>   ] 120/482: tauri\n"
@@ -124,7 +139,12 @@ describe("host/test-app start and stop", () => {
     const appExe = `${root}\\packages\\ade\\src-tauri\\target\\debug\\ade-test.exe`
     const table = (): ProcessRow[] => [
       { pid: 10, ppid: 1, created: startedAt + 5, cmd: `bun.exe x tauri dev --config ${plan.configPath}` },
-      { pid: 15, ppid: 999, created: startedAt + 7, cmd: `node "${root}\\packages\\ade\\node_modules\\vite\\bin\\vite.js" --port 5270 --strictPort` },
+      {
+        pid: 15,
+        ppid: 999,
+        created: startedAt + 7,
+        cmd: `node "${root}\\packages\\ade\\node_modules\\vite\\bin\\vite.js" --port 5270 --strictPort`,
+      },
       { pid: 20, ppid: 10, created: startedAt + 60_000, exe: appExe, cmd: appExe },
       { pid: 21, ppid: 20, created: startedAt + 61_000, cmd: `msedgewebview2.exe --user-data-dir=${plan.profileDir}` },
     ]

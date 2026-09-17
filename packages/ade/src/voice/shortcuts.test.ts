@@ -1,9 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import {
-  createPushToTalkHandler,
-  resolveVoiceOrAdeKey,
-  type PushToTalkTarget,
-} from "./shortcuts"
+import { createPushToTalkHandler, resolveVoiceOrAdeKey, type PushToTalkTarget } from "./shortcuts"
 import { parseChord, type Binding } from "../keyboard/keymap"
 import {
   DEFAULT_VOICE_SETTINGS,
@@ -26,7 +22,7 @@ describe("resolveVoiceOrAdeKey", () => {
       adeBindings,
       DEFAULT_VOICE_SETTINGS,
       { key: "w", ctrlKey: true, shiftKey: false, altKey: false, metaKey: false },
-      "other"
+      "other",
     )
 
     expect(res.type).toBe("ade")
@@ -39,7 +35,7 @@ describe("resolveVoiceOrAdeKey", () => {
       adeBindings,
       DEFAULT_VOICE_SETTINGS,
       { key: "k", ctrlKey: true, shiftKey: true, altKey: false, metaKey: false },
-      "other"
+      "other",
     )
     expect(agentRes.type).toBe("voice-agent")
     expect(agentRes.commandId).toBe(VOICE_COMMAND_AGENT)
@@ -48,7 +44,7 @@ describe("resolveVoiceOrAdeKey", () => {
       adeBindings,
       DEFAULT_VOICE_SETTINGS,
       { key: "j", ctrlKey: true, shiftKey: true, altKey: false, metaKey: false },
-      "other"
+      "other",
     )
     expect(transcriptionRes.type).toBe("voice-transcription")
     expect(transcriptionRes.commandId).toBe(VOICE_COMMAND_TRANSCRIPTION)
@@ -65,7 +61,7 @@ describe("resolveVoiceOrAdeKey", () => {
       adeBindings,
       conflictingSettings,
       { key: "n", ctrlKey: true, shiftKey: false, altKey: false, metaKey: false },
-      "other"
+      "other",
     )
 
     // 1. ADE wins: the returned type is 'ade' and the command is ADE's 'session.new'
@@ -89,7 +85,7 @@ describe("resolveVoiceOrAdeKey", () => {
       adeBindings,
       conflictingSettings,
       { key: "w", ctrlKey: true, shiftKey: false, altKey: false, metaKey: false },
-      "other"
+      "other",
     )
 
     expect(res.type).toBe("ade")
@@ -159,7 +155,7 @@ describe("resolveVoiceOrAdeKey", () => {
       adeBindings,
       DEFAULT_VOICE_SETTINGS,
       { key: "x", ctrlKey: true, shiftKey: true, altKey: false, metaKey: false },
-      "other"
+      "other",
     )
     expect(res.type).toBe("none")
     expect(res.commandId).toBeUndefined()
@@ -212,7 +208,6 @@ describe("createPushToTalkHandler", () => {
 
     expect(modes).toEqual([undefined])
   })
-
 
   /*
    * The microphone belongs to the chord that is being held, not to the
@@ -361,14 +356,23 @@ describe("push-to-talk watchdog", () => {
 
     const handler = createPushToTalkHandler(
       {
-        pressToTalk: async () => { calls.push("press") },
-        releaseToTalk: async () => { calls.push("release") },
+        pressToTalk: async () => {
+          calls.push("press")
+        },
+        releaseToTalk: async () => {
+          calls.push("release")
+        },
       },
       {
-        setTimer: (fn) => { fire = fn; return 1 },
-        clearTimer: () => { fire = undefined },
+        setTimer: (fn) => {
+          fire = fn
+          return 1
+        },
+        clearTimer: () => {
+          fire = undefined
+        },
         maxHoldMs: 1000,
-      }
+      },
     )
 
     await handler.onKeyDown(parseChord("mod+shift+k", "other"), {})
@@ -390,14 +394,24 @@ describe("push-to-talk watchdog", () => {
 
     const handler = createPushToTalkHandler(
       {
-        pressToTalk: async () => { calls.push("press") },
-        releaseToTalk: async () => { calls.push("release") },
+        pressToTalk: async () => {
+          calls.push("press")
+        },
+        releaseToTalk: async () => {
+          calls.push("release")
+        },
       },
       {
-        setTimer: (fn) => { fire = fn; return 1 },
-        clearTimer: () => { cleared = true; fire = undefined },
+        setTimer: (fn) => {
+          fire = fn
+          return 1
+        },
+        clearTimer: () => {
+          cleared = true
+          fire = undefined
+        },
         maxHoldMs: 1000,
-      }
+      },
     )
 
     await handler.onKeyDown(parseChord("mod+shift+k", "other"), {})

@@ -6,14 +6,23 @@ import { createQuotaStore } from "./quota-store"
 const report = (remaining: number, at: string) =>
   JSON.stringify({
     generatedAt: at,
-    providers: [{ provider: "claude", plan: "max", windows: [{ id: "five_hour", kind: "session", percentRemaining: remaining, resetsAt: "2026-09-15T22:40:00Z" }] }],
+    providers: [
+      {
+        provider: "claude",
+        plan: "max",
+        windows: [{ id: "five_hour", kind: "session", percentRemaining: remaining, resetsAt: "2026-09-15T22:40:00Z" }],
+      },
+    ],
   })
 
 describe("createQuotaStore", () => {
   test("a view built before the first read updates when the report arrives, and again when it changes", async () => {
     let clock = Date.parse("2026-09-15T20:00:00Z")
     let text: string | undefined
-    const store = createQuotaStore(async () => text, () => clock)
+    const store = createQuotaStore(
+      async () => text,
+      () => clock,
+    )
 
     const seen = createRoot(() => createMemo(() => quotaForAgent("claude-code", store.snapshot(), store.now())))
     expect(isQuotaUnavailable(seen())).toBe(true)
@@ -35,13 +44,17 @@ describe("createQuotaStore", () => {
   test("the clock moves on each refresh, so the countdown does", async () => {
     let clock = Date.parse("2026-09-15T20:00:00Z")
     const text = report(64, "2026-09-15T19:59:00Z")
-    const store = createQuotaStore(async () => text, () => clock)
+    const store = createQuotaStore(
+      async () => text,
+      () => clock,
+    )
     await store.refresh()
     const before = quotaForAgent("claude-code", store.snapshot(), store.now())
     clock += 10 * 60_000
     await store.refresh()
     const after = quotaForAgent("claude-code", store.snapshot(), store.now())
-    if (!before || !after || isQuotaUnavailable(before) || isQuotaUnavailable(after)) throw new Error("expected readings")
+    if (!before || !after || isQuotaUnavailable(before) || isQuotaUnavailable(after))
+      throw new Error("expected readings")
     expect(before.countdown).toBe("2h 40m")
     expect(after.countdown).toBe("2h 30m")
   })
@@ -51,7 +64,7 @@ describe("createQuotaStore", () => {
     let mode: "good" | "broken" | "throws" | "none" = "good"
     const store = createQuotaStore(async () => {
       if (mode === "throws") throw new Error("EPERM")
-      if (mode === "broken") return "{\"generatedAt\": \"2026-09"
+      if (mode === "broken") return '{"generatedAt": "2026-09'
       if (mode === "none") return undefined
       return report(64, "2026-09-15T19:59:00Z")
     }, clock)
@@ -96,7 +109,12 @@ describe("createQuotaStore", () => {
       data: { quota: { "gemini-5h": { remaining_fraction: 0.4, reset_time: "2026-09-16T18:00:00Z" } } },
     })
     let axiText: string | undefined
-    const store = createQuotaStore(async () => axiText, clock, 2_000, async () => agyText)
+    const store = createQuotaStore(
+      async () => axiText,
+      clock,
+      2_000,
+      async () => agyText,
+    )
     const agy = () => quotaForAgent("agy", store.snapshot(), store.now())
     const claude = () => quotaForAgent("claude-code", store.snapshot(), store.now())
 
@@ -120,10 +138,13 @@ describe("createQuotaStore", () => {
   test("a reading kept through failures stays, marked old, once it is too old", async () => {
     let clock = Date.parse("2026-09-15T20:00:00Z")
     let fail = false
-    const store = createQuotaStore(async () => {
-      if (fail) throw new Error("EPERM")
-      return report(64, "2026-09-15T19:59:00Z")
-    }, () => clock)
+    const store = createQuotaStore(
+      async () => {
+        if (fail) throw new Error("EPERM")
+        return report(64, "2026-09-15T19:59:00Z")
+      },
+      () => clock,
+    )
     await store.refresh()
     fail = true
     clock += 31 * 60_000
@@ -142,7 +163,13 @@ describe("createQuotaStore", () => {
         capturedAt: new Date(clock - 5_000).toISOString(),
         data: { rateLimits: { five_hour: { used_percentage: 40, resets_at: 1789593600 } } },
       })
-    const store = createQuotaStore(async () => report(64, "2026-09-15T19:59:00Z"), () => clock, 2_000, undefined, async () => line())
+    const store = createQuotaStore(
+      async () => report(64, "2026-09-15T19:59:00Z"),
+      () => clock,
+      2_000,
+      undefined,
+      async () => line(),
+    )
     const states: string[] = []
     for (let i = 0; i < 6; i++) {
       await store.refresh()

@@ -38,9 +38,23 @@ import {
 import { detectAgents } from "../session-new/availability"
 import { RESUME, planFork, planRestore, planResume, planStart, type ResumePlan } from "../session-new/resume"
 import { followReports, newNonce } from "../session-new/agent-link"
-import { HOOK_TARGETS, hookTarget, readHookStatus, refreshHookScript, type HookHost, type HookStatus } from "../session-new/agent-hooks"
+import {
+  HOOK_TARGETS,
+  hookTarget,
+  readHookStatus,
+  refreshHookScript,
+  type HookHost,
+  type HookStatus,
+} from "../session-new/agent-hooks"
 import { AgentHooksSection } from "../session-new/agent-hooks-panel"
-import { BotSection, GridSection, LanguageSection, ProviderSection, RoutineSection, SkillsSection } from "../settings/sections"
+import {
+  BotSection,
+  GridSection,
+  LanguageSection,
+  ProviderSection,
+  RoutineSection,
+  SkillsSection,
+} from "../settings/sections"
 import { locale, refreshSystemLocale, syncDocumentLanguage, t, translate } from "../i18n"
 import { exitedActivity } from "../grid/activity"
 import { ExtensionsPage } from "../extensions/extensions-page"
@@ -54,9 +68,7 @@ import { requestRename } from "../grid/rename"
 import { EmptyProject } from "./empty-project"
 import { ProjectBar } from "./project-bar"
 import { NikChromeLogo } from "./nik-chrome-logo"
-const isTauriDesktop = () =>
-  typeof window !== "undefined" &&
-  ("__TAURI_INTERNALS__" in window || "__TAURI__" in window)
+const isTauriDesktop = () => typeof window !== "undefined" && ("__TAURI_INTERNALS__" in window || "__TAURI__" in window)
 
 /**
  * On macOS the window keeps its native traffic lights, drawn over the bar
@@ -161,16 +173,8 @@ import { parseCommandId } from "../plugin/trust"
 import { CONSENT_KEY, consentQuestion, hasConsent, withConsent } from "../plugin/consent"
 import { toPluginSession } from "../plugin/session"
 import type { DiscoveryIO } from "../plugin/discovery"
-import {
-  markSaved,
-  openBuffer,
-  saveBlockedReason,
-} from "../editor"
-import {
-  detectPermission,
-  isResolved,
-  type PermissionAnswer,
-} from "../session/permission"
+import { markSaved, openBuffer, saveBlockedReason } from "../editor"
+import { detectPermission, isResolved, type PermissionAnswer } from "../session/permission"
 import { readReportLine } from "../session/report"
 import { asOneLine, asSubmittedLine, pasteSettled } from "../session/typing"
 import { searchPaths, walkProject } from "../search"
@@ -243,7 +247,13 @@ import { Splash } from "../splash/splash"
 import { createPanelRouter } from "../panels/router"
 import { panelsHelp } from "../panels/protocol"
 import { BROWSER_VERBS, runBrowserCommand, type BrowserController } from "../browser/binding"
-import { formatRequestDetails, formatRequestLine, requestStem, type BrowserRequest, type Rect } from "../browser/request"
+import {
+  formatRequestDetails,
+  formatRequestLine,
+  requestStem,
+  type BrowserRequest,
+  type Rect,
+} from "../browser/request"
 import { devServerUrl, offerKey, shouldOffer, type DevServerOffer } from "../browser/dev-server"
 import { DevServerOffers } from "../browser/dev-server-offer"
 import { VIDEO_VERBS } from "../video/video"
@@ -299,7 +309,13 @@ import {
   type VoiceSettings,
 } from "@nikcli-ai/voice"
 import { ShotTray, createShotSource } from "../shots"
-import { disposeTerminal, noteInTerminal, refreshTerminalThemes, startOnCleanScreen, writeToTerminal } from "../terminal/registry"
+import {
+  disposeTerminal,
+  noteInTerminal,
+  refreshTerminalThemes,
+  startOnCleanScreen,
+  writeToTerminal,
+} from "../terminal/registry"
 import { decideOpening } from "../session/opening"
 import { cleanTranscriptLine } from "../session/transcript-line"
 import { createRawWindows } from "../session/raw-window"
@@ -380,7 +396,7 @@ const SPLASH_FLOOR_MS = 7000
 export function Workbench() {
   const platform = navigator.userAgent.includes("Mac") ? "mac" : "other"
   const bindings = resolveDefaultBindings(platform)
-  
+
   /*
    * The workbench is a store, and `wb()` hands back the store itself.
    *
@@ -435,8 +451,7 @@ export function Workbench() {
    * tray misses the screenshots taken while it waited for an answer.
    */
   const shotSource = createShotSource(
-    typeof window !== "undefined" &&
-      "__TAURI_INTERNALS__" in (window as unknown as Record<string, unknown>),
+    typeof window !== "undefined" && "__TAURI_INTERNALS__" in (window as unknown as Record<string, unknown>),
   )
   const [project, setProject] = createSignal<Project>()
   const [recents, setRecents] = createSignal<RecentEntry[]>([])
@@ -471,7 +486,7 @@ export function Workbench() {
     const list: Array<{ root: string; name: string; branch?: string }> = recents().map((r) => ({
       root: r.root,
       name: r.name,
-      branch: (r.root === currentProject?.root || r.name === currentProject?.name) ? currentProject?.branch : undefined,
+      branch: r.root === currentProject?.root || r.name === currentProject?.name ? currentProject?.branch : undefined,
     }))
     if (currentProject && !list.some((p) => p.name === currentProject.name || p.root === currentProject.root)) {
       list.unshift({
@@ -596,9 +611,13 @@ export function Workbench() {
   panels.register("keys", {
     verbs: KEYS_VERBS,
     run: (request) => {
-      return runKeysCommand({ list: keysService.list, ask: (env, reason) => setKeyRequest({ env, reason }) }, request).catch(
-        (failure: unknown) => ({ ok: false as const, reason: failure instanceof Error ? failure.message : String(failure) }),
-      )
+      return runKeysCommand(
+        { list: keysService.list, ask: (env, reason) => setKeyRequest({ env, reason }) },
+        request,
+      ).catch((failure: unknown) => ({
+        ok: false as const,
+        reason: failure instanceof Error ? failure.message : String(failure),
+      }))
     },
   })
 
@@ -609,7 +628,10 @@ export function Workbench() {
    */
   const browserControllers = new Map<string, BrowserController>()
   /** The web pane bound to session `ownerId`, the most recent if several. */
-  const ownedBrowser = (ownerId: string) => wb().panes.filter((p) => p.browserUrl && p.browserOwner?.id === ownerId).at(-1)
+  const ownedBrowser = (ownerId: string) =>
+    wb()
+      .panes.filter((p) => p.browserUrl && p.browserOwner?.id === ownerId)
+      .at(-1)
   /** A new web pane on `url`, bound to `owner`, in the owner's project. */
   const openOwnedBrowser = (url: string, owner: { id: string; title: string }, focus: boolean): Pane => {
     const pane: Pane = {
@@ -656,9 +678,12 @@ export function Workbench() {
     const url = devServerUrl(line)
     if (!url) return
     const pane = wb().panes.find((p) => p.id === paneId && !isPanelPane(p))
-    if (!pane || !shouldOffer({ sessionId: paneId, url, seen: offersSeen, ownedUrl: ownedBrowser(paneId)?.browserUrl })) return
+    if (!pane || !shouldOffer({ sessionId: paneId, url, seen: offersSeen, ownedUrl: ownedBrowser(paneId)?.browserUrl }))
+      return
     offersSeen.add(offerKey(paneId, url))
-    setDevOffers((list) => [...list.filter((offer) => offer.sessionId !== paneId), { sessionId: paneId, title: pane.title, url }].slice(-3))
+    setDevOffers((list) =>
+      [...list.filter((offer) => offer.sessionId !== paneId), { sessionId: paneId, title: pane.title, url }].slice(-3),
+    )
   }
   const acceptDevOffer = (offer: DevServerOffer) => {
     setDevOffers((list) => list.filter((item) => item !== offer))
@@ -836,7 +861,10 @@ export function Workbench() {
     setExporting(true)
     report(t("record.exporting"), "info")
     try {
-      const events = await host.readTextFile(eventsPathFor(video)).then((file) => file.text).catch(() => "")
+      const events = await host
+        .readTextFile(eventsPathFor(video))
+        .then((file) => file.text)
+        .catch(() => "")
       const exists = async (path: string) => ((await host.exists?.(path).catch(() => false)) ? path : undefined)
       const mic = (await exists(micPathFor(video, "webm"))) ?? (await exists(micPathFor(video, "m4a")))
       const voice = await exists(voicePathFor(video))
@@ -943,16 +971,18 @@ export function Workbench() {
       setWb((w) => ({ ...w, focusedId: existing.id }))
       return
     }
-    setWb((w) => addPane(w, {
-      id: `m${Date.now()}`,
-      title: path ? (path.split(/[\\/]/).pop() ?? t("newPane.model")) : t("newPane.model"),
-      status: "working",
-      model: "—",
-      mode: "model",
-      modelPath: path,
-      workspaceId: project()?.name ?? "workspace",
-      lines: [],
-    }))
+    setWb((w) =>
+      addPane(w, {
+        id: `m${Date.now()}`,
+        title: path ? (path.split(/[\\/]/).pop() ?? t("newPane.model")) : t("newPane.model"),
+        status: "working",
+        model: "—",
+        mode: "model",
+        modelPath: path,
+        workspaceId: project()?.name ?? "workspace",
+        lines: [],
+      }),
+    )
   }
 
   /** A video panel on `path`, or the one already playing it. */
@@ -962,16 +992,18 @@ export function Workbench() {
       setWb((w) => ({ ...w, focusedId: existing.id }))
       return
     }
-    setWb((w) => addPane(w, {
-      id: `v${Date.now()}`,
-      title: path.split(/[\\/]/).pop() ?? t("pane.video.title"),
-      status: "working",
-      model: "—",
-      mode: "video",
-      videoPath: path,
-      workspaceId: project()?.name ?? "workspace",
-      lines: [],
-    }))
+    setWb((w) =>
+      addPane(w, {
+        id: `v${Date.now()}`,
+        title: path.split(/[\\/]/).pop() ?? t("pane.video.title"),
+        status: "working",
+        model: "—",
+        mode: "video",
+        videoPath: path,
+        workspaceId: project()?.name ?? "workspace",
+        lines: [],
+      }),
+    )
   }
 
   /**
@@ -986,7 +1018,10 @@ export function Workbench() {
     if (!host?.readTextFile || !root) return []
     const base = root.replace(/[/\\]+$/, "")
     const read = (relative: string) =>
-      host.readTextFile!(`${base}/${relative}`, 256_000).then((file) => file.text, () => undefined)
+      host.readTextFile!(`${base}/${relative}`, 256_000).then(
+        (file) => file.text,
+        () => undefined,
+      )
     const [packageJson, tauriConf, appJson] = await Promise.all([
       read("package.json"),
       read("src-tauri/tauri.conf.json"),
@@ -1015,7 +1050,9 @@ export function Workbench() {
       return {
         readTextFile: (path: string, maxBytes?: number) => host.readTextFile!(path, maxBytes),
         writeTextFile: (path: string, contents: string) => host.writeTextFile!(path, contents),
-        ...(host.appendTextFile ? { appendTextFile: (path: string, text: string) => host.appendTextFile!(path, text) } : {}),
+        ...(host.appendTextFile
+          ? { appendTextFile: (path: string, text: string) => host.appendTextFile!(path, text) }
+          : {}),
         ...(host.readDir ? { readDir: (path: string) => host.readDir!(path) } : {}),
       }
     },
@@ -1088,8 +1125,17 @@ export function Workbench() {
         const decision = state.decisions.find((entry) => entry.k === item.k)
         if (!decision || !running.has(target.id) || !(await freeNow(host, target.id))) continue
         // Through the inbox when the line is long (a note of a few paragraphs), like every other message.
-        if (!(await deliverText(host, target.id, deliveryLine(decision), { id: `decisione-${decision.k}`, kind: "send", from: "" }))) continue
-        const stored = decisionsOutbox().find((entry) => entry.path === item.path && entry.k === item.k && entry.answeredAt === item.answeredAt)
+        if (
+          !(await deliverText(host, target.id, deliveryLine(decision), {
+            id: `decisione-${decision.k}`,
+            kind: "send",
+            from: "",
+          }))
+        )
+          continue
+        const stored = decisionsOutbox().find(
+          (entry) => entry.path === item.path && entry.k === item.k && entry.answeredAt === item.answeredAt,
+        )
         if (stored) saveDecisionsOutbox(markDelivered(decisionsOutbox(), stored, target.title, Date.now()))
         appendLine(target.id, t("decisions.delivered", decision.k), "note")
       }
@@ -1107,7 +1153,9 @@ export function Workbench() {
     onAnswered: (decision, event) => {
       const path = decisionsRegister.path()
       if (!path) return
-      saveDecisionsOutbox(enqueue(decisionsOutbox(), { path, k: decision.k, answeredAt: event.at, queuedAt: Date.now() }))
+      saveDecisionsOutbox(
+        enqueue(decisionsOutbox(), { path, k: decision.k, answeredAt: event.at, queuedAt: Date.now() }),
+      )
       void deliverDecisions()
     },
   })
@@ -1123,7 +1171,9 @@ export function Workbench() {
   })
 
   const [decisionsOpen, setDecisionsOpen] = createSignal(false)
-  const decisionsWaiting = createMemo(() => decisionsRegister.state()?.decisions.filter((decision) => decision.status === "aperta").length ?? 0)
+  const decisionsWaiting = createMemo(
+    () => decisionsRegister.state()?.decisions.filter((decision) => decision.status === "aperta").length ?? 0,
+  )
 
   onMount(() => {
     onCleanup(decisionsRegister.watch())
@@ -1229,8 +1279,11 @@ export function Workbench() {
 
   const running = new Map<string, SpawnedSession>()
   const [runningTick, setRunningTick] = createSignal(0)
-  const touchRunning = () => setRunningTick(n => n + 1)
-  const isRunning = (id: string) => { runningTick(); return running.has(id) }
+  const touchRunning = () => setRunningTick((n) => n + 1)
+  const isRunning = (id: string) => {
+    runningTick()
+    return running.has(id)
+  }
 
   /*
    * Messages between sessions. See `session/mailbox.ts` and `mailbox.rs`.
@@ -1409,7 +1462,9 @@ export function Workbench() {
   }
 
   /** The `ask` and `spawn` requests still waiting for a reply. */
-  const openRequests = new Map<string, OpenRequest>(parseOpenRequests(readStored(REQUESTS_KEY)).map((request) => [request.id, request]))
+  const openRequests = new Map<string, OpenRequest>(
+    parseOpenRequests(readStored(REQUESTS_KEY)).map((request) => [request.id, request]),
+  )
   const saveRequests = () => writeStored(REQUESTS_KEY, JSON.stringify([...openRequests.values()]))
 
   /** Long messages left in an inbox and not yet read (S20). */
@@ -1434,7 +1489,17 @@ export function Workbench() {
     if (!session) return false
     if (!goesToInbox(line) || !host.mailboxInboxPut || !host.mailboxInboxRead) return typeLine(session, line)
     const at = Date.now()
-    const entry: InboxEntry = { id: meta.id, paneId, name: inboxName(meta.id, at), from: meta.from, kind: meta.kind, chars: line.length, at, ringAt: at, rings: 0 }
+    const entry: InboxEntry = {
+      id: meta.id,
+      paneId,
+      name: inboxName(meta.id, at),
+      from: meta.from,
+      kind: meta.kind,
+      chars: line.length,
+      at,
+      ringAt: at,
+      rings: 0,
+    }
     const stored = await host.mailboxInboxPut(paneId, entry.name, line).then(
       () => true,
       () => false,
@@ -1442,7 +1507,14 @@ export function Workbench() {
     if (!stored) return typeLine(session, line)
     inboxPending.push(entry)
     saveInbox()
-    return typeLine(session, formatBell(entry, mailPanes().find((pane) => pane.id === meta.from), line.length))
+    return typeLine(
+      session,
+      formatBell(
+        entry,
+        mailPanes().find((pane) => pane.id === meta.from),
+        line.length,
+      ),
+    )
   }
 
   /** Rings again for unread inbox messages, and tells the sender of one never read. */
@@ -1459,12 +1531,25 @@ export function Workbench() {
       if (action === "ring" && session) {
         entry.rings += 1
         entry.ringAt = now
-        void typeLine(session, formatBell(entry, panes.find((pane) => pane.id === entry.from), entry.chars))
+        void typeLine(
+          session,
+          formatBell(
+            entry,
+            panes.find((pane) => pane.id === entry.from),
+            entry.chars,
+          ),
+        )
         appendLine(entry.paneId, t("note.rang", entry.rings), "note")
       } else {
         inboxPending.splice(inboxPending.indexOf(entry), 1)
         if (action === "warn" && entry.from && running.has(entry.from)) {
-          heldLines.push({ paneId: entry.from, text: formatUnread(entry, panes.find((pane) => pane.id === entry.paneId)) })
+          heldLines.push({
+            paneId: entry.from,
+            text: formatUnread(
+              entry,
+              panes.find((pane) => pane.id === entry.paneId),
+            ),
+          })
         }
       }
       changed = true
@@ -1483,7 +1568,11 @@ export function Workbench() {
     (() => {
       try {
         const raw: unknown = JSON.parse(readStored(SPAWNED_KEY) ?? "{}")
-        return raw && typeof raw === "object" ? Object.entries(raw as Record<string, unknown>).filter((entry): entry is [string, string] => typeof entry[1] === "string") : []
+        return raw && typeof raw === "object"
+          ? Object.entries(raw as Record<string, unknown>).filter(
+              (entry): entry is [string, string] => typeof entry[1] === "string",
+            )
+          : []
       } catch {
         return []
       }
@@ -1504,7 +1593,8 @@ export function Workbench() {
     const rows: { title: string; agent: string; project?: string; usage: TokenUsage }[] = []
     for (const pane of wb().panes) {
       const agent = pane.agent ?? pane.model
-      if ((agent !== "claude-code" && agent !== "codex") || !pane.resumeId || !pane.cwd || isRemoteRoot(pane.cwd)) continue
+      if ((agent !== "claude-code" && agent !== "codex") || !pane.resumeId || !pane.cwd || isRemoteRoot(pane.cwd))
+        continue
       const usage = await host.transcriptUsage(agent, pane.resumeId, pane.cwd)
       if (usage) usageOf.set(pane.id, usage)
       const known = usageOf.get(pane.id)
@@ -1623,7 +1713,10 @@ export function Workbench() {
       const entries = await host.readDir(dir).catch(() => [])
       for (const entry of entries) {
         if (entry.is_dir || !entry.name.endsWith(".log")) continue
-        const text = await host.readTextFile(entry.path).then((read) => read.text).catch(() => "")
+        const text = await host
+          .readTextFile(entry.path)
+          .then((read) => read.text)
+          .catch(() => "")
         logs.push({ spec: entry.name.slice(0, -4), text })
       }
       if (entries.length) break
@@ -1734,16 +1827,21 @@ export function Workbench() {
    * on its branch the project's branch does not have, are work that closing
    * would strand.
    */
-  const unintegrated = async (host: NonNullable<Awaited<ReturnType<typeof getHost>>>, paneId: string): Promise<string | undefined> => {
+  const unintegrated = async (
+    host: NonNullable<Awaited<ReturnType<typeof getHost>>>,
+    paneId: string,
+  ): Promise<string | undefined> => {
     const pane = wb().panes.find((candidate) => candidate.id === paneId)
     if (!pane?.worktree || !host.run) return undefined
     const status = await host.run("git", ["status", "--porcelain"], pane.worktree)
-    if (status.code === 0 && status.stdout.trim()) return `"${pane.title}" ha modifiche non committate in ${pane.worktree}`
+    if (status.code === 0 && status.stdout.trim())
+      return `"${pane.title}" ha modifiche non committate in ${pane.worktree}`
     const branch = pane.tree?.branch
     const root = (await projectOfPane(host, paneId))?.root
     if (branch && root) {
       const merged = await host.run("git", ["branch", "--list", branch, "--merged"], root)
-      if (merged.code === 0 && !merged.stdout.trim()) return `"${pane.title}" ha commit sul branch ${branch} non ancora integrati`
+      if (merged.code === 0 && !merged.stdout.trim())
+        return `"${pane.title}" ha commit sul branch ${branch} non ancora integrati`
     }
     return undefined
   }
@@ -1767,7 +1865,9 @@ export function Workbench() {
       if (reason) blocked.set(id, reason)
     }
     if (blocked.size > 0 && !force) {
-      return { error: `non chiudo: ${[...blocked.values()].join("; ")}. Integra o committa prima, oppure usa --force (la worktree resta su disco)` }
+      return {
+        error: `non chiudo: ${[...blocked.values()].join("; ")}. Integra o committa prima, oppure usa --force (la worktree resta su disco)`,
+      }
     }
     const closed: string[] = []
     const kept: string[] = []
@@ -1775,7 +1875,12 @@ export function Workbench() {
       const pane = wb().panes.find((candidate) => candidate.id === id)
       if (!pane) continue
       for (const request of [...openRequests.values()]) {
-        if (request.to === id) await settle(host, request.id, `[ade-msg] richiesta ${request.id} interrotta: la sessione "${pane.title}" è stata chiusa`)
+        if (request.to === id)
+          await settle(
+            host,
+            request.id,
+            `[ade-msg] richiesta ${request.id} interrotta: la sessione "${pane.title}" è stata chiusa`,
+          )
       }
       spawnedBy.delete(id)
       close(id)
@@ -1802,7 +1907,10 @@ export function Workbench() {
     const dir = common.stdout.trim()
     const absolute = /^([A-Za-z]:[\\/]|[\\/])/.test(dir) ? dir : `${root}/${dir}`
     const file = `${absolute}/info/exclude`
-    const current = await host.readTextFile(file).then((read) => read.text).catch(() => "")
+    const current = await host
+      .readTextFile(file)
+      .then((read) => read.text)
+      .catch(() => "")
     const next = excludeWithAde(current)
     if (next !== undefined) await host.writeTextFile(file, next).catch(() => null)
   }
@@ -1813,7 +1921,8 @@ export function Workbench() {
     for (const { id, body } of await host.mailboxTake().catch(() => [])) {
       const parsed = parseMessage(body)
       // A pane's token, or a background turn's (voice agent, bot) registered for its length.
-      const message = parsed && verifySender(parsed, (paneId) => (running.has(paneId) ? paneTokens.get(paneId) : senderToken(paneId)))
+      const message =
+        parsed && verifySender(parsed, (paneId) => (running.has(paneId) ? paneTokens.get(paneId) : senderToken(paneId)))
       if (message) mailQueue.push({ id, message, at: Date.now() })
       else await host.mailboxReceipt(id, "errore: messaggio non valido").catch(() => {})
     }
@@ -1842,14 +1951,25 @@ export function Workbench() {
       // A request whose answerer is gone will never be answered; the caller is told, not left waiting.
       if (state === "sessione chiusa") {
         const title = wb().panes.find((pane) => pane.id === request.to)?.title ?? request.to
-        await settle(host, request.id, `[ade-msg] errore: la sessione "${title}" si è chiusa senza rispondere alla richiesta ${request.id}`)
+        await settle(
+          host,
+          request.id,
+          `[ade-msg] errore: la sessione "${title}" si è chiusa senza rispondere alla richiesta ${request.id}`,
+        )
         continue
       }
       if (state === "forse bloccata" && !request.wedgeWarned) {
         request.wedgeWarned = true
         saveRequests()
         if (request.from && running.has(request.from)) {
-          heldLines.push({ paneId: request.from, text: formatWedged(request, panes.find((pane) => pane.id === request.to), now) })
+          heldLines.push({
+            paneId: request.from,
+            text: formatWedged(
+              request,
+              panes.find((pane) => pane.id === request.to),
+              now,
+            ),
+          })
         }
         appendLine(request.to, t("pane.maybeStuck", request.id), "note")
       }
@@ -1872,7 +1992,13 @@ export function Workbench() {
         request.nudges = (request.nudges ?? 0) + 1
         request.nudgedAt = now
         saveRequests()
-        void typeLine(session, formatNudge(request.id, panes.find((pane) => pane.id === request.from)))
+        void typeLine(
+          session,
+          formatNudge(
+            request.id,
+            panes.find((pane) => pane.id === request.from),
+          ),
+        )
         appendLine(request.to, t("note.nudged", request.id), "note")
       }
     }
@@ -1887,7 +2013,11 @@ export function Workbench() {
   }
 
   /** Delivers one message; false leaves it queued for the next pass. */
-  const deliverOne = async (host: NonNullable<Awaited<ReturnType<typeof getHost>>>, id: string, message: Message): Promise<boolean> => {
+  const deliverOne = async (
+    host: NonNullable<Awaited<ReturnType<typeof getHost>>>,
+    id: string,
+    message: Message,
+  ): Promise<boolean> => {
     const answer = (text: string) => host.mailboxReceipt!(id, text).catch(() => {})
     const panes = mailPanes()
     const sender = panes.find((pane) => pane.id === message.from)
@@ -1904,11 +2034,19 @@ export function Workbench() {
       }
       await settle(host, message.ref, message.text)
       const caller = request ? panes.find((pane) => pane.id === request.from) : undefined
-      if (sender) appendLine(sender.id, (caller ? t("note.replySentTo", caller.title, message.ref) : t("note.replySent", message.ref)), "note")
-      if (caller) appendLine(caller.id, t("note.replyFrom", sender?.title ?? t("note.someSession"), message.text), "note")
+      if (sender)
+        appendLine(
+          sender.id,
+          caller ? t("note.replySentTo", caller.title, message.ref) : t("note.replySent", message.ref),
+          "note",
+        )
+      if (caller)
+        appendLine(caller.id, t("note.replyFrom", sender?.title ?? t("note.someSession"), message.text), "note")
       await answer(
         `ok: risposta consegnata${caller ? ` a "${caller.title}"` : ""}` +
-          (request?.autoClose ? " — se non ha lavoro da integrare questa sessione ora si chiude" : " — la sessione resta aperta per i seguiti"),
+          (request?.autoClose
+            ? " — se non ha lavoro da integrare questa sessione ora si chiude"
+            : " — la sessione resta aperta per i seguiti"),
       )
       // Nobody claimed it: the caller stopped waiting, so it is typed in, the way a background subagent reports back.
       setTimeout(() => {
@@ -1926,7 +2064,10 @@ export function Workbench() {
       if (request?.autoClose) {
         setTimeout(() => {
           void closeTree(host, request.to, false).then((outcome) => {
-            const note = "error" in outcome ? t("note.keptOpen", outcome.error) : t("note.closedAfterReply", outcome.closed.join(", "))
+            const note =
+              "error" in outcome
+                ? t("note.keptOpen", outcome.error)
+                : t("note.closedAfterReply", outcome.closed.join(", "))
             appendLine(request.to, note, "note")
             if (caller) appendLine(caller.id, note, "note")
           })
@@ -1950,8 +2091,15 @@ export function Workbench() {
       const caller = panes.find((pane) => pane.id === request.from)
       const line = formatUpdate(request.id, message.state, message.text, sender)
       await host.mailboxState?.(request.id, line, "update").catch(() => {})
-      if (caller) appendLine(caller.id, t("note.updateFrom", sender?.title ?? t("note.someSession"), message.state, message.text), "note")
-      await answer(`ok: aggiornamento consegnato${caller ? ` a "${caller.title}"` : ""}; la richiesta resta aperta, aspetta la sua risposta`)
+      if (caller)
+        appendLine(
+          caller.id,
+          t("note.updateFrom", sender?.title ?? t("note.someSession"), message.state, message.text),
+          "note",
+        )
+      await answer(
+        `ok: aggiornamento consegnato${caller ? ` a "${caller.title}"` : ""}; la richiesta resta aperta, aspetta la sua risposta`,
+      )
       // Nobody woke on it: typed into the caller, which is not waiting any more.
       setTimeout(() => {
         void host.mailboxResultReclaim?.(request.id, "update").then((text) => {
@@ -1977,7 +2125,9 @@ export function Workbench() {
       // The session stays: it may have other work, and closing is `ade-msg close`'s decision.
       const session = running.get(request.to)
       if (session && !permissions()[request.to]) void typeLine(session, formatCancel(request.id, sender))
-      await answer(`ok: richiesta ${request.id} annullata; la sessione resta aperta (chiudila con ade-msg close se non serve più)`)
+      await answer(
+        `ok: richiesta ${request.id} annullata; la sessione resta aperta (chiudila con ade-msg close se non serve più)`,
+      )
       return true
     }
 
@@ -2005,7 +2155,10 @@ export function Workbench() {
         return true
       }
       for (const path of boardCandidates(owner.root)) {
-        const text = await host.readTextFile(path).then((read) => read.text).catch(() => undefined)
+        const text = await host
+          .readTextFile(path)
+          .then((read) => read.text)
+          .catch(() => undefined)
         if (text === undefined) continue
         await answer(`ok\n${whoOwns(parseOwners(text), message.text)}`)
         return true
@@ -2021,7 +2174,12 @@ export function Workbench() {
         return true
       }
       const path = `${owner.root}/.ade/memory.md`
-      const current = host.readTextFile ? await host.readTextFile(path).then((read) => read.text).catch(() => "") : ""
+      const current = host.readTextFile
+        ? await host
+            .readTextFile(path)
+            .then((read) => read.text)
+            .catch(() => "")
+        : ""
       if (message.op === "show") {
         await answer(current.trim() ? `ok\n${current}` : `ok\n(memoria vuota: ${path})`)
         return true
@@ -2113,7 +2271,9 @@ export function Workbench() {
       // Depth: the user's own sessions are level 0, and each spawn goes one down.
       const depth = message.from ? depthOf(message.from, parentOf) + 1 : 1
       if (depth > maxDepth()) {
-        await answer(`errore: questa sessione è già al livello ${depth - 1} e il massimo è ${maxDepth()}: fai il lavoro qui o chiedi a chi ti ha avviato`)
+        await answer(
+          `errore: questa sessione è già al livello ${depth - 1} e il massimo è ${maxDepth()}: fai il lavoro qui o chiedi a chi ti ha avviato`,
+        )
         return true
       }
 
@@ -2124,8 +2284,15 @@ export function Workbench() {
           await answer(`errore: ${checked.error}`)
           return true
         }
-        if (nameTaken(panes.map((pane) => pane.title), checked.name)) {
-          await answer(`errore: esiste già una sessione "${checked.name}": scegli un altro nome, o mandale una richiesta con ade-msg ask`)
+        if (
+          nameTaken(
+            panes.map((pane) => pane.title),
+            checked.name,
+          )
+        ) {
+          await answer(
+            `errore: esiste già una sessione "${checked.name}": scegli un altro nome, o mandale una richiesta con ade-msg ask`,
+          )
           return true
         }
         name = checked.name
@@ -2145,7 +2312,9 @@ export function Workbench() {
         let json: string | undefined
         for (const path of board && !board.remote && host.readTextFile ? boardCandidates(board.root) : []) {
           const dispatchPath = `${path.replace(/[\\/][^\\/]+$/, "")}/dispatch.json`
-          json = await host.readTextFile!(dispatchPath).then((read) => read.text).catch(() => undefined)
+          json = await host.readTextFile!(dispatchPath)
+            .then((read) => read.text)
+            .catch(() => undefined)
           if (json !== undefined) break
         }
         if (json === undefined) {
@@ -2165,7 +2334,9 @@ export function Workbench() {
       const effort = message.effort ?? profileEffort
 
       // A fork keeps the parent's model choice: a different model is a different cache.
-      const spawnArgs: string[] = fork ? [...(wb().panes.find((pane) => pane.id === message.from)?.spawnArgs ?? [])] : []
+      const spawnArgs: string[] = fork
+        ? [...(wb().panes.find((pane) => pane.id === message.from)?.spawnArgs ?? [])]
+        : []
       if (model) {
         const chosen = modelArgs(agent.id, model)
         if ("error" in chosen) {
@@ -2222,7 +2393,9 @@ export function Workbench() {
         }
         const added = await host.run("git", worktreeAddArgs(plan, base), root)
         if (added.code !== 0) {
-          await answer(`errore: worktree non creata (${(added.stderr || added.stdout).trim().split(/\r?\n/)[0] || "git ha rifiutato"})`)
+          await answer(
+            `errore: worktree non creata (${(added.stderr || added.stdout).trim().split(/\r?\n/)[0] || "git ha rifiutato"})`,
+          )
           return true
         }
         worktree = { path: plan.path, branch: plan.branch }
@@ -2240,7 +2413,16 @@ export function Workbench() {
         maxDepth: maxDepth(),
       })
       const created = addAgent(
-        { agentId: agent.id, count: 1, task, title, workspaceId: owner, ...(worktree ? { worktree } : {}), spawnArgs, ...(fork ? { fork } : {}) },
+        {
+          agentId: agent.id,
+          count: 1,
+          task,
+          title,
+          workspaceId: owner,
+          ...(worktree ? { worktree } : {}),
+          spawnArgs,
+          ...(fork ? { fork } : {}),
+        },
         { index, agentId: agent.id, role: "agent" },
       )
       openRequests.set(id, {
@@ -2341,7 +2523,11 @@ export function Workbench() {
       if (message.fresh) {
         for (const request of [...openRequests.values()]) {
           if (request.to === pane.id) {
-            await settle(host, request.id, `[ade-msg] richiesta ${request.id} interrotta: la sessione "${pane.title}" è stata riavviata da zero`)
+            await settle(
+              host,
+              request.id,
+              `[ade-msg] richiesta ${request.id} interrotta: la sessione "${pane.title}" è stata riavviata da zero`,
+            )
           }
         }
         void startProcess(pane.id, agentId, "")
@@ -2349,7 +2535,15 @@ export function Workbench() {
         const updated = wb().panes.find((candidate) => candidate.id === pane.id)
         if (updated) void reopen(updated)
       }
-      appendLine(pane.id, t(message.fresh ? "note.restartedFresh" : "note.restarted", sender?.title ?? t("note.someSession"), message.model ?? ""), "note")
+      appendLine(
+        pane.id,
+        t(
+          message.fresh ? "note.restartedFresh" : "note.restarted",
+          sender?.title ?? t("note.someSession"),
+          message.model ?? "",
+        ),
+        "note",
+      )
       // The note is typed once the new process is up, like any held line; given up after a minute.
       const noteText = `[Nota di ripresa da ${sender?.title ?? "una sessione"}]: ${message.note.trim()}`
       const waitStart = Date.now()
@@ -2362,14 +2556,18 @@ export function Workbench() {
       }, 1000)
       await answer(
         `ok: riavviata "${pane.title}"${message.model ? ` con ${message.model}` : ""}${message.effort ? `, effort ${message.effort}` : ""}` +
-          (message.fresh ? " da zero con la tua nota: se serve il compito intero mandalo con ade-msg ask" : " con la tua nota; riprende la sua conversazione e le richieste aperte restano valide"),
+          (message.fresh
+            ? " da zero con la tua nota: se serve il compito intero mandalo con ade-msg ask"
+            : " con la tua nota; riprende la sua conversazione e le richieste aperte restano valide"),
       )
       return true
     }
 
     if (message.kind === "close") {
       if (!message.from || spawnedBy.get(target.pane.id) !== message.from) {
-        await answer(`errore: puoi chiudere solo le sessioni avviate da questa sessione con spawn ("${target.pane.title}" non lo è)`)
+        await answer(
+          `errore: puoi chiudere solo le sessioni avviate da questa sessione con spawn ("${target.pane.title}" non lo è)`,
+        )
         return true
       }
       const outcome = await closeTree(host, target.pane.id, message.force)
@@ -2385,7 +2583,9 @@ export function Workbench() {
     }
 
     if (message.kind === "ask" && message.effort) {
-      await answer("errore: l'effort di una sessione aperta non si cambia con ask: usa spawn --effort, oppure relaunch --effort --note")
+      await answer(
+        "errore: l'effort di una sessione aperta non si cambia con ask: usa spawn --effort, oppure relaunch --effort --note",
+      )
       return true
     }
     if (message.kind === "ask" && target.pane.id === message.from) {
@@ -2396,7 +2596,12 @@ export function Workbench() {
     if (!session) {
       // Its sender stopped reading receipts when it was held: an ask is answered where the caller waits.
       if (held.delete(id)) {
-        if (message.kind === "ask") await settle(host, id, `[ade-msg] errore: la sessione "${target.pane.title}" si è chiusa prima di ricevere la richiesta ${id}`)
+        if (message.kind === "ask")
+          await settle(
+            host,
+            id,
+            `[ade-msg] errore: la sessione "${target.pane.title}" si è chiusa prima di ricevere la richiesta ${id}`,
+          )
         return true
       }
       await answer(`errore: la sessione "${target.pane.title}" non è attiva`)
@@ -2428,7 +2633,13 @@ export function Workbench() {
             maxDepth: maxDepth(),
           })
         : formatDelivery(message, sender)
-    if (!(await deliverText(host, target.pane.id, line, { id, kind: message.kind === "ask" ? "ask" : "send", from: message.from }))) {
+    if (
+      !(await deliverText(host, target.pane.id, line, {
+        id,
+        kind: message.kind === "ask" ? "ask" : "send",
+        from: message.from,
+      }))
+    ) {
       await answer(`errore: la sessione "${target.pane.title}" si è chiusa durante la consegna`)
       return true
     }
@@ -2441,11 +2652,23 @@ export function Workbench() {
     }
     if (message.kind === "ask") {
       const at = Date.now()
-      openRequests.set(id, { id, kind: "ask", from: message.from, to: target.pane.id, at, deliveredAt: at, brief: briefOf(message.text) })
+      openRequests.set(id, {
+        id,
+        kind: "ask",
+        from: message.from,
+        to: target.pane.id,
+        at,
+        deliveredAt: at,
+        brief: briefOf(message.text),
+      })
       saveRequests()
     }
     const ask = message.kind === "ask"
-    appendLine(target.pane.id, t(ask ? "note.askFrom" : "note.messageFrom", sender?.title ?? t("note.someSession"), message.text), "note")
+    appendLine(
+      target.pane.id,
+      t(ask ? "note.askFrom" : "note.messageFrom", sender?.title ?? t("note.someSession"), message.text),
+      "note",
+    )
     if (sender) appendLine(sender.id, t(ask ? "note.askTo" : "note.messageTo", target.pane.title, message.text), "note")
     // A held message's sender was answered when it was held, and has stopped listening since.
     if (held.delete(id)) return true
@@ -2539,9 +2762,7 @@ export function Workbench() {
   const checkForUpdates = async () => {
     if (checkingUpdate()) return
     if (!updateWatch) {
-      setNotices((list) =>
-        addNotice(list, { kind: "info", text: t("update.desktopOnly"), at: Date.now() }),
-      )
+      setNotices((list) => addNotice(list, { kind: "info", text: t("update.desktopOnly"), at: Date.now() }))
       return
     }
     setCheckingUpdate(true)
@@ -2552,15 +2773,28 @@ export function Workbench() {
        * two identical rows; saying nothing would look like the command did
        * nothing. So it says which one it found.
        */
-      if (result.status === "update" && result.update && notices().some((notice) => notice.href === result.update?.url)) {
+      if (
+        result.status === "update" &&
+        result.update &&
+        notices().some((notice) => notice.href === result.update?.url)
+      ) {
         setNotices((list) =>
-          addNotice(list, { kind: "info", text: t("update.alreadyShown", result.update?.version ?? ""), at: Date.now() }),
+          addNotice(list, {
+            kind: "info",
+            text: t("update.alreadyShown", result.update?.version ?? ""),
+            at: Date.now(),
+          }),
         )
         return
       }
       const message = checkMessage(result)
       setNotices((list) =>
-        addNotice(list, { kind: message.kind, text: message.text, ...(message.href ? { href: message.href } : {}), at: Date.now() }),
+        addNotice(list, {
+          kind: message.kind,
+          text: message.text,
+          ...(message.href ? { href: message.href } : {}),
+          at: Date.now(),
+        }),
       )
     } finally {
       setCheckingUpdate(false)
@@ -2591,16 +2825,16 @@ export function Workbench() {
   const installUpdate = async (href: string) => {
     if (updating()) return
     const running = wb().panes.filter(
-      (pane) =>
-        !isPanelPane(pane) && (pane.agent ?? pane.model) &&
-        pane.status !== "done" && pane.status !== "error",
+      (pane) => !isPanelPane(pane) && (pane.agent ?? pane.model) && pane.status !== "done" && pane.status !== "error",
     ).length
     if (running > 0) {
       const { ask } = await import("@tauri-apps/plugin-dialog")
-      const go = await ask(
-        t("update.restart", running),
-        { title: t("update.restart.title"), kind: "warning", okLabel: t("update.restart.ok"), cancelLabel: t("update.restart.later") },
-      )
+      const go = await ask(t("update.restart", running), {
+        title: t("update.restart.title"),
+        kind: "warning",
+        okLabel: t("update.restart.ok"),
+        cancelLabel: t("update.restart.later"),
+      })
       if (!go) return
     }
     setUpdating(true)
@@ -2666,8 +2900,7 @@ export function Workbench() {
    * engines that remain — the local model and the cloud one — read the
    * microphone themselves, so mediaDevices is the whole requirement.
    */
-  const voiceAvailable =
-    typeof navigator !== "undefined" && !!navigator.mediaDevices?.getUserMedia
+  const voiceAvailable = typeof navigator !== "undefined" && !!navigator.mediaDevices?.getUserMedia
   const rawSavedVoice = typeof localStorage !== "undefined" ? localStorage.getItem("voice.settings") : null
   const initialVoice = loadVoiceSettings()
   const [voiceSettings, setVoiceSettings] = createSignal<VoiceSettings>(initialVoice.settings)
@@ -2712,11 +2945,7 @@ export function Workbench() {
    * the shortcut they configured and gets a pane command or nothing at all.
    * The panel says it too, but only once opened; this says it on the way in.
    */
-  const shadowedVoiceChords = summarizeVoiceShortcutConflicts(
-    initialVoice.settings,
-    bindings,
-    platform
-  )
+  const shadowedVoiceChords = summarizeVoiceShortcutConflicts(initialVoice.settings, bindings, platform)
   /*
    * The migration to the wake word, kept for the settings panel.
    *
@@ -2727,7 +2956,9 @@ export function Workbench() {
   const migratedToWakeWord = initialVoice.migrations.includes("wake-word")
   const migratedToAlwaysListen = initialVoice.migrations.includes("always-listen")
   const movedToShortcut = initialVoice.migrations.includes("shortcut-only")
-  const movedToName = initialVoice.migrations.some((m) => m === "name-only" || m === "wake-word" || m === "always-listen")
+  const movedToName = initialVoice.migrations.some(
+    (m) => m === "name-only" || m === "wake-word" || m === "always-listen",
+  )
   const agentShortcut = describeShortcut(initialVoice.settings.agentChord, platform)
   const [voiceSettingsNotice, setVoiceSettingsNotice] = createSignal<string | undefined>(
     wakeWordEnabled() && !shortcutActivationEnabled() && movedToName
@@ -2735,7 +2966,12 @@ export function Workbench() {
       : movedToShortcut
         ? t("voice.shortcutOnly", agentShortcut)
         : wakeWordEnabled() && (migratedToWakeWord || migratedToAlwaysListen)
-          ? t("voice.alwaysListening", initialVoice.settings.wakeWord, t("vui.listen.manual"), t("vui.activation.toggle"))
+          ? t(
+              "voice.alwaysListening",
+              initialVoice.settings.wakeWord,
+              t("vui.listen.manual"),
+              t("vui.activation.toggle"),
+            )
           : undefined,
   )
 
@@ -2749,7 +2985,7 @@ export function Workbench() {
       shadowedVoiceChords,
     ]
       .filter((line): line is string => line !== undefined)
-      .join(" ") || undefined
+      .join(" ") || undefined,
   )
 
   /*
@@ -3066,7 +3302,10 @@ export function Workbench() {
           return { name: current.name, root: current.root, branch: current.branch }
         },
         session: {
-          list: () => wb().panes.filter((pane) => !isPanelPane(pane)).map(toPluginSession),
+          list: () =>
+            wb()
+              .panes.filter((pane) => !isPanelPane(pane))
+              .map(toPluginSession),
           get: (id) => {
             const pane = wb().panes.find((item) => item.id === id)
             return pane && !isPanelPane(pane) ? toPluginSession(pane) : undefined
@@ -3165,7 +3404,7 @@ export function Workbench() {
       setRecents(newRecents)
       localStorage.setItem("ade.recents", serializeRecents(newRecents))
 
-      setWb(w => ({ ...w, projectPath: p.root }))
+      setWb((w) => ({ ...w, projectPath: p.root }))
 
       /*
        * Restarting what was running when the app went away.
@@ -3524,7 +3763,7 @@ export function Workbench() {
         if (p) {
           setProject(p)
           // The panes of the project being left stay: their sessions keep running, and keep talking to the others.
-          setWb(w => ({ ...w, projectPath: p.root, expandedId: undefined }))
+          setWb((w) => ({ ...w, projectPath: p.root, expandedId: undefined }))
           const newRecents = addRecent(recents(), { root: p.root, name: p.name })
           setRecents(newRecents)
           localStorage.setItem("ade.recents", serializeRecents(newRecents))
@@ -3533,19 +3772,19 @@ export function Workbench() {
     } else if (id === "pane.close") {
       if (wb().focusedId) close(wb().focusedId!)
     } else if (id === "pane.expand") {
-      if (wb().focusedId) setWb(w => expandPane(w, w.focusedId!))
+      if (wb().focusedId) setWb((w) => expandPane(w, w.focusedId!))
     } else if (id === "pane.rename") {
       // Handled by the pane itself: the title is edited where it is shown.
       requestRename(wb().focusedId)
     } else if (id === "view.toggle") {
-      setWb(w => ({ ...w, view: nextView(w.view) }))
+      setWb((w) => ({ ...w, view: nextView(w.view) }))
     } else if (id.startsWith("view.")) {
       // Matched against the list rather than parsed off the id, so a command
       // called "view.anything" cannot put the workbench in a view that has no
       // branch to render it.
       // Only a section the bar shows: a hidden one has no command to run (S40).
       const target = VISIBLE_VIEWS.find((view) => `view.${view}` === id)
-      if (target) setWb(w => ({ ...w, view: target }))
+      if (target) setWb((w) => ({ ...w, view: target }))
     } else if (id === "theme.set.light" || id === "theme.set.dark") {
       themeState.set(id === "theme.set.light" ? "light" : "dark")
     } else if (id === "theme.toggle") {
@@ -3559,16 +3798,18 @@ export function Workbench() {
        * the user meant — and the agent can open one itself with
        * `@ade video open <percorso>`.
        */
-      setWb(w => addPane(w, {
-        id: `v${Date.now()}`,
-        title: t("pane.video.title"),
-        status: "working",
-        model: "—",
-        mode: "video",
-        videoPath: "",
-        workspaceId: project()?.name ?? "workspace",
-        lines: []
-      }))
+      setWb((w) =>
+        addPane(w, {
+          id: `v${Date.now()}`,
+          title: t("pane.video.title"),
+          status: "working",
+          model: "—",
+          mode: "video",
+          videoPath: "",
+          workspaceId: project()?.name ?? "workspace",
+          lines: [],
+        }),
+      )
     } else if (id === "update.check") {
       void checkForUpdates()
     } else if (id === "decisions.open") {
@@ -3584,46 +3825,59 @@ export function Workbench() {
        * points at, and guessing one to load would load the wrong app half
        * the time — or ADE's own Vite server.
        */
-      setWb(w => addPane(w, {
-        id: `a${Date.now()}`,
-        title: "Simulatore",
-        status: "working",
-        model: "—",
-        mode: "app",
-        appUrl: "",
-        workspaceId: project()?.name ?? "workspace",
-        lines: []
-      }))
+      setWb((w) =>
+        addPane(w, {
+          id: `a${Date.now()}`,
+          title: "Simulatore",
+          status: "working",
+          model: "—",
+          mode: "app",
+          appUrl: "",
+          workspaceId: project()?.name ?? "workspace",
+          lines: [],
+        }),
+      )
     } else if (id === "browser.new") {
       const newId = `b${Date.now()}`
-      setWb(w => addPane(w, {
-        id: newId,
-        title: "Browser",
-        status: "working",
-        model: "—",
-        mode: "browser",
-        // Where a dev server usually is. The pane has an address bar, so this is
-        // a starting point rather than a decision the user is stuck with.
-        browserUrl: DEFAULT_PREVIEW_URL,
-        /*
-         * The project's own id, like every other pane.
-         *
-         * "ws-browser" was not a workspace: `gridPanes` keeps only the panes
-         * whose `workspaceId` matches the open project, so with a project open
-         * the browser pane was created, given the focus, and then drawn
-         * nowhere — and the next Ctrl+W closed a pane the user could not see.
-         * It worked in the browser harness only because `project()` is
-         * undefined there and the filter is skipped.
-         */
-        workspaceId: project()?.name ?? "workspace",
-        lines: []
-      }))
+      setWb((w) =>
+        addPane(w, {
+          id: newId,
+          title: "Browser",
+          status: "working",
+          model: "—",
+          mode: "browser",
+          // Where a dev server usually is. The pane has an address bar, so this is
+          // a starting point rather than a decision the user is stuck with.
+          browserUrl: DEFAULT_PREVIEW_URL,
+          /*
+           * The project's own id, like every other pane.
+           *
+           * "ws-browser" was not a workspace: `gridPanes` keeps only the panes
+           * whose `workspaceId` matches the open project, so with a project open
+           * the browser pane was created, given the focus, and then drawn
+           * nowhere — and the next Ctrl+W closed a pane the user could not see.
+           * It worked in the browser harness only because `project()` is
+           * undefined there and the filter is skipped.
+           */
+          workspaceId: project()?.name ?? "workspace",
+          lines: [],
+        }),
+      )
     } else if (id === "process.kill") {
       if (wb().focusedId && isRunning(wb().focusedId!)) {
         running.get(wb().focusedId!)?.kill()
         running.delete(wb().focusedId!)
         touchRunning()
-        setWb(w => updatePane(w, w.focusedId!, { status: "error", activity: "killed", lines: [...(w.panes.find(p=>p.id===w.focusedId)?.lines||[]), {kind:"note", text:t("pane.killed")}] }))
+        setWb((w) =>
+          updatePane(w, w.focusedId!, {
+            status: "error",
+            activity: "killed",
+            lines: [
+              ...(w.panes.find((p) => p.id === w.focusedId)?.lines || []),
+              { kind: "note", text: t("pane.killed") },
+            ],
+          }),
+        )
       }
     } else if (id === "voice.toggle") {
       void voiceEngine.toggle()
@@ -3669,7 +3923,7 @@ export function Workbench() {
       if (host) {
         const p = await discoverProject(host, root)
         setProject(p)
-        setWb(w => ({ ...w, projectPath: p.root, expandedId: undefined }))
+        setWb((w) => ({ ...w, projectPath: p.root, expandedId: undefined }))
         const newRecents = addRecent(recents(), { root: p.root, name: p.name })
         setRecents(newRecents)
         localStorage.setItem("ade.recents", serializeRecents(newRecents))
@@ -3725,21 +3979,24 @@ export function Workbench() {
   const quietTimers = new Map<string, ReturnType<typeof setTimeout>>()
   const settleWhenQuiet = (paneId: string) => {
     clearTimeout(quietTimers.get(paneId))
-    quietTimers.set(paneId, setTimeout(() => {
-      quietTimers.delete(paneId)
-      if (wb().panes.find((pane) => pane.id === paneId)?.status !== "working") return
-      // Without turn hooks, a session that owes an answer is working until it answers (S14).
-      const outcome = quietOutcome({
-        hooked: hooked(paneId),
-        busy: activityOf.get(paneId)?.state === "busy",
-        owesAnswer: holdsForAnswer([...openRequests.values()], paneId, Date.now()),
-      })
-      // The hold has to be re-armed: it ends with time passing, and nothing
-      // else would come back to look at a pane whose terminal has gone quiet.
-      if (outcome === "recheck") return settleWhenQuiet(paneId)
-      if (outcome === "wait") return
-      setWb((w) => updatePane(w, paneId, { status: "idle", activity: "ready" }))
-    }, QUIET_MS))
+    quietTimers.set(
+      paneId,
+      setTimeout(() => {
+        quietTimers.delete(paneId)
+        if (wb().panes.find((pane) => pane.id === paneId)?.status !== "working") return
+        // Without turn hooks, a session that owes an answer is working until it answers (S14).
+        const outcome = quietOutcome({
+          hooked: hooked(paneId),
+          busy: activityOf.get(paneId)?.state === "busy",
+          owesAnswer: holdsForAnswer([...openRequests.values()], paneId, Date.now()),
+        })
+        // The hold has to be re-armed: it ends with time passing, and nothing
+        // else would come back to look at a pane whose terminal has gone quiet.
+        if (outcome === "recheck") return settleWhenQuiet(paneId)
+        if (outcome === "wait") return
+        setWb((w) => updatePane(w, paneId, { status: "idle", activity: "ready" }))
+      }, QUIET_MS),
+    )
   }
   const forgetQuiet = (paneId: string) => {
     clearTimeout(quietTimers.get(paneId))
@@ -3884,9 +4141,7 @@ export function Workbench() {
      */
     const buffer = buffers()[id]
     if (buffer?.dirty) {
-      const discard = confirm(
-        t("editor.closeDirty", buffer.path),
-      )
+      const discard = confirm(t("editor.closeDirty", buffer.path))
       if (!discard) return
     }
 
@@ -3905,17 +4160,19 @@ export function Workbench() {
     // reporting a tile the user closed and the plugin's own "already open"
     // check refuses to reopen it.
     pluginRuntime.registry.closePane(id)
-    setWb(w => closePane(w, id))
+    setWb((w) => closePane(w, id))
   }
 
   const finish = (id: string, code: number | null) => {
     running.delete(id)
     touchRunning()
     forgetQuiet(id)
-    setWb(w => updatePane(w, id, {
-      status: code === 0 ? "done" : "error",
-      activity: code === 0 ? "done" : exitedActivity(code)
-    }))
+    setWb((w) =>
+      updatePane(w, id, {
+        status: code === 0 ? "done" : "error",
+        activity: code === 0 ? "done" : exitedActivity(code),
+      }),
+    )
   }
 
   /*
@@ -4056,17 +4313,13 @@ export function Workbench() {
       }
 
       if (unreadable !== undefined) {
-        const anyway = confirm(
-          t("editor.saveUnreadable", buffer.path, String(unreadable)),
-        )
+        const anyway = confirm(t("editor.saveUnreadable", buffer.path, String(unreadable)))
         if (!anyway) {
           report(t("editor.saveCancelled.unreadable", String(unreadable)), "warning")
           return
         }
       } else if (onDisk && !onDisk.truncated && onDisk.text !== buffer.saved) {
-        const overwrite = confirm(
-          t("editor.saveChanged", buffer.path),
-        )
+        const overwrite = confirm(t("editor.saveChanged", buffer.path))
         if (!overwrite) {
           report(t("editor.saveCancelled.changed"), "warning")
           return
@@ -4295,7 +4548,10 @@ export function Workbench() {
    * spawned by one of its agents — has to start in its own root. Found by
    * name among the known projects; the open one when the pane's is unknown.
    */
-  const projectOfPane = async (host: NonNullable<Awaited<ReturnType<typeof getHost>>>, paneId: string): Promise<Project | undefined> => {
+  const projectOfPane = async (
+    host: NonNullable<Awaited<ReturnType<typeof getHost>>>,
+    paneId: string,
+  ): Promise<Project | undefined> => {
     const open = project()
     const owner = wb().panes.find((pane) => pane.id === paneId)?.workspaceId
     if (!owner || owner === open?.name) return open
@@ -4388,17 +4644,22 @@ export function Workbench() {
      */
     try {
       const hasTask = Boolean(task.trim())
-      setWb(w => updatePane(w, paneId, {
-        cwd: workDir,
-        tree: launched?.worktree && launched.tree
-          ? launched.tree
-          : p.branch ? { branch: p.branch, fidelity: "project" } : undefined,
-        status: hasTask ? "working" : "idle",
-        activity: resumed ? "resumed" : (hasTask ? "running" : "ready"),
-        // A fresh start drops an id whose conversation is gone, so the pane
-        // stops promising to reopen it.
-        ...(mintedId ? { resumeId: mintedId } : resume?.kind === "fresh" ? { resumeId: undefined } : {}),
-      }))
+      setWb((w) =>
+        updatePane(w, paneId, {
+          cwd: workDir,
+          tree:
+            launched?.worktree && launched.tree
+              ? launched.tree
+              : p.branch
+                ? { branch: p.branch, fidelity: "project" }
+                : undefined,
+          status: hasTask ? "working" : "idle",
+          activity: resumed ? "resumed" : hasTask ? "running" : "ready",
+          // A fresh start drops an id whose conversation is gone, so the pane
+          // stops promising to reopen it.
+          ...(mintedId ? { resumeId: mintedId } : resume?.kind === "fresh" ? { resumeId: undefined } : {}),
+        }),
+      )
 
       appendLine(paneId, `${workDir}> ${[agent.command, ...displayArgs(extraArgs)].join(" ")}`, "shell")
 
@@ -4413,7 +4674,8 @@ export function Workbench() {
         try {
           const assigned = await host.assignedSecrets(agent.command)
           secretNames = assigned.map((key) => key.name)
-          if (assigned.length > 0) appendLine(paneId, t("keys.passed", assigned.map((key) => key.env).join(", ")), "note")
+          if (assigned.length > 0)
+            appendLine(paneId, t("keys.passed", assigned.map((key) => key.env).join(", ")), "note")
         } catch (failure) {
           appendLine(paneId, t("keys.unread", failure instanceof Error ? failure.message : String(failure)), "note")
         }
@@ -4589,19 +4851,25 @@ export function Workbench() {
 
           stopOpeningPoll(poll)
           if (decision === "send") {
-            setWb(w => updatePane(w, paneId, {
-              status: "working",
-              activity: "running",
-            }))
+            setWb((w) =>
+              updatePane(w, paneId, {
+                status: "working",
+                activity: "running",
+              }),
+            )
             // Opening tasks only — a line the user typed later is theirs alone.
             // Text and Enter apart, for the reason `typeLine` gives.
             const session = running.get(paneId)
             const opening = typeIntoResumed ? task : withIntro(agentId, task)
             // A task from `ade-msg spawn` is a request like any other: too long to type, it goes to the inbox.
-            const spawned = [...openRequests.values()].find((request) => request.kind === "spawn" && request.to === paneId)
+            const spawned = [...openRequests.values()].find(
+              (request) => request.kind === "spawn" && request.to === paneId,
+            )
             if (session && spawned) {
               void getHost().then((host) =>
-                host ? deliverText(host, paneId, opening, { id: spawned.id, kind: "spawn", from: spawned.from }) : typeLine(session, opening),
+                host
+                  ? deliverText(host, paneId, opening, { id: spawned.id, kind: "spawn", from: spawned.from })
+                  : typeLine(session, opening),
               )
             } else if (session) void typeLine(session, opening)
             return
@@ -4611,22 +4879,20 @@ export function Workbench() {
            * the user's sentence going missing; they need to know it is still
            * theirs to send, and the terminal is where they are looking.
            */
-          setWb(w => updatePane(w, paneId, {
-            status: "idle",
-            activity: "ready",
-          }))
-          noteInTerminal(
-            paneId,
-            t("task.notSent"),
+          setWb((w) =>
+            updatePane(w, paneId, {
+              status: "idle",
+              activity: "ready",
+            }),
           )
+          noteInTerminal(paneId, t("task.notSent"))
           appendLine(paneId, t("task.notSent.short"), "note")
         }, 100)
         openingPolls.add(poll)
       }
-
     } catch (e) {
       appendLine(paneId, String(e))
-      setWb(w => updatePane(w, paneId, { status: "error", activity: "startFailed" }))
+      setWb((w) => updatePane(w, paneId, { status: "error", activity: "startFailed" }))
     }
   }
 
@@ -4701,7 +4967,11 @@ export function Workbench() {
         }
         const last = lastOutputAt.get(paneId)
         if (last !== undefined && last > stepStart) stepFirst ??= last
-        const lastLine = tail.split(/\r?\n|\r/).filter((line) => line.trim()).pop() ?? ""
+        const lastLine =
+          tail
+            .split(/\r?\n|\r/)
+            .filter((line) => line.trim())
+            .pop() ?? ""
         const decision = decideOpening({
           startedAt: stepStart,
           firstByteAt: stepFirst,
@@ -4721,7 +4991,9 @@ export function Workbench() {
         const text = steps[index]!
         index += 1
         void typeLine(session, text)
-        setWb((w) => updatePane(w, paneId, { activity: index < steps.length || !task.trim() ? "connected" : "running" }))
+        setWb((w) =>
+          updatePane(w, paneId, { activity: index < steps.length || !task.trim() ? "connected" : "running" }),
+        )
         if (index >= steps.length) {
           stopOpeningPoll(poll)
           return
@@ -4799,29 +5071,34 @@ export function Workbench() {
     const open = project()
     // Another project's session (a subagent spawned from there) keeps that project's name; its root is found at start.
     const currentProj = input.workspaceId && input.workspaceId !== open?.name ? undefined : open
-    setWb(w => addPane(w, {
-      id,
-      title,
-      // If there is an initial task, provisioning begins; otherwise idle ("disponibile")
-      status: hasInitialTask ? "provisioning" : "idle",
-      activity: hasInitialTask ? "starting" : "ready",
-      model: entry.agentId,
-      agent: entry.agentId,
-      mode: input.preset ?? "custom",
-      task,
-      lines: [{ kind: "note", text: task || t("task.none") }],
-      workspaceId: input.workspaceId || currentProj?.name || "workspace",
-      cwd: input.worktree?.path ?? currentProj?.root,
-      tree: input.worktree
-        ? { branch: input.worktree.branch, fidelity: "full", note: `Worktree ${input.worktree.path}` }
-        : currentProj?.branch ? { branch: currentProj.branch, fidelity: "project" } : undefined,
-      ...(input.worktree ? { worktree: input.worktree.path } : {}),
-      ...(input.spawnArgs?.length ? { spawnArgs: input.spawnArgs } : {}),
-      ...(input.fork?.resumeId ? { resumeId: input.fork.resumeId } : {}),
-    }))
+    setWb((w) =>
+      addPane(w, {
+        id,
+        title,
+        // If there is an initial task, provisioning begins; otherwise idle ("disponibile")
+        status: hasInitialTask ? "provisioning" : "idle",
+        activity: hasInitialTask ? "starting" : "ready",
+        model: entry.agentId,
+        agent: entry.agentId,
+        mode: input.preset ?? "custom",
+        task,
+        lines: [{ kind: "note", text: task || t("task.none") }],
+        workspaceId: input.workspaceId || currentProj?.name || "workspace",
+        cwd: input.worktree?.path ?? currentProj?.root,
+        tree: input.worktree
+          ? { branch: input.worktree.branch, fidelity: "full", note: `Worktree ${input.worktree.path}` }
+          : currentProj?.branch
+            ? { branch: currentProj.branch, fidelity: "project" }
+            : undefined,
+        ...(input.worktree ? { worktree: input.worktree.path } : {}),
+        ...(input.spawnArgs?.length ? { spawnArgs: input.spawnArgs } : {}),
+        ...(input.fork?.resumeId ? { resumeId: input.fork.resumeId } : {}),
+      }),
+    )
     setStarting(false)
     // A fork opens as a resumed conversation, and the task is typed into it all the same.
-    if (input.fork) void startProcess(id, entry.agentId, task, { kind: "resume", via: "id", args: input.fork.args }, undefined, true)
+    if (input.fork)
+      void startProcess(id, entry.agentId, task, { kind: "resume", via: "id", args: input.fork.args }, undefined, true)
     else void startProcess(id, entry.agentId, task)
     // Handed back for the callers that need to keep talking to the pane they
     // just made; `launchSessions` ignores it.
@@ -4864,18 +5141,20 @@ export function Workbench() {
     const mine = owner ? wb().panes.filter((p) => p.workspaceId === owner) : wb().panes
     const id = `n${Date.now()}-bot-${++paneSequence}`
 
-    setWb((w) => addPane(w, {
-      id,
-      title: bot.identifier,
-      status: "idle",
-      activity: "ready",
-      model: bot.model ?? launch.command,
-      agent: launch.agentId,
-      mode: "bot",
-      task: "",
-      lines: [{ kind: "note", text: `${launch.command} ${launch.args.join(" ")}` }],
-      workspaceId: owner || "workspace",
-    }))
+    setWb((w) =>
+      addPane(w, {
+        id,
+        title: bot.identifier,
+        status: "idle",
+        activity: "ready",
+        model: bot.model ?? launch.command,
+        agent: launch.agentId,
+        mode: "bot",
+        task: "",
+        lines: [{ kind: "note", text: `${launch.command} ${launch.args.join(" ")}` }],
+        workspaceId: owner || "workspace",
+      }),
+    )
     /* Narrowed to nothing, or the grid keeps showing whichever session was
        expanded and the one just started is off screen. */
     setWb((w) => ({ ...w, view: "code", focusedId: id, expandedId: undefined }))
@@ -4893,18 +5172,20 @@ export function Workbench() {
     if (!agentById(agentId) || runner.login.length === 0) return
     const owner = project()?.name
     const id = `n${Date.now()}-login-${++paneSequence}`
-    setWb((w) => addPane(w, {
-      id,
-      title: `${runner.label} · accesso`,
-      status: "idle",
-      activity: "ready",
-      model: runner.command,
-      agent: agentId,
-      mode: "bot",
-      task: "",
-      lines: [{ kind: "note", text: `${runner.command} ${runner.login.join(" ")}` }],
-      workspaceId: owner || "workspace",
-    }))
+    setWb((w) =>
+      addPane(w, {
+        id,
+        title: `${runner.label} · accesso`,
+        status: "idle",
+        activity: "ready",
+        model: runner.command,
+        agent: agentId,
+        mode: "bot",
+        task: "",
+        lines: [{ kind: "note", text: `${runner.command} ${runner.login.join(" ")}` }],
+        workspaceId: owner || "workspace",
+      }),
+    )
     setWb((w) => ({ ...w, view: "code", focusedId: id, expandedId: undefined }))
     setStarting(false)
     void startProcess(id, agentId, "", undefined, [...runner.login])
@@ -4959,8 +5240,7 @@ export function Workbench() {
         if (!host?.readBytes) throw new Error("questo host non può leggere file binari")
         return host.readBytes(path, maxBytes)
       }),
-    readDir: (path) =>
-      getHost().then((host) => (host?.readDir ? host.readDir(path) : [])),
+    readDir: (path) => getHost().then((host) => (host?.readDir ? host.readDir(path) : [])),
     captureFrame,
     guessServers,
     decisions: decisionsHub,
@@ -5029,63 +5309,70 @@ export function Workbench() {
             </span>
           </Show>
           <ProjectBar project={project()} />
-          <span data-slot="ade-count">{t("bar.sessions", wb().panes.filter(p => !isPanelPane(p)).length)}</span>
+          <span data-slot="ade-count">{t("bar.sessions", wb().panes.filter((p) => !isPanelPane(p)).length)}</span>
         </div>
 
         <div data-slot="ade-bar-center">
-        {/* A segmented control rather than loose chips: with four sections
+          {/* A segmented control rather than loose chips: with four sections
             the set is the navigation, and it has to read as one object with
             one selection — not as four independent toggles. */}
-        <div data-slot="ade-views" role="tablist" aria-label={t("bar.sections")}>
-          <For each={VISIBLE_VIEWS}>
-            {(view) => (
-              <button
-                type="button"
-                role="tab"
-                aria-selected={wb().view === view}
-                data-slot="ade-view-tab"
-                data-active={wb().view === view ? "true" : undefined}
-                onClick={() => setWb(w => ({ ...w, view }))}
-              >
-                {ADE_VIEW_LABELS[view]}
-              </button>
-            )}
-          </For>
-        </div>
-        {/* The palette, next to the sections rather than in the middle of the
+          <div data-slot="ade-views" role="tablist" aria-label={t("bar.sections")}>
+            <For each={VISIBLE_VIEWS}>
+              {(view) => (
+                <button
+                  type="button"
+                  role="tab"
+                  aria-selected={wb().view === view}
+                  data-slot="ade-view-tab"
+                  data-active={wb().view === view ? "true" : undefined}
+                  onClick={() => setWb((w) => ({ ...w, view }))}
+                >
+                  {ADE_VIEW_LABELS[view]}
+                </button>
+              )}
+            </For>
+          </div>
+          {/* The palette, next to the sections rather than in the middle of the
             bar: it is navigation too — the way to reach what the four tabs do
             not show — and it belongs with the thing it extends. Reduced to its
             icon so the group stays one object; the chord is in the tooltip,
             which is where a shortcut for a control this small belongs. */}
-        <button
-          type="button"
-          data-slot="ade-icon"
-          data-action="palette"
-          onClick={() => setPaletteOpen(true)}
-          aria-label={t("bar.palette")}
-          title={`${t("bar.palette")}  ${paletteChord()}`}
-        >
-          <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.4">
-            <circle cx="7" cy="7" r="4.2" />
-            <path d="M10.2 10.2L14 14" stroke-linecap="round" />
-          </svg>
-        </button>
-        {/* Decisions waiting for the user. Hidden at zero; opens only when pressed. */}
-        <Show when={decisionsWaiting() > 0}>
           <button
             type="button"
-            data-slot="decisions-badge"
-            onClick={() => setDecisionsOpen(true)}
-            title={t("decisions.waiting")}
+            data-slot="ade-icon"
+            data-action="palette"
+            onClick={() => setPaletteOpen(true)}
+            aria-label={t("bar.palette")}
+            title={`${t("bar.palette")}  ${paletteChord()}`}
           >
-            {countLabel(decisionsWaiting())}
+            <svg
+              viewBox="0 0 16 16"
+              width="14"
+              height="14"
+              aria-hidden="true"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.4"
+            >
+              <circle cx="7" cy="7" r="4.2" />
+              <path d="M10.2 10.2L14 14" stroke-linecap="round" />
+            </svg>
           </button>
-        </Show>
+          {/* Decisions waiting for the user. Hidden at zero; opens only when pressed. */}
+          <Show when={decisionsWaiting() > 0}>
+            <button
+              type="button"
+              data-slot="decisions-badge"
+              onClick={() => setDecisionsOpen(true)}
+              title={t("decisions.waiting")}
+            >
+              {countLabel(decisionsWaiting())}
+            </button>
+          </Show>
         </div>
 
         <div data-slot="ade-bar-side" data-side="end">
-
-        {/*
+          {/*
           The column chips used to sit here — a label and five buttons, shown
           only in `code`. They were configuration parked among the verbs: a
           decision taken once and then left alone, holding a permanent seat in
@@ -5093,7 +5380,7 @@ export function Workbench() {
           now. They live in Impostazioni › Codice, with room to say what
           "auto" means. See `GridSection`.
         */}
-        {/*
+          {/*
           One control: the orb.
 
           The assistant and dictation are two features — both always available,
@@ -5109,155 +5396,183 @@ export function Workbench() {
           and three of the views link to it — and it put a configuration
           control in the middle of the toolbar's verbs.
         */}
-        <div
-          data-slot="ade-voice-controls"
-          data-voice-mode={voiceEngine.isRunning() ? voiceEngine.activeMode() : undefined}
-          title={voiceAvailable ? undefined : t("palette.voice.unsupported")}
-        >
-          <VoiceOrb engine={voiceEngine} class={voiceAvailable ? undefined : "disabled"} />
-          <Show when={voiceAvailable}>
-            <ListeningIndicator engine={voiceEngine} />
-          </Show>
-        </div>
+          <div
+            data-slot="ade-voice-controls"
+            data-voice-mode={voiceEngine.isRunning() ? voiceEngine.activeMode() : undefined}
+            title={voiceAvailable ? undefined : t("palette.voice.unsupported")}
+          >
+            <VoiceOrb engine={voiceEngine} class={voiceAvailable ? undefined : "disabled"} />
+            <Show when={voiceAvailable}>
+              <ListeningIndicator engine={voiceEngine} />
+            </Show>
+          </div>
 
-        {/* Everything that opens a pane, behind one mark.
+          {/* Everything that opens a pane, behind one mark.
             One button per kind worked while there were two; with a video
             player, and an emulator and a 3D viewer behind it, the bar would
             become a row of verbs competing with the navigation beside it. */}
-        <Show when={showsNewPane(wb().view)}>
-          <div data-slot="ade-menu-anchor">
-            <button
-              type="button"
-              data-slot="ade-icon"
-              data-action="new-pane"
-              data-open={newPaneOpen() ? "true" : undefined}
-              aria-haspopup="menu"
-              aria-expanded={newPaneOpen()}
-              onClick={() => setNewPaneOpen((open) => !open)}
-              aria-label={t("bar.newPane")}
-              title={t("bar.newPane")}
-            >
-              {/* Four frames: the grid this button adds to. */}
-              <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3">
-                <rect x="2" y="2" width="5" height="5" rx="1.2" />
-                <rect x="9" y="2" width="5" height="5" rx="1.2" />
-                <rect x="2" y="9" width="5" height="5" rx="1.2" />
-                <rect x="9" y="9" width="5" height="5" rx="1.2" />
-              </svg>
-            </button>
+          <Show when={showsNewPane(wb().view)}>
+            <div data-slot="ade-menu-anchor">
+              <button
+                type="button"
+                data-slot="ade-icon"
+                data-action="new-pane"
+                data-open={newPaneOpen() ? "true" : undefined}
+                aria-haspopup="menu"
+                aria-expanded={newPaneOpen()}
+                onClick={() => setNewPaneOpen((open) => !open)}
+                aria-label={t("bar.newPane")}
+                title={t("bar.newPane")}
+              >
+                {/* Four frames: the grid this button adds to. */}
+                <svg
+                  viewBox="0 0 16 16"
+                  width="15"
+                  height="15"
+                  aria-hidden="true"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.3"
+                >
+                  <rect x="2" y="2" width="5" height="5" rx="1.2" />
+                  <rect x="9" y="2" width="5" height="5" rx="1.2" />
+                  <rect x="2" y="9" width="5" height="5" rx="1.2" />
+                  <rect x="9" y="9" width="5" height="5" rx="1.2" />
+                </svg>
+              </button>
 
-            <Show when={newPaneOpen()}>
-              <div data-slot="ade-menu" role="menu" aria-label={t("bar.newPane")}>
-                <For each={NEW_PANE_ITEMS}>
-                  {(item) => (
-                    <button
-                      type="button"
-                      role="menuitem"
-                      data-slot="ade-menu-item"
-                      onClick={() => {
-                        setNewPaneOpen(false)
-                        void runCommand(item.commandId)
-                      }}
-                    >
-                      <span data-slot="ade-menu-glyph" aria-hidden="true">
-                        <NewPaneGlyph kind={item.glyph} />
-                      </span>
-                      <span data-slot="ade-menu-text">
-                        <span data-slot="ade-menu-label">{item.label}</span>
-                        <span data-slot="ade-menu-hint">{item.hint}</span>
-                      </span>
-                    </button>
-                  )}
-                </For>
-              </div>
-            </Show>
-          </div>
-        </Show>
+              <Show when={newPaneOpen()}>
+                <div data-slot="ade-menu" role="menu" aria-label={t("bar.newPane")}>
+                  <For each={NEW_PANE_ITEMS}>
+                    {(item) => (
+                      <button
+                        type="button"
+                        role="menuitem"
+                        data-slot="ade-menu-item"
+                        onClick={() => {
+                          setNewPaneOpen(false)
+                          void runCommand(item.commandId)
+                        }}
+                      >
+                        <span data-slot="ade-menu-glyph" aria-hidden="true">
+                          <NewPaneGlyph kind={item.glyph} />
+                        </span>
+                        <span data-slot="ade-menu-text">
+                          <span data-slot="ade-menu-label">{item.label}</span>
+                          <span data-slot="ade-menu-hint">{item.hint}</span>
+                        </span>
+                      </button>
+                    )}
+                  </For>
+                </div>
+              </Show>
+            </div>
+          </Show>
 
-        {/* The user must never be unsure whether ADE is filming: the badge
+          {/* The user must never be unsure whether ADE is filming: the badge
             stays above everything, says where the file is going, and stops
             the take when clicked. In the bar, before the window controls:
             laid over the corner it covered minimise, maximise and close. */}
-        <Show when={recordState().status !== "idle"}>
-          <button
-            type="button"
-            data-slot="ade-rec"
-            data-stopping={recordState().status === "stopping" ? "" : undefined}
-            data-mic={recordMicOn() ? "" : undefined}
-            title={
-              recordState().status === "recording"
-                ? t(recordMicOn() ? "record.active.mic" : "record.active.noMic", recordState().status === "recording" ? (recordState() as { recording: { path: string } }).recording.path : "")
-                : t("record.closing")
-            }
-            aria-label={t("palette.record.stop")}
-            onClick={() => void recorder.stop().then((problem) => problem && report(problem))}
-          >
-            <span data-slot="ade-rec-dot" aria-hidden="true" />
-            {recordState().status === "recording" ? (recordMicOn() ? "REC · MIC" : "REC") : "…"}
-          </button>
-        </Show>
+          <Show when={recordState().status !== "idle"}>
+            <button
+              type="button"
+              data-slot="ade-rec"
+              data-stopping={recordState().status === "stopping" ? "" : undefined}
+              data-mic={recordMicOn() ? "" : undefined}
+              title={
+                recordState().status === "recording"
+                  ? t(
+                      recordMicOn() ? "record.active.mic" : "record.active.noMic",
+                      recordState().status === "recording"
+                        ? (recordState() as { recording: { path: string } }).recording.path
+                        : "",
+                    )
+                  : t("record.closing")
+              }
+              aria-label={t("palette.record.stop")}
+              onClick={() => void recorder.stop().then((problem) => problem && report(problem))}
+            >
+              <span data-slot="ade-rec-dot" aria-hidden="true" />
+              {recordState().status === "recording" ? (recordMicOn() ? "REC · MIC" : "REC") : "…"}
+            </button>
+          </Show>
 
-        {/* On macOS the traffic lights hold the left edge, so the mark takes
+          {/* On macOS the traffic lights hold the left edge, so the mark takes
             the place the window controls have elsewhere. */}
-        <Show when={isTauriDesktop() && isMacOS()}>
-          <span data-slot="ade-brand" data-place="end" role="img" aria-label="ADE">
-            <NikChromeLogo size={30} />
-          </span>
-        </Show>
+          <Show when={isTauriDesktop() && isMacOS()}>
+            <span data-slot="ade-brand" data-place="end" role="img" aria-label="ADE">
+              <NikChromeLogo size={30} />
+            </span>
+          </Show>
 
-        <Show when={isTauriDesktop() && !isMacOS()}>
-          <div data-slot="ade-window-controls" aria-label={t("bar.windowControls")}>
-            <button
-              type="button"
-              data-slot="ade-win-btn"
-              data-win="minimize"
-              onMouseDown={(e) => e.stopPropagation()}
-              onClick={(e) => {
-                e.stopPropagation()
-                void adeWindowMinimize()
-              }}
-              title={t("window.minimize")}
-              aria-label={t("window.minimize")}
-            >
-              <svg viewBox="0 0 10 1" width="10" height="1" style={{ "pointer-events": "none" }}>
-                <rect width="10" height="1" fill="currentColor" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              data-slot="ade-win-btn"
-              data-win="maximize"
-              onMouseDown={(e) => e.stopPropagation()}
-              onClick={(e) => {
-                e.stopPropagation()
-                void adeWindowToggleMaximize()
-              }}
-              title={t("window.maximize")}
-              aria-label={t("window.maximize")}
-            >
-              <svg viewBox="0 0 10 10" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1" style={{ "pointer-events": "none" }}>
-                <rect x="0.5" y="0.5" width="9" height="9" rx="1" />
-              </svg>
-            </button>
-            <button
-              type="button"
-              data-slot="ade-win-btn"
-              data-win="close"
-              onMouseDown={(e) => e.stopPropagation()}
-              onClick={(e) => {
-                e.stopPropagation()
-                void adeWindowClose()
-              }}
-              title={t("window.close")}
-              aria-label={t("window.close")}
-            >
-              <svg viewBox="0 0 10 10" width="10" height="10" fill="none" stroke="currentColor" stroke-width="1.2" style={{ "pointer-events": "none" }}>
-                <path d="M1 1L9 9M9 1L1 9" />
-              </svg>
-            </button>
-          </div>
-        </Show>
-
+          <Show when={isTauriDesktop() && !isMacOS()}>
+            <div data-slot="ade-window-controls" aria-label={t("bar.windowControls")}>
+              <button
+                type="button"
+                data-slot="ade-win-btn"
+                data-win="minimize"
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  void adeWindowMinimize()
+                }}
+                title={t("window.minimize")}
+                aria-label={t("window.minimize")}
+              >
+                <svg viewBox="0 0 10 1" width="10" height="1" style={{ "pointer-events": "none" }}>
+                  <rect width="10" height="1" fill="currentColor" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                data-slot="ade-win-btn"
+                data-win="maximize"
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  void adeWindowToggleMaximize()
+                }}
+                title={t("window.maximize")}
+                aria-label={t("window.maximize")}
+              >
+                <svg
+                  viewBox="0 0 10 10"
+                  width="10"
+                  height="10"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1"
+                  style={{ "pointer-events": "none" }}
+                >
+                  <rect x="0.5" y="0.5" width="9" height="9" rx="1" />
+                </svg>
+              </button>
+              <button
+                type="button"
+                data-slot="ade-win-btn"
+                data-win="close"
+                onMouseDown={(e) => e.stopPropagation()}
+                onClick={(e) => {
+                  e.stopPropagation()
+                  void adeWindowClose()
+                }}
+                title={t("window.close")}
+                aria-label={t("window.close")}
+              >
+                <svg
+                  viewBox="0 0 10 10"
+                  width="10"
+                  height="10"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.2"
+                  style={{ "pointer-events": "none" }}
+                >
+                  <path d="M1 1L9 9M9 1L1 9" />
+                </svg>
+              </button>
+            </div>
+          </Show>
         </div>
       </header>
 
@@ -5348,14 +5663,33 @@ export function Workbench() {
                 <Show
                   when={theme() === "dark"}
                   fallback={
-                    <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3">
+                    <svg
+                      viewBox="0 0 16 16"
+                      width="14"
+                      height="14"
+                      aria-hidden="true"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.3"
+                    >
                       <path d="M13 9.5A5.2 5.2 0 0 1 6.5 3a5.5 5.5 0 1 0 6.5 6.5z" stroke-linejoin="round" />
                     </svg>
                   }
                 >
-                  <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3">
+                  <svg
+                    viewBox="0 0 16 16"
+                    width="14"
+                    height="14"
+                    aria-hidden="true"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.3"
+                  >
                     <circle cx="8" cy="8" r="3.2" />
-                    <path d="M8 1v1.6M8 13.4V15M1 8h1.6M13.4 8H15M3.2 3.2l1.1 1.1M11.7 11.7l1.1 1.1M12.8 3.2l-1.1 1.1M4.3 11.7l-1.1 1.1" stroke-linecap="round" />
+                    <path
+                      d="M8 1v1.6M8 13.4V15M1 8h1.6M13.4 8H15M3.2 3.2l1.1 1.1M11.7 11.7l1.1 1.1M12.8 3.2l-1.1 1.1M4.3 11.7l-1.1 1.1"
+                      stroke-linecap="round"
+                    />
                   </svg>
                 </Show>
               </button>
@@ -5378,14 +5712,23 @@ export function Workbench() {
                     if (opening) setNotices((list) => markAllRead(list))
                   }}
                   aria-label={
-                    unreadCount(notices()) > 0
-                      ? `Notifiche, ${unreadCount(notices())} da leggere`
-                      : "Notifiche"
+                    unreadCount(notices()) > 0 ? `Notifiche, ${unreadCount(notices())} da leggere` : "Notifiche"
                   }
                   title={t("bell.title")}
                 >
-                  <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3">
-                    <path d="M8 2.2a3.8 3.8 0 0 1 3.8 3.8v2.2l1 2H3.2l1-2V6A3.8 3.8 0 0 1 8 2.2z" stroke-linejoin="round" />
+                  <svg
+                    viewBox="0 0 16 16"
+                    width="15"
+                    height="15"
+                    aria-hidden="true"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.3"
+                  >
+                    <path
+                      d="M8 2.2a3.8 3.8 0 0 1 3.8 3.8v2.2l1 2H3.2l1-2V6A3.8 3.8 0 0 1 8 2.2z"
+                      stroke-linejoin="round"
+                    />
                     <path d="M6.6 12.6a1.5 1.5 0 0 0 2.8 0" stroke-linecap="round" />
                   </svg>
                   <Show when={unreadCount(notices()) > 0}>
@@ -5407,10 +5750,7 @@ export function Workbench() {
                     >
                       {checkingUpdate() ? t("update.checking") : t("palette.update.check")}
                     </button>
-                    <Show
-                      when={notices().length > 0}
-                      fallback={<p data-slot="ade-menu-empty">{t("bell.empty")}</p>}
-                    >
+                    <Show when={notices().length > 0} fallback={<p data-slot="ade-menu-empty">{t("bell.empty")}</p>}>
                       <For each={notices()}>
                         {(notice) => (
                           <div data-slot="ade-notice-row" data-kind={notice.kind}>
@@ -5449,7 +5789,6 @@ export function Workbench() {
         <Show when={recordAsk()}>
           {(ask) => <RecordConsentDialog target={ask().target} onAnswer={(consent) => ask().answer(consent)} />}
         </Show>
-
 
         <main data-slot="ade-main">
           {/* Above the section rather than over it: these messages are about
@@ -5490,10 +5829,7 @@ export function Workbench() {
           <Show when={wb().view === "chat" && isViewVisible("chat")}>
             {/* The same credential the assistant uses. Asking for it twice is
                 a way to get one of the two wrong. */}
-            <Chat
-              apiKey={voiceSettings().openRouterApiKey ?? ""}
-              onOpenSettings={() => setVoiceSettingsOpen(true)}
-            />
+            <Chat apiKey={voiceSettings().openRouterApiKey ?? ""} onOpenSettings={() => setVoiceSettingsOpen(true)} />
           </Show>
 
           <Show when={wb().view === "bot" && isViewVisible("bot")}>
@@ -5534,7 +5870,7 @@ export function Workbench() {
                 <SessionGrid
                   panes={gridPanes()}
                   focused={wb().focusedId}
-                  onFocus={(id) => setWb(w => ({ ...w, focusedId: id }))}
+                  onFocus={(id) => setWb((w) => ({ ...w, focusedId: id }))}
                   onClose={close}
                   columns={wb().pinnedColumns}
                   tileOf={(id) => wb().panes.find((pane) => pane.id === id)}
@@ -5652,11 +5988,7 @@ export function Workbench() {
                     columns={wb().pinnedColumns}
                     onChange={(columns) => setWb((w) => setColumns(w, columns))}
                   />
-                  <AgentHooksSection
-                    host={hookHost()}
-                    states={hookStates()}
-                    onChanged={() => void refreshHooks()}
-                  />
+                  <AgentHooksSection host={hookHost()} states={hookStates()} onChanged={() => void refreshHooks()} />
                 </>
               ),
             },
@@ -5695,9 +6027,7 @@ export function Workbench() {
                       fallback={<p data-slot="section-desc">{t("settings.noPlugins")}</p>}
                     >
                       <For each={pluginRuntime.registry.sections()}>
-                        {(section) => (
-                          <PluginSection title={section.title} render={() => section.render({})} />
-                        )}
+                        {(section) => <PluginSection title={section.title} render={() => section.render({})} />}
                       </For>
                     </Show>
                   )}
@@ -5757,7 +6087,15 @@ export function Workbench() {
  */
 function NewPaneGlyph(props: { kind: NewPaneItem["glyph"] }) {
   return (
-    <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3">
+    <svg
+      viewBox="0 0 16 16"
+      width="14"
+      height="14"
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.3"
+    >
       <Show when={props.kind === "session"}>
         <rect x="1.8" y="3" width="12.4" height="10" rx="1.6" />
         <path d="M4.4 6.6l2 1.9-2 1.9M8.4 10.4h3.2" stroke-linecap="round" stroke-linejoin="round" />

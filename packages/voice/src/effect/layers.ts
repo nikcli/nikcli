@@ -21,16 +21,9 @@ import {
   describeParakeetReadiness,
   type ParakeetTranscriberOptions,
 } from "../asr/parakeet-local"
-import {
-  createOpenRouterTranscriber,
-  type OpenRouterTranscriberOptions,
-} from "../asr/openrouter"
+import { createOpenRouterTranscriber, type OpenRouterTranscriberOptions } from "../asr/openrouter"
 import type { SelectTranscriberOptions, TranscriberBackend } from "../asr/select"
-import {
-  createMicCapture,
-  type CapturedSegment,
-  type MicCaptureOptions,
-} from "../audio/capture"
+import { createMicCapture, type CapturedSegment, type MicCaptureOptions } from "../audio/capture"
 import {
   createWebSpeechSpeaker,
   createFakeSpeaker,
@@ -74,11 +67,7 @@ export function mapToVoiceError(err: unknown): VoiceError {
   const msg = err instanceof Error ? err.message : String(err ?? "")
   const lower = msg.toLowerCase()
 
-  if (
-    lower.includes("negato") ||
-    lower.includes("notallowederror") ||
-    lower.includes("permissiondenied")
-  ) {
+  if (lower.includes("negato") || lower.includes("notallowederror") || lower.includes("permissiondenied")) {
     return new MicPermissionDenied({ message: msg, cause: err })
   }
   if (
@@ -95,19 +84,24 @@ export function mapToVoiceError(err: unknown): VoiceError {
       message: msg,
     })
   }
-  if (
-    lower.includes("riconoscimento vocale non supportato") ||
-    lower.includes("speechrecognition")
-  ) {
+  if (lower.includes("riconoscimento vocale non supportato") || lower.includes("speechrecognition")) {
     return new SpeechRecognitionUnavailable({ message: msg })
   }
   if (lower.includes("chiave api openrouter mancante")) {
     return new ApiKeyMissing({ message: msg })
   }
-  if (lower.includes("autenticazione openrouter fallita") || lower.includes("la chiave openrouter non funziona") || lower.includes("401")) {
+  if (
+    lower.includes("autenticazione openrouter fallita") ||
+    lower.includes("la chiave openrouter non funziona") ||
+    lower.includes("401")
+  ) {
     return new ApiKeyInvalid({ message: msg, cause: err })
   }
-  if (lower.includes("credito openrouter esaurito") || lower.includes("credito openrouter è finito") || lower.includes("402")) {
+  if (
+    lower.includes("credito openrouter esaurito") ||
+    lower.includes("credito openrouter è finito") ||
+    lower.includes("402")
+  ) {
     return new QuotaExhausted({ message: msg, cause: err })
   }
   if (lower.includes("timeout") || lower.includes("scaduta per timeout") || lower.includes("non ha risposto in")) {
@@ -126,7 +120,7 @@ export function mapToVoiceError(err: unknown): VoiceError {
 export function bridgeTranscriber(
   transcriber: TranscriberContract,
   mapErr: (err: unknown) => VoiceError = mapToVoiceError,
-  onRawError?: (err: Error) => void
+  onRawError?: (err: Error) => void,
 ): Effect.Effect<TranscriberService, VoiceError, Scope.Scope> {
   return Effect.gen(function* () {
     const eventsQueue = yield* Queue.unbounded<TranscriberEvent>()
@@ -167,34 +161,27 @@ export function bridgeTranscriber(
         try: () => Promise.resolve(transcriber.start()),
         catch: (err) => mapErr(err),
       }),
-      () => Effect.promise(() => Promise.resolve(transcriber.stop()))
+      () => Effect.promise(() => Promise.resolve(transcriber.stop())),
     )
 
     const eventsStream = Stream.fromQueue(eventsQueue)
 
     const finals = eventsStream.pipe(
-      Stream.filter(
-        (e): e is { readonly _tag: "final"; readonly event: TranscriptEvent } =>
-          e._tag === "final"
-      ),
-      Stream.map((e) => e.event)
+      Stream.filter((e): e is { readonly _tag: "final"; readonly event: TranscriptEvent } => e._tag === "final"),
+      Stream.map((e) => e.event),
     )
 
     const partials = eventsStream.pipe(
-      Stream.filter(
-        (e): e is { readonly _tag: "partial"; readonly text: string } =>
-          e._tag === "partial"
-      ),
-      Stream.map((e) => e.text)
+      Stream.filter((e): e is { readonly _tag: "partial"; readonly text: string } => e._tag === "partial"),
+      Stream.map((e) => e.text),
     )
 
     const stream = eventsStream.pipe(
       Stream.filterMap((e) => {
         if (e._tag === "final") return Option.some(e.event)
-        if (e._tag === "partial")
-          return Option.some({ text: e.text, isFinal: false })
+        if (e._tag === "partial") return Option.some({ text: e.text, isFinal: false })
         return Option.none()
-      })
+      }),
     )
 
     return {
@@ -223,9 +210,7 @@ export function bridgeTranscriber(
 // 1. Microphone Hardware Capture Layer
 // ---------------------------------------------------------------------------
 
-export const MicCaptureLive = (
-  options?: MicCaptureOptions
-): Layer.Layer<MicCaptureService, VoiceError> =>
+export const MicCaptureLive = (options?: MicCaptureOptions): Layer.Layer<MicCaptureService, VoiceError> =>
   Layer.scoped(
     MicCapture,
     Effect.gen(function* () {
@@ -235,7 +220,7 @@ export const MicCaptureLive = (
           try: () => capture.start(),
           catch: (err) => mapToVoiceError(err),
         }),
-        () => Effect.sync(() => capture.stop())
+        () => Effect.sync(() => capture.stop()),
       )
 
       const levelsQueue = yield* Queue.sliding<number>(16)
@@ -262,7 +247,7 @@ export const MicCaptureLive = (
         pcmChunks: Stream.fromQueue(pcmQueue),
         segments: Stream.fromQueue(segmentsQueue),
       }
-    })
+    }),
   )
 
 // ---------------------------------------------------------------------------
@@ -270,7 +255,7 @@ export const MicCaptureLive = (
 // ---------------------------------------------------------------------------
 
 export const TranscriberParakeetLive = (
-  options?: ParakeetTranscriberOptions
+  options?: ParakeetTranscriberOptions,
 ): Layer.Layer<TranscriberService, VoiceError> =>
   Layer.scoped(
     Transcriber,
@@ -281,16 +266,16 @@ export const TranscriberParakeetLive = (
           new ModelLoadFailed({
             backend: "parakeet",
             message: readiness.reason ?? "Parakeet non disponibile.",
-          })
+          }),
         )
       }
       const transcriber = createParakeetTranscriber(options)
       return yield* bridgeTranscriber(transcriber)
-    })
+    }),
   )
 
 export const TranscriberOpenRouterLive = (
-  options: OpenRouterTranscriberOptions
+  options: OpenRouterTranscriberOptions,
 ): Layer.Layer<TranscriberService, VoiceError> =>
   Layer.scoped(
     Transcriber,
@@ -298,19 +283,16 @@ export const TranscriberOpenRouterLive = (
       if (!options.apiKey || options.apiKey.trim().length === 0) {
         return yield* Effect.fail(
           new ApiKeyMissing({
-            message:
-              "Chiave API OpenRouter mancante. Specificare una chiave valida.",
-          })
+            message: "Chiave API OpenRouter mancante. Specificare una chiave valida.",
+          }),
         )
       }
       const transcriber = createOpenRouterTranscriber(options)
       return yield* bridgeTranscriber(transcriber)
-    })
+    }),
   )
 
-export const TranscriberFake = (
-  fake?: FakeTranscriber
-): Layer.Layer<TranscriberService, VoiceError> => {
+export const TranscriberFake = (fake?: FakeTranscriber): Layer.Layer<TranscriberService, VoiceError> => {
   const instance = fake ?? createFakeTranscriber()
   return Layer.scoped(Transcriber, bridgeTranscriber(instance))
 }
@@ -321,7 +303,7 @@ export const TranscriberFake = (
 
 export const TranscriberSelectLive = (
   backend: TranscriberBackend,
-  options: SelectTranscriberOptions = {}
+  options: SelectTranscriberOptions = {},
 ): Layer.Layer<TranscriberService, VoiceError> => {
   switch (backend) {
     case "parakeet":
@@ -338,7 +320,7 @@ export const TranscriberSelectLive = (
         new HostActionFailed({
           action: "select_backend",
           message: `Backend di trascrizione non riconosciuto: ${backend}`,
-        })
+        }),
       )
   }
 }
@@ -347,9 +329,7 @@ export const TranscriberSelectLive = (
 // 4. Speaker Layers (Live & Fake for Tests)
 // ---------------------------------------------------------------------------
 
-export const SpeakerLive = (
-  options?: WebSpeechSpeakerOptions
-): Layer.Layer<SpeakerService> =>
+export const SpeakerLive = (options?: WebSpeechSpeakerOptions): Layer.Layer<SpeakerService> =>
   Layer.sync(Speaker, () => {
     const speaker = createWebSpeechSpeaker(options)
     return {
@@ -367,9 +347,7 @@ export const SpeakerLive = (
     }
   })
 
-export const SpeakerFake = (
-  fake?: FakeSpeaker
-): Layer.Layer<SpeakerService> => {
+export const SpeakerFake = (fake?: FakeSpeaker): Layer.Layer<SpeakerService> => {
   const instance = fake ?? createFakeSpeaker()
   return Layer.succeed(Speaker, {
     speak: (text: string) =>
@@ -384,6 +362,4 @@ export const SpeakerFake = (
 // 5. Host Layer
 // ---------------------------------------------------------------------------
 
-export const VoiceHostLive = (
-  host: VoiceHost
-): Layer.Layer<VoiceHost> => Layer.succeed(VoiceHostService, host)
+export const VoiceHostLive = (host: VoiceHost): Layer.Layer<VoiceHost> => Layer.succeed(VoiceHostService, host)

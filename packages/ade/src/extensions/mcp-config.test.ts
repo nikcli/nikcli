@@ -61,9 +61,13 @@ describe(".mcp.json merge", () => {
     expect(() => addMcpServer(undefined, bare)).toThrow(/type "http" o "sse"/)
     const sse = addMcpServer(undefined, { name: "old", server: { type: "sse", url: "https://example.test/sse" } })
     expect(JSON.parse(sse).mcpServers.old).toEqual({ type: "sse", url: "https://example.test/sse" })
-    expect(() => addMcpServer(undefined, { name: "x", server: { type: "stdio", url: "https://example.test/mcp" } })).toThrow()
+    expect(() =>
+      addMcpServer(undefined, { name: "x", server: { type: "stdio", url: "https://example.test/mcp" } }),
+    ).toThrow()
     expect(() => addMcpServer(undefined, { name: "x", server: { type: "http", command: "npx" } })).toThrow()
-    expect(JSON.parse(addMcpServer(undefined, { name: "x", server: { command: "npx", args: ["-y", "pkg"] } })).mcpServers.x).toEqual({
+    expect(
+      JSON.parse(addMcpServer(undefined, { name: "x", server: { command: "npx", args: ["-y", "pkg"] } })).mcpServers.x,
+    ).toEqual({
       command: "npx",
       args: ["-y", "pkg"],
     })

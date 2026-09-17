@@ -43,7 +43,13 @@ describe("the log on disk", () => {
   })
 
   test("broken lines become problems and the rest still counts", () => {
-    const text = [JSON.stringify(opened("D1")), "{not json", "", JSON.stringify({ type: "boh", k: "D1", at: at(1), by: "x" }), '{"type":"aperta","k":"D2"'].join("\n")
+    const text = [
+      JSON.stringify(opened("D1")),
+      "{not json",
+      "",
+      JSON.stringify({ type: "boh", k: "D1", at: at(1), by: "x" }),
+      '{"type":"aperta","k":"D2"',
+    ].join("\n")
     const parsed = parseDecisionLog(text)
     expect(parsed.events.map((e) => e.k)).toEqual(["D1"])
     expect(parsed.problems).toEqual([
@@ -54,13 +60,17 @@ describe("the log on disk", () => {
   })
 
   test("an answer without the user's words is not an answer", () => {
-    expect(toEvent({ type: "risposta", k: "D1", at: at(1), by: "utente", choice: "B" })).toBe("risposta senza le parole dell'utente")
+    expect(toEvent({ type: "risposta", k: "D1", at: at(1), by: "utente", choice: "B" })).toBe(
+      "risposta senza le parole dell'utente",
+    )
   })
 
   test("keys, dates and deferrals are checked", () => {
     expect(toEvent({ ...opened("D1"), k: "D 1" })).toBe("chiave mancante o non valida")
     expect(toEvent({ ...opened("D1"), at: "ieri" })).toBe("data mancante o non valida")
-    expect(toEvent({ type: "rimandata", k: "D1", at: at(1), by: "utente", until: "più tardi" })).toBe("rimandata senza una data valida")
+    expect(toEvent({ type: "rimandata", k: "D1", at: at(1), by: "utente", until: "più tardi" })).toBe(
+      "rimandata senza una data valida",
+    )
     expect(toEvent({ ...opened("D1"), options: [{ detail: "senza etichetta" }] })).toBe("opzione senza etichetta")
   })
 })
@@ -87,13 +97,22 @@ describe("folding events into decisions", () => {
     expect(decisions[0]!.status).toBe("aperta")
     expect(rejected[0]!.reason).toBe("D1 si chiude solo dopo una risposta o con un'evidenza")
 
-    const withEvidence = foldDecisions([opened("D1"), { type: "chiusa", k: "D1", at: at(2), by: "Master", evidence: "superata da D4" }])
+    const withEvidence = foldDecisions([
+      opened("D1"),
+      { type: "chiusa", k: "D1", at: at(2), by: "Master", evidence: "superata da D4" },
+    ])
     expect(withEvidence.decisions[0]!.status).toBe("chiusa")
   })
 
   test("a deferral runs out on its date without anyone writing", () => {
-    const events = [opened("D1"), { type: "rimandata", k: "D1", at: at(1), by: "utente", until: "2026-09-20" } as DecisionEvent]
-    expect(foldDecisions(events, new Date("2026-09-18T10:00:00Z")).decisions[0]).toMatchObject({ status: "rimandata", deferredUntil: "2026-09-20" })
+    const events = [
+      opened("D1"),
+      { type: "rimandata", k: "D1", at: at(1), by: "utente", until: "2026-09-20" } as DecisionEvent,
+    ]
+    expect(foldDecisions(events, new Date("2026-09-18T10:00:00Z")).decisions[0]).toMatchObject({
+      status: "rimandata",
+      deferredUntil: "2026-09-20",
+    })
     expect(foldDecisions(events, new Date("2026-09-20T00:00:00Z")).decisions[0]!.status).toBe("aperta")
   })
 
@@ -113,7 +132,12 @@ describe("folding events into decisions", () => {
     expect(raced.decisions[0]!.answer!.words).toBe("A")
     expect(raced.rejected[0]!.reason).toBe("D1 ha già una risposta: prima va riaperta")
 
-    const changed = foldDecisions([opened("D1"), answered("D1", "A"), { type: "riaperta", k: "D1", at: at(6), by: "utente" }, answered("D1", "B", 7)])
+    const changed = foldDecisions([
+      opened("D1"),
+      answered("D1", "A"),
+      { type: "riaperta", k: "D1", at: at(6), by: "utente" },
+      answered("D1", "B", 7),
+    ])
     expect(changed.rejected).toEqual([])
     expect(changed.decisions[0]!.answer!.words).toBe("B")
   })
@@ -133,11 +157,19 @@ describe("folding events into decisions", () => {
   })
 
   test("only an open decision can be deferred", () => {
-    const { rejected } = foldDecisions([opened("D1"), answered("D1", "A"), { type: "rimandata", k: "D1", at: at(7), by: "utente", until: "2026-10-01" }])
+    const { rejected } = foldDecisions([
+      opened("D1"),
+      answered("D1", "A"),
+      { type: "rimandata", k: "D1", at: at(7), by: "utente", until: "2026-10-01" },
+    ])
     expect(rejected[0]!.reason).toBe("si rimanda solo una decisione aperta (D1 è con risposta)")
     resetLocaleForTests("en")
     try {
-      const english = foldDecisions([opened("D1"), answered("D1", "A"), { type: "rimandata", k: "D1", at: at(7), by: "utente", until: "2026-10-01" }])
+      const english = foldDecisions([
+        opened("D1"),
+        answered("D1", "A"),
+        { type: "rimandata", k: "D1", at: at(7), by: "utente", until: "2026-10-01" },
+      ])
       expect(english.rejected[0]!.reason).toBe("only an open decision can be deferred (D1 is answered)")
     } finally {
       resetLocaleForTests("it")
@@ -170,7 +202,15 @@ describe("buckets and messages", () => {
   test("the message to Master starts with the verb and keeps the user's words", () => {
     const { decisions } = foldDecisions([
       opened("D21", { title: "Pagina Plugin: quale variante?" }),
-      { type: "risposta", k: "D21", at: at(5), by: "utente", choice: "B · Estensioni", note: "catalogo\nsolo progetto", words: "la B" },
+      {
+        type: "risposta",
+        k: "D21",
+        at: at(5),
+        by: "utente",
+        choice: "B · Estensioni",
+        note: "catalogo\nsolo progetto",
+        words: "la B",
+      },
     ])
     expect(resolvedMessage(decisions[0]!)).toBe(
       'risolta [k=D21] Pagina Plugin: quale variante? — scelta: B · Estensioni — nota: catalogo solo progetto — parole: "la B" — sblocca S16',
@@ -205,7 +245,9 @@ describe("the store", () => {
     expect(decisionsPath("C:\\work\\app")).toBe("C:\\work\\app\\.ade\\decisions.jsonl")
     expect(decisionsPath("/work/app/", "  ")).toBe("/work/app/.ade/decisions.jsonl")
     expect(decisionsPath("/work/app", "./team/decisions.jsonl")).toBe("/work/app/team/decisions.jsonl")
-    expect(decisionsPath("C:\\work\\app", "C:\\Users\\me\\ade-team\\decisions.jsonl")).toBe("C:\\Users\\me\\ade-team\\decisions.jsonl")
+    expect(decisionsPath("C:\\work\\app", "C:\\Users\\me\\ade-team\\decisions.jsonl")).toBe(
+      "C:\\Users\\me\\ade-team\\decisions.jsonl",
+    )
   })
 
   test("a missing register is empty, and the first append creates it", async () => {
@@ -258,7 +300,11 @@ describe("the store", () => {
       },
     }
     await appendDecisionEvent(io, path, answered("D1", "sì"))
-    expect(parseDecisionLog(disk).events.map((event) => `${event.type} ${event.k}`)).toEqual(["aperta D1", "aperta D2", "risposta D1"])
+    expect(parseDecisionLog(disk).events.map((event) => `${event.type} ${event.k}`)).toEqual([
+      "aperta D1",
+      "aperta D2",
+      "risposta D1",
+    ])
   })
 
   test("a host write failure is reported, a truncated read is refused", async () => {

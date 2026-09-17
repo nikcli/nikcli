@@ -39,7 +39,6 @@ export function missingTypeNote(): string {
   return t("extensions.missingType")
 }
 
-
 const REFERENCE = /\$\{([A-Z_][A-Z0-9_]*)\}/g
 
 function referencesIn(value: unknown, into: Set<string>): void {
@@ -58,7 +57,11 @@ function referencesIn(value: unknown, into: Set<string>): void {
  * `stripe` pointing at something else is not the catalog's Stripe, and
  * showing it as installed would hide that the card's server is missing.
  */
-export function matchCatalog(_name: string, server: unknown, catalog: readonly McpCatalogEntry[] = MCP_CATALOG): McpCatalogEntry | undefined {
+export function matchCatalog(
+  _name: string,
+  server: unknown,
+  catalog: readonly McpCatalogEntry[] = MCP_CATALOG,
+): McpCatalogEntry | undefined {
   if (!server || typeof server !== "object") return undefined
   const config = server as McpServerConfig
   return catalog.find((entry) => {
@@ -73,7 +76,10 @@ export function matchCatalog(_name: string, server: unknown, catalog: readonly M
 }
 
 /** The servers in the project's `.mcp.json`, in file order. Throws the parser's error for a broken file. */
-export function installedServers(raw: string | undefined, catalog: readonly McpCatalogEntry[] = MCP_CATALOG): InstalledServer[] {
+export function installedServers(
+  raw: string | undefined,
+  catalog: readonly McpCatalogEntry[] = MCP_CATALOG,
+): InstalledServer[] {
   const servers = parseMcpConfig(raw).mcpServers ?? {}
   return Object.entries(servers).map(([name, value]) => {
     const config = (value && typeof value === "object" ? value : {}) as McpServerConfig
@@ -94,10 +100,30 @@ export function installedServers(raw: string | undefined, catalog: readonly McpC
 export type CatalogFilter = "tutti" | "un-clic" | "guida" | "ufficiali" | "community"
 
 export const CATALOG_FILTERS: readonly { id: CatalogFilter; readonly label: string }[] = [
-  { id: "tutti", get label() { return t("extensions.filter.all") } },
-  { id: "un-clic", get label() { return t("extensions.filter.oneClick") } },
-  { id: "guida", get label() { return t("extensions.filter.guide") } },
-  { id: "ufficiali", get label() { return t("extensions.filter.official") } },
+  {
+    id: "tutti",
+    get label() {
+      return t("extensions.filter.all")
+    },
+  },
+  {
+    id: "un-clic",
+    get label() {
+      return t("extensions.filter.oneClick")
+    },
+  },
+  {
+    id: "guida",
+    get label() {
+      return t("extensions.filter.guide")
+    },
+  },
+  {
+    id: "ufficiali",
+    get label() {
+      return t("extensions.filter.official")
+    },
+  },
   { id: "community", label: "Community" },
 ]
 
@@ -117,7 +143,9 @@ export function filterCatalog(
     if (filter === "guida" && entry.installation.mode !== "guide") return false
     if (filter === "ufficiali" && entry.origin !== "official") return false
     if (filter === "community" && entry.origin !== "community") return false
-    const haystack = fold([entry.name, entry.publisher, entry.description, CATALOG_EN[entry.id]?.description ?? "", entry.id].join(" "))
+    const haystack = fold(
+      [entry.name, entry.publisher, entry.description, CATALOG_EN[entry.id]?.description ?? "", entry.id].join(" "),
+    )
     return words.every((word) => haystack.includes(word))
   })
 }
@@ -139,7 +167,9 @@ export function cardAction(entry: McpCatalogEntry, installed: readonly Installed
 }
 
 export function transportLabel(transport: readonly ("remote" | "stdio")[]): string {
-  const labels = transport.map((item) => (item === "remote" ? t("extensions.transport.remote") : t("extensions.transport.stdio")))
+  const labels = transport.map((item) =>
+    item === "remote" ? t("extensions.transport.remote") : t("extensions.transport.stdio"),
+  )
   return labels.join(" · ")
 }
 
@@ -156,14 +186,15 @@ export function afterInstallHint(entry: McpCatalogEntry): string {
   const oauth = /oauth/.test(entry.authentication.kind)
   if (names.length === 0) return oauth ? t("extensions.after.oauth") : t("extensions.after.none")
   const list = names.join(", ")
-  return oauth
-    ? t("extensions.after.oauthOrEnv", list)
-    : t("extensions.after.env", list)
+  return oauth ? t("extensions.after.oauthOrEnv", list) : t("extensions.after.env", list)
 }
 
 /** Two letters for a card without a verified logo. */
 export function monogram(name: string): string {
-  const words = name.replace(/[^\p{L}\p{N} ]/gu, " ").split(/\s+/).filter(Boolean)
+  const words = name
+    .replace(/[^\p{L}\p{N} ]/gu, " ")
+    .split(/\s+/)
+    .filter(Boolean)
   if (words.length >= 2) return (words[0]![0]! + words[1]![0]!).toUpperCase()
   return (words[0] ?? "?").slice(0, 2).toUpperCase()
 }

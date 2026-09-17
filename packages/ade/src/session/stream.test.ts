@@ -1,12 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import {
-  stripAnsi,
-  parseAnsi,
-  classifyLine,
-  appendLine,
-  emptyBuffer,
-  type LineBuffer,
-} from "./stream"
+import { stripAnsi, parseAnsi, classifyLine, appendLine, emptyBuffer, type LineBuffer } from "./stream"
 
 describe("stripAnsi", () => {
   test("removes colour codes", () => {
@@ -77,28 +70,28 @@ describe("parseAnsi", () => {
   test("single colour produces a coloured span", () => {
     const spans = parseAnsi("\x1b[31mrosso\x1b[0m")
     expect(spans.length).toBeGreaterThanOrEqual(1)
-    const red = spans.find(s => s.text === "rosso")
+    const red = spans.find((s) => s.text === "rosso")
     expect(red).toBeDefined()
     expect(red!.color).toBe("red")
   })
 
   test("bold is tracked", () => {
     const spans = parseAnsi("\x1b[1mgrassetto\x1b[0m")
-    const bold = spans.find(s => s.text === "grassetto")
+    const bold = spans.find((s) => s.text === "grassetto")
     expect(bold).toBeDefined()
     expect(bold!.bold).toBe(true)
   })
 
   test("bright colours are parsed", () => {
     const spans = parseAnsi("\x1b[91mtesto\x1b[0m")
-    const bright = spans.find(s => s.text === "testo")
+    const bright = spans.find((s) => s.text === "testo")
     expect(bright).toBeDefined()
     expect(bright!.color).toBe("brightRed")
   })
 
   test("reset clears colour and bold", () => {
     const spans = parseAnsi("\x1b[1m\x1b[31mrosso\x1b[0m normale")
-    const normal = spans.find(s => s.text.includes("normale"))
+    const normal = spans.find((s) => s.text.includes("normale"))
     expect(normal).toBeDefined()
     expect(normal!.color).toBeUndefined()
     expect(normal!.bold).toBeFalsy()
@@ -106,7 +99,7 @@ describe("parseAnsi", () => {
 
   test("empty SGR is treated as reset", () => {
     const spans = parseAnsi("\x1b[31mrosso\x1b[m dopo")
-    const after = spans.find(s => s.text.includes("dopo"))
+    const after = spans.find((s) => s.text.includes("dopo"))
     expect(after).toBeDefined()
     expect(after!.color).toBeUndefined()
   })

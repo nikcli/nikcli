@@ -9,11 +9,7 @@
  */
 
 import { markVoice } from "../timing"
-import {
-  calculateRms,
-  createSpeechDetector,
-  type SpeechDetectorConfig,
-} from "./level"
+import { calculateRms, createSpeechDetector, type SpeechDetectorConfig } from "./level"
 import { t } from "@nikcli-ai/ade/i18n"
 
 // ---------------------------------------------------------------------------
@@ -99,9 +95,7 @@ export function encodeWav(samples: Float32Array, sampleRate: number = 16000): Bl
  * Prefers Opus in WebM, falling back to AAC in MP4 container.
  * Throws a localized Italian error when neither is available.
  */
-export function chooseSupportedAudioMimeType(
-  isTypeSupported?: (mime: string) => boolean
-): SupportedAudioFormat {
+export function chooseSupportedAudioMimeType(isTypeSupported?: (mime: string) => boolean): SupportedAudioFormat {
   const probe =
     isTypeSupported ??
     ((mime: string) => {
@@ -118,9 +112,7 @@ export function chooseSupportedAudioMimeType(
     return { mimeType: "audio/mp4", format: "m4a" }
   }
 
-  throw new Error(
-    t("vui.mic.noFormat")
-  )
+  throw new Error(t("vui.mic.noFormat"))
 }
 
 // ---------------------------------------------------------------------------
@@ -135,11 +127,7 @@ export function chooseSupportedAudioMimeType(
  * we explicitly resample the PCM samples to 16000 Hz mono. Parakeet TDT strictly
  * requires 16 kHz; wrong sample rates do not crash, but result in garbage transcription.
  */
-export function resamplePcm(
-  input: Float32Array,
-  fromSampleRate: number,
-  toSampleRate: number = 16000
-): Float32Array {
+export function resamplePcm(input: Float32Array, fromSampleRate: number, toSampleRate: number = 16000): Float32Array {
   if (fromSampleRate === toSampleRate || input.length === 0) {
     return input
   }
@@ -289,9 +277,7 @@ export function createMicCapture(options: MicCaptureOptions = {}): MicCapture {
   let onSpeechEndCb: SpeechLifecycleCallback = options.onSpeechEnd ?? (() => {})
   let onErrorCb: CaptureErrorCallback = options.onError ?? (() => {})
 
-  const { mimeType: chosenMimeType, format: chosenFormat } = chooseSupportedAudioMimeType(
-    options.isTypeSupported
-  )
+  const { mimeType: chosenMimeType, format: chosenFormat } = chooseSupportedAudioMimeType(options.isTypeSupported)
 
   const detector = createSpeechDetector(options.speechDetectorConfig)
 
@@ -404,7 +390,11 @@ export function createMicCapture(options: MicCaptureOptions = {}): MicCapture {
             const slice = Math.max(1, Math.round(sampleRate / 50))
             for (let start = 0; start < inputChannel.length; start += slice) {
               const end = Math.min(inputChannel.length, start + slice)
-              processAudioFrame(inputChannel.slice(start, end), sampleRate, heardAt - ((inputChannel.length - end) / sampleRate) * 1000)
+              processAudioFrame(
+                inputChannel.slice(start, end),
+                sampleRate,
+                heardAt - ((inputChannel.length - end) / sampleRate) * 1000,
+              )
             }
             const outputBuffer = event.outputBuffer
             if (outputBuffer) {
@@ -540,7 +530,10 @@ export function createMicCapture(options: MicCaptureOptions = {}): MicCapture {
     const closeTime = nowFn()
     const duration = Math.max(0, closeTime - segmentStartTime)
     const quietSince = detector.getState().silenceStartTime
-    markVoice("segment-closed", `${reason} ${Math.round(duration)}ms, silenzio ${quietSince === undefined ? "-" : Math.round(closeTime - quietSince)}ms`)
+    markVoice(
+      "segment-closed",
+      `${reason} ${Math.round(duration)}ms, silenzio ${quietSince === undefined ? "-" : Math.round(closeTime - quietSince)}ms`,
+    )
 
     let wavBlob: Blob | undefined
     if (recordedPcmChunks.length > 0) {
@@ -655,10 +648,7 @@ export function createMicCapture(options: MicCaptureOptions = {}): MicCapture {
     if (!running) return
 
     // Resample to 16 kHz mono Float32Array for Parakeet
-    const pcm16k =
-      inputSampleRate !== 16000
-        ? resamplePcm(samples, inputSampleRate, 16000)
-        : samples
+    const pcm16k = inputSampleRate !== 16000 ? resamplePcm(samples, inputSampleRate, 16000) : samples
 
     onPcmChunkCb(pcm16k)
 
@@ -747,9 +737,7 @@ export function createMicCapture(options: MicCaptureOptions = {}): MicCapture {
           (() => {
             const nav = typeof navigator !== "undefined" ? navigator : (globalThis as any).navigator
             if (!nav?.mediaDevices?.getUserMedia) {
-              throw new Error(
-                t("vui.mic.unsupported")
-              )
+              throw new Error(t("vui.mic.unsupported"))
             }
             return nav.mediaDevices.getUserMedia.bind(nav.mediaDevices)
           })()
@@ -769,23 +757,15 @@ export function createMicCapture(options: MicCaptureOptions = {}): MicCapture {
           if (err.name === "OverconstrainedError" || err.name === "ConstraintNotSatisfiedError") {
             // Only reachable if a browser treats `ideal` as binding. Named so the
             // message points at the picker rather than at the permission dialog.
-            throw new Error(
-              t("vui.mic.chosenMissing")
-            )
+            throw new Error(t("vui.mic.chosenMissing"))
           }
           if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
-            throw new Error(
-              t("vui.mic.denied")
-            )
+            throw new Error(t("vui.mic.denied"))
           }
           if (err.name === "NotFoundError" || err.name === "DevicesNotFoundError") {
-            throw new Error(
-              t("vui.mic.none")
-            )
+            throw new Error(t("vui.mic.none"))
           }
-          throw new Error(
-            t("vui.mic.failed", err?.message ?? t("vui.error.unknown"))
-          )
+          throw new Error(t("vui.mic.failed", err?.message ?? t("vui.error.unknown")))
         }
       }
 
@@ -811,7 +791,6 @@ export function createMicCapture(options: MicCaptureOptions = {}): MicCapture {
         throw err
       }
     },
-
 
     stop(): void {
       running = false

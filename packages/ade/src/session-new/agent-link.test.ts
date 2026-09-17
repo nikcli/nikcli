@@ -224,11 +224,9 @@ describe("followReports", () => {
   }
 
   test("a /clear or /resume inside the CLI moves the pane after the first report", async () => {
-    expect(await run([report("first", "startup"), null, report("cleared", "clear"), report("other", "resume")])).toEqual([
-      "first",
-      "cleared",
-      "other",
-    ])
+    expect(
+      await run([report("first", "startup"), null, report("cleared", "clear"), report("other", "resume")]),
+    ).toEqual(["first", "cleared", "other"])
   })
 
   test("a nested agent's startup, with the inherited nonce, does not", async () => {

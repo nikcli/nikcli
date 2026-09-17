@@ -33,7 +33,7 @@ describe("DEFAULT_BINDINGS", () => {
   })
 
   test("includes essential bindings", () => {
-    const ids = DEFAULT_BINDINGS.map(b => b.commandId)
+    const ids = DEFAULT_BINDINGS.map((b) => b.commandId)
     expect(ids).toContain("palette.open")
     expect(ids).toContain("session.new")
     expect(ids).toContain("pane.close")
@@ -45,10 +45,10 @@ describe("DEFAULT_BINDINGS", () => {
    * binding is not inert — it takes the key from whoever would have used it.
    */
   test("binds nothing the surface cannot execute", () => {
-    const ids = DEFAULT_BINDINGS.map(b => b.commandId)
+    const ids = DEFAULT_BINDINGS.map((b) => b.commandId)
     expect(ids).not.toContain("prompt.send")
     expect(ids).not.toContain("files.search")
     // Pane focus belongs to the grid, which measures its own columns.
-    expect(ids.filter(id => id.startsWith("focus."))).toEqual([])
+    expect(ids.filter((id) => id.startsWith("focus."))).toEqual([])
   })
 })

@@ -114,17 +114,17 @@ describe("SessionTiming", () => {
 
   test("resume restarts accumulation", () => {
     const t0 = startTiming(100)
-    const t1 = pauseTiming(t0, 200)   // 100ms banked
-    const t2 = resumeTiming(t1, 300)   // resume at 300
+    const t1 = pauseTiming(t0, 200) // 100ms banked
+    const t2 = resumeTiming(t1, 300) // resume at 300
     expect(activeElapsed(t2, 400)).toBe(200) // 100 banked + 100 new
   })
 
   test("multiple pause/resume cycles accumulate correctly", () => {
     let t = startTiming(0)
-    t = pauseTiming(t, 100)   // 100ms active
-    t = resumeTiming(t, 200)  // 100ms paused (not counted)
-    t = pauseTiming(t, 350)   // 150ms active
-    t = resumeTiming(t, 400)  // 50ms paused
+    t = pauseTiming(t, 100) // 100ms active
+    t = resumeTiming(t, 200) // 100ms paused (not counted)
+    t = pauseTiming(t, 350) // 150ms active
+    t = resumeTiming(t, 400) // 50ms paused
     expect(activeElapsed(t, 500)).toBe(350) // 100 + 150 + 100
   })
 
@@ -145,8 +145,8 @@ describe("SessionTiming", () => {
 describe("sumMetrics", () => {
   test("sums all fields across panes", () => {
     const result = sumMetrics([
-      { tokens: 100, costUsd: 0.10, activeMs: 1000 },
-      { tokens: 200, costUsd: 0.20, activeMs: 2000 },
+      { tokens: 100, costUsd: 0.1, activeMs: 1000 },
+      { tokens: 200, costUsd: 0.2, activeMs: 2000 },
       { tokens: 50, costUsd: 0.05, activeMs: 500 },
     ])
     expect(result.totalTokens).toBe(350)

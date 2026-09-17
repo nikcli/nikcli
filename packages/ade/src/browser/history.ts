@@ -76,8 +76,23 @@ export function restoreHistory(url: string, saved: unknown): BrowserHistory {
  * or `monkey` are not.
  */
 const SECRET_PARTS = new Set([
-  "token", "code", "key", "apikey", "secret", "password", "passwd", "pwd",
-  "auth", "session", "sessionid", "sid", "sig", "signature", "jwt", "credential", "credentials",
+  "token",
+  "code",
+  "key",
+  "apikey",
+  "secret",
+  "password",
+  "passwd",
+  "pwd",
+  "auth",
+  "session",
+  "sessionid",
+  "sid",
+  "sig",
+  "signature",
+  "jwt",
+  "credential",
+  "credentials",
 ])
 // Also inside a longer name (`sessionid`, `xsrftoken`); "auth" is not, or `author` would go too.
 const SECRET_WORDS = ["token", "secret", "password", "session"]
@@ -95,13 +110,34 @@ function isSecretName(name: string): boolean {
  * (a commit hash, a UUID) are caught too, and lose only the path.
  */
 const SECRET_PATH_WORDS = new Set([
-  "reset", "reset-password", "password-reset", "verify", "verification", "confirm", "confirmation",
-  "magic", "magic-link", "invite", "invitation", "activate", "activation", "token", "tokens",
-  "auth", "login", "signin", "sign-in", "unsubscribe", "share", "download",
+  "reset",
+  "reset-password",
+  "password-reset",
+  "verify",
+  "verification",
+  "confirm",
+  "confirmation",
+  "magic",
+  "magic-link",
+  "invite",
+  "invitation",
+  "activate",
+  "activation",
+  "token",
+  "tokens",
+  "auth",
+  "login",
+  "signin",
+  "sign-in",
+  "unsubscribe",
+  "share",
+  "download",
 ])
 
 function looksRandom(segment: string): boolean {
-  return segment.length >= 24 && /^[A-Za-z0-9_\-.~=+%]+$/.test(segment) && /[0-9]/.test(segment) && /[A-Za-z]/.test(segment)
+  return (
+    segment.length >= 24 && /^[A-Za-z0-9_\-.~=+%]+$/.test(segment) && /[0-9]/.test(segment) && /[A-Za-z]/.test(segment)
+  )
 }
 
 function hasSecretPath(pathname: string): boolean {

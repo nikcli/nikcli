@@ -79,9 +79,7 @@ describe("walkProject", () => {
       "C:/repo/node_modules": [
         { name: "bad.js", path: "C:/repo/node_modules/bad.js", is_dir: false, size: 50, modified_ms: 0 },
       ],
-      "C:/repo/.git": [
-        { name: "HEAD", path: "C:/repo/.git/HEAD", is_dir: false, size: 20, modified_ms: 0 },
-      ],
+      "C:/repo/.git": [{ name: "HEAD", path: "C:/repo/.git/HEAD", is_dir: false, size: 20, modified_ms: 0 }],
     }
 
     const host = createFakeHost(fs)
@@ -97,9 +95,7 @@ describe("walkProject", () => {
         { name: "keep.ts", path: "C:/repo/keep.ts", is_dir: false, size: 100, modified_ms: 0 },
         { name: "vendor", path: "C:/repo/vendor", is_dir: true, size: 0, modified_ms: 0 },
       ],
-      "C:/repo/vendor": [
-        { name: "dep.js", path: "C:/repo/vendor/dep.js", is_dir: false, size: 200, modified_ms: 0 },
-      ],
+      "C:/repo/vendor": [{ name: "dep.js", path: "C:/repo/vendor/dep.js", is_dir: false, size: 200, modified_ms: 0 }],
     }
 
     const host = createFakeHost(fs)
@@ -182,9 +178,7 @@ describe("walkProject", () => {
 
   it("handles limit <= 0 gracefully", async () => {
     const fs: Record<string, DirEntry[]> = {
-      "C:/repo": [
-        { name: "a.ts", path: "C:/repo/a.ts", is_dir: false, size: 10, modified_ms: 0 },
-      ],
+      "C:/repo": [{ name: "a.ts", path: "C:/repo/a.ts", is_dir: false, size: 10, modified_ms: 0 }],
     }
     const host = createFakeHost(fs)
     const result = await walkProject({
@@ -205,9 +199,7 @@ describe("walkProject", () => {
         { name: "other", path: "C:/repo/other", is_dir: true, size: 0, modified_ms: 0 },
       ],
       // "C:/repo/locked" is missing from fs map, so readDir will throw
-      "C:/repo/other": [
-        { name: "other.ts", path: "C:/repo/other/other.ts", is_dir: false, size: 20, modified_ms: 0 },
-      ],
+      "C:/repo/other": [{ name: "other.ts", path: "C:/repo/other/other.ts", is_dir: false, size: 20, modified_ms: 0 }],
     }
 
     const host = createFakeHost(fs)

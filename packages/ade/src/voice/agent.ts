@@ -102,9 +102,9 @@ export const VOICE_AGENT_INSTRUCTIONS = [
   "Se qualcosa non riesce, dillo in parole semplici, senza codici di errore, e di' cosa può fare l'utente.",
   "Per gestire le sessioni usa il comando ade-msg dalla shell:",
   "- ade-msg list: le sessioni aperte;",
-  "- ade-msg ask SESSIONE \"RICHIESTA\": chiede e aspetta la risposta; usalo sempre così, bloccante, perché non hai un terminale che riceva risposte dopo;",
+  '- ade-msg ask SESSIONE "RICHIESTA": chiede e aspetta la risposta; usalo sempre così, bloccante, perché non hai un terminale che riceva risposte dopo;',
   "- ade-msg spawn AGENTE \"COMPITO\" --no-wait: avvia una sessione per un lavoro lungo; poi di' all'utente che è partita, senza aspettarla;",
-  "- ade-msg send SESSIONE \"TESTO\": una nota; ade-msg close SESSIONE: chiude una sessione avviata da te.",
+  '- ade-msg send SESSIONE "TESTO": una nota; ade-msg close SESSIONE: chiude una sessione avviata da te.',
   "Non modificare file e non eseguire comandi che cambiano il progetto: il lavoro lo fanno le sessioni, dove l'utente lo vede.",
   "Non puoi aprire pannelli e non scrivere mai righe che iniziano con @ade: qui verrebbero lette ad alta voce. Se l'utente vuole un pannello, digli di dire «apri il browser», «apri il video», «apri il modello 3D», «apri il simulatore» o «apri le decisioni».",
   "Se la richiesta è ambigua, o chiudere o fermare qualcosa farebbe perdere lavoro, chiedi conferma invece di agire.",
@@ -179,7 +179,11 @@ export function createVoiceAgent(deps: VoiceAgentDeps): VoiceAgent {
   let latest = 0
 
   /* Everything but the sentence: the same for a turn and for the process that waits for one. */
-  const turnFor = (runner: RunnerId, cwd: string | undefined, speed: "fast" | "cli" | undefined): Omit<TurnRequest, "message"> => ({
+  const turnFor = (
+    runner: RunnerId,
+    cwd: string | undefined,
+    speed: "fast" | "cli" | undefined,
+  ): Omit<TurnRequest, "message"> => ({
     runner,
     instructions: VOICE_AGENT_INSTRUCTIONS,
     ...(cwd ? { cwd } : {}),
@@ -225,12 +229,17 @@ export function createVoiceAgent(deps: VoiceAgentDeps): VoiceAgent {
       signal?.addEventListener("abort", onAbort, { once: true })
       try {
         const result = await turn.result
-        if (result.sessionId && generation === latest) conversation = { runner: resolved.runner, cwd, sessionId: result.sessionId }
+        if (result.sessionId && generation === latest)
+          conversation = { runner: resolved.runner, cwd, sessionId: result.sessionId }
         if (result.status === "done") {
           return { ok: true, text: result.text || "Fatto.", ran: true }
         }
         if (result.status === "stopped") return { ok: false, text: "", ran: true }
-        return { ok: false, text: result.problem || "Non sono riuscito a risponderti: l'agente non ha detto niente.", ran: true }
+        return {
+          ok: false,
+          text: result.problem || "Non sono riuscito a risponderti: l'agente non ha detto niente.",
+          ran: true,
+        }
       } finally {
         signal?.removeEventListener("abort", onAbort)
       }

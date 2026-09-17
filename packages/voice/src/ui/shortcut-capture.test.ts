@@ -22,7 +22,7 @@ describe("ui/shortcut-capture", () => {
           altKey: false,
           metaKey: false,
         },
-        "other"
+        "other",
       )
 
       expect(result.type).toBe("chord")
@@ -41,7 +41,7 @@ describe("ui/shortcut-capture", () => {
           altKey: false,
           metaKey: true,
         },
-        "mac"
+        "mac",
       )
 
       expect(result.type).toBe("chord")
@@ -60,7 +60,7 @@ describe("ui/shortcut-capture", () => {
           altKey: true,
           metaKey: false,
         },
-        "other"
+        "other",
       )
 
       expect(result.type).toBe("chord")
@@ -79,7 +79,7 @@ describe("ui/shortcut-capture", () => {
           altKey: false,
           metaKey: false,
         },
-        "other"
+        "other",
       )
 
       expect(result.type).toBe("chord")
@@ -98,7 +98,7 @@ describe("ui/shortcut-capture", () => {
           altKey: false,
           metaKey: false,
         },
-        "other"
+        "other",
       )
       expect(result1.type).toBe("cancel")
 
@@ -110,7 +110,7 @@ describe("ui/shortcut-capture", () => {
           altKey: false,
           metaKey: false,
         },
-        "mac"
+        "mac",
       )
       expect(result2.type).toBe("cancel")
     })
@@ -124,7 +124,7 @@ describe("ui/shortcut-capture", () => {
           altKey: false,
           metaKey: false,
         },
-        "other"
+        "other",
       )
       expect(ctrlResult.type).toBe("modifier_only")
 
@@ -136,7 +136,7 @@ describe("ui/shortcut-capture", () => {
           altKey: false,
           metaKey: false,
         },
-        "mac"
+        "mac",
       )
       expect(shiftResult.type).toBe("modifier_only")
     })
@@ -150,7 +150,7 @@ describe("ui/shortcut-capture", () => {
           altKey: false,
           metaKey: false,
         },
-        "other"
+        "other",
       )
       expect(result.type).toBe("ignored")
     })
@@ -158,7 +158,7 @@ describe("ui/shortcut-capture", () => {
     test("il tasto «+» viene registrato per nome, perché separa le parti di un accordo", () => {
       const result = captureKeyboardEvent(
         { key: "+", ctrlKey: true, shiftKey: false, altKey: false, metaKey: false },
-        "other"
+        "other",
       )
 
       expect(result.type).toBe("chord")
@@ -176,10 +176,7 @@ describe("ui/shortcut-capture", () => {
    * in one test is what catches a spelling that only one side understands.
    */
   describe("captured chord is honoured by the runtime matcher", () => {
-    const press = (
-      key: string,
-      mods: Partial<Omit<Parameters<typeof captureKeyboardEvent>[0], "key">> = {},
-    ) => ({
+    const press = (key: string, mods: Partial<Omit<Parameters<typeof captureKeyboardEvent>[0], "key">> = {}) => ({
       key,
       ctrlKey: mods.ctrlKey ?? false,
       metaKey: mods.metaKey ?? false,
@@ -206,13 +203,7 @@ describe("ui/shortcut-capture", () => {
 
   describe("checkShortcutConflict", () => {
     test("detects conflict between agent chord and palette.open ADE shortcut", () => {
-      const conflict = checkShortcutConflict(
-        "mod+shift+p",
-        VOICE_COMMAND_AGENT,
-        DEFAULT_VOICE_SETTINGS,
-        [],
-        "other"
-      )
+      const conflict = checkShortcutConflict("mod+shift+p", VOICE_COMMAND_AGENT, DEFAULT_VOICE_SETTINGS, [], "other")
 
       expect(conflict.hasConflict).toBe(true)
       expect(conflict.conflictingCommand).toBe("palette.open")
@@ -225,7 +216,7 @@ describe("ui/shortcut-capture", () => {
         VOICE_COMMAND_AGENT,
         DEFAULT_VOICE_SETTINGS,
         [],
-        "other"
+        "other",
       )
 
       expect(conflict.hasConflict).toBe(true)
@@ -239,7 +230,7 @@ describe("ui/shortcut-capture", () => {
         VOICE_COMMAND_TRANSCRIPTION,
         DEFAULT_VOICE_SETTINGS,
         [],
-        "other"
+        "other",
       )
 
       expect(conflict.hasConflict).toBe(true)
@@ -260,7 +251,7 @@ describe("ui/shortcut-capture", () => {
         VOICE_COMMAND_AGENT,
         DEFAULT_VOICE_SETTINGS,
         customBindings,
-        "other"
+        "other",
       )
 
       expect(conflict.hasConflict).toBe(true)
@@ -268,81 +259,39 @@ describe("ui/shortcut-capture", () => {
     })
 
     test("allows distinct, non-conflicting chords", () => {
-      const noConflict = checkShortcutConflict(
-        "mod+alt+k",
-        VOICE_COMMAND_AGENT,
-        DEFAULT_VOICE_SETTINGS,
-        [],
-        "other"
-      )
+      const noConflict = checkShortcutConflict("mod+alt+k", VOICE_COMMAND_AGENT, DEFAULT_VOICE_SETTINGS, [], "other")
 
       expect(noConflict.hasConflict).toBe(false)
       expect(noConflict.conflictingCommand).toBeUndefined()
     })
 
     test("rejects invalid chord without principal key", () => {
-      const modifierOnly = checkShortcutConflict(
-        "mod+shift",
-        VOICE_COMMAND_AGENT,
-        DEFAULT_VOICE_SETTINGS,
-        [],
-        "other"
-      )
+      const modifierOnly = checkShortcutConflict("mod+shift", VOICE_COMMAND_AGENT, DEFAULT_VOICE_SETTINGS, [], "other")
       expect(modifierOnly.hasConflict).toBe(true)
 
-      const empty = checkShortcutConflict(
-        "",
-        VOICE_COMMAND_AGENT,
-        DEFAULT_VOICE_SETTINGS,
-        [],
-        "other"
-      )
+      const empty = checkShortcutConflict("", VOICE_COMMAND_AGENT, DEFAULT_VOICE_SETTINGS, [], "other")
       expect(empty.hasConflict).toBe(true)
     })
 
     test("un tasto singolo che serve a scrivere viene rifiutato con la ragione", () => {
-      const bare = checkShortcutConflict(
-        "k",
-        VOICE_COMMAND_AGENT,
-        DEFAULT_VOICE_SETTINGS,
-        [],
-        "other"
-      )
+      const bare = checkShortcutConflict("k", VOICE_COMMAND_AGENT, DEFAULT_VOICE_SETTINGS, [], "other")
       expect(bare.hasConflict).toBe(true)
       expect(bare.message).toContain("scrivere")
       // Refused for what it is, not for who else holds it.
       expect(bare.conflictingCommand).toBeUndefined()
 
-      const bareSpace = checkShortcutConflict(
-        "space",
-        VOICE_COMMAND_AGENT,
-        DEFAULT_VOICE_SETTINGS,
-        [],
-        "other"
-      )
+      const bareSpace = checkShortcutConflict("space", VOICE_COMMAND_AGENT, DEFAULT_VOICE_SETTINGS, [], "other")
       expect(bareSpace.hasConflict).toBe(true)
     })
 
     test("accetta un accordo rischioso ma lo spiega invece di bloccarlo", () => {
-      const win = checkShortcutConflict(
-        "meta+shift+y",
-        VOICE_COMMAND_AGENT,
-        DEFAULT_VOICE_SETTINGS,
-        [],
-        "other"
-      )
+      const win = checkShortcutConflict("meta+shift+y", VOICE_COMMAND_AGENT, DEFAULT_VOICE_SETTINGS, [], "other")
       expect(win.hasConflict).toBe(false)
       expect(win.warning).toContain("Win")
     })
 
     test("un accordo sicuro non porta alcun avviso", () => {
-      const clean = checkShortcutConflict(
-        "mod+alt+y",
-        VOICE_COMMAND_AGENT,
-        DEFAULT_VOICE_SETTINGS,
-        [],
-        "other"
-      )
+      const clean = checkShortcutConflict("mod+alt+y", VOICE_COMMAND_AGENT, DEFAULT_VOICE_SETTINGS, [], "other")
       expect(clean.hasConflict).toBe(false)
       expect(clean.warning).toBeUndefined()
     })
@@ -351,13 +300,7 @@ describe("ui/shortcut-capture", () => {
       // The table is read from ADE rather than retyped here, so a binding added
       // to ADE tomorrow is covered by this test without anyone remembering to.
       for (const binding of DEFAULT_BINDINGS) {
-        const conflict = checkShortcutConflict(
-          binding.chord,
-          VOICE_COMMAND_AGENT,
-          DEFAULT_VOICE_SETTINGS,
-          [],
-          "other"
-        )
+        const conflict = checkShortcutConflict(binding.chord, VOICE_COMMAND_AGENT, DEFAULT_VOICE_SETTINGS, [], "other")
         expect(conflict.hasConflict).toBe(true)
         expect(conflict.conflictingCommand).toBe(binding.commandId)
         // Never a bare command id: the user has to recognise what they hit.
@@ -371,13 +314,7 @@ describe("ui/shortcut-capture", () => {
         ...DEFAULT_VOICE_SETTINGS,
         transcriptionChord: "mod+alt+d",
       }
-      const conflict = checkShortcutConflict(
-        "mod+alt+d",
-        VOICE_COMMAND_AGENT,
-        rebound,
-        [],
-        "other"
-      )
+      const conflict = checkShortcutConflict("mod+alt+d", VOICE_COMMAND_AGENT, rebound, [], "other")
       expect(conflict.hasConflict).toBe(true)
       expect(conflict.conflictingCommand).toBe(VOICE_COMMAND_TRANSCRIPTION)
     })
@@ -386,13 +323,7 @@ describe("ui/shortcut-capture", () => {
       // Order, case and the KeyboardEvent.code spelling all reduce to one chord,
       // so none of them can be used to sneak past the collision check.
       for (const spelling of ["shift+mod+p", "MOD+SHIFT+P", "mod+shift+KeyP"]) {
-        const conflict = checkShortcutConflict(
-          spelling,
-          VOICE_COMMAND_AGENT,
-          DEFAULT_VOICE_SETTINGS,
-          [],
-          "other"
-        )
+        const conflict = checkShortcutConflict(spelling, VOICE_COMMAND_AGENT, DEFAULT_VOICE_SETTINGS, [], "other")
         expect(conflict.hasConflict).toBe(true)
         expect(conflict.conflictingCommand).toBe("palette.open")
       }

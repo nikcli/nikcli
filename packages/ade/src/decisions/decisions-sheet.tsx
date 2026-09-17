@@ -90,14 +90,22 @@ export function DecisionsSheet(props: { hub: DecisionsHub; onClose: () => void; 
           </Show>
           <button type="button" data-slot="sheet-close" onClick={() => props.onClose()} aria-label={t("new.close")}>
             <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
-              <path d="M2.5 2.5l7 7M9.5 2.5l-7 7" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+              <path
+                d="M2.5 2.5l7 7M9.5 2.5l-7 7"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.2"
+                stroke-linecap="round"
+              />
             </svg>
           </button>
         </header>
 
         <div data-slot="sheet-body">
           <Show when={props.hub.register.error()}>
-            <div data-slot="decision-problem" role="alert">{t("decisions.unreadable", String(props.hub.register.error()))}</div>
+            <div data-slot="decision-problem" role="alert">
+              {t("decisions.unreadable", String(props.hub.register.error()))}
+            </div>
           </Show>
           <Show
             when={current()}
@@ -140,7 +148,12 @@ export function DecisionsSheet(props: { hub: DecisionsHub; onClose: () => void; 
           <span>{t("decisions.sheet.keys")}</span>
           <Show when={props.hub.recipient().state !== "pronta" && queued() > 0}>
             <span data-tone="warn">
-              {t(props.hub.recipient().state === "non scelta" ? "decisions.sheet.queued.none" : "decisions.sheet.queued.idle", queued())}
+              {t(
+                props.hub.recipient().state === "non scelta"
+                  ? "decisions.sheet.queued.none"
+                  : "decisions.sheet.queued.idle",
+                queued(),
+              )}
             </span>
           </Show>
           <button type="button" data-slot="decision-ghost" onClick={() => props.onOpenPanel()}>

@@ -12,24 +12,12 @@ const SHOT_MIME = "application/x-ade-shot"
 import "@xterm/xterm/css/xterm.css"
 import "./pane.css"
 
-import {
-  type PaneStatus,
-  type PaneState,
-  STATE_FULL,
-  STATE_SHORT,
-  resolvePaneState,
-} from "./pane-state"
+import { type PaneStatus, type PaneState, STATE_FULL, STATE_SHORT, resolvePaneState } from "./pane-state"
 import { t } from "../i18n"
 import { activityLabel } from "./activity"
 import { FolderGlyph, PaneActions } from "./pane-actions"
 
-export {
-  type PaneStatus,
-  type PaneState,
-  STATE_FULL,
-  STATE_SHORT,
-  resolvePaneState,
-}
+export { type PaneStatus, type PaneState, STATE_FULL, STATE_SHORT, resolvePaneState }
 
 /*
  * How faithfully the tree a session runs in matches what the user asked for.
@@ -61,8 +49,12 @@ export interface PaneTree {
  */
 const FIDELITY_LABEL: Readonly<Record<PaneTreeFidelity, string | undefined>> = {
   full: undefined,
-  get stale() { return t("pane.tree.stale.short") },
-  get "no-deps"() { return t("pane.tree.noDeps.short") },
+  get stale() {
+    return t("pane.tree.stale.short")
+  },
+  get "no-deps"() {
+    return t("pane.tree.noDeps.short")
+  },
   /*
    * Quiet too: sessions run in the project on purpose now (see `startProcess`),
    * so marking every pane as a failure was an alarm with nothing to act on.
@@ -73,10 +65,18 @@ const FIDELITY_LABEL: Readonly<Record<PaneTreeFidelity, string | undefined>> = {
 
 /** Spoken/inspected form of each fidelity, used when no provisioning note arrives. */
 const FIDELITY_TITLE: Readonly<Record<PaneTreeFidelity, string>> = {
-  get full() { return t("pane.tree.full") },
-  get stale() { return t("pane.tree.stale") },
-  get "no-deps"() { return t("pane.tree.noDeps") },
-  get project() { return t("pane.tree.project") },
+  get full() {
+    return t("pane.tree.full")
+  },
+  get stale() {
+    return t("pane.tree.stale")
+  },
+  get "no-deps"() {
+    return t("pane.tree.noDeps")
+  },
+  get project() {
+    return t("pane.tree.project")
+  },
 }
 
 /* Icons are stroke-based marks on a 16px grid, never emoji: they must survive
@@ -276,7 +276,6 @@ export function StateIcon(props: { state: PaneState }) {
   )
 }
 
-
 /**
  * One agent session, as it appears inside the grid.
  *
@@ -296,8 +295,7 @@ export function SessionPane(props: SessionPaneProps) {
    */
   const [following, setFollowing] = createSignal(true)
 
-  const atBottom = (element: HTMLDivElement) =>
-    element.scrollHeight - element.scrollTop - element.clientHeight < 24
+  const atBottom = (element: HTMLDivElement) => element.scrollHeight - element.scrollTop - element.clientHeight < 24
 
   const toBottom = () => {
     if (!scroller) return
@@ -446,7 +444,8 @@ export function SessionPane(props: SessionPaneProps) {
     if (props.stateDetail) return props.stateDetail
     if (props.activity) return activityLabel(props.activity)
     const st = state()
-    if (st === "limit") return reading()?.countdown ? t("pane.limit.window", String(reading()?.bindingKey ?? "")) : t("pane.limit")
+    if (st === "limit")
+      return reading()?.countdown ? t("pane.limit.window", String(reading()?.bindingKey ?? "")) : t("pane.limit")
     if (st === "work") return props.mode ?? t("activity.running")
     if (st === "perm") return props.actions?.[0]?.label ?? t("paneState.short.perm")
     if (st === "err") return t("paneState.err")
@@ -654,11 +653,7 @@ export function SessionPane(props: SessionPaneProps) {
               {/* An old figure shows when it was read; a current one when it resets. */}
               <Show
                 when={q().stale && q().readAt}
-                fallback={
-                  <Show when={q().countdown}>
-                    {(cd) => <span class="qr">↻ {cd()}</span>}
-                  </Show>
-                }
+                fallback={<Show when={q().countdown}>{(cd) => <span class="qr">↻ {cd()}</span>}</Show>}
               >
                 {(at) => <span class="qr qat">{at()}</span>}
               </Show>
@@ -667,7 +662,9 @@ export function SessionPane(props: SessionPaneProps) {
         </Show>
 
         <Show when={props.mode}>
-          <span class="a-mode" data-slot="pane-mode">{props.mode}</span>
+          <span class="a-mode" data-slot="pane-mode">
+            {props.mode}
+          </span>
         </Show>
 
         {/* While provisioning decides, the same slot holds a placeholder so the
@@ -678,12 +675,7 @@ export function SessionPane(props: SessionPaneProps) {
           when={props.tree}
           fallback={
             <Show when={props.status === "provisioning"}>
-              <span
-                class="a-br"
-                data-slot="pane-tree"
-                data-fidelity="pending"
-                title={t("pane.tree.preparing")}
-              >
+              <span class="a-br" data-slot="pane-tree" data-fidelity="pending" title={t("pane.tree.preparing")}>
                 <BranchGlyph />
                 <span class="a-brt trunc">{t("pane.tree.preparing.short")}</span>
               </span>

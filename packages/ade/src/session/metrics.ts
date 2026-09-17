@@ -144,10 +144,7 @@ export function resumeTiming(timing: SessionTiming, now: number): SessionTiming 
 
 /** Total active ms up to `now`, including any in-progress segment. */
 export function activeElapsed(timing: SessionTiming, now: number): number {
-  const inProgress =
-    timing.activeSegmentStart !== undefined
-      ? Math.max(0, now - timing.activeSegmentStart)
-      : 0
+  const inProgress = timing.activeSegmentStart !== undefined ? Math.max(0, now - timing.activeSegmentStart) : 0
   return timing.accumulatedMs + inProgress
 }
 

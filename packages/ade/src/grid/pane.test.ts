@@ -1,14 +1,6 @@
 import { describe, expect, test } from "bun:test"
-import {
-  resolvePaneState,
-  STATE_FULL,
-  STATE_SHORT,
-  type PaneState,
-} from "./pane-state"
-import {
-  formatSessionQuota,
-  type ProviderQuota,
-} from "../session/quota"
+import { resolvePaneState, STATE_FULL, STATE_SHORT, type PaneState } from "./pane-state"
+import { formatSessionQuota, type ProviderQuota } from "../session/quota"
 
 describe("resolvePaneState (Proposal A 6-state resolution)", () => {
   test("resolves 'work' when status is working or provisioning", () => {
@@ -106,7 +98,6 @@ describe("Proposal A state vocabulary", () => {
     expect(STATE_SHORT.idle).toBe("Pronta")
   })
 })
-
 
 describe("Quota Horizon formatting", () => {
   const now = 1_000_000

@@ -4,7 +4,13 @@ import { createWorkbench } from "../surface/state"
 import { createAdeVoiceHost } from "./host"
 import type { TurnRequest, TurnResult } from "../bots/turn"
 import { limitNotice } from "../bots/terms"
-import { createVoiceAgent, resolveVoiceAgentRunner, VOICE_AGENT_DISABLED_TOOLS, VOICE_AGENT_INSTRUCTIONS, VOICE_AGENT_TIMEOUT_MS } from "./agent"
+import {
+  createVoiceAgent,
+  resolveVoiceAgentRunner,
+  VOICE_AGENT_DISABLED_TOOLS,
+  VOICE_AGENT_INSTRUCTIONS,
+  VOICE_AGENT_TIMEOUT_MS,
+} from "./agent"
 
 const status = (id: string, availability: AgentStatus["availability"]): AgentStatus =>
   ({ agent: { id, label: id, command: id }, availability }) as AgentStatus
@@ -16,10 +22,19 @@ describe("voice/agent", () => {
     })
     expect(resolveVoiceAgentRunner("auto", undefined)).toEqual({ runner: "claude" })
     expect(resolveVoiceAgentRunner("codex", [status("codex", "assente")])).toEqual({ runner: "codex" })
-    const none = resolveVoiceAgentRunner("auto", ["claude-code", "codex", "nikcli"].map((id) => status(id, "assente")))
+    const none = resolveVoiceAgentRunner(
+      "auto",
+      ["claude-code", "codex", "nikcli"].map((id) => status(id, "assente")),
+    )
     expect("problem" in none && none.problem).toContain("Claude Code")
     // nikcli cannot be held to read-only for one turn: never picked, and refused when named.
-    expect(resolveVoiceAgentRunner("auto", [status("claude-code", "assente"), status("codex", "assente"), status("nikcli", "presente")])).toHaveProperty("problem")
+    expect(
+      resolveVoiceAgentRunner("auto", [
+        status("claude-code", "assente"),
+        status("codex", "assente"),
+        status("nikcli", "presente"),
+      ]),
+    ).toHaveProperty("problem")
     expect(resolveVoiceAgentRunner("nikcli", undefined)).toHaveProperty("problem")
   })
 
@@ -46,7 +61,9 @@ describe("voice/agent", () => {
       requests.push(request)
       return {
         result: new Promise<TurnResult>((resolve) =>
-          pending.push((next) => resolve({ status: "done", text: "", tokens: 0, costUsd: 0, talk: {} as never, ...next } as TurnResult)),
+          pending.push((next) =>
+            resolve({ status: "done", text: "", tokens: 0, costUsd: 0, talk: {} as never, ...next } as TurnResult),
+          ),
         ),
         stop: () => {},
       }
@@ -71,7 +88,14 @@ describe("voice/agent", () => {
       requests.push(request)
       const next = results.shift() ?? {}
       return {
-        result: Promise.resolve({ status: "done", text: "", tokens: 0, costUsd: 0, talk: {} as never, ...next } as TurnResult),
+        result: Promise.resolve({
+          status: "done",
+          text: "",
+          tokens: 0,
+          costUsd: 0,
+          talk: {} as never,
+          ...next,
+        } as TurnResult),
         stop: () => stops++,
       }
     }
@@ -100,7 +124,13 @@ describe("voice/agent", () => {
       request.onUpdate?.(talk("Ci sono"))
       request.onUpdate?.(talk("Ci sono due sessioni."))
       return {
-        result: Promise.resolve({ status: "done", text: "Ci sono due sessioni.", tokens: 0, costUsd: 0, talk: {} as never } as TurnResult),
+        result: Promise.resolve({
+          status: "done",
+          text: "Ci sono due sessioni.",
+          tokens: 0,
+          costUsd: 0,
+          talk: {} as never,
+        } as TurnResult),
         stop: () => {},
       }
     }
@@ -144,7 +174,11 @@ describe("voice/agent", () => {
     const runner = fakeRunner([{ status: "error", problem: "claude non si avvia: ENOENT" }, { status: "stopped" }])
     const agent = createVoiceAgent({ runTurn: runner.runTurn, statuses: () => undefined, cwd: () => undefined })
 
-    expect(await agent.ask({ text: "x", engine: "claude" })).toEqual({ ok: false, text: "claude non si avvia: ENOENT", ran: true })
+    expect(await agent.ask({ text: "x", engine: "claude" })).toEqual({
+      ok: false,
+      text: "claude non si avvia: ENOENT",
+      ran: true,
+    })
     // No runner at all: nothing ran, so the planner may still take the sentence.
     expect(await agent.ask({ text: "x", engine: "nikcli" })).toMatchObject({ ok: false, ran: false })
 
@@ -208,7 +242,14 @@ describe("the warm process", () => {
     let forgotten = 0
     let closed = 0
     const done = (text: string) => ({
-      result: Promise.resolve({ status: "done", text, sessionId: "s1", tokens: 0, costUsd: 0, talk: {} as never } as TurnResult),
+      result: Promise.resolve({
+        status: "done",
+        text,
+        sessionId: "s1",
+        tokens: 0,
+        costUsd: 0,
+        talk: {} as never,
+      } as TurnResult),
       stop: () => {},
     })
     const agent = createVoiceAgent({
@@ -242,9 +283,32 @@ describe("the warm process", () => {
     const heard: string[] = []
     const agent = createVoiceAgent({
       runTurn: (request) => {
-        request.onUpdate?.({ messages: [{ role: "user", text: "q", at: 0 }], status: "running", tokens: 0, costUsd: 0, streaming: "Fa" } as never)
-        request.onUpdate?.({ messages: [{ role: "user", text: "q", at: 0 }, { role: "bot", text: "Fa 4", at: 0 }], status: "running", tokens: 0, costUsd: 0 } as never)
-        return { result: Promise.resolve({ status: "done", text: "Fa 4", tokens: 0, costUsd: 0, talk: {} as never } as TurnResult), stop: () => {} }
+        request.onUpdate?.({
+          messages: [{ role: "user", text: "q", at: 0 }],
+          status: "running",
+          tokens: 0,
+          costUsd: 0,
+          streaming: "Fa",
+        } as never)
+        request.onUpdate?.({
+          messages: [
+            { role: "user", text: "q", at: 0 },
+            { role: "bot", text: "Fa 4", at: 0 },
+          ],
+          status: "running",
+          tokens: 0,
+          costUsd: 0,
+        } as never)
+        return {
+          result: Promise.resolve({
+            status: "done",
+            text: "Fa 4",
+            tokens: 0,
+            costUsd: 0,
+            talk: {} as never,
+          } as TurnResult),
+          stop: () => {},
+        }
       },
       statuses: () => undefined,
       cwd: () => "C:/p",

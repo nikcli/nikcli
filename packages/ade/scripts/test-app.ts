@@ -185,7 +185,10 @@ async function start(): Promise<void> {
   writeFileSync(plan.configPath, devConfig(port))
   writeFileSync(plan.logPath, "")
 
-  const browserArgs = [process.env.WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS, cdpPort ? `--remote-debugging-port=${cdpPort}` : ""]
+  const browserArgs = [
+    process.env.WEBVIEW2_ADDITIONAL_BROWSER_ARGUMENTS,
+    cdpPort ? `--remote-debugging-port=${cdpPort}` : "",
+  ]
     .filter(Boolean)
     .join(" ")
 
@@ -221,7 +224,9 @@ async function start(): Promise<void> {
   const record: TestAppRecord = { port, cdpPort, label: plan.label, root, startedAt }
   writeFileSync(plan.recordPath, JSON.stringify(record, null, 2))
 
-  console.log(`ADE Test in avvio (la prima compilazione Rust di una cartella nuova richiede minuti):\n${describe(record)}`)
+  console.log(
+    `ADE Test in avvio (la prima compilazione Rust di una cartella nuova richiede minuti):\n${describe(record)}`,
+  )
   console.log(
     wantWatch
       ? "  --watch: ogni modifica al Rust ricompila e riapre la finestra, chiudendo quella aperta"
@@ -253,7 +258,8 @@ async function start(): Promise<void> {
       console.error(`\nADE Test si è chiusa durante l'avvio. Log: ${plan.logPath}`)
       break
     case "timeout": {
-      const limit = timeoutMs >= 60_000 ? `${Math.round(timeoutMs / 60_000)} minuti` : `${Math.round(timeoutMs / 1000)} secondi`
+      const limit =
+        timeoutMs >= 60_000 ? `${Math.round(timeoutMs / 60_000)} minuti` : `${Math.round(timeoutMs / 1000)} secondi`
       console.error(`\nADE Test non ha aperto la finestra entro ${limit}. Log: ${plan.logPath}`)
       break
     }
@@ -296,14 +302,15 @@ function stop(quiet = false): void {
       }
     },
     waitExit: (pids, timeoutMs) => {
-      const alive = () => pids.filter((pid) => {
-        try {
-          process.kill(pid, 0)
-          return true
-        } catch {
-          return false
-        }
-      })
+      const alive = () =>
+        pids.filter((pid) => {
+          try {
+            process.kill(pid, 0)
+            return true
+          } catch {
+            return false
+          }
+        })
       const deadline = Date.now() + timeoutMs
       while (alive().length > 0 && Date.now() < deadline) Bun.sleepSync(200)
       return alive()
@@ -318,7 +325,11 @@ function stop(quiet = false): void {
     process.exit(1)
   }
   if (!quiet) {
-    console.log(result.outcome === "stopped" ? `ADE Test chiusa: ${plan.label}` : "Nessuna ADE Test in esecuzione per questa cartella.")
+    console.log(
+      result.outcome === "stopped"
+        ? `ADE Test chiusa: ${plan.label}`
+        : "Nessuna ADE Test in esecuzione per questa cartella.",
+    )
   }
 }
 

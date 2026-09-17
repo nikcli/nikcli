@@ -57,10 +57,7 @@ function cleanTextSnippet(text: unknown, maxLen = 100): string {
 /**
  * Formats a single inspected element into structured, agent-readable lines.
  */
-export function describeElement(
-  element: Partial<InspectedElement> | null | undefined,
-  index?: number,
-): string {
+export function describeElement(element: Partial<InspectedElement> | null | undefined, index?: number): string {
   if (!element || typeof element !== "object") {
     return index !== undefined ? `${index + 1}. <unknown>` : "<unknown>"
   }

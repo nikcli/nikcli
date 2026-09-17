@@ -82,7 +82,7 @@ export function resolveVoiceOrAdeKey(
   adeBindings: readonly Binding[],
   voiceSettings: VoiceSettings,
   event: KeyInput,
-  platform: Platform
+  platform: Platform,
 ): VoiceShortcutResolution {
   // 1. Resolve against fixed ADE bindings first
   const adeCommandId = resolveBinding(adeBindings as Binding[], event, platform)
@@ -91,9 +91,7 @@ export function resolveVoiceOrAdeKey(
   const conflicts = conflictsFor(voiceSettings, adeBindings, platform)
 
   if (adeCommandId) {
-    const matchedConflict = conflicts.find((c) =>
-      matchesChord(c.chord, event)
-    )
+    const matchedConflict = conflicts.find((c) => matchesChord(c.chord, event))
     return {
       type: "ade",
       commandId: adeCommandId,
@@ -160,10 +158,7 @@ export interface PushToTalkOptions {
  * Manages push-to-talk lifecycle ensuring event.repeat is ignored
  * and window blur, key release, or the watchdog safely releases the microphone.
  */
-export function createPushToTalkHandler(
-  engine: PushToTalkTarget,
-  options: PushToTalkOptions = {}
-) {
+export function createPushToTalkHandler(engine: PushToTalkTarget, options: PushToTalkOptions = {}) {
   const setTimer = options.setTimer ?? ((fn, ms) => setTimeout(fn, ms))
   const clearTimer = options.clearTimer ?? ((h) => clearTimeout(h as ReturnType<typeof setTimeout>))
   const maxHoldMs = options.maxHoldMs ?? PUSH_TO_TALK_MAX_HOLD_MS
@@ -256,7 +251,11 @@ export function createPushToTalkHandler(
     if ((norm === "shift" || norm.startsWith("shift")) && chord.shift) return true
     if ((norm === "control" || norm === "ctrl" || norm.startsWith("control")) && chord.ctrl) return true
     if ((norm === "meta" || norm === "cmd" || norm === "os" || norm.startsWith("meta")) && chord.meta) return true
-    if ((norm === "alt" || norm === "opt" || norm === "option" || norm === "altgraph" || norm.startsWith("alt")) && chord.alt) return true
+    if (
+      (norm === "alt" || norm === "opt" || norm === "option" || norm === "altgraph" || norm.startsWith("alt")) &&
+      chord.alt
+    )
+      return true
     return false
   }
 

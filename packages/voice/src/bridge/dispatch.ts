@@ -44,7 +44,7 @@ export function resolveTargetPane(
    * processo, nega un permesso. Per queste il pannello va nominato o messo a
    * fuoco — non indovinato. Vedi il commento sul passo 5.
    */
-  destructive = false
+  destructive = false,
 ): { pane?: PaneSummary; error?: string } {
   if (panes.length === 0) {
     return { error: "Nessun pannello attualmente aperto su ADE." }
@@ -66,10 +66,7 @@ export function resolveTargetPane(
     let bestPane: PaneSummary | undefined
 
     for (const pane of panes) {
-      const hit = fuzzyMatch(
-        String(slots.paneTitle).toLowerCase(),
-        pane.title.toLowerCase()
-      )
+      const hit = fuzzyMatch(String(slots.paneTitle).toLowerCase(), pane.title.toLowerCase())
       if (hit && hit.score > bestScore) {
         bestScore = hit.score
         bestPane = pane
@@ -109,9 +106,7 @@ export function resolveTargetPane(
   if (destructive) {
     return {
       error:
-        panes.length === 1
-          ? undefined
-          : "Non so su quale pannello: dimmi il numero o il nome, oppure mettilo a fuoco.",
+        panes.length === 1 ? undefined : "Non so su quale pannello: dimmi il numero o il nome, oppure mettilo a fuoco.",
       // Con un solo pannello non c'è ambiguità da risolvere.
       pane: panes.length === 1 ? panes[0] : undefined,
     }
@@ -126,7 +121,7 @@ export function resolveTargetPane(
 export async function dispatch(
   result: ParseResult,
   host: VoiceHost,
-  ctx: DispatchContext = {}
+  ctx: DispatchContext = {},
 ): Promise<DispatchOutcome> {
   if (result.outcome !== "matched" || !result.intent) {
     return {
@@ -350,16 +345,18 @@ export async function dispatch(
         const hasExplicitPane =
           slots.paneIndex !== undefined || slots.paneTitle !== undefined || slots.paneId !== undefined
         const candidatePanes =
-          hasExplicitPane || panes.filter((p) => p.isBrowser).length === 0
-            ? panes
-            : panes.filter((p) => p.isBrowser)
+          hasExplicitPane || panes.filter((p) => p.isBrowser).length === 0 ? panes : panes.filter((p) => p.isBrowser)
         const resolved = resolveTargetPane(slots, candidatePanes, ctx.focusedPaneId, isDestructive)
         if (resolved.error) {
           return { success: false, spoken: resolved.error, error: "pane_not_found" }
         }
         const url = slots.url || "http://localhost:3000"
         if (host.browserNavigate(resolved.pane!.id, url) === false) {
-          return { success: false, spoken: "Non ho trovato il pannello browser da far navigare.", error: "pane_not_found" }
+          return {
+            success: false,
+            spoken: "Non ho trovato il pannello browser da far navigare.",
+            error: "pane_not_found",
+          }
         }
         return {
           success: true,

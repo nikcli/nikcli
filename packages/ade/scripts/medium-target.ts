@@ -22,7 +22,9 @@ if (process.platform === "win32") {
       stderr: "inherit",
     })
     if (raised.exitCode !== 0) {
-      console.warn("ADE: non sono riuscito a cambiare l'etichetta; nikcli e gli altri agenti potrebbero non scrivere i loro file.")
+      console.warn(
+        "ADE: non sono riuscito a cambiare l'etichetta; nikcli e gli altri agenti potrebbero non scrivere i loro file.",
+      )
     }
   }
 }

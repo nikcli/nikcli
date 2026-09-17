@@ -21,7 +21,12 @@ describe("ui/agent-orb-state", () => {
   })
 
   test("only thinking and speaking take the middle of the window", () => {
-    expect([orbCentered("idle"), orbCentered("listen"), orbCentered("think"), orbCentered("speak")]).toEqual([false, false, true, true])
+    expect([orbCentered("idle"), orbCentered("listen"), orbCentered("think"), orbCentered("speak")]).toEqual([
+      false,
+      false,
+      true,
+      true,
+    ])
   })
 
   test("the points cover the sphere evenly", () => {

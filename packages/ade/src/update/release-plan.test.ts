@@ -6,8 +6,17 @@ const commit = (subject: string, body = ""): Commit => ({ sha: `sha${++n}`, subj
 
 describe("parseSubject", () => {
   test("reads type, scope, breaking mark and description", () => {
-    expect(parseSubject("feat(ade): talk to bots")).toEqual({ type: "feat", scope: "ade", breaking: false, description: "talk to bots" })
-    expect(parseSubject("fix!: drop the old store")).toEqual({ type: "fix", breaking: true, description: "drop the old store" })
+    expect(parseSubject("feat(ade): talk to bots")).toEqual({
+      type: "feat",
+      scope: "ade",
+      breaking: false,
+      description: "talk to bots",
+    })
+    expect(parseSubject("fix!: drop the old store")).toEqual({
+      type: "fix",
+      breaking: true,
+      description: "drop the old store",
+    })
     expect(parseSubject("perf(ade,voice): idle less")?.scope).toBe("ade,voice")
   })
 
@@ -29,7 +38,9 @@ describe("invalidSubjects", () => {
 
 describe("planRelease", () => {
   test("nothing a user would notice means no release", () => {
-    expect(planRelease("ade-v0.2.0", [commit("docs(ade): rules"), commit("test(ade): more"), commit("chore: bump")])).toBeUndefined()
+    expect(
+      planRelease("ade-v0.2.0", [commit("docs(ade): rules"), commit("test(ade): more"), commit("chore: bump")]),
+    ).toBeUndefined()
     expect(planRelease("ade-v0.2.0", [])).toBeUndefined()
   })
 
@@ -42,7 +53,10 @@ describe("planRelease", () => {
   test("a breaking change moves the major after 1.0 and the minor before it", () => {
     expect(planRelease("ade-v1.4.2", [commit("feat(ade)!: new layout")])?.version).toBe("2.0.0")
     expect(planRelease("ade-v1.4.2", [commit("fix(ade): a", "BREAKING CHANGE: settings reset")])?.version).toBe("2.0.0")
-    expect(planRelease("ade-v0.4.2", [commit("feat(ade)!: new layout")])).toMatchObject({ version: "0.5.0", bump: "major" })
+    expect(planRelease("ade-v0.4.2", [commit("feat(ade)!: new layout")])).toMatchObject({
+      version: "0.5.0",
+      bump: "major",
+    })
   })
 
   test("the skip marker keeps a commit from causing a release", () => {

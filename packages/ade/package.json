@@ -1,6 +1,6 @@
 {
   "name": "@nikcli-ai/ade",
-  "version": "1.287.0",
+  "version": "1.368.0",
   "description": "Agent development environment: many live agent sessions, side by side.",
   "type": "module",
   "exports": {
@@ -34,7 +34,7 @@
     "test:unit": "bun test --conditions=browser --preload ./happydom.ts ./src",
     "test:unit:watch": "bun test --watch --conditions=browser --preload ./happydom.ts ./src",
     "test:app": "bun scripts/test-app.ts",
-    "native:dev":"bun scripts/medium-target.ts && tauri dev --config src-tauri/tauri.test.conf.json --features test-exe -- --bin ade-test",
+    "native:dev": "bun scripts/medium-target.ts && tauri dev --config src-tauri/tauri.test.conf.json --features test-exe -- --bin ade-test",
     "native:build": "tauri build",
     "native:build:test": "tauri build --config src-tauri/tauri.test.conf.json --bundles nsis"
   },

@@ -131,7 +131,7 @@ const OPENROUTER_MAJOR_CODES: readonly string[] = [
  */
 export function availableLanguages(
   backend: TranscriberBackend,
-  options: AvailableLanguagesOptions = {}
+  options: AvailableLanguagesOptions = {},
 ): LanguageOption[] {
   switch (backend) {
     case "parakeet": {
@@ -172,7 +172,7 @@ export function availableLanguages(
 export function isLanguageSupported(
   backend: TranscriberBackend,
   code: string,
-  options: AvailableLanguagesOptions = {}
+  options: AvailableLanguagesOptions = {},
 ): boolean {
   const cleanCode = code.trim().toLowerCase()
   if (!cleanCode) return false
@@ -206,11 +206,7 @@ export function isLanguageSupported(
     }
 
     case "openrouter":
-      return (
-        OPENROUTER_MAJOR_CODES.includes(cleanCode) ||
-        cleanCode === "auto" ||
-        cleanCode.length === 2
-      )
+      return OPENROUTER_MAJOR_CODES.includes(cleanCode) || cleanCode === "auto" || cleanCode.length === 2
 
     default:
       return false

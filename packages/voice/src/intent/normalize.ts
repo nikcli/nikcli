@@ -11,22 +11,9 @@
  * All functions are pure with zero side-effects.
  */
 
-const FILLER_PHRASES: readonly string[] = [
-  "per favore",
-  "per piacere",
-  "per cortesia",
-]
+const FILLER_PHRASES: readonly string[] = ["per favore", "per piacere", "per cortesia"]
 
-const FILLER_WORDS: readonly string[] = [
-  "ehm",
-  "uhm",
-  "em",
-  "um",
-  "cioe",
-  "dai",
-  "allora",
-  "dunque",
-]
+const FILLER_WORDS: readonly string[] = ["ehm", "uhm", "em", "um", "cioe", "dai", "allora", "dunque"]
 
 const ORDINALS_MAP: Readonly<Record<string, number>> = {
   primo: 1,

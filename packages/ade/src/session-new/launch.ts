@@ -26,11 +26,7 @@ export interface LaunchEntry {
  * If `count` is increased beyond what a preset defines, additional slots default to `agent`.
  * If no preset is selected, all slots default to `agent`.
  */
-export function willLaunch(input: {
-  preset?: PresetId
-  agentId: string
-  count: number
-}): LaunchEntry[] {
+export function willLaunch(input: { preset?: PresetId; agentId: string; count: number }): LaunchEntry[] {
   const entries: LaunchEntry[] = []
 
   for (let i = 1; i <= input.count; i++) {

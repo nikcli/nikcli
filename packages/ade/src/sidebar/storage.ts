@@ -61,10 +61,7 @@ export function serializeSet(set: ReadonlySet<string>): string {
  * throwing, preventing a corrupted localStorage entry from breaking sidebar
  * rendering.
  */
-export function deserializeSet(
-  raw: string | null | undefined,
-  fallback: readonly string[] = [],
-): Set<string> {
+export function deserializeSet(raw: string | null | undefined, fallback: readonly string[] = []): Set<string> {
   if (raw === null || raw === undefined || raw.trim() === "") {
     return new Set(fallback)
   }
@@ -85,10 +82,7 @@ export function deserializeSet(
 /**
  * Validates and parses the active sidebar tab mode.
  */
-export function parseSidebarTab(
-  raw: string | null | undefined,
-  fallback: SidebarTab = "sessions",
-): SidebarTab {
+export function parseSidebarTab(raw: string | null | undefined, fallback: SidebarTab = "sessions"): SidebarTab {
   if (raw === "sessions" || raw === "files") {
     return raw
   }

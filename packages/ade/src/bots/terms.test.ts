@@ -43,7 +43,11 @@ test("ADE's source never touches the CLIs' credentials", () => {
   const walk = (dir: string): string[] =>
     readdirSync(dir).flatMap((name) => {
       const path = join(dir, name)
-      return statSync(path).isDirectory() ? walk(path) : /\.(ts|tsx|rs)$/.test(name) && !/\.test\.ts$/.test(name) ? [path] : []
+      return statSync(path).isDirectory()
+        ? walk(path)
+        : /\.(ts|tsx|rs)$/.test(name) && !/\.test\.ts$/.test(name)
+          ? [path]
+          : []
     })
   const root = join(import.meta.dir, "..", "..")
   const files = [...walk(join(root, "src")), ...walk(join(root, "src-tauri", "src"))]

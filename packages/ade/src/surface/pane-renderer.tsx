@@ -163,7 +163,9 @@ export function createPaneRenderer(deps: PaneRendererDeps) {
     /** The agent sessions of this pane's project, running or not. */
     const projectSessions = () =>
       wb()
-        .panes.filter((pane) => pane.workspaceId === current().workspaceId && !isPanelPane(pane) && (pane.agent ?? pane.model))
+        .panes.filter(
+          (pane) => pane.workspaceId === current().workspaceId && !isPanelPane(pane) && (pane.agent ?? pane.model),
+        )
         .map((pane) => ({ id: pane.id, title: pane.title, running: deps.isRunning(pane.id) }))
 
     const filePane = () => (
@@ -173,13 +175,9 @@ export function createPaneRenderer(deps: PaneRendererDeps) {
         loading={bufferLoading()[current().id]}
         focused={isFocused()}
         onFocus={focus}
-        onChange={(draft) =>
-          buffers.update(current().id, (buffer) => (buffer ? editBuffer(buffer, draft) : buffer))
-        }
+        onChange={(draft) => buffers.update(current().id, (buffer) => (buffer ? editBuffer(buffer, draft) : buffer))}
         onSave={() => deps.saveFile(current().id)}
-        onRevert={() =>
-          buffers.update(current().id, (buffer) => (buffer ? revertBuffer(buffer) : buffer))
-        }
+        onRevert={() => buffers.update(current().id, (buffer) => (buffer ? revertBuffer(buffer) : buffer))}
         onClose={() => deps.close(current().id)}
         onExpand={expand}
       />
@@ -392,11 +390,7 @@ export function createPaneRenderer(deps: PaneRendererDeps) {
             session.write(`${text} `)
             return
           }
-          deps.appendLine(
-            current().id,
-            t("pane.notDelivered", text),
-            "note",
-          )
+          deps.appendLine(current().id, t("pane.notDelivered", text), "note")
         }}
         onResize={(cols, rows) => deps.sessionFor(current().id)?.resize(cols, rows)}
         onSubmit={
@@ -474,37 +468,55 @@ export function createPaneRenderer(deps: PaneRendererDeps) {
     )
 
     return (
-      <Show when={current().plugin} fallback={
-        <Show when={current().filePath} fallback={
-          <Show when={current().browserUrl} fallback={
-            /*
-             * Tested on the mode, not on the path: a video pane opens empty
-             * and `videoPath` is "" until a file is chosen, so asking for the
-             * path drew a terminal in a pane with no session behind it and no
-             * way to get one.
-             */
-            <Show when={current().mode === "video"} fallback={
-              <Show when={current().mode === "model"} fallback={
-                <Show when={current().mode === "app"} fallback={
-                  <Show when={current().mode === "decisions"} fallback={sessionPane()}>
-                    {decisionsPane()}
+      <Show
+        when={current().plugin}
+        fallback={
+          <Show
+            when={current().filePath}
+            fallback={
+              <Show
+                when={current().browserUrl}
+                fallback={
+                  /*
+                   * Tested on the mode, not on the path: a video pane opens empty
+                   * and `videoPath` is "" until a file is chosen, so asking for the
+                   * path drew a terminal in a pane with no session behind it and no
+                   * way to get one.
+                   */
+                  <Show
+                    when={current().mode === "video"}
+                    fallback={
+                      <Show
+                        when={current().mode === "model"}
+                        fallback={
+                          <Show
+                            when={current().mode === "app"}
+                            fallback={
+                              <Show when={current().mode === "decisions"} fallback={sessionPane()}>
+                                {decisionsPane()}
+                              </Show>
+                            }
+                          >
+                            {simulatorPane()}
+                          </Show>
+                        }
+                      >
+                        {modelPane()}
+                      </Show>
+                    }
+                  >
+                    {videoPane()}
                   </Show>
-                }>
-                  {simulatorPane()}
-                </Show>
-              }>
-                {modelPane()}
+                }
+              >
+                {browserPane()}
               </Show>
-            }>
-              {videoPane()}
-            </Show>
-          }>
-            {browserPane()}
+            }
+          >
+            {filePane()}
           </Show>
-        }>
-          {filePane()}
-        </Show>
-      }>
+        }
+      >
         {pluginPane()}
       </Show>
     )

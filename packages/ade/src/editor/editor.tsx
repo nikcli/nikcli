@@ -68,9 +68,7 @@ export function Editor(props: EditorProps) {
         {(buf) => (
           <>
             <Show when={buf().truncated}>
-              <div data-slot="banner">
-                {t("editor.truncatedBanner")}
-              </div>
+              <div data-slot="banner">{t("editor.truncatedBanner")}</div>
             </Show>
 
             <div data-slot="header">
@@ -78,10 +76,7 @@ export function Editor(props: EditorProps) {
                 <span data-slot="file-path" title={buf().path}>
                   {buf().path}
                 </span>
-                <span
-                  data-slot="dirty-badge"
-                  data-dirty={buf().dirty ? "true" : "false"}
-                >
+                <span data-slot="dirty-badge" data-dirty={buf().dirty ? "true" : "false"}>
                   {buf().dirty ? t("editor.modified") : t("editor.saved")}
                 </span>
               </div>
@@ -114,9 +109,7 @@ export function Editor(props: EditorProps) {
 
             <div data-slot="body">
               <div data-slot="gutter" ref={gutterRef} aria-hidden="true">
-                <For each={lineNumbers()}>
-                  {(num) => <span data-slot="gutter-line">{num}</span>}
-                </For>
+                <For each={lineNumbers()}>{(num) => <span data-slot="gutter-line">{num}</span>}</For>
               </div>
 
               <div data-slot="textarea-wrap">
@@ -149,14 +142,10 @@ export function Editor(props: EditorProps) {
 
               <div data-slot="status-section">
                 <span data-slot="status-item">
-                  <span data-slot="status-mono">
-                    {t("editor.cursor", cursor().line, cursor().column)}
-                  </span>
+                  <span data-slot="status-mono">{t("editor.cursor", cursor().line, cursor().column)}</span>
                 </span>
                 <span data-slot="status-item">
-                  <span data-slot="status-mono">
-                    {t("editor.lines", lineNumbers().length)}
-                  </span>
+                  <span data-slot="status-mono">{t("editor.lines", lineNumbers().length)}</span>
                 </span>
               </div>
             </div>

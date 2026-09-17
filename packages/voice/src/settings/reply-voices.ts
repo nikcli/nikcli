@@ -15,15 +15,35 @@ export const REPLY_VOICE_CHOICES: readonly {
 }[] = [
   {
     value: "ugo",
-    get title() { return t("vui.reply.male") },
-    get desc() { return t("vui.reply.ugo") },
-    get licence() { return t("vui.reply.ugo.licence") },
+    get title() {
+      return t("vui.reply.male")
+    },
+    get desc() {
+      return t("vui.reply.ugo")
+    },
+    get licence() {
+      return t("vui.reply.ugo.licence")
+    },
   },
   {
     value: "paola",
-    get title() { return t("vui.reply.female") },
-    get desc() { return t("vui.reply.paola") },
-    get licence() { return t("vui.reply.paola.licence") },
+    get title() {
+      return t("vui.reply.female")
+    },
+    get desc() {
+      return t("vui.reply.paola")
+    },
+    get licence() {
+      return t("vui.reply.paola.licence")
+    },
   },
-  { value: "system", get title() { return t("vui.reply.system") }, get desc() { return t("vui.reply.system.desc") } },
+  {
+    value: "system",
+    get title() {
+      return t("vui.reply.system")
+    },
+    get desc() {
+      return t("vui.reply.system.desc")
+    },
+  },
 ]

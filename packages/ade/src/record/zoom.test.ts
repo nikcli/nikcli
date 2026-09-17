@@ -54,9 +54,7 @@ describe("record/zoom shots", () => {
 
   test("a click moves in before it happens, holds, and comes back out", () => {
     const shots = planShots([click(2000, 300, 400)], identity, 10_000)
-    expect(shots).toEqual([
-      { start: 2000 - ZOOM_EASE_MS, end: 2000 + ZOOM_HOLD_MS + ZOOM_EASE_MS, x: 300, y: 400 },
-    ])
+    expect(shots).toEqual([{ start: 2000 - ZOOM_EASE_MS, end: 2000 + ZOOM_HOLD_MS + ZOOM_EASE_MS, x: 300, y: 400 }])
     expect(cameraAt(shots, 0, 1000, 1000).scale).toBe(1)
     expect(cameraAt(shots, 2000, 1000, 1000).scale).toBeCloseTo(ZOOM_SCALE)
     expect(cameraAt(shots, 2000 + ZOOM_HOLD_MS + ZOOM_EASE_MS + 1, 1000, 1000).scale).toBe(1)

@@ -66,7 +66,8 @@ const isProse = (text: string) => isText(text.trim()) && /\p{L}{2,}\s+\p{L}/u.te
 /** The fixed words in a literal or template, or undefined when it is not one. */
 function literalText(node: ts.Node): string | undefined {
   if (ts.isStringLiteral(node) || ts.isNoSubstitutionTemplateLiteral(node)) return node.text
-  if (ts.isTemplateExpression(node)) return [node.head.text, ...node.templateSpans.map((span) => span.literal.text)].join(" ")
+  if (ts.isTemplateExpression(node))
+    return [node.head.text, ...node.templateSpans.map((span) => span.literal.text)].join(" ")
   return undefined
 }
 

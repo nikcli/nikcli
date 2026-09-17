@@ -51,7 +51,8 @@ export function turnsRunning(runnerId: string): number {
   return running.get(runnerId) ?? 0
 }
 
-const LIMIT = /usage limit|rate limit|limit reached|hit your limit|limit will reset|quota exceeded|out of (?:extra )?usage|too many requests|\b429\b/i
+const LIMIT =
+  /usage limit|rate limit|limit reached|hit your limit|limit will reset|quota exceeded|out of (?:extra )?usage|too many requests|\b429\b/i
 
 /** Whether a CLI's error says the plan's limit was reached. */
 export function limitReached(text: string): boolean {

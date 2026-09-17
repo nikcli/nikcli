@@ -62,9 +62,7 @@ export function Overlay(
 }
 
 /** The raised panel a dialog is drawn on. */
-export function Surface(
-  props: ParentProps<JSX.HTMLAttributes<HTMLDivElement> & { size?: "sm" | "md" | "lg" | "xl" }>,
-) {
+export function Surface(props: ParentProps<JSX.HTMLAttributes<HTMLDivElement> & { size?: "sm" | "md" | "lg" | "xl" }>) {
   const [own, rest] = splitProps(props, ["size", "children"])
   return (
     <div data-layout="surface" data-size={own.size ?? "md"} {...rest}>

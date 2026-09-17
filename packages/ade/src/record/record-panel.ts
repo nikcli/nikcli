@@ -62,7 +62,9 @@ export async function runRecordRequest(request: PanelRequest, deps: RecordPanelD
       const before = deps.state()
       if (!before.recording) return { ok: false, reason: "non si sta registrando" }
       const problem = await deps.stop("it")
-      return problem ? { ok: false, reason: problem } : { ok: true, detail: before.path ? `salvato in ${before.path}` : "registrazione chiusa" }
+      return problem
+        ? { ok: false, reason: problem }
+        : { ok: true, detail: before.path ? `salvato in ${before.path}` : "registrazione chiusa" }
     }
     case "state": {
       const now = deps.state()

@@ -69,7 +69,7 @@ describe("surface state", () => {
       mockPane,
       { ...mockPane, id: "p2", workspaceId: "ws1" },
       { ...mockPane, id: "p3", workspaceId: "ws2" },
-      { ...mockPane, id: "b1", browserUrl: "http://url", workspaceId: "ws3" }
+      { ...mockPane, id: "b1", browserUrl: "http://url", workspaceId: "ws3" },
     ]
     const ws = deriveWorkspaces(panes)
     expect(ws).toHaveLength(2) // browser is ignored
@@ -83,7 +83,7 @@ describe("surface state", () => {
     const state = toWorkspaceState(wb)
     expect(state.panes).toHaveLength(1)
     expect(state.panes[0].id).toBe("p1")
-    
+
     const restored = fromWorkspaceState(state)
     expect(restored.panes).toHaveLength(1)
     expect(restored.panes[0].id).toBe("p1")
@@ -103,7 +103,17 @@ describe("panes of several projects, and spawned worktrees, survive a restart", 
   test("each pane keeps its project, worktree and spawn arguments", () => {
     let wb = createWorkbench()
     wb = { ...wb, projectPath: "C:/p/web" }
-    wb = addPane(wb, { id: "a", title: "A", status: "idle", mode: "auto", lines: [], model: "codex", agent: "codex", workspaceId: "web", cwd: "C:/p/web" })
+    wb = addPane(wb, {
+      id: "a",
+      title: "A",
+      status: "idle",
+      mode: "auto",
+      lines: [],
+      model: "codex",
+      agent: "codex",
+      workspaceId: "web",
+      cwd: "C:/p/web",
+    })
     wb = addPane(wb, {
       id: "b",
       title: "revisore",

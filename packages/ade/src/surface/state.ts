@@ -204,10 +204,20 @@ export interface Pane {
  * with an empty path, and `!pane.videoPath` read "" as "no video here", so an
  * empty player was listed as a session and offered to be restarted as one.
  */
-export function isPanelPane(pane: Pick<Pane, "mode" | "browserUrl" | "filePath" | "videoPath" | "modelPath" | "appUrl" | "plugin">): boolean {
+export function isPanelPane(
+  pane: Pick<Pane, "mode" | "browserUrl" | "filePath" | "videoPath" | "modelPath" | "appUrl" | "plugin">,
+): boolean {
   return Boolean(
-    pane.browserUrl || pane.filePath || pane.videoPath || pane.modelPath || pane.appUrl || pane.plugin ||
-      pane.mode === "video" || pane.mode === "model" || pane.mode === "app" || pane.mode === "decisions",
+    pane.browserUrl ||
+    pane.filePath ||
+    pane.videoPath ||
+    pane.modelPath ||
+    pane.appUrl ||
+    pane.plugin ||
+    pane.mode === "video" ||
+    pane.mode === "model" ||
+    pane.mode === "app" ||
+    pane.mode === "decisions",
   )
 }
 
@@ -227,7 +237,7 @@ export function createWorkbench(): Workbench {
     // The terminals, because that is what ADE is for. `agent` and `chat` are
     // where you go on purpose; `code` is where you already were.
     view: "code",
-    sidebarWidth: 260
+    sidebarWidth: 260,
   }
 }
 
@@ -235,7 +245,7 @@ export function addPane(workbench: Workbench, pane: Pane): Workbench {
   return {
     ...workbench,
     panes: [...workbench.panes, pane],
-    focusedId: pane.id
+    focusedId: pane.id,
   }
 }
 
@@ -245,19 +255,19 @@ export function closePane(workbench: Workbench, paneId: string): Workbench {
     focused: workbench.focusedId,
     closing: paneId,
   })
-  
+
   return {
     ...workbench,
     panes: workbench.panes.filter((p) => p.id !== paneId),
     focusedId: nextFocused,
-    expandedId: workbench.expandedId === paneId ? undefined : workbench.expandedId
+    expandedId: workbench.expandedId === paneId ? undefined : workbench.expandedId,
   }
 }
 
 export function updatePane(workbench: Workbench, paneId: string, updates: Partial<Pane>): Workbench {
   return {
     ...workbench,
-    panes: workbench.panes.map((p) => (p.id === paneId ? { ...p, ...updates } : p))
+    panes: workbench.panes.map((p) => (p.id === paneId ? { ...p, ...updates } : p)),
   }
 }
 
@@ -265,7 +275,7 @@ export function expandPane(workbench: Workbench, paneId: string): Workbench {
   return {
     ...workbench,
     focusedId: paneId,
-    expandedId: workbench.expandedId === paneId ? undefined : paneId
+    expandedId: workbench.expandedId === paneId ? undefined : paneId,
   }
 }
 
@@ -273,7 +283,7 @@ export function setColumns(workbench: Workbench, columns?: number): Workbench {
   return {
     ...workbench,
     pinnedColumns: columns,
-    expandedId: undefined
+    expandedId: undefined,
   }
 }
 
@@ -323,7 +333,8 @@ function inferAgent(model: string, title: string): string {
   if (t.includes("prime")) return "prime"
   if (t.includes("ohmypi")) return "ohmypi"
   if (t.includes("pi")) return "pi"
-  if (t.includes("shell") || t.includes("term") || t.includes("bash") || t.includes("zsh") || t.includes("powershell")) return "terminal"
+  if (t.includes("shell") || t.includes("term") || t.includes("bash") || t.includes("zsh") || t.includes("powershell"))
+    return "terminal"
   return "nikcli"
 }
 
@@ -371,7 +382,7 @@ export function deriveWorkspaces(
       cwd: pane.cwd || ws?.path,
     })
   }
-  
+
   return Object.values(workspaces)
 }
 
@@ -397,7 +408,19 @@ function lastSegment(path: string | undefined): string | undefined {
  * resuming a session, it is opening a new one that happens to share a name.
  */
 export function isResumable(
-  pane: Pick<Pane, "status" | "task" | "resumeId" | "mode" | "browserUrl" | "filePath" | "videoPath" | "modelPath" | "appUrl" | "plugin">,
+  pane: Pick<
+    Pane,
+    | "status"
+    | "task"
+    | "resumeId"
+    | "mode"
+    | "browserUrl"
+    | "filePath"
+    | "videoPath"
+    | "modelPath"
+    | "appUrl"
+    | "plugin"
+  >,
 ): boolean {
   if (isPanelPane(pane)) return false
   const hasTask = (pane.task ?? "").trim().length > 0
@@ -469,7 +492,7 @@ export function toWorkspaceState(workbench: Workbench): WorkspaceState {
     pinnedColumns: workbench.pinnedColumns,
     currentView: workbench.view,
     sidebarWidth: workbench.sidebarWidth,
-    projectPath: workbench.projectPath
+    projectPath: workbench.projectPath,
   }
 }
 
@@ -518,110 +541,116 @@ function samePath(a: string, b: string): boolean {
 export function fromWorkspaceState(state: WorkspaceState, projectName?: string): Workbench {
   const owner = projectName ?? lastSegment(state.projectPath) ?? "ws-restored"
   return {
-    panes: state.panes.map((p): Pane => {
-      /*
-       * The transcript comes back with the process's death appended, rather
-       * than replacing it. Before, every restored pane held exactly one line
-       * saying the process was gone — which is true, and is also the only
-       * thing a user could no longer check, because the output that would
-       * have told them what the agent had done was discarded with it.
-       */
-      /*
-       * Cleaned on the way back in, not only on the way out.
-       *
-       * The transcripts already on disk were captured before anything
-       * filtered them, and they are the ones being looked at right now: a
-       * restored nikcli session opened on a thousand braille spinner frames,
-       * a flattened banner and a stray `+q4d73Gi=…` from a DCS reply. Doing
-       * it here means they read correctly on the next launch rather than on
-       * the next session.
-       */
-      const history = cleanTranscript(
-        (p.lines ?? [])
-          // The note below is appended on every launch; the previous launches'
-          // copies say nothing the new one does not.
-          .filter((line) => !(line.kind === "note" && isRestoreNote(line.text)))
-          .map((line): TranscriptLine => ({
-          // Narrowed here as well as in the store's sanitiser: the kind reaches
-          // the DOM as a class name, and the type that says so should not rest
-          // on an assertion about what some other module promised to check.
-          kind: toLineKind(line.kind),
-          text: line.text,
-          ...(line.repeat !== undefined ? { repeat: line.repeat } : {}),
-        })),
-      )
-
-      return {
-        id: p.id,
-        title: p.title,
-        status: restoredStatus(p.status),
-        activity: p.wasRunning ? "toResume" : "restored",
-        model: p.model ?? p.agent,
-        mode: "auto",
-        agent: p.agent,
-        cwd: p.cwd,
-        task: p.task,
-        lines: [
-          ...history,
-          {
-            kind: "note",
-            /*
-             * Three sentences, because three things can have happened and
-             * telling them apart is the whole point. Reopening the agent's
-             * own conversation is not the same as running the task again,
-             * and a line that said "riprendo il compito" for both left the
-             * user unable to tell which one they got.
-             */
-            text: !p.agent
-              ? `${t("restore.note")} ${t("restore.note.gone")}`
-              : p.resumeId
-                ? `${t("restore.note")} ${t("restore.note.reopen")}`
-                : `${t("restore.note")} ${t("restore.note.rerun")}`,
-          },
-        ],
-        workspaceId: p.project || owner,
-        ...(p.worktree ? { worktree: p.worktree } : {}),
-        ...(p.spawnArgs?.length ? { spawnArgs: [...p.spawnArgs] } : {}),
-        ...(p.span ? { span: { columns: p.span.columns, rows: p.span.rows } } : {}),
+    panes: state.panes
+      .map((p): Pane => {
         /*
-         * Sessions run in the project itself, or in the worktree `spawn
-         * --worktree` made for them; only a pane saved from one of the old
-         * per-session worktrees is a tree that may be behind.
+         * The transcript comes back with the process's death appended, rather
+         * than replacing it. Before, every restored pane held exactly one line
+         * saying the process was gone — which is true, and is also the only
+         * thing a user could no longer check, because the output that would
+         * have told them what the agent had done was discarded with it.
          */
-        tree: p.branch
-          ? {
-              branch: p.branch,
-              fidelity: p.worktree
-                ? "full"
-                : p.cwd && state.projectPath && !p.project && samePath(p.cwd, state.projectPath) === false
-                  ? "stale"
-                  : "project",
-              note: t("activity.restored"),
-            }
-          : undefined
-      }
-    }).concat(
-      (state.browsers ?? []).map((b): Pane => ({
-        id: b.id,
-        title: b.title,
-        // As `browser.new` creates it: a page is never a finished session.
-        status: "working",
-        model: "—",
-        mode: "browser",
-        browserUrl: b.url,
-        ...(b.history ? { browserHistory: { entries: [...b.history.entries], index: b.history.index } } : {}),
-        ...(b.owner ? { browserOwner: { id: b.owner.id, title: b.owner.title } } : {}),
-        workspaceId: b.project || owner,
-        ...(b.span ? { span: { columns: b.span.columns, rows: b.span.rows } } : {}),
-        lines: [],
-      })),
-    ),
+        /*
+         * Cleaned on the way back in, not only on the way out.
+         *
+         * The transcripts already on disk were captured before anything
+         * filtered them, and they are the ones being looked at right now: a
+         * restored nikcli session opened on a thousand braille spinner frames,
+         * a flattened banner and a stray `+q4d73Gi=…` from a DCS reply. Doing
+         * it here means they read correctly on the next launch rather than on
+         * the next session.
+         */
+        const history = cleanTranscript(
+          (p.lines ?? [])
+            // The note below is appended on every launch; the previous launches'
+            // copies say nothing the new one does not.
+            .filter((line) => !(line.kind === "note" && isRestoreNote(line.text)))
+            .map(
+              (line): TranscriptLine => ({
+                // Narrowed here as well as in the store's sanitiser: the kind reaches
+                // the DOM as a class name, and the type that says so should not rest
+                // on an assertion about what some other module promised to check.
+                kind: toLineKind(line.kind),
+                text: line.text,
+                ...(line.repeat !== undefined ? { repeat: line.repeat } : {}),
+              }),
+            ),
+        )
+
+        return {
+          id: p.id,
+          title: p.title,
+          status: restoredStatus(p.status),
+          activity: p.wasRunning ? "toResume" : "restored",
+          model: p.model ?? p.agent,
+          mode: "auto",
+          agent: p.agent,
+          cwd: p.cwd,
+          task: p.task,
+          lines: [
+            ...history,
+            {
+              kind: "note",
+              /*
+               * Three sentences, because three things can have happened and
+               * telling them apart is the whole point. Reopening the agent's
+               * own conversation is not the same as running the task again,
+               * and a line that said "riprendo il compito" for both left the
+               * user unable to tell which one they got.
+               */
+              text: !p.agent
+                ? `${t("restore.note")} ${t("restore.note.gone")}`
+                : p.resumeId
+                  ? `${t("restore.note")} ${t("restore.note.reopen")}`
+                  : `${t("restore.note")} ${t("restore.note.rerun")}`,
+            },
+          ],
+          workspaceId: p.project || owner,
+          ...(p.worktree ? { worktree: p.worktree } : {}),
+          ...(p.spawnArgs?.length ? { spawnArgs: [...p.spawnArgs] } : {}),
+          ...(p.span ? { span: { columns: p.span.columns, rows: p.span.rows } } : {}),
+          /*
+           * Sessions run in the project itself, or in the worktree `spawn
+           * --worktree` made for them; only a pane saved from one of the old
+           * per-session worktrees is a tree that may be behind.
+           */
+          tree: p.branch
+            ? {
+                branch: p.branch,
+                fidelity: p.worktree
+                  ? "full"
+                  : p.cwd && state.projectPath && !p.project && samePath(p.cwd, state.projectPath) === false
+                    ? "stale"
+                    : "project",
+                note: t("activity.restored"),
+              }
+            : undefined,
+        }
+      })
+      .concat(
+        (state.browsers ?? []).map(
+          (b): Pane => ({
+            id: b.id,
+            title: b.title,
+            // As `browser.new` creates it: a page is never a finished session.
+            status: "working",
+            model: "—",
+            mode: "browser",
+            browserUrl: b.url,
+            ...(b.history ? { browserHistory: { entries: [...b.history.entries], index: b.history.index } } : {}),
+            ...(b.owner ? { browserOwner: { id: b.owner.id, title: b.owner.title } } : {}),
+            workspaceId: b.project || owner,
+            ...(b.span ? { span: { columns: b.span.columns, rows: b.span.rows } } : {}),
+            lines: [],
+          }),
+        ),
+      ),
     focusedId: state.focusedPaneId,
     pinnedColumns: state.pinnedColumns,
     expandedId: undefined,
     view: restoreView(state.currentView),
     sidebarWidth: state.sidebarWidth,
-    projectPath: state.projectPath
+    projectPath: state.projectPath,
   }
 }
 

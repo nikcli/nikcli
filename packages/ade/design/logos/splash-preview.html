@@ -1,469 +1,575 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="it">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>ADE &bull; Fullscreen 3D ASCII Synaptic Swarm &amp; Physics Mercury Logo</title>
-  <style>
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      user-select: none;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>ADE &bull; Fullscreen 3D ASCII Synaptic Swarm &amp; Physics Mercury Logo</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        user-select: none;
+      }
 
-    body, html {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background-color: #07090e;
-      color: #e6edf3;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-    }
+      body,
+      html {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: #07090e;
+        color: #e6edf3;
+        font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+      }
 
-    #canvas-container {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 1;
-      opacity: 0;
-      pointer-events: none;
-    }
+      #canvas-container {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+        opacity: 0;
+        pointer-events: none;
+      }
 
-    #ascii-layer {
-      position: absolute;
-      top: 50%;
-      left: 50%;
-      transform: translate(-50%, -50%);
-      margin: 0;
-      padding: 0;
-      z-index: 2;
-      pointer-events: none;
-      font-family: "Fira Code", "JetBrains Mono", Consolas, monospace;
-      font-size: 10px;
-      line-height: 10px;
-      letter-spacing: 1px;
-      white-space: pre;
-      overflow: hidden;
-      color: #58a6ff;
-      text-shadow: 0 0 5px rgba(88, 166, 255, 0.9);
-      background: #07090e;
-      text-align: center;
-    }
+      #ascii-layer {
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        margin: 0;
+        padding: 0;
+        z-index: 2;
+        pointer-events: none;
+        font-family: "Fira Code", "JetBrains Mono", Consolas, monospace;
+        font-size: 10px;
+        line-height: 10px;
+        letter-spacing: 1px;
+        white-space: pre;
+        overflow: hidden;
+        color: #58a6ff;
+        text-shadow: 0 0 5px rgba(88, 166, 255, 0.9);
+        background: #07090e;
+        text-align: center;
+      }
 
-    .crt-overlay {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 3;
-      pointer-events: none;
-      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.22) 50%),
-                  radial-gradient(circle at center, transparent 65%, rgba(0, 0, 0, 0.7) 100%);
-      background-size: 100% 4px, 100% 100%;
-      opacity: 0.5;
-    }
+      .crt-overlay {
+        position: absolute;
+        inset: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 3;
+        pointer-events: none;
+        background:
+          linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.22) 50%),
+          radial-gradient(circle at center, transparent 65%, rgba(0, 0, 0, 0.7) 100%);
+        background-size:
+          100% 4px,
+          100% 100%;
+        opacity: 0.5;
+      }
 
-    /* Top Bar Header with Concept 3 Physics Logo */
-    header {
-      position: absolute;
-      top: 20px;
-      left: 24px;
-      z-index: 10;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
+      /* Top Bar Header with Concept 3 Physics Logo */
+      header {
+        position: absolute;
+        top: 20px;
+        left: 24px;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+      }
 
-    .logo-card {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: rgba(13, 17, 23, 0.85);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(88, 166, 255, 0.25);
-      padding: 8px 16px;
-      border-radius: 12px;
-      box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
-    }
+      .logo-card {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: rgba(13, 17, 23, 0.85);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        border: 1px solid rgba(88, 166, 255, 0.25);
+        padding: 8px 16px;
+        border-radius: 12px;
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+      }
 
-    .logo-container {
-      width: 36px;
-      height: 36px;
-      position: relative;
-      perspective: 500px;
-      cursor: pointer;
-    }
+      .logo-container {
+        width: 36px;
+        height: 36px;
+        position: relative;
+        perspective: 500px;
+        cursor: pointer;
+      }
 
-    .physics-turntable {
-      width: 100%;
-      height: 100%;
-      position: absolute;
-      transform-style: preserve-3d;
-      will-change: transform;
-    }
+      .physics-turntable {
+        width: 100%;
+        height: 100%;
+        position: absolute;
+        transform-style: preserve-3d;
+        will-change: transform;
+      }
 
-    .sheen-sweep {
-      stroke-dasharray: 45 110;
-      animation: sheenFlow 2.8s linear infinite;
-    }
+      .sheen-sweep {
+        stroke-dasharray: 45 110;
+        animation: sheenFlow 2.8s linear infinite;
+      }
 
-    @keyframes sheenFlow {
-      0% { stroke-dashoffset: 160; opacity: 0.25; }
-      50% { opacity: 0.95; }
-      100% { stroke-dashoffset: -160; opacity: 0.25; }
-    }
+      @keyframes sheenFlow {
+        0% {
+          stroke-dashoffset: 160;
+          opacity: 0.25;
+        }
+        50% {
+          opacity: 0.95;
+        }
+        100% {
+          stroke-dashoffset: -160;
+          opacity: 0.25;
+        }
+      }
 
-    .droplet {
-      position: absolute;
-      border-radius: 50%;
-      transform-style: preserve-3d;
-      pointer-events: none;
-      will-change: transform, opacity;
-    }
+      .droplet {
+        position: absolute;
+        border-radius: 50%;
+        transform-style: preserve-3d;
+        pointer-events: none;
+        will-change: transform, opacity;
+      }
 
-    .badge-meta {
-      display: flex;
-      flex-direction: column;
-    }
+      .badge-meta {
+        display: flex;
+        flex-direction: column;
+      }
 
-    .badge-title {
-      font-size: 12px;
-      font-weight: 700;
-      color: #e6edf3;
-      letter-spacing: 0.05em;
-    }
+      .badge-title {
+        font-size: 12px;
+        font-weight: 700;
+        color: #e6edf3;
+        letter-spacing: 0.05em;
+      }
 
-    .badge-sub {
-      font-size: 10px;
-      color: #8b949e;
-      font-family: monospace;
-    }
-
-  </style>
-  <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
-</head>
-<body>
-  <!-- Header with Interactive Physics Molten Chrome Logo -->
-  <header>
-    <div class="logo-card">
-      <div id="physics-logo" class="logo-container" title="Click or hover for liquid mercury physics">
-        <div id="logo-turntable" class="physics-turntable">
-          <!-- Layer -3: Dark Shadow Extrusion -->
-          <svg viewBox="0 0 44 44" width="100%" height="100%" style="position: absolute; inset: 0; transform: translateZ(-4.5px); filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.9));">
-            <path d="M 11 34 C 10 24, 11 13, 12 8 C 13 4, 16.5 4, 18.5 8.5 L 26.5 27 C 28.5 31, 31.5 31, 32.5 27 C 33.5 21, 34 13.5, 34.5 8" fill="none" stroke="#0a101d" stroke-width="5" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-          <!-- Layer -2: Deep Cobalt Base -->
-          <svg viewBox="0 0 44 44" width="100%" height="100%" style="position: absolute; inset: 0; transform: translateZ(-3px);">
-            <path d="M 11 34 C 10 24, 11 13, 12 8 C 13 4, 16.5 4, 18.5 8.5 L 26.5 27 C 28.5 31, 31.5 31, 32.5 27 C 33.5 21, 34 13.5, 34.5 8" fill="none" stroke="#1b2c4e" stroke-width="4.6" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-          <!-- Layer -1: Mid Body -->
-          <svg viewBox="0 0 44 44" width="100%" height="100%" style="position: absolute; inset: 0; transform: translateZ(-1.5px);">
-            <path d="M 11 34 C 10 24, 11 13, 12 8 C 13 4, 16.5 4, 18.5 8.5 L 26.5 27 C 28.5 31, 31.5 31, 32.5 27 C 33.5 21, 34 13.5, 34.5 8" fill="none" stroke="#3a5a8c" stroke-width="4.2" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-          <!-- Layer 0: Front Liquid Chrome -->
-          <svg viewBox="0 0 44 44" width="100%" height="100%" style="position: absolute; inset: 0; transform: translateZ(0px);">
-            <defs>
-              <linearGradient id="chromeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                <stop offset="0%" stop-color="#ffffff" />
-                <stop offset="22%" stop-color="#d6e8ff" />
-                <stop offset="42%" stop-color="#58a6ff" />
-                <stop offset="55%" stop-color="#0e1726" />
-                <stop offset="72%" stop-color="#79c0ff" />
-                <stop offset="90%" stop-color="#e6edf3" />
-                <stop offset="100%" stop-color="#ffffff" />
-              </linearGradient>
-              <linearGradient id="sheenGrad" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%" stop-color="#ffffff" stop-opacity="0" />
-                <stop offset="45%" stop-color="#ffffff" stop-opacity="0.95" />
-                <stop offset="55%" stop-color="#79c0ff" stop-opacity="1" />
-                <stop offset="100%" stop-color="#58a6ff" stop-opacity="0" />
-              </linearGradient>
-              <radialGradient id="dropGrad" cx="35%" cy="35%" r="65%">
-                <stop offset="0%" stop-color="#ffffff" />
-                <stop offset="40%" stop-color="#79c0ff" />
-                <stop offset="85%" stop-color="#1b2c4e" />
-                <stop offset="100%" stop-color="#0a101d" />
-              </radialGradient>
-            </defs>
-            <path d="M 11 34 C 10 24, 11 13, 12 8 C 13 4, 16.5 4, 18.5 8.5 L 26.5 27 C 28.5 31, 31.5 31, 32.5 27 C 33.5 21, 34 13.5, 34.5 8" fill="none" stroke="url(#chromeGrad)" stroke-width="3.8" stroke-linecap="round" stroke-linejoin="round" />
-            <path d="M 11 34 C 10 24, 11 13, 12 8 C 13 4, 16.5 4, 18.5 8.5 L 26.5 27 C 28.5 31, 31.5 31, 32.5 27 C 33.5 21, 34 13.5, 34.5 8" class="sheen-sweep" fill="none" stroke="url(#sheenGrad)" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" />
-          </svg>
-          <!-- Droplets with physics -->
-          <div id="droplet-a" class="droplet" style="width: 5px; height: 5px; top: 16px; left: 16px;">
-            <svg viewBox="0 0 8 8" width="8" height="8"><circle cx="4" cy="4" r="3.2" fill="url(#dropGrad)" /><circle cx="2.8" cy="2.8" r="1.1" fill="#ffffff" opacity="0.9" /></svg>
-          </div>
-          <div id="droplet-b" class="droplet" style="width: 4px; height: 4px; top: 22px; left: 20px;">
-            <svg viewBox="0 0 8 8" width="8" height="8"><circle cx="4" cy="4" r="2.8" fill="url(#dropGrad)" /><circle cx="2.8" cy="2.8" r="0.9" fill="#ffffff" opacity="0.9" /></svg>
+      .badge-sub {
+        font-size: 10px;
+        color: #8b949e;
+        font-family: monospace;
+      }
+    </style>
+    <script src="https://unpkg.com/three@0.160.0/build/three.min.js"></script>
+  </head>
+  <body>
+    <!-- Header with Interactive Physics Molten Chrome Logo -->
+    <header>
+      <div class="logo-card">
+        <div id="physics-logo" class="logo-container" title="Click or hover for liquid mercury physics">
+          <div id="logo-turntable" class="physics-turntable">
+            <!-- Layer -3: Dark Shadow Extrusion -->
+            <svg
+              viewBox="0 0 44 44"
+              width="100%"
+              height="100%"
+              style="
+                position: absolute;
+                inset: 0;
+                transform: translateZ(-4.5px);
+                filter: drop-shadow(0 4px 6px rgba(0, 0, 0, 0.9));
+              "
+            >
+              <path
+                d="M 11 34 C 10 24, 11 13, 12 8 C 13 4, 16.5 4, 18.5 8.5 L 26.5 27 C 28.5 31, 31.5 31, 32.5 27 C 33.5 21, 34 13.5, 34.5 8"
+                fill="none"
+                stroke="#0a101d"
+                stroke-width="5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <!-- Layer -2: Deep Cobalt Base -->
+            <svg
+              viewBox="0 0 44 44"
+              width="100%"
+              height="100%"
+              style="position: absolute; inset: 0; transform: translateZ(-3px)"
+            >
+              <path
+                d="M 11 34 C 10 24, 11 13, 12 8 C 13 4, 16.5 4, 18.5 8.5 L 26.5 27 C 28.5 31, 31.5 31, 32.5 27 C 33.5 21, 34 13.5, 34.5 8"
+                fill="none"
+                stroke="#1b2c4e"
+                stroke-width="4.6"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <!-- Layer -1: Mid Body -->
+            <svg
+              viewBox="0 0 44 44"
+              width="100%"
+              height="100%"
+              style="position: absolute; inset: 0; transform: translateZ(-1.5px)"
+            >
+              <path
+                d="M 11 34 C 10 24, 11 13, 12 8 C 13 4, 16.5 4, 18.5 8.5 L 26.5 27 C 28.5 31, 31.5 31, 32.5 27 C 33.5 21, 34 13.5, 34.5 8"
+                fill="none"
+                stroke="#3a5a8c"
+                stroke-width="4.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <!-- Layer 0: Front Liquid Chrome -->
+            <svg
+              viewBox="0 0 44 44"
+              width="100%"
+              height="100%"
+              style="position: absolute; inset: 0; transform: translateZ(0px)"
+            >
+              <defs>
+                <linearGradient id="chromeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#ffffff" />
+                  <stop offset="22%" stop-color="#d6e8ff" />
+                  <stop offset="42%" stop-color="#58a6ff" />
+                  <stop offset="55%" stop-color="#0e1726" />
+                  <stop offset="72%" stop-color="#79c0ff" />
+                  <stop offset="90%" stop-color="#e6edf3" />
+                  <stop offset="100%" stop-color="#ffffff" />
+                </linearGradient>
+                <linearGradient id="sheenGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stop-color="#ffffff" stop-opacity="0" />
+                  <stop offset="45%" stop-color="#ffffff" stop-opacity="0.95" />
+                  <stop offset="55%" stop-color="#79c0ff" stop-opacity="1" />
+                  <stop offset="100%" stop-color="#58a6ff" stop-opacity="0" />
+                </linearGradient>
+                <radialGradient id="dropGrad" cx="35%" cy="35%" r="65%">
+                  <stop offset="0%" stop-color="#ffffff" />
+                  <stop offset="40%" stop-color="#79c0ff" />
+                  <stop offset="85%" stop-color="#1b2c4e" />
+                  <stop offset="100%" stop-color="#0a101d" />
+                </radialGradient>
+              </defs>
+              <path
+                d="M 11 34 C 10 24, 11 13, 12 8 C 13 4, 16.5 4, 18.5 8.5 L 26.5 27 C 28.5 31, 31.5 31, 32.5 27 C 33.5 21, 34 13.5, 34.5 8"
+                fill="none"
+                stroke="url(#chromeGrad)"
+                stroke-width="3.8"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M 11 34 C 10 24, 11 13, 12 8 C 13 4, 16.5 4, 18.5 8.5 L 26.5 27 C 28.5 31, 31.5 31, 32.5 27 C 33.5 21, 34 13.5, 34.5 8"
+                class="sheen-sweep"
+                fill="none"
+                stroke="url(#sheenGrad)"
+                stroke-width="2.2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <!-- Droplets with physics -->
+            <div id="droplet-a" class="droplet" style="width: 5px; height: 5px; top: 16px; left: 16px">
+              <svg viewBox="0 0 8 8" width="8" height="8">
+                <circle cx="4" cy="4" r="3.2" fill="url(#dropGrad)" />
+                <circle cx="2.8" cy="2.8" r="1.1" fill="#ffffff" opacity="0.9" />
+              </svg>
+            </div>
+            <div id="droplet-b" class="droplet" style="width: 4px; height: 4px; top: 22px; left: 20px">
+              <svg viewBox="0 0 8 8" width="8" height="8">
+                <circle cx="4" cy="4" r="2.8" fill="url(#dropGrad)" />
+                <circle cx="2.8" cy="2.8" r="0.9" fill="#ffffff" opacity="0.9" />
+              </svg>
+            </div>
           </div>
         </div>
+        <div class="badge-meta">
+          <span class="badge-title">ADE // CHROME N</span>
+          <span class="badge-sub">Physics: Spring + Surface Tension</span>
+        </div>
       </div>
-      <div class="badge-meta">
-        <span class="badge-title">ADE // CHROME N</span>
-        <span class="badge-sub">Physics: Spring + Surface Tension</span>
-      </div>
-    </div>
-  </header>
+    </header>
 
-  <!-- Three.js Canvas Container (Volumetric Glow) -->
-  <div id="canvas-container"></div>
+    <!-- Three.js Canvas Container (Volumetric Glow) -->
+    <div id="canvas-container"></div>
 
-  <!-- Realtime Fullscreen 3D ASCII Typography Layer -->
-  <pre id="ascii-layer"></pre>
+    <!-- Realtime Fullscreen 3D ASCII Typography Layer -->
+    <pre id="ascii-layer"></pre>
 
-  <!-- CRT Vignette & Scanlines -->
-  <div class="crt-overlay"></div>
+    <!-- CRT Vignette & Scanlines -->
+    <div class="crt-overlay"></div>
 
-  <script>
-    // ═════════════════════════════════════════════════════════════════════════
-    // 1. LOGO PHYSICS (Spring-Damper + Liquid Mercury Wobble)
-    // ═════════════════════════════════════════════════════════════════════════
-    const logoEl = document.getElementById("physics-logo");
-    const turntableEl = document.getElementById("logo-turntable");
-    const dropA = document.getElementById("droplet-a");
-    const dropB = document.getElementById("droplet-b");
+    <script>
+      // ═════════════════════════════════════════════════════════════════════════
+      // 1. LOGO PHYSICS (Spring-Damper + Liquid Mercury Wobble)
+      // ═════════════════════════════════════════════════════════════════════════
+      const logoEl = document.getElementById("physics-logo")
+      const turntableEl = document.getElementById("logo-turntable")
+      const dropA = document.getElementById("droplet-a")
+      const dropB = document.getElementById("droplet-b")
 
-    const BASE_ROTY = 20;
-    const BASE_ROTX = 6;
-    let tiltX = 0, tiltY = 0;
-    let targetTiltX = 0, targetTiltY = 0;
-    let velX = 0, velY = 0;
-    let wobbleAmp = 0, wobblePhase = 0;
+      const BASE_ROTY = 20
+      const BASE_ROTX = 6
+      let tiltX = 0,
+        tiltY = 0
+      let targetTiltX = 0,
+        targetTiltY = 0
+      let velX = 0,
+        velY = 0
+      let wobbleAmp = 0,
+        wobblePhase = 0
 
-    let dropAX = 0, dropAY = 0, dropAZ = 16, dropAVelX = 0, dropAVelY = 0, dropAVelZ = 0;
-    let dropBX = 0, dropBY = 0, dropBZ = -14, dropBVelX = 0, dropBVelY = 0, dropBVelZ = 0;
-    let physTime = 0;
+      let dropAX = 0,
+        dropAY = 0,
+        dropAZ = 16,
+        dropAVelX = 0,
+        dropAVelY = 0,
+        dropAVelZ = 0
+      let dropBX = 0,
+        dropBY = 0,
+        dropBZ = -14,
+        dropBVelX = 0,
+        dropBVelY = 0,
+        dropBVelZ = 0
+      let physTime = 0
 
-    function stepLogoPhysics() {
-      physTime += 0.02;
+      function stepLogoPhysics() {
+        physTime += 0.02
 
-      // Spring-damper integration
-      const SPRING_K = 0.14;
-      const DAMPING = 0.82;
-      velX += -SPRING_K * (tiltX - targetTiltX) - (1 - DAMPING) * velX;
-      velY += -SPRING_K * (tiltY - targetTiltY) - (1 - DAMPING) * velY;
-      tiltX += velX;
-      tiltY += velY;
+        // Spring-damper integration
+        const SPRING_K = 0.14
+        const DAMPING = 0.82
+        velX += -SPRING_K * (tiltX - targetTiltX) - (1 - DAMPING) * velX
+        velY += -SPRING_K * (tiltY - targetTiltY) - (1 - DAMPING) * velY
+        tiltX += velX
+        tiltY += velY
 
-      // Liquid surface tension wobble
-      wobbleAmp *= 0.94;
-      wobblePhase += 0.4;
-      const wobble = Math.sin(wobblePhase) * wobbleAmp;
-      const scaleX = 1 + wobble * 0.015;
-      const scaleY = 1 - wobble * 0.015;
+        // Liquid surface tension wobble
+        wobbleAmp *= 0.94
+        wobblePhase += 0.4
+        const wobble = Math.sin(wobblePhase) * wobbleAmp
+        const scaleX = 1 + wobble * 0.015
+        const scaleY = 1 - wobble * 0.015
 
-      turntableEl.style.transform = `rotateY(${BASE_ROTY + tiltY}deg) rotateX(${BASE_ROTX + tiltX}deg) scale3d(${scaleX}, ${scaleY}, 1)`;
+        turntableEl.style.transform = `rotateY(${BASE_ROTY + tiltY}deg) rotateX(${BASE_ROTX + tiltX}deg) scale3d(${scaleX}, ${scaleY}, 1)`
 
-      // Droplet A
-      const targetDropAX = Math.cos(physTime * 1.5) * 16 + tiltY * 0.3;
-      const targetDropAY = Math.sin(physTime * 1.2) * 5 + tiltX * 0.3;
-      const targetDropAZ = Math.sin(physTime * 1.5) * 12;
-      dropAVelX += -0.12 * (dropAX - targetDropAX) - 0.18 * dropAVelX;
-      dropAVelY += -0.12 * (dropAY - targetDropAY) - 0.18 * dropAVelY;
-      dropAVelZ += -0.12 * (dropAZ - targetDropAZ) - 0.18 * dropAVelZ;
-      dropAX += dropAVelX; dropAY += dropAVelY; dropAZ += dropAVelZ;
-      dropA.style.transform = `translate3d(${dropAX}px, ${dropAY}px, ${dropAZ}px) scale(${1 + (dropAZ / 30) * 0.35})`;
+        // Droplet A
+        const targetDropAX = Math.cos(physTime * 1.5) * 16 + tiltY * 0.3
+        const targetDropAY = Math.sin(physTime * 1.2) * 5 + tiltX * 0.3
+        const targetDropAZ = Math.sin(physTime * 1.5) * 12
+        dropAVelX += -0.12 * (dropAX - targetDropAX) - 0.18 * dropAVelX
+        dropAVelY += -0.12 * (dropAY - targetDropAY) - 0.18 * dropAVelY
+        dropAVelZ += -0.12 * (dropAZ - targetDropAZ) - 0.18 * dropAVelZ
+        dropAX += dropAVelX
+        dropAY += dropAVelY
+        dropAZ += dropAVelZ
+        dropA.style.transform = `translate3d(${dropAX}px, ${dropAY}px, ${dropAZ}px) scale(${1 + (dropAZ / 30) * 0.35})`
 
-      // Droplet B
-      const targetDropBX = Math.cos(physTime * 1.1 + Math.PI) * 14 - tiltY * 0.25;
-      const targetDropBY = Math.sin(physTime * 1.6 + Math.PI) * 6 - tiltX * 0.25;
-      const targetDropBZ = Math.sin(physTime * 1.1 + Math.PI) * 12;
-      dropBVelX += -0.1 * (dropBX - targetDropBX) - 0.2 * dropBVelX;
-      dropBVelY += -0.1 * (dropBY - targetDropBY) - 0.2 * dropBVelY;
-      dropBVelZ += -0.1 * (dropBZ - targetDropBZ) - 0.2 * dropBVelZ;
-      dropBX += dropBVelX; dropBY += dropBVelY; dropBZ += dropBVelZ;
-      dropB.style.transform = `translate3d(${dropBX}px, ${dropBY}px, ${dropBZ}px) scale(${1 + (dropBZ / 30) * 0.35})`;
+        // Droplet B
+        const targetDropBX = Math.cos(physTime * 1.1 + Math.PI) * 14 - tiltY * 0.25
+        const targetDropBY = Math.sin(physTime * 1.6 + Math.PI) * 6 - tiltX * 0.25
+        const targetDropBZ = Math.sin(physTime * 1.1 + Math.PI) * 12
+        dropBVelX += -0.1 * (dropBX - targetDropBX) - 0.2 * dropBVelX
+        dropBVelY += -0.1 * (dropBY - targetDropBY) - 0.2 * dropBVelY
+        dropBVelZ += -0.1 * (dropBZ - targetDropBZ) - 0.2 * dropBVelZ
+        dropBX += dropBVelX
+        dropBY += dropBVelY
+        dropBZ += dropBVelZ
+        dropB.style.transform = `translate3d(${dropBX}px, ${dropBY}px, ${dropBZ}px) scale(${1 + (dropBZ / 30) * 0.35})`
 
-      requestAnimationFrame(stepLogoPhysics);
-    }
-    requestAnimationFrame(stepLogoPhysics);
-
-    logoEl.addEventListener("mousemove", (e) => {
-      const rect = logoEl.getBoundingClientRect();
-      const cx = rect.left + rect.width / 2;
-      const cy = rect.top + rect.height / 2;
-      targetTiltY = Math.max(-30, Math.min(30, ((e.clientX - cx) / (rect.width * 1.2)) * 30));
-      targetTiltX = Math.max(-25, Math.min(25, -((e.clientY - cy) / (rect.height * 1.2)) * 25));
-    });
-
-    logoEl.addEventListener("mouseenter", () => {
-      velY += 6; velX += 5; wobbleAmp += 5;
-    });
-
-    logoEl.addEventListener("mouseleave", () => {
-      targetTiltX = 0; targetTiltY = 0;
-    });
-
-    logoEl.addEventListener("click", () => {
-      wobbleAmp = 22;
-      velX += (Math.random() - 0.5) * 26;
-      velY += (Math.random() - 0.5) * 26;
-      dropAVelZ += 18; dropBVelZ -= 18;
-    });
-
-    // ═════════════════════════════════════════════════════════════════════════
-    // 2. ONBOARDING SWARM (Three.js 3D ASCII, ZERO ROTATION)
-    // ═════════════════════════════════════════════════════════════════════════
-    const container = document.getElementById("canvas-container");
-    const asciiLayer = document.getElementById("ascii-layer");
-    const offscreenCanvas = document.createElement("canvas");
-    const offscreenCtx = offscreenCanvas.getContext("2d", { willReadFrequently: true });
-    const asciiChars = [" ", ".", ":", "-", "=", "+", "*", "%", "#", "@", "N", "i", "K"];
-
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x07090e);
-
-    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera.position.set(0, 0, 15);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, powerPreference: "high-performance" });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    container.appendChild(renderer.domElement);
-
-    const NUM_PARTICLES = 2000;
-    const swarmTargets = [];
-    const swarmPositions = [];
-
-    function sampleLine(x1, y1, z1, x2, y2, z2, count) {
-      for (let i = 0; i < count; i++) {
-        const t = i / count;
-        swarmTargets.push(new THREE.Vector3(
-          x1 + (x2 - x1) * t + (Math.random() - 0.5) * 0.25,
-          y1 + (y2 - y1) * t + (Math.random() - 0.5) * 0.25,
-          z1 + (z2 - z1) * t + (Math.random() - 0.5) * 0.4
-        ));
+        requestAnimationFrame(stepLogoPhysics)
       }
-    }
+      requestAnimationFrame(stepLogoPhysics)
 
-    // Letter N strokes (880 points) - centered on x = -2.9
-    sampleLine(-4.2, -3.5, 0, -4.2, 3.5, 0, 280);
-    sampleLine(-4.2, 3.5, 0, -1.6, -3.5, 0, 340);
-    sampleLine(-1.6, -3.5, 0, -1.6, 3.5, 0, 260);
+      logoEl.addEventListener("mousemove", (e) => {
+        const rect = logoEl.getBoundingClientRect()
+        const cx = rect.left + rect.width / 2
+        const cy = rect.top + rect.height / 2
+        targetTiltY = Math.max(-30, Math.min(30, ((e.clientX - cx) / (rect.width * 1.2)) * 30))
+        targetTiltX = Math.max(-25, Math.min(25, -((e.clientY - cy) / (rect.height * 1.2)) * 25))
+      })
 
-    // Letter I strokes (360 points) - centered on x = 0.0
-    sampleLine(0.0, -2.5, 0, 0.0, 2.0, 0, 260);
-    sampleLine(0.0, 3.0, 0, 0.0, 3.5, 0, 100);
+      logoEl.addEventListener("mouseenter", () => {
+        velY += 6
+        velX += 5
+        wobbleAmp += 5
+      })
 
-    // Letter K strokes (760 points) - centered on x = +2.9
-    sampleLine(1.6, -3.5, 0, 1.6, 3.5, 0, 280);
-    sampleLine(1.6, 0.2, 0, 4.2, 3.5, 0, 240);
-    sampleLine(1.6, 0.2, 0, 4.2, -3.5, 0, 240);
+      logoEl.addEventListener("mouseleave", () => {
+        targetTiltX = 0
+        targetTiltY = 0
+      })
 
-    const pGeo = new THREE.BufferGeometry();
-    const posArray = new Float32Array(NUM_PARTICLES * 3);
-    for (let i = 0; i < NUM_PARTICLES; i++) {
-      const tgt = swarmTargets[i] || new THREE.Vector3(0, 0, 0);
-      posArray[i * 3] = tgt.x + (Math.random() - 0.5) * 0.4;
-      posArray[i * 3 + 1] = tgt.y + (Math.random() - 0.5) * 0.4;
-      posArray[i * 3 + 2] = tgt.z + (Math.random() - 0.5) * 0.4;
-      swarmPositions.push(new THREE.Vector3(posArray[i * 3], posArray[i * 3 + 1], posArray[i * 3 + 2]));
-    }
-    pGeo.setAttribute("position", new THREE.BufferAttribute(posArray, 3));
+      logoEl.addEventListener("click", () => {
+        wobbleAmp = 22
+        velX += (Math.random() - 0.5) * 26
+        velY += (Math.random() - 0.5) * 26
+        dropAVelZ += 18
+        dropBVelZ -= 18
+      })
 
-    const pMat = new THREE.PointsMaterial({
-      size: 0.28,
-      color: 0x58a6ff,
-      transparent: true,
-      opacity: 1.0,
-      blending: THREE.AdditiveBlending
-    });
-    const particleSystem = new THREE.Points(pGeo, pMat);
+      // ═════════════════════════════════════════════════════════════════════════
+      // 2. ONBOARDING SWARM (Three.js 3D ASCII, ZERO ROTATION)
+      // ═════════════════════════════════════════════════════════════════════════
+      const container = document.getElementById("canvas-container")
+      const asciiLayer = document.getElementById("ascii-layer")
+      const offscreenCanvas = document.createElement("canvas")
+      const offscreenCtx = offscreenCanvas.getContext("2d", { willReadFrequently: true })
+      const asciiChars = [" ", ".", ":", "-", "=", "+", "*", "%", "#", "@", "N", "i", "K"]
 
-    const activeGroup = new THREE.Group();
-    activeGroup.add(particleSystem);
-    activeGroup.position.set(0, 0, 0);
-    activeGroup.rotation.set(0, 0, 0); // ZERO ROTATION
-    scene.add(activeGroup);
+      const scene = new THREE.Scene()
+      scene.background = new THREE.Color(0x07090e)
 
-    // Measure monospace character dimensions
-    const measureSpan = document.createElement("span");
-    measureSpan.style.fontFamily = "var(--font-mono, 'Fira Code', 'JetBrains Mono', Consolas, monospace)";
-    measureSpan.style.fontSize = "10px";
-    measureSpan.style.letterSpacing = "1px";
-    measureSpan.style.lineHeight = "10px";
-    measureSpan.style.visibility = "hidden";
-    measureSpan.style.position = "absolute";
-    measureSpan.textContent = "M";
-    document.body.appendChild(measureSpan);
-    const measuredRect = measureSpan.getBoundingClientRect();
-    const charW = measuredRect.width || 7;
-    const charH = measuredRect.height || 10;
-    document.body.removeChild(measureSpan);
+      const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100)
+      camera.position.set(0, 0, 15)
 
-    function updateAsciiRender() {
-      const cols = Math.max(20, Math.floor(window.innerWidth / charW));
-      const rows = Math.max(10, Math.floor(window.innerHeight / charH));
+      const renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        preserveDrawingBuffer: true,
+        powerPreference: "high-performance",
+      })
+      renderer.setSize(window.innerWidth, window.innerHeight)
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+      container.appendChild(renderer.domElement)
 
-      offscreenCanvas.width = cols;
-      offscreenCanvas.height = rows;
+      const NUM_PARTICLES = 2000
+      const swarmTargets = []
+      const swarmPositions = []
 
-      offscreenCtx.drawImage(renderer.domElement, 0, 0, cols, rows);
-      const imgData = offscreenCtx.getImageData(0, 0, cols, rows).data;
-
-      let str = "";
-      const count = asciiChars.length - 1;
-      for (let y = 0; y < rows; y++) {
-        const rowOffset = y * cols;
-        for (let x = 0; x < cols; x++) {
-          const idx = (rowOffset + x) * 4;
-          const r = imgData[idx];
-          const g = imgData[idx + 1];
-          const b = imgData[idx + 2];
-          const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-          const charIndex = Math.floor(brightness * count);
-          str += asciiChars[charIndex];
+      function sampleLine(x1, y1, z1, x2, y2, z2, count) {
+        for (let i = 0; i < count; i++) {
+          const t = i / count
+          swarmTargets.push(
+            new THREE.Vector3(
+              x1 + (x2 - x1) * t + (Math.random() - 0.5) * 0.25,
+              y1 + (y2 - y1) * t + (Math.random() - 0.5) * 0.25,
+              z1 + (z2 - z1) * t + (Math.random() - 0.5) * 0.4,
+            ),
+          )
         }
-        str += "\n";
       }
-      asciiLayer.textContent = str;
-    }
 
-    const clock = new THREE.Clock();
-    const displacement = 0.25;
+      // Letter N strokes (880 points) - centered on x = -2.9
+      sampleLine(-4.2, -3.5, 0, -4.2, 3.5, 0, 280)
+      sampleLine(-4.2, 3.5, 0, -1.6, -3.5, 0, 340)
+      sampleLine(-1.6, -3.5, 0, -1.6, 3.5, 0, 260)
 
-    function animateSwarm() {
-      requestAnimationFrame(animateSwarm);
-      const time = clock.getElapsedTime();
+      // Letter I strokes (360 points) - centered on x = 0.0
+      sampleLine(0.0, -2.5, 0, 0.0, 2.0, 0, 260)
+      sampleLine(0.0, 3.0, 0, 0.0, 3.5, 0, 100)
 
-      // ZERO ROTATION: Locked front-facing
-      activeGroup.rotation.set(0, 0, 0);
+      // Letter K strokes (760 points) - centered on x = +2.9
+      sampleLine(1.6, -3.5, 0, 1.6, 3.5, 0, 280)
+      sampleLine(1.6, 0.2, 0, 4.2, 3.5, 0, 240)
+      sampleLine(1.6, 0.2, 0, 4.2, -3.5, 0, 240)
 
-      const positions = particleSystem.geometry.attributes.position.array;
-
+      const pGeo = new THREE.BufferGeometry()
+      const posArray = new Float32Array(NUM_PARTICLES * 3)
       for (let i = 0; i < NUM_PARTICLES; i++) {
-        const cur = swarmPositions[i];
-        const target = swarmTargets[i];
+        const tgt = swarmTargets[i] || new THREE.Vector3(0, 0, 0)
+        posArray[i * 3] = tgt.x + (Math.random() - 0.5) * 0.4
+        posArray[i * 3 + 1] = tgt.y + (Math.random() - 0.5) * 0.4
+        posArray[i * 3 + 2] = tgt.z + (Math.random() - 0.5) * 0.4
+        swarmPositions.push(new THREE.Vector3(posArray[i * 3], posArray[i * 3 + 1], posArray[i * 3 + 2]))
+      }
+      pGeo.setAttribute("position", new THREE.BufferAttribute(posArray, 3))
 
-        const breathe = 1 + Math.sin(time * 2.0 + i * 0.02) * (0.05 + displacement * 0.3);
-        const tx = target.x * breathe + (Math.sin(time * 3 + i) * 0.08);
-        const ty = target.y * breathe + (Math.cos(time * 2.5 + i) * 0.08);
-        const tz = target.z * breathe;
+      const pMat = new THREE.PointsMaterial({
+        size: 0.28,
+        color: 0x58a6ff,
+        transparent: true,
+        opacity: 1.0,
+        blending: THREE.AdditiveBlending,
+      })
+      const particleSystem = new THREE.Points(pGeo, pMat)
 
-        cur.x += (tx - cur.x) * 0.08;
-        cur.y += (ty - cur.y) * 0.08;
-        cur.z += (tz - cur.z) * 0.08;
+      const activeGroup = new THREE.Group()
+      activeGroup.add(particleSystem)
+      activeGroup.position.set(0, 0, 0)
+      activeGroup.rotation.set(0, 0, 0) // ZERO ROTATION
+      scene.add(activeGroup)
 
-        positions[i * 3] = cur.x;
-        positions[i * 3 + 1] = cur.y;
-        positions[i * 3 + 2] = cur.z;
+      // Measure monospace character dimensions
+      const measureSpan = document.createElement("span")
+      measureSpan.style.fontFamily = "var(--font-mono, 'Fira Code', 'JetBrains Mono', Consolas, monospace)"
+      measureSpan.style.fontSize = "10px"
+      measureSpan.style.letterSpacing = "1px"
+      measureSpan.style.lineHeight = "10px"
+      measureSpan.style.visibility = "hidden"
+      measureSpan.style.position = "absolute"
+      measureSpan.textContent = "M"
+      document.body.appendChild(measureSpan)
+      const measuredRect = measureSpan.getBoundingClientRect()
+      const charW = measuredRect.width || 7
+      const charH = measuredRect.height || 10
+      document.body.removeChild(measureSpan)
+
+      function updateAsciiRender() {
+        const cols = Math.max(20, Math.floor(window.innerWidth / charW))
+        const rows = Math.max(10, Math.floor(window.innerHeight / charH))
+
+        offscreenCanvas.width = cols
+        offscreenCanvas.height = rows
+
+        offscreenCtx.drawImage(renderer.domElement, 0, 0, cols, rows)
+        const imgData = offscreenCtx.getImageData(0, 0, cols, rows).data
+
+        let str = ""
+        const count = asciiChars.length - 1
+        for (let y = 0; y < rows; y++) {
+          const rowOffset = y * cols
+          for (let x = 0; x < cols; x++) {
+            const idx = (rowOffset + x) * 4
+            const r = imgData[idx]
+            const g = imgData[idx + 1]
+            const b = imgData[idx + 2]
+            const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+            const charIndex = Math.floor(brightness * count)
+            str += asciiChars[charIndex]
+          }
+          str += "\n"
+        }
+        asciiLayer.textContent = str
       }
 
-      particleSystem.geometry.attributes.position.needsUpdate = true;
+      const clock = new THREE.Clock()
+      const displacement = 0.25
 
-      renderer.render(scene, camera);
-      updateAsciiRender();
-    }
+      function animateSwarm() {
+        requestAnimationFrame(animateSwarm)
+        const time = clock.getElapsedTime()
 
-    animateSwarm();
+        // ZERO ROTATION: Locked front-facing
+        activeGroup.rotation.set(0, 0, 0)
 
-    window.addEventListener("resize", () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-  </script>
-</body>
+        const positions = particleSystem.geometry.attributes.position.array
+
+        for (let i = 0; i < NUM_PARTICLES; i++) {
+          const cur = swarmPositions[i]
+          const target = swarmTargets[i]
+
+          const breathe = 1 + Math.sin(time * 2.0 + i * 0.02) * (0.05 + displacement * 0.3)
+          const tx = target.x * breathe + Math.sin(time * 3 + i) * 0.08
+          const ty = target.y * breathe + Math.cos(time * 2.5 + i) * 0.08
+          const tz = target.z * breathe
+
+          cur.x += (tx - cur.x) * 0.08
+          cur.y += (ty - cur.y) * 0.08
+          cur.z += (tz - cur.z) * 0.08
+
+          positions[i * 3] = cur.x
+          positions[i * 3 + 1] = cur.y
+          positions[i * 3 + 2] = cur.z
+        }
+
+        particleSystem.geometry.attributes.position.needsUpdate = true
+
+        renderer.render(scene, camera)
+        updateAsciiRender()
+      }
+
+      animateSwarm()
+
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight
+        camera.updateProjectionMatrix()
+        renderer.setSize(window.innerWidth, window.innerHeight)
+      })
+    </script>
+  </body>
 </html>

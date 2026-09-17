@@ -336,15 +336,18 @@ export function normalizeSettings(raw: unknown): NormalizedVoiceSettings {
     if (wakeWordEnabled() && version < 2 && candidate.activation === "toggle") {
       candidate = { ...candidate, activation: "wake-word" }
       migrations.push("wake-word")
-      corrections.push(
-        t("vui.fix.wakeDefault"),
-      )
+      corrections.push(t("vui.fix.wakeDefault"))
     }
     /*
      * Version 3: listening is always on for whoever waits for the name. Told
      * once, where the switch that turns it off is.
      */
-    if (wakeWordEnabled() && version < 3 && candidate.activation === "wake-word" && candidate.mode !== "transcription") {
+    if (
+      wakeWordEnabled() &&
+      version < 3 &&
+      candidate.activation === "wake-word" &&
+      candidate.mode !== "transcription"
+    ) {
       migrations.push("always-listen")
     }
     /* Version 5: a stored "toggle" goes back to the shortcut too. */
@@ -362,9 +365,7 @@ export function normalizeSettings(raw: unknown): NormalizedVoiceSettings {
   if (candidate.mode === "agent" || candidate.mode === "transcription") {
     mode = candidate.mode
   } else {
-    corrections.push(
-      t("vui.fix.mode", String(candidate.mode), DEFAULT_VOICE_SETTINGS.mode),
-    )
+    corrections.push(t("vui.fix.mode", String(candidate.mode), DEFAULT_VOICE_SETTINGS.mode))
     mode = DEFAULT_VOICE_SETTINGS.mode
   }
 
@@ -386,9 +387,7 @@ export function normalizeSettings(raw: unknown): NormalizedVoiceSettings {
   ) {
     activation = candidate.activation
   } else {
-    corrections.push(
-      t("vui.fix.activation", String(candidate.activation), DEFAULT_VOICE_SETTINGS.activation),
-    )
+    corrections.push(t("vui.fix.activation", String(candidate.activation), DEFAULT_VOICE_SETTINGS.activation))
     activation = DEFAULT_VOICE_SETTINGS.activation
   }
 
@@ -397,9 +396,7 @@ export function normalizeSettings(raw: unknown): NormalizedVoiceSettings {
   if (candidate.transcriptionSend === "manual" || candidate.transcriptionSend === "auto") {
     transcriptionSend = candidate.transcriptionSend
   } else {
-    corrections.push(
-      t("vui.fix.send", String(candidate.transcriptionSend), DEFAULT_VOICE_SETTINGS.transcriptionSend),
-    )
+    corrections.push(t("vui.fix.send", String(candidate.transcriptionSend), DEFAULT_VOICE_SETTINGS.transcriptionSend))
     transcriptionSend = DEFAULT_VOICE_SETTINGS.transcriptionSend
   }
 
@@ -437,7 +434,12 @@ export function normalizeSettings(raw: unknown): NormalizedVoiceSettings {
     transcriptionChord = String(candidate.transcriptionChord).trim()
   } else {
     corrections.push(
-      t("vui.fix.transcriptionChord", String(candidate.transcriptionChord), transcriptionChordProblem, DEFAULT_VOICE_SETTINGS.transcriptionChord),
+      t(
+        "vui.fix.transcriptionChord",
+        String(candidate.transcriptionChord),
+        transcriptionChordProblem,
+        DEFAULT_VOICE_SETTINGS.transcriptionChord,
+      ),
     )
     transcriptionChord = DEFAULT_VOICE_SETTINGS.transcriptionChord
   }
@@ -451,9 +453,7 @@ export function normalizeSettings(raw: unknown): NormalizedVoiceSettings {
   if (candidate.backend === "parakeet" || candidate.backend === "openrouter") {
     backend = candidate.backend
   } else {
-    corrections.push(
-      t("vui.fix.backend", String(candidate.backend), DEFAULT_VOICE_SETTINGS.backend),
-    )
+    corrections.push(t("vui.fix.backend", String(candidate.backend), DEFAULT_VOICE_SETTINGS.backend))
     backend = DEFAULT_VOICE_SETTINGS.backend
   }
 

@@ -10,11 +10,7 @@ export interface SessionDiff {
   error?: string
 }
 
-export async function loadSessionDiff(input: {
-  host: Host
-  cwd: string
-  baseRef: string
-}): Promise<SessionDiff> {
+export async function loadSessionDiff(input: { host: Host; cwd: string; baseRef: string }): Promise<SessionDiff> {
   const { host, cwd, baseRef } = input
 
   /*
@@ -73,7 +69,13 @@ export async function loadSessionDiff(input: {
     if (diffResult.code === 0) {
       files = parseUnifiedDiff(diffResult.stdout)
     } else {
-      return { files: [], added: 0, removed: 0, truncated: false, error: "Impossibile calcolare i dettagli delle modifiche." }
+      return {
+        files: [],
+        added: 0,
+        removed: 0,
+        truncated: false,
+        error: "Impossibile calcolare i dettagli delle modifiche.",
+      }
     }
   }
 

@@ -165,7 +165,8 @@ export function SimulatorPane(props: SimulatorPaneProps) {
       observer.observe(stage)
       onCleanup(() => observer.disconnect())
     }
-    if (props.url) void load(props.url).catch((error: unknown) => setNote(String(error instanceof Error ? error.message : error)))
+    if (props.url)
+      void load(props.url).catch((error: unknown) => setNote(String(error instanceof Error ? error.message : error)))
     void props.guessServers?.().then(setGuesses, () => setGuesses([]))
   })
   onCleanup(() => props.onController?.(undefined))
@@ -190,7 +191,10 @@ export function SimulatorPane(props: SimulatorPaneProps) {
     setDragScale(scale)
     const move = (next: PointerEvent) => {
       setDragSize(
-        clampWindowSize(from.width + ((next.clientX - start.x) / scale) * 2, from.height + (next.clientY - start.y) / scale),
+        clampWindowSize(
+          from.width + ((next.clientX - start.x) / scale) * 2,
+          from.height + (next.clientY - start.y) / scale,
+        ),
       )
     }
     const end = () => {
@@ -231,14 +235,31 @@ export function SimulatorPane(props: SimulatorPaneProps) {
           {props.url ? `${props.title} · ${hostName()}` : props.title}
         </h2>
         <div data-slot="pane-actions">
-          <button type="button" data-slot="pane-action" onClick={() => props.onExpand?.()} aria-label={t("pane.expand")}>
+          <button
+            type="button"
+            data-slot="pane-action"
+            onClick={() => props.onExpand?.()}
+            aria-label={t("pane.expand")}
+          >
             <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
-              <path d="M1 4.5V1h3.5M11 7.5V11H7.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+              <path
+                d="M1 4.5V1h3.5M11 7.5V11H7.5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.2"
+                stroke-linecap="round"
+              />
             </svg>
           </button>
           <button type="button" data-slot="pane-action" onClick={() => props.onClose?.()} aria-label={t("pane.close")}>
             <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
-              <path d="M2.5 2.5l7 7M9.5 2.5l-7 7" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+              <path
+                d="M2.5 2.5l7 7M9.5 2.5l-7 7"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.2"
+                stroke-linecap="round"
+              />
             </svg>
           </button>
         </div>
@@ -253,7 +274,15 @@ export function SimulatorPane(props: SimulatorPaneProps) {
           aria-label={t("sim.reload")}
           title={t("sim.reload")}
         >
-          <svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
+          <svg
+            viewBox="0 0 12 12"
+            width="12"
+            height="12"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.2"
+            stroke-linecap="round"
+          >
             <path d="M10 6a4 4 0 1 1-1.2-2.8M10 1.5v2.2H7.8" />
           </svg>
         </button>
@@ -286,7 +315,15 @@ export function SimulatorPane(props: SimulatorPaneProps) {
             aria-label={t("browser.rotate")}
             title={t("browser.rotate")}
           >
-            <svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+            <svg
+              viewBox="0 0 12 12"
+              width="12"
+              height="12"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.2"
+              stroke-linejoin="round"
+            >
               <rect x="1.5" y="4" width="7" height="6.5" rx="1" />
               <path d="M6 1.5h2.5A2 2 0 0 1 10.5 3.5V5M9.3 3.8l1.2 1.2 1.2-1.2" stroke-linecap="round" />
             </svg>
@@ -324,10 +361,7 @@ export function SimulatorPane(props: SimulatorPaneProps) {
             </div>
           }
         >
-          <div
-            data-slot="sim-fit"
-            style={{ width: `${fit().renderedWidth}px`, height: `${fit().renderedHeight}px` }}
-          >
+          <div data-slot="sim-fit" style={{ width: `${fit().renderedWidth}px`, height: `${fit().renderedHeight}px` }}>
             <div
               data-slot="sim-device-frame"
               data-kind={device().kind}

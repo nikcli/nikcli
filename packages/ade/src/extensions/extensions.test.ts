@@ -1,7 +1,15 @@
 import { describe, expect, test } from "bun:test"
 import { existsSync } from "node:fs"
 import { join } from "node:path"
-import { afterInstallHint, cardAction, filterCatalog, installedServers, matchCatalog, missingTypeNote, monogram } from "./extensions"
+import {
+  afterInstallHint,
+  cardAction,
+  filterCatalog,
+  installedServers,
+  matchCatalog,
+  missingTypeNote,
+  monogram,
+} from "./extensions"
 import { findMcpServer, MCP_CATALOG } from "./mcp-catalog"
 import { addMcpServer } from "./mcp-config"
 
@@ -16,7 +24,11 @@ describe("installed servers", () => {
     const servers = installedServers(raw)
     expect(servers.map((server) => [server.name, server.transport, server.entry?.id])).toEqual([
       ["mio", "stdio", undefined],
-      [stripe.installation.config.name, stripe.transport.includes("remote") && stripe.installation.config.server.url ? "remote" : "stdio", "stripe"],
+      [
+        stripe.installation.config.name,
+        stripe.transport.includes("remote") && stripe.installation.config.server.url ? "remote" : "stdio",
+        "stripe",
+      ],
     ])
     expect(servers[0]!.detail).toBe("node server.js")
     expect(servers[0]!.variables).toEqual(["MY_TOKEN"])
@@ -30,7 +42,12 @@ describe("installed servers", () => {
 
   test("a remote server written without type gets a note, not an alarm", () => {
     const github = findMcpServer("github")!
-    const raw = JSON.stringify({ mcpServers: { github: { url: github.installation.config.server.url }, ok: { type: "sse", url: "https://x.test/sse" } } })
+    const raw = JSON.stringify({
+      mcpServers: {
+        github: { url: github.installation.config.server.url },
+        ok: { type: "sse", url: "https://x.test/sse" },
+      },
+    })
     const [bare, sse] = installedServers(raw)
     expect(bare!.entry?.id).toBe("github")
     // A note, not an error: other clients read the file as it is.
@@ -58,16 +75,23 @@ describe("the catalog", () => {
     expect(community.length).toBeGreaterThan(0)
     expect(community.every((id) => findMcpServer(id)!.origin === "community")).toBe(true)
     expect(filterCatalog(MCP_CATALOG, "", "guida").every((entry) => entry.installation.mode === "guide")).toBe(true)
-    expect(filterCatalog(MCP_CATALOG, "", "un-clic").length + filterCatalog(MCP_CATALOG, "", "guida").length).toBe(MCP_CATALOG.length)
+    expect(filterCatalog(MCP_CATALOG, "", "un-clic").length + filterCatalog(MCP_CATALOG, "", "guida").length).toBe(
+      MCP_CATALOG.length,
+    )
   })
 
   test("a card offers to add, says it is installed, guides, or warns of a name clash", () => {
     const guide = MCP_CATALOG.find((entry) => entry.installation.mode === "guide")!
     expect(cardAction(stripe, [])).toEqual({ kind: "add" })
-    expect(cardAction(stripe, installedServers(addMcpServer(undefined, stripe.installation.config)))).toEqual({ kind: "installed" })
+    expect(cardAction(stripe, installedServers(addMcpServer(undefined, stripe.installation.config)))).toEqual({
+      kind: "installed",
+    })
     expect(cardAction(guide, [])).toEqual({ kind: "guide", url: guide.installation.guideUrl })
     const clash = JSON.stringify({ mcpServers: { [stripe.installation.config.name]: { command: "altro" } } })
-    expect(cardAction(stripe, installedServers(clash))).toEqual({ kind: "name-taken", name: stripe.installation.config.name })
+    expect(cardAction(stripe, installedServers(clash))).toEqual({
+      kind: "name-taken",
+      name: stripe.installation.config.name,
+    })
   })
 
   test("after adding, the hint names the variables and never a value", () => {

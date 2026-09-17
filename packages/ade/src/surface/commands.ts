@@ -57,11 +57,7 @@ export interface CommandContext {
  * key combination the keymap does not implement teaches the user something
  * false, and that drift is invisible until someone presses the key.
  */
-function shortcutFor(
-  commandId: string,
-  platform: Platform,
-  voiceChord?: string
-): string | undefined {
+function shortcutFor(commandId: string, platform: Platform, voiceChord?: string): string | undefined {
   if (commandId === "voice.toggle") {
     const chordStr = voiceChord ?? "mod+shift+k"
     return formatChord(parseChord(chordStr, platform), platform)
@@ -96,9 +92,7 @@ export function keepsPaletteOpen(commandId: string): boolean {
 export function buildCommands(ctx: CommandContext): SurfaceCommand[] {
   const { workbench, recents, hasHost, running, platform } = ctx
   const views = ctx.views ?? VISIBLE_VIEWS
-  const focusedPane = workbench.focusedId
-    ? workbench.panes.find((pane) => pane.id === workbench.focusedId)
-    : undefined
+  const focusedPane = workbench.focusedId ? workbench.panes.find((pane) => pane.id === workbench.focusedId) : undefined
   const focusedRuns = !!focusedPane && running.has(focusedPane.id)
   const desktopOnly = hasHost ? undefined : t("palette.desktopOnly")
 
@@ -184,7 +178,18 @@ export function buildCommands(ctx: CommandContext): SurfaceCommand[] {
       id: "record.toggle",
       title: ctx.recording ? t("palette.record.stop") : t("palette.record.start"),
       group: t("palette.group.view"),
-      keywords: ["video", "registra", "schermo", "cattura", "demo", "pubblicità", "record", "screen", "capture", "promo"],
+      keywords: [
+        "video",
+        "registra",
+        "schermo",
+        "cattura",
+        "demo",
+        "pubblicità",
+        "record",
+        "screen",
+        "capture",
+        "promo",
+      ],
       enabled: ctx.hasHost,
       disabledReason: ctx.hasHost ? undefined : t("palette.record.desktopOnly"),
     },
@@ -248,13 +253,38 @@ export function buildCommands(ctx: CommandContext): SurfaceCommand[] {
       id: "app.new",
       title: t("palette.app.new"),
       group: t("palette.group.pane"),
-      keywords: ["simulatore", "emulatore", "telefono", "mobile", "expo", "tauri", "dispositivo", "finestra", "simulator", "emulator", "phone", "device", "window"],
+      keywords: [
+        "simulatore",
+        "emulatore",
+        "telefono",
+        "mobile",
+        "expo",
+        "tauri",
+        "dispositivo",
+        "finestra",
+        "simulator",
+        "emulator",
+        "phone",
+        "device",
+        "window",
+      ],
     },
     {
       id: "decisions.open",
       title: t("palette.decisions.open"),
       group: t("palette.group.pane"),
-      keywords: ["decisioni", "decidere", "scelte", "domande", "master", "bearings", "rispondi", "decisions", "questions", "answer"],
+      keywords: [
+        "decisioni",
+        "decidere",
+        "scelte",
+        "domande",
+        "master",
+        "bearings",
+        "rispondi",
+        "decisions",
+        "questions",
+        "answer",
+      ],
     },
     {
       id: "decisions.pane",

@@ -159,7 +159,13 @@ export function createAdePluginRuntime(options: RuntimeOptions): AdePluginRuntim
     const trusted = options.trust ? await options.trust(projectRoot, found.resolved).catch(() => false) : true
     if (!trusted) {
       for (const plugin of found.resolved) {
-        note({ id: plugin.spec, spec: plugin.spec, source: "file", active: false, error: "non autorizzato per questo progetto" })
+        note({
+          id: plugin.spec,
+          spec: plugin.spec,
+          source: "file",
+          active: false,
+          error: "non autorizzato per questo progetto",
+        })
       }
       return
     }
@@ -195,10 +201,12 @@ export function createAdePluginRuntime(options: RuntimeOptions): AdePluginRuntim
       return queue
     },
     async dispose() {
-      queue = queue.catch(() => undefined).then(async () => {
-        await teardown()
-        clearPluginStorage()
-      })
+      queue = queue
+        .catch(() => undefined)
+        .then(async () => {
+          await teardown()
+          clearPluginStorage()
+        })
       await queue
     },
   }

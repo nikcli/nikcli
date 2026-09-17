@@ -181,9 +181,7 @@ describe("selectionAfterSessionClose (Defect 4)", () => {
   })
 
   test("Defect 4: closing the sole remaining session across all workspaces returns undefined", () => {
-    const fixture: Workspace[] = [
-      { id: "w1", name: "w1", sessions: [{ id: "last", title: "Last", status: "done" }] },
-    ]
+    const fixture: Workspace[] = [{ id: "w1", name: "w1", sessions: [{ id: "last", title: "Last", status: "done" }] }]
 
     expect(selectionAfterSessionClose(fixture, "last", "last")).toBeUndefined()
   })

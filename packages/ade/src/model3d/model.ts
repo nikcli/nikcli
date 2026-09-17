@@ -342,7 +342,11 @@ export function viewFileName(source: string, now: Date): string {
 
 /** The panel's verbs, for the agent's greeting and for the handler. */
 export const MODEL_VERBS = [
-  { name: "open", usage: "open <percorso>", summary: `apre un modello 3D del progetto (${MODEL_EXTENSIONS.join(", ")})` },
+  {
+    name: "open",
+    usage: "open <percorso>",
+    summary: `apre un modello 3D del progetto (${MODEL_EXTENSIONS.join(", ")})`,
+  },
   { name: "view", usage: "view <vista>", summary: `inquadra da ${Object.keys(VIEW_PRESETS).join(", ")}` },
   { name: "reload", usage: "reload", summary: "rilegge il file dal disco" },
   { name: "capture", usage: "capture", summary: "salva la vista corrente come PNG e ne dà il percorso" },

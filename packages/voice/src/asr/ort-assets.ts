@@ -61,10 +61,7 @@ export async function bundledOrtPaths(): Promise<OrtWasmPaths | undefined> {
     ])
     const wasmUrl = (wasm as { default?: unknown }).default
     const mjsUrl = (mjs as { default?: unknown }).default
-    resolved =
-      typeof wasmUrl === "string" && typeof mjsUrl === "string"
-        ? { wasm: wasmUrl, mjs: mjsUrl }
-        : undefined
+    resolved = typeof wasmUrl === "string" && typeof mjsUrl === "string" ? { wasm: wasmUrl, mjs: mjsUrl } : undefined
   } catch {
     resolved = undefined
   }

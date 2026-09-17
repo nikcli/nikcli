@@ -22,15 +22,7 @@ import { t } from "../i18n"
 import { stripAnsi } from "../session/stream"
 import type { AgentFile } from "./nikcli"
 import { NIKCLI_COMMAND } from "./nikcli"
-import {
-  appendMessage,
-  applyJsonLine,
-  applyLine,
-  attachOutput,
-  errorText,
-  runArgs,
-  type Talk,
-} from "./talk"
+import { appendMessage, applyJsonLine, applyLine, attachOutput, errorText, runArgs, type Talk } from "./talk"
 
 export type RunnerId = "nikcli" | "claude" | "codex"
 
@@ -390,7 +382,10 @@ export function applyClaudeEvent(talk: Talk, event: Record<string, unknown>, at:
           return {
             ...appendMessage(
               rest,
-              { role: "error", text: "Claude Code non ha più questa conversazione: il prossimo messaggio ne apre una nuova." },
+              {
+                role: "error",
+                text: "Claude Code non ha più questa conversazione: il prossimo messaggio ne apre una nuova.",
+              },
               at,
             ),
             status: "error",
@@ -434,7 +429,12 @@ export function applyCodexEvent(talk: Talk, event: Record<string, unknown>, at: 
           const output = str(item["aggregated_output"])
           return appendMessage(
             next,
-            { role: "tool", tool: "shell", text: str(item["command"]) ?? "comando", ...(output?.trim() ? { output } : {}) },
+            {
+              role: "tool",
+              tool: "shell",
+              text: str(item["command"]) ?? "comando",
+              ...(output?.trim() ? { output } : {}),
+            },
             at,
           )
         }
@@ -461,7 +461,11 @@ export function applyCodexEvent(talk: Talk, event: Record<string, unknown>, at: 
     case "turn.failed":
     case "error": {
       const text = errorText(event["error"] ?? event["message"] ?? event)
-      return { ...appendMessage(next, { role: "error", text }, at), status: "error", ...(event["type"] === "turn.failed" ? { ended: true } : {}) }
+      return {
+        ...appendMessage(next, { role: "error", text }, at),
+        status: "error",
+        ...(event["type"] === "turn.failed" ? { ended: true } : {}),
+      }
     }
     default:
       return next

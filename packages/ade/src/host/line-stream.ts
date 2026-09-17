@@ -14,7 +14,6 @@
 
 import { stripAnsi } from "./ansi"
 
-
 /**
  * How much output without a newline is kept before it is emitted anyway.
  *

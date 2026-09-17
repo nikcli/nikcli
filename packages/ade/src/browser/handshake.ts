@@ -44,10 +44,7 @@ export const INITIAL_HANDSHAKE_STATE: HandshakeState = {
 /**
  * Pure state reducer managing the fidelity handshake lifecycle.
  */
-export function handshakeReducer(
-  state: HandshakeState,
-  event: HandshakeEvent,
-): HandshakeState {
+export function handshakeReducer(state: HandshakeState, event: HandshakeEvent): HandshakeState {
   switch (event.type) {
     case "navigate": {
       // Navigating to a new target always restarts the handshake from scratch.

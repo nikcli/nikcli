@@ -124,9 +124,15 @@ describe("record/record-panel", () => {
 
   test("state answers whether a take is running", async () => {
     const { deps: d } = deps({ state: () => ({ recording: true, path: "C:/video/ADE.mp4" }) })
-    expect(await runRecordRequest(ask("@ade record state"), d)).toEqual({ ok: true, detail: "registro in C:/video/ADE.mp4" })
+    expect(await runRecordRequest(ask("@ade record state"), d)).toEqual({
+      ok: true,
+      detail: "registro in C:/video/ADE.mp4",
+    })
     const { deps: idle } = deps()
-    expect(await runRecordRequest(ask("@ade record state"), idle)).toEqual({ ok: true, detail: "nessuna registrazione" })
+    expect(await runRecordRequest(ask("@ade record state"), idle)).toEqual({
+      ok: true,
+      detail: "nessuna registrazione",
+    })
   })
 
   test("an unknown verb is refused, and every verb offered has an answer", async () => {
@@ -134,7 +140,10 @@ describe("record/record-panel", () => {
     const outcome = await runRecordRequest(ask("@ade record zoom"), d)
     expect(outcome.ok).toBe(false)
     for (const verb of RECORD_VERBS) {
-      const answered = await runRecordRequest(ask(`@ade record ${verb.name}`), deps({ state: () => ({ recording: true }) }).deps)
+      const answered = await runRecordRequest(
+        ask(`@ade record ${verb.name}`),
+        deps({ state: () => ({ recording: true }) }).deps,
+      )
       expect(answered).toBeDefined()
     }
   })

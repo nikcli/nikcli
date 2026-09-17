@@ -72,16 +72,14 @@ type ColourSlot = Exclude<keyof ITheme, "extendedAnsi">
  */
 function readTheme(): ITheme {
   if (typeof document === "undefined" || !document.body) return {}
-  const host =
-    document.querySelector('[data-component="ade-shell"]') ?? document.body
+  const host = document.querySelector('[data-component="ade-shell"]') ?? document.body
   const declared = getComputedStyle(host)
   const probe = document.createElement("span")
   probe.setAttribute("aria-hidden", "true")
   // Visible to the cascade, invisible to the user: `light-dark()` is resolved
   // from computed style, and an element kept in the box tree cannot be
   // short-circuited by an engine that skips work for `display: none`.
-  probe.style.cssText =
-    "position:absolute;width:0;height:0;visibility:hidden;pointer-events:none"
+  probe.style.cssText = "position:absolute;width:0;height:0;visibility:hidden;pointer-events:none"
   host.appendChild(probe)
 
   const theme: ITheme = { selectionBackground: "rgba(10, 124, 107, 0.25)" }
@@ -225,7 +223,10 @@ export interface AttachOptions {
  * unmounts the whole grid, so every running session's pane is thrown away and
  * remade the moment another session starts.
  */
-export function placementFor(drawn: { parentElement: unknown } | null | undefined, parent: unknown): "open" | "move" | "keep" {
+export function placementFor(
+  drawn: { parentElement: unknown } | null | undefined,
+  parent: unknown,
+): "open" | "move" | "keep" {
   if (!drawn) return "open"
   return drawn.parentElement === parent ? "keep" : "move"
 }

@@ -37,15 +37,7 @@ import { COMMON_EFFORTS, OBJECTIVES_HEADING, splitPrompt, type AgentFile, type A
 import { applyRunnerLine, runnerAccount, runnerById, RUNNERS, type Runner } from "./runners"
 import { PLAN_RUNNERS } from "./terms"
 import { startTurn, type TurnHandle } from "./session"
-import {
-  createBot,
-  deleteBot,
-  listBots,
-  listModels,
-  resolveRoots,
-  updateBot,
-  type BotRoots,
-} from "./store"
+import { createBot, deleteBot, listBots, listModels, resolveRoots, updateBot, type BotRoots } from "./store"
 import {
   answerKeys,
   applyExit,
@@ -296,7 +288,9 @@ export function BotsRoster(props: BotsRosterProps) {
                   <Face identifier={bot.identifier} avatar={bot.avatar} expression={expression(bot)} size={36} />
                   <span data-slot="bots-row-text">
                     <span data-slot="bots-row-name">{bot.identifier}</span>
-                    <span data-slot="bots-row-line">{lastLine(talk(), bot.description || t("bots.noDescription"))}</span>
+                    <span data-slot="bots-row-line">
+                      {lastLine(talk(), bot.description || t("bots.noDescription"))}
+                    </span>
                   </span>
                   <span data-slot="bots-row-when">{formatWhen(talk().updatedAt, now())}</span>
                 </button>
@@ -569,10 +563,15 @@ function Thread(props: {
     ),
   )
 
-  createEffect(on(() => props.bot.path, () => {
-    setDraft("")
-    field?.focus()
-  }))
+  createEffect(
+    on(
+      () => props.bot.path,
+      () => {
+        setDraft("")
+        field?.focus()
+      },
+    ),
+  )
 
   const busy = () => props.talk.status === "working" || props.talk.status === "waiting"
 
@@ -592,12 +591,12 @@ function Thread(props: {
           <div data-slot="bots-thread-empty">
             <Face identifier={props.bot.identifier} avatar={props.bot.avatar} expression={props.expression} size={72} />
             <p data-slot="bots-thread-empty-name">{props.bot.identifier}</p>
-            <p data-slot="bots-thread-empty-text">
-              {props.bot.description || t("bots.noDescription")}
-            </p>
+            <p data-slot="bots-thread-empty-text">{props.bot.description || t("bots.noDescription")}</p>
             <Show when={subagent()}>
               <p data-slot="bots-hint">
-                {t("bots.subagent.isA")}<strong>{t("bots.subagent.label")}</strong>{t("bots.subagent.desc")}
+                {t("bots.subagent.isA")}
+                <strong>{t("bots.subagent.label")}</strong>
+                {t("bots.subagent.desc")}
               </p>
             </Show>
           </div>
@@ -758,11 +757,16 @@ function BotCard(props: {
   const [problem, setProblem] = createSignal<string>()
   const parts = createMemo(() => splitPrompt(props.bot.prompt))
 
-  createEffect(on(() => props.bot.path, () => {
-    setEditing(false)
-    setConfirming(false)
-    setProblem(undefined)
-  }))
+  createEffect(
+    on(
+      () => props.bot.path,
+      () => {
+        setEditing(false)
+        setConfirming(false)
+        setProblem(undefined)
+      },
+    ),
+  )
 
   const remove = async () => {
     const failure = await deleteBot(props.bot)
@@ -795,11 +799,7 @@ function BotCard(props: {
               data-slot="bots-btn"
               disabled={props.bot.mode === "subagent"}
               onClick={() => launch()(props.bot)}
-              title={
-                props.bot.mode === "subagent"
-                  ? t("bots.terminal.subagentTip")
-                  : t("bots.terminal.launchTip")
-              }
+              title={props.bot.mode === "subagent" ? t("bots.terminal.subagentTip") : t("bots.terminal.launchTip")}
             >
               {t("bots.terminal.button")}
             </button>
@@ -812,7 +812,12 @@ function BotCard(props: {
             </button>
           )}
         </Show>
-        <button type="button" data-slot="bots-btn" data-active={editing() ? "true" : undefined} onClick={() => setEditing((v) => !v)}>
+        <button
+          type="button"
+          data-slot="bots-btn"
+          data-active={editing() ? "true" : undefined}
+          onClick={() => setEditing((v) => !v)}
+        >
           {editing() ? t("bots.edit.close") : t("bots.edit.open")}
         </button>
       </div>
@@ -833,10 +838,7 @@ function BotCard(props: {
           <span data-slot="bots-label">{t("bots.card.conversation")}</span>
           <span data-slot="bots-card-stat">
             {t("bots.card.messages", props.talk.messages.length)}
-            <Show when={props.talk.tokens > 0}>
-              {" "}
-              · {t("bots.tokens", formatCount(props.talk.tokens))}
-            </Show>
+            <Show when={props.talk.tokens > 0}> · {t("bots.tokens", formatCount(props.talk.tokens))}</Show>
             <Show when={props.talk.costUsd > 0}> · {formatUsd(props.talk.costUsd)}</Show>
           </span>
           <Show when={props.talk.sessionId}>
@@ -885,11 +887,7 @@ function BotCard(props: {
       </Show>
 
       <Show when={editing()}>
-        <BotSettings
-          bot={props.bot}
-          models={props.models}
-          onSaved={() => props.onChanged()}
-        />
+        <BotSettings bot={props.bot} models={props.models} onSaved={() => props.onChanged()} />
       </Show>
     </div>
   )
@@ -993,9 +991,7 @@ function BotForm(props: {
         <span data-slot="bots-hint">
           {/* Said plainly, because the two routes name the bot differently and
               a field that is sometimes ignored is worse than one that says so. */}
-          {generating()
-            ? t("bots.form.hintGenerating")
-            : t("bots.form.hintNamed")}
+          {generating() ? t("bots.form.hintGenerating") : t("bots.form.hintNamed")}
         </span>
       </label>
 
@@ -1168,9 +1164,7 @@ function EngineFields(props: {
               <For each={props.nikcliModels}>{(id) => <option value={id}>{id}</option>}</For>
             </select>
             <Show when={props.nikcliModels.length === 0}>
-              <span data-slot="bots-hint">
-                {t("bots.engine.modelsUnavailable")}
-              </span>
+              <span data-slot="bots-hint">{t("bots.engine.modelsUnavailable")}</span>
             </Show>
           </Show>
         </label>
@@ -1179,7 +1173,9 @@ function EngineFields(props: {
           <span data-slot="bots-label">{t("bots.engine.effort")}</span>
           <Show
             when={runner().efforts.length > 0}
-            fallback={<input data-slot="bots-input" value="" placeholder={t("bots.engine.effortNotSupported")} disabled />}
+            fallback={
+              <input data-slot="bots-input" value="" placeholder={t("bots.engine.effortNotSupported")} disabled />
+            }
           >
             <select
               data-slot="bots-input"
@@ -1199,11 +1195,7 @@ function EngineFields(props: {
   )
 }
 
-function BotSettings(props: {
-  bot: AgentFile
-  models: readonly string[]
-  onSaved: () => void
-}) {
+function BotSettings(props: { bot: AgentFile; models: readonly string[]; onSaved: () => void }) {
   const parts = createMemo(() => splitPrompt(props.bot.prompt))
 
   const [description, setDescription] = createSignal(props.bot.description)
@@ -1222,7 +1214,11 @@ function BotSettings(props: {
   createEffect(
     on(
       () =>
-        props.bot.path + props.bot.prompt + (props.bot.model ?? "") + (props.bot.effort ?? "") + (props.bot.runner ?? ""),
+        props.bot.path +
+        props.bot.prompt +
+        (props.bot.model ?? "") +
+        (props.bot.effort ?? "") +
+        (props.bot.runner ?? ""),
       () => {
         setRunner(runnerById(props.bot.runner).id)
         setDescription(props.bot.description)

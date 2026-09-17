@@ -144,7 +144,9 @@ describe("wording", () => {
       loading: false,
       stats: { meshes: 3, triangles: 12500, size: [2, 0.5, 12.25], animations: 1 },
     }
-    expect(describeModelState(state)).toBe("ship.glb — 3 mesh, 12.500 triangoli, ingombro 2,00 × 0,500 × 12,3, 1 animazioni")
+    expect(describeModelState(state)).toBe(
+      "ship.glb — 3 mesh, 12.500 triangoli, ingombro 2,00 × 0,500 × 12,3, 1 animazioni",
+    )
   })
 
   test("says when there is nothing, or it is loading, or it failed", () => {
@@ -193,7 +195,10 @@ describe("runModelCommand", () => {
 
   test("open reports a load that ended in an error as a failure", async () => {
     const { controller } = fake()
-    expect(await runModelCommand(controller, request("@ade model open broken.stl"))).toEqual({ ok: false, reason: "file non valido" })
+    expect(await runModelCommand(controller, request("@ade model open broken.stl"))).toEqual({
+      ok: false,
+      reason: "file non valido",
+    })
   })
 
   test("open refuses a format before touching the panel", async () => {
@@ -207,14 +212,24 @@ describe("runModelCommand", () => {
     const empty = fake()
     expect((await runModelCommand(empty.controller, request("@ade model view top"))).ok).toBe(false)
 
-    const loaded = fake({ source: "a.glb", loading: false, stats: { meshes: 1, triangles: 1, size: [1, 1, 1], animations: 0 } })
-    expect(await runModelCommand(loaded.controller, request("@ade model view sopra"))).toEqual({ ok: true, detail: "vista top" })
+    const loaded = fake({
+      source: "a.glb",
+      loading: false,
+      stats: { meshes: 1, triangles: 1, size: [1, 1, 1], animations: 0 },
+    })
+    expect(await runModelCommand(loaded.controller, request("@ade model view sopra"))).toEqual({
+      ok: true,
+      detail: "vista top",
+    })
     expect((await runModelCommand(loaded.controller, request("@ade model view diagonale"))).ok).toBe(false)
   })
 
   test("an unknown verb lists the ones that exist", async () => {
     const { controller } = fake()
     const outcome = await runModelCommand(controller, request("@ade model spin"))
-    expect(outcome).toEqual({ ok: false, reason: "comando sconosciuto; disponibili: open, view, reload, capture, state" })
+    expect(outcome).toEqual({
+      ok: false,
+      reason: "comando sconosciuto; disponibili: open, view, reload, capture, state",
+    })
   })
 })

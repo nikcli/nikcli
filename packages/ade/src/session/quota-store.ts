@@ -96,7 +96,11 @@ export function createQuotaStore(
     }
 
     /** Applies one file's text: failure keeps, absence clears, half-written keeps. */
-    const apply = <T,>(text: string | undefined | false, parse: (raw: unknown) => T | undefined, set: (value: T | undefined) => void) => {
+    const apply = <T>(
+      text: string | undefined | false,
+      parse: (raw: unknown) => T | undefined,
+      set: (value: T | undefined) => void,
+    ) => {
       if (text === false) return
       if (!text) return set(undefined)
       try {

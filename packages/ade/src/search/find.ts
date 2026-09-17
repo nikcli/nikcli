@@ -73,7 +73,7 @@ export function findByName(paths: PathInput[], query: string, limit?: number): F
   if (q.length === 0) {
     const allHits: FileHit[] = paths.map((item) => {
       const path = typeof item === "string" ? item : item.path
-      const kind = typeof item === "object" ? item.kind : (item.endsWith("/") ? "directory" : undefined)
+      const kind = typeof item === "object" ? item.kind : item.endsWith("/") ? "directory" : undefined
       return {
         path,
         kind,
@@ -89,7 +89,7 @@ export function findByName(paths: PathInput[], query: string, limit?: number): F
 
   for (const item of paths) {
     const path = typeof item === "string" ? item : item.path
-    const kind = typeof item === "object" ? item.kind : (item.endsWith("/") ? "directory" : undefined)
+    const kind = typeof item === "object" ? item.kind : item.endsWith("/") ? "directory" : undefined
     const cleanPath = path.replace(/[/\\]+$/, "")
     const filename = cleanPath.split(/[/\\]/).pop() || cleanPath
     const lowerFilename = filename.toLowerCase()
@@ -192,8 +192,7 @@ export function searchPaths(
   for (const entry of entries) {
     if (kinds && !kinds.has(entry.kind)) continue
     const full = entry.path.replace(/\\/g, "/").replace(/\/+$/, "")
-    const rel =
-      rootLower && full.toLowerCase().startsWith(`${rootLower}/`) ? full.slice(root.length + 1) : full
+    const rel = rootLower && full.toLowerCase().startsWith(`${rootLower}/`) ? full.slice(root.length + 1) : full
     const nameStart = rel.lastIndexOf("/") + 1
     const name = rel.slice(nameStart)
     const lowerName = name.toLowerCase()

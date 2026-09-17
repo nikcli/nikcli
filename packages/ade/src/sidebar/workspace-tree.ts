@@ -42,7 +42,8 @@ export function normalizeAgentId(raw?: string): string {
   if (s.includes("prime")) return "prime"
   if (s.includes("ohmypi")) return "ohmypi"
   if (s.includes("pi")) return "pi"
-  if (s.includes("shell") || s.includes("term") || s.includes("bash") || s.includes("zsh") || s.includes("powershell")) return "terminal"
+  if (s.includes("shell") || s.includes("term") || s.includes("bash") || s.includes("zsh") || s.includes("powershell"))
+    return "terminal"
   if (s.includes("nik")) return "nikcli"
   return "nikcli"
 }
@@ -88,10 +89,7 @@ export type FlatWorkspaceRow = FlatWorkspaceHeaderRow | FlatSessionChildRow
 /**
  * Toggles the expanded state of a workspace, returning a new immutable Set.
  */
-export function toggleWorkspaceExpansion(
-  expanded: ReadonlySet<string>,
-  workspaceId: string,
-): Set<string> {
+export function toggleWorkspaceExpansion(expanded: ReadonlySet<string>, workspaceId: string): Set<string> {
   const next = new Set(expanded)
   if (next.has(workspaceId)) {
     next.delete(workspaceId)
@@ -104,10 +102,7 @@ export function toggleWorkspaceExpansion(
 /**
  * Checks whether a workspace is expanded.
  */
-export function isWorkspaceExpanded(
-  expanded: ReadonlySet<string>,
-  workspaceId: string,
-): boolean {
+export function isWorkspaceExpanded(expanded: ReadonlySet<string>, workspaceId: string): boolean {
   return expanded.has(workspaceId)
 }
 
@@ -160,10 +155,7 @@ export function flattenWorkspaces(
 /**
  * Finds the workspace that contains a given session id.
  */
-export function findWorkspaceBySessionId(
-  workspaces: readonly Workspace[],
-  sessionId: string,
-): Workspace | undefined {
+export function findWorkspaceBySessionId(workspaces: readonly Workspace[], sessionId: string): Workspace | undefined {
   return workspaces.find((ws) => ws.sessions.some((s) => s.id === sessionId))
 }
 

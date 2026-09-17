@@ -18,7 +18,7 @@
 export type Platform = "mac" | "other"
 
 export interface Chord {
-  key: string        // lowercase principal key, e.g. "p", "enter", "arrowup"
+  key: string // lowercase principal key, e.g. "p", "enter", "arrowup"
   ctrl: boolean
   meta: boolean
   shift: boolean
@@ -133,8 +133,16 @@ export function normalizeKeyName(key: string): string {
  */
 export function parseChord(raw: string, platform: Platform): Chord {
   const parts = raw.includes("+")
-    ? raw.toLowerCase().split("+").map(s => s.trim()).filter(Boolean)
-    : raw.toLowerCase().split(/[\s-]+/).map(s => s.trim()).filter(Boolean)
+    ? raw
+        .toLowerCase()
+        .split("+")
+        .map((s) => s.trim())
+        .filter(Boolean)
+    : raw
+        .toLowerCase()
+        .split(/[\s-]+/)
+        .map((s) => s.trim())
+        .filter(Boolean)
 
   let ctrl = false
   let meta = false
@@ -234,9 +242,16 @@ function prettifyKey(key: string): string {
   if (key.length === 1) return key.toUpperCase()
   // Named keys
   const map: Record<string, string> = {
-    enter: "Enter", escape: "Esc", backspace: "Backspace", tab: "Tab",
-    delete: "Delete", space: "Space",
-    arrowup: "↑", arrowdown: "↓", arrowleft: "←", arrowright: "→",
+    enter: "Enter",
+    escape: "Esc",
+    backspace: "Backspace",
+    tab: "Tab",
+    delete: "Delete",
+    space: "Space",
+    arrowup: "↑",
+    arrowdown: "↓",
+    arrowleft: "←",
+    arrowright: "→",
   }
   return map[key] ?? key.charAt(0).toUpperCase() + key.slice(1)
 }
@@ -251,11 +266,7 @@ function prettifyKey(key: string): string {
  * First match wins: bindings earlier in the array have higher priority. This
  * is intentional — it lets user overrides prepend the array and shadow defaults.
  */
-export function resolveBinding(
-  bindings: Binding[],
-  event: KeyInput,
-  platform: Platform,
-): string | undefined {
+export function resolveBinding(bindings: Binding[], event: KeyInput, platform: Platform): string | undefined {
   for (const b of bindings) {
     if (matchesChord(b.chord, event)) return b.commandId
   }
@@ -295,8 +306,8 @@ export function findConflicts(bindings: Binding[]): Conflict[] {
   }
 
   return [...groups.values()]
-    .filter(g => g.commandIds.length > 1)
-    .map(g => ({ chord: g.chord, commandIds: g.commandIds }))
+    .filter((g) => g.commandIds.length > 1)
+    .map((g) => ({ chord: g.chord, commandIds: g.commandIds }))
 }
 
 function chordKey(c: Chord): string {

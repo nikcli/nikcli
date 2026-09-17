@@ -30,7 +30,9 @@ export interface AdeVoiceHostDeps {
   project: () => Project | undefined
   runCommand: (id: string) => Promise<void>
   isRunning: (paneId: string) => boolean
-  getRunningSession: (paneId: string) => SpawnedSession | { write: (text: string) => void; kill?: () => void } | undefined
+  getRunningSession: (
+    paneId: string,
+  ) => SpawnedSession | { write: (text: string) => void; kill?: () => void } | undefined
   openFile: (path: string) => Promise<void>
   appendLine: (paneId: string, text: string, kind?: "step" | "shell" | "note") => void
   permissions: () => Record<string, PermissionRequest>
@@ -82,9 +84,7 @@ const ITALIAN_NUMBERS: Record<number, string> = {
  */
 function paneElement(paneId: string): HTMLElement | null {
   if (typeof document === "undefined") return null
-  return document.querySelector<HTMLElement>(
-    `[data-component="session-pane"][data-pane-id="${CSS.escape(paneId)}"]`
-  )
+  return document.querySelector<HTMLElement>(`[data-component="session-pane"][data-pane-id="${CSS.escape(paneId)}"]`)
 }
 
 /**
@@ -111,13 +111,14 @@ export function createAdeVoiceHost(deps: AdeVoiceHostDeps): VoiceHost {
     return warm
   }
   const voiceAgent = () =>
-    (agent ??= Promise.all([import("../bots/turn"), import("../bots/warm")]).then(([{ runTurn }, { createWarmClaude }]) =>
-      createVoiceAgent({
-        runTurn,
-        warm: warmClaude(createWarmClaude()),
-        statuses: () => deps.agentAvailability?.(),
-        cwd: () => deps.project()?.root,
-      }),
+    (agent ??= Promise.all([import("../bots/turn"), import("../bots/warm")]).then(
+      ([{ runTurn }, { createWarmClaude }]) =>
+        createVoiceAgent({
+          runTurn,
+          warm: warmClaude(createWarmClaude()),
+          statuses: () => deps.agentAvailability?.(),
+          cwd: () => deps.project()?.root,
+        }),
     ))
 
   return {
@@ -210,15 +211,10 @@ export function createAdeVoiceHost(deps: AdeVoiceHostDeps): VoiceHost {
       const agentId = resolveAgentId(input.agent, AGENTS)
 
       if (input.project) {
-        const target = resolveProject(
-          input.project,
-          listProjectsFrom(deps.recents?.() ?? [], deps.project()),
-        )
+        const target = resolveProject(input.project, listProjectsFrom(deps.recents?.() ?? [], deps.project()))
         if (!target.isOpen) {
           if (!deps.switchProject) {
-            throw new Error(
-              `Non posso passare al progetto «${target.name}» da qui: aprilo tu e ripeti.`,
-            )
+            throw new Error(`Non posso passare al progetto «${target.name}» da qui: aprilo tu e ripeti.`)
           }
           // Awaited, because the new session's working directory is whatever
           // project is open when the process spawns.
@@ -311,7 +307,9 @@ export function createAdeVoiceHost(deps: AdeVoiceHostDeps): VoiceHost {
         const hits = findByName(result.files, query, 40)
         return hits.map((hit) => ({ path: hit.path }))
       } catch (error) {
-        throw new Error(`non riesco a leggere i file del progetto (${error instanceof Error ? error.message : String(error)})`)
+        throw new Error(
+          `non riesco a leggere i file del progetto (${error instanceof Error ? error.message : String(error)})`,
+        )
       }
     },
 
@@ -424,15 +422,12 @@ export function createAdeVoiceHost(deps: AdeVoiceHostDeps): VoiceHost {
       const trimmed = asOneLine(text).trim()
       if (trimmed.length === 0) return
 
-      const field = paneElement(paneId)?.querySelector<HTMLTextAreaElement>(
-        '[data-slot="pane-prompt"] textarea'
-      )
+      const field = paneElement(paneId)?.querySelector<HTMLTextAreaElement>('[data-slot="pane-prompt"] textarea')
 
       if (field && !field.disabled) {
         const existing = field.value
-        field.value = existing.length > 0 && !existing.endsWith(" ")
-          ? `${existing} ${trimmed}`
-          : `${existing}${trimmed}`
+        field.value =
+          existing.length > 0 && !existing.endsWith(" ") ? `${existing} ${trimmed}` : `${existing}${trimmed}`
         field.dispatchEvent(new Event("input", { bubbles: true }))
         field.focus()
         return
@@ -443,7 +438,7 @@ export function createAdeVoiceHost(deps: AdeVoiceHostDeps): VoiceHost {
         throw new Error(
           field
             ? "Il pannello selezionato non ha un processo in ascolto."
-            : "Il pannello selezionato non ha dove ricevere il testo."
+            : "Il pannello selezionato non ha dove ricevere il testo.",
         )
       }
       // A trailing space, not a carriage return: the next dictated phrase must
@@ -468,9 +463,7 @@ export function createAdeVoiceHost(deps: AdeVoiceHostDeps): VoiceHost {
       )
       const sessionPanes = panes.filter((p) => sessionIds.has(p.id))
       const totalSessions = sessionPanes.length
-      const workingSessions = sessionPanes.filter(
-        (p) => p.status === "working" || p.status === "provisioning",
-      ).length
+      const workingSessions = sessionPanes.filter((p) => p.status === "working" || p.status === "provisioning").length
       const waitingSessions = sessionPanes.filter((p) => p.status === "waiting").length
       const doneSessions = sessionPanes.filter((p) => p.status === "done").length
       const errorSessions = sessionPanes.filter((p) => p.status === "error").length
@@ -513,9 +506,7 @@ export function createAdeVoiceHost(deps: AdeVoiceHostDeps): VoiceHost {
           details.push(w)
         }
         if (errorSessions > 0) {
-          details.push(
-            `${errorSessions === 1 ? "una" : (ITALIAN_NUMBERS[errorSessions] ?? errorSessions)} in errore`,
-          )
+          details.push(`${errorSessions === 1 ? "una" : (ITALIAN_NUMBERS[errorSessions] ?? errorSessions)} in errore`)
         }
         const detailsStr = details.length > 0 ? `: ${details.join(", ")}.` : "."
         spokenSummary = `Ci sono ${countWord} sessioni${detailsStr}`

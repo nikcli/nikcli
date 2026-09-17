@@ -39,7 +39,9 @@ export interface TurnInput {
   readonly onExit: (code: number | null) => void
 }
 
-export type TurnStart = { readonly ok: true; readonly handle: TurnHandle } | { readonly ok: false; readonly problem: string }
+export type TurnStart =
+  | { readonly ok: true; readonly handle: TurnHandle }
+  | { readonly ok: false; readonly problem: string }
 
 export async function startTurn(input: TurnInput): Promise<TurnStart> {
   const host = await getHost()

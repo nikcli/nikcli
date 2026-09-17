@@ -86,7 +86,9 @@
   border: 2px solid currentColor;
   pointer-events: none;
   opacity: 0.5;
-  transition: transform var(--ade-dur-fast) var(--ade-ease), opacity var(--ade-dur-fast) var(--ade-ease);
+  transition:
+    transform var(--ade-dur-fast) var(--ade-ease),
+    opacity var(--ade-dur-fast) var(--ade-ease);
 }
 
 [data-component="voice-button"][data-status="listening"] [data-slot="mic-ring"] {
@@ -102,7 +104,8 @@
 }
 
 @keyframes ade-voice-ring-pulse {
-  0%, 100% {
+  0%,
+  100% {
     opacity: 0.3;
   }
   50% {
@@ -150,8 +153,12 @@
 }
 
 @keyframes ade-voice-fade-in {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
 }
 
 @keyframes ade-voice-scale-in {
@@ -233,7 +240,9 @@
   background: transparent;
   color: var(--ade-text-weak);
   cursor: pointer;
-  transition: background var(--ade-dur-fast) var(--ade-ease), color var(--ade-dur-fast) var(--ade-ease);
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease);
 }
 
 [data-component="voice-overlay"] [data-slot="close-btn"]:hover {

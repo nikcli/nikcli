@@ -173,7 +173,13 @@ export function SessionGrid(props: SessionGridProps) {
     const current = props.panes[index]
     const pane = props.panes[neighbour(layout().placements, index, direction)]
     if (!current || !pane) return
-    props.onMove(swapTiles(props.panes.map((p) => p.id), current.id, pane.id))
+    props.onMove(
+      swapTiles(
+        props.panes.map((p) => p.id),
+        current.id,
+        pane.id,
+      ),
+    )
   }
 
   onMount(() => {

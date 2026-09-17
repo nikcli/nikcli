@@ -24,26 +24,55 @@ function event(type: string, extra: Record<string, unknown>): string {
 describe("runArgs", () => {
   test("names the agent, asks for json, and puts the message after --", () => {
     expect(runArgs({ identifier: "revisore", message: "ciao" })).toEqual([
-      "run", "--agent", "revisore", "--format", "json", "--", "ciao",
+      "run",
+      "--agent",
+      "revisore",
+      "--format",
+      "json",
+      "--",
+      "ciao",
     ])
   })
 
   test("continues the session and pins model and effort when known", () => {
     expect(
-      runArgs({ identifier: "revisore", message: "-x", sessionId: "ses_1", model: "anthropic/claude-sonnet-5", effort: "high" }),
+      runArgs({
+        identifier: "revisore",
+        message: "-x",
+        sessionId: "ses_1",
+        model: "anthropic/claude-sonnet-5",
+        effort: "high",
+      }),
     ).toEqual([
-      "run", "--agent", "revisore", "--format", "json",
-      "--model", "anthropic/claude-sonnet-5", "--variant", "high", "--session", "ses_1",
-      "--", "-x",
+      "run",
+      "--agent",
+      "revisore",
+      "--format",
+      "json",
+      "--model",
+      "anthropic/claude-sonnet-5",
+      "--variant",
+      "high",
+      "--session",
+      "ses_1",
+      "--",
+      "-x",
     ])
   })
 })
 
 describe("applyLine", () => {
   test("a text event becomes the bot's message and records the session", () => {
-    const talk = applyLine(sendMessage(emptyTalk(), "ciao", T0), event("text", { part: { type: "text", text: "Ciao a te." } }), T0)
+    const talk = applyLine(
+      sendMessage(emptyTalk(), "ciao", T0),
+      event("text", { part: { type: "text", text: "Ciao a te." } }),
+      T0,
+    )
     expect(talk.sessionId).toBe("ses_abc")
-    expect(talk.messages.map((m) => [m.role, m.text])).toEqual([["user", "ciao"], ["bot", "Ciao a te."]])
+    expect(talk.messages.map((m) => [m.role, m.text])).toEqual([
+      ["user", "ciao"],
+      ["bot", "Ciao a te."],
+    ])
     expect(talk.status).toBe("working")
   })
 
@@ -61,7 +90,11 @@ describe("applyLine", () => {
   })
 
   test("a tool with no title shows its input, and one with neither shows its name", () => {
-    const withInput = applyLine(emptyTalk(), event("tool_use", { part: { tool: "read", state: { input: { path: "a.ts" } } } }), T0)
+    const withInput = applyLine(
+      emptyTalk(),
+      event("tool_use", { part: { tool: "read", state: { input: { path: "a.ts" } } } }),
+      T0,
+    )
     expect(withInput.messages.at(-1)?.text).toBe('{"path":"a.ts"}')
     const bare = applyLine(emptyTalk(), event("tool_use", { part: { tool: "glob", state: { input: {} } } }), T0)
     expect(bare.messages.at(-1)?.text).toBe("glob")
@@ -70,7 +103,9 @@ describe("applyLine", () => {
   test("step_finish accumulates tokens across nested records and cost", () => {
     const one = applyLine(
       emptyTalk(),
-      event("step_finish", { part: { tokens: { input: 100, output: 20, reasoning: 0, cache: { read: 30, write: 0 } }, cost: 0.01 } }),
+      event("step_finish", {
+        part: { tokens: { input: 100, output: 20, reasoning: 0, cache: { read: 30, write: 0 } }, cost: 0.01 },
+      }),
       T0,
     )
     const two = applyLine(one, event("step_finish", { part: { tokens: { input: 50, output: 5 }, cost: 0.005 } }), T0)
@@ -79,7 +114,11 @@ describe("applyLine", () => {
   })
 
   test("an error event ends the turn as an error with its message", () => {
-    const talk = applyLine(emptyTalk(), event("error", { error: { name: "ProviderError", data: { message: "chiave scaduta" } } }), T0)
+    const talk = applyLine(
+      emptyTalk(),
+      event("error", { error: { name: "ProviderError", data: { message: "chiave scaduta" } } }),
+      T0,
+    )
     expect(talk.status).toBe("error")
     expect(talk.messages.at(-1)).toMatchObject({ role: "error", text: "chiave scaduta" })
   })
@@ -101,7 +140,9 @@ describe("applyLine", () => {
 
   test("an event cut into rows by the pty is glued back together", () => {
     // ConPTY re-renders at the terminal's width: one event, three rows.
-    const whole = event("text", { part: { type: "text", text: "una risposta abbastanza lunga da essere spezzata in più righe dal terminale" } })
+    const whole = event("text", {
+      part: { type: "text", text: "una risposta abbastanza lunga da essere spezzata in più righe dal terminale" },
+    })
     const rows = [whole.slice(0, 60), whole.slice(60, 120), whole.slice(120)]
     let talk = emptyTalk()
     for (const row of rows) talk = applyLine(talk, row, T0)
@@ -162,7 +203,11 @@ describe("applyExit", () => {
   })
 
   test("a turn ended by the plan's limit says nothing will retry it, once", () => {
-    const limited = applyLine(sendMessage(emptyTalk(), "x", T0), event("error", { error: "Claude AI usage limit reached" }), T0)
+    const limited = applyLine(
+      sendMessage(emptyTalk(), "x", T0),
+      event("error", { error: "Claude AI usage limit reached" }),
+      T0,
+    )
     const ended = applyExit(limited, 1, T0 + 1, "Claude Code")
     expect(ended.messages.at(-1)?.text).toContain("ADE non riprova")
     expect(applyExit(ended, 1, T0 + 2, "Claude Code").messages).toHaveLength(ended.messages.length)
@@ -197,7 +242,10 @@ describe("formatWhen", () => {
 describe("mentionIn", () => {
   const bots = ["revisore", "tester"]
   test("finds a bot named after @ and returns the text without it", () => {
-    expect(mentionIn("@tester confermi con un test?", bots)).toEqual({ identifier: "tester", rest: "confermi con un test?" })
+    expect(mentionIn("@tester confermi con un test?", bots)).toEqual({
+      identifier: "tester",
+      rest: "confermi con un test?",
+    })
     expect(mentionIn("guarda tu @Revisore", bots)).toEqual({ identifier: "revisore", rest: "guarda tu" })
   })
   test("ignores names that are not bots and @ inside words", () => {

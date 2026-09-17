@@ -128,9 +128,8 @@ function hasWebGL(): boolean {
   try {
     if (!window.WebGLRenderingContext) return false
     const testCanvas = document.createElement("canvas")
-    const gl = (testCanvas.getContext("webgl") || testCanvas.getContext("experimental-webgl")) as
-      | WebGLRenderingContext
-      | null
+    const gl = (testCanvas.getContext("webgl") ||
+      testCanvas.getContext("experimental-webgl")) as WebGLRenderingContext | null
     if (!gl) return false
     gl.getExtension("WEBGL_lose_context")?.loseContext()
     return true
@@ -140,10 +139,7 @@ function hasWebGL(): boolean {
 }
 
 /** Builds the scene and runs it. Resolves to the function that undoes all of it. */
-async function startScene(
-  container: HTMLDivElement,
-  asciiLayer: HTMLPreElement
-): Promise<(() => void) | undefined> {
+async function startScene(container: HTMLDivElement, asciiLayer: HTMLPreElement): Promise<(() => void) | undefined> {
   let three: typeof THREE
   try {
     three = await import("three")
@@ -180,23 +176,15 @@ async function startScene(
   const swarmTargets: THREE.Vector3[] = []
   const swarmPositions: THREE.Vector3[] = []
 
-  function sampleLine(
-    x1: number,
-    y1: number,
-    z1: number,
-    x2: number,
-    y2: number,
-    z2: number,
-    count: number
-  ) {
+  function sampleLine(x1: number, y1: number, z1: number, x2: number, y2: number, z2: number, count: number) {
     for (let i = 0; i < count; i++) {
       const t = i / count
       swarmTargets.push(
         new three.Vector3(
           x1 + (x2 - x1) * t + (Math.random() - 0.5) * 0.25,
           y1 + (y2 - y1) * t + (Math.random() - 0.5) * 0.25,
-          z1 + (z2 - z1) * t + (Math.random() - 0.5) * 0.4
-        )
+          z1 + (z2 - z1) * t + (Math.random() - 0.5) * 0.4,
+        ),
       )
     }
   }

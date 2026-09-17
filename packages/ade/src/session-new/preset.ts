@@ -25,27 +25,43 @@ export interface Preset {
 export const PRESETS: Preset[] = [
   {
     id: "solo",
-    get label() { return t("preset.solo") },
+    get label() {
+      return t("preset.solo")
+    },
     sessions: 1,
-    get description() { return t("preset.solo.desc") },
+    get description() {
+      return t("preset.solo.desc")
+    },
   },
   {
     id: "pair",
-    get label() { return t("preset.pair") },
+    get label() {
+      return t("preset.pair")
+    },
     sessions: 2,
-    get description() { return t("preset.pair.desc") },
+    get description() {
+      return t("preset.pair.desc")
+    },
   },
   {
     id: "workbench",
-    get label() { return t("preset.workbench") },
+    get label() {
+      return t("preset.workbench")
+    },
     sessions: 2,
-    get description() { return t("preset.workbench.desc") },
+    get description() {
+      return t("preset.workbench.desc")
+    },
   },
   {
     id: "swarm",
-    get label() { return t("preset.swarm") },
+    get label() {
+      return t("preset.swarm")
+    },
     sessions: 4,
-    get description() { return t("preset.swarm.desc") },
+    get description() {
+      return t("preset.swarm.desc")
+    },
   },
 ]
 

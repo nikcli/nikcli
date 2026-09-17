@@ -21,22 +21,22 @@ describe("groupHits", () => {
       { command: { id: "4", title: "D", group: "G3" }, score: 0, titleRanges: [], groupRanges: [] },
       { command: { id: "5", title: "E", group: "G2" }, score: 0, titleRanges: [], groupRanges: [] },
     ]
-    
+
     const groups = groupHits(hits)
-    
+
     expect(groups).toHaveLength(3)
-    
+
     expect(groups[0].name).toBe("G1")
-    expect(groups[0].hits.map(h => h.hit.command.id)).toEqual(["1", "3"])
-    expect(groups[0].hits.map(h => h.index)).toEqual([0, 2])
-    
+    expect(groups[0].hits.map((h) => h.hit.command.id)).toEqual(["1", "3"])
+    expect(groups[0].hits.map((h) => h.index)).toEqual([0, 2])
+
     expect(groups[1].name).toBe("G2")
-    expect(groups[1].hits.map(h => h.hit.command.id)).toEqual(["2", "5"])
-    expect(groups[1].hits.map(h => h.index)).toEqual([1, 4])
-    
+    expect(groups[1].hits.map((h) => h.hit.command.id)).toEqual(["2", "5"])
+    expect(groups[1].hits.map((h) => h.index)).toEqual([1, 4])
+
     expect(groups[2].name).toBe("G3")
-    expect(groups[2].hits.map(h => h.hit.command.id)).toEqual(["4"])
-    expect(groups[2].hits.map(h => h.index)).toEqual([3])
+    expect(groups[2].hits.map((h) => h.hit.command.id)).toEqual(["4"])
+    expect(groups[2].hits.map((h) => h.index)).toEqual([3])
   })
 })
 

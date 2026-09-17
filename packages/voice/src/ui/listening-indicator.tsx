@@ -32,9 +32,7 @@ export function ListeningIndicator(props: { engine: VoiceEngine }) {
           title={current.title}
           aria-label={current.title}
           onClick={() =>
-            void (current.kind !== "paused"
-              ? props.engine.stop()
-              : props.engine.start("agent", { waitForName: true }))
+            void (current.kind !== "paused" ? props.engine.stop() : props.engine.start("agent", { waitForName: true }))
           }
         >
           <i data-slot="listening-dot" />

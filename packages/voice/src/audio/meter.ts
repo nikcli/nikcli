@@ -175,8 +175,7 @@ export function createMicMeter(options: MicMeterOptions = {}): MicMeter {
       } catch (err: any) {
         if (err.name === "NotAllowedError" || err.name === "PermissionDeniedError") {
           throw new MicPermissionDenied({
-            message:
-              t("vui.mic.denied"),
+            message: t("vui.mic.denied"),
             cause: err,
           })
         }
@@ -200,9 +199,7 @@ export function createMicMeter(options: MicMeterOptions = {}): MicMeter {
 
       if (!AudioContextClass) {
         cleanup()
-        throw new Error(
-          t("vui.mic.noAudioContext")
-        )
+        throw new Error(t("vui.mic.noAudioContext"))
       }
 
       const ctx = new AudioContextClass()

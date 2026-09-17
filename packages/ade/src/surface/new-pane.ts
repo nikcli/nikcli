@@ -36,39 +36,59 @@ export interface NewPaneItem {
 export const NEW_PANE_ITEMS: readonly NewPaneItem[] = [
   {
     commandId: "session.new",
-    get label() { return t("newPane.session") },
-    get hint() { return t("newPane.session.hint") },
+    get label() {
+      return t("newPane.session")
+    },
+    get hint() {
+      return t("newPane.session.hint")
+    },
     glyph: "session",
     primary: true,
   },
   {
     commandId: "browser.new",
     label: "Browser",
-    get hint() { return t("newPane.browser.hint") },
+    get hint() {
+      return t("newPane.browser.hint")
+    },
     glyph: "browser",
   },
   {
     commandId: "video.new",
     label: "Video",
-    get hint() { return t("newPane.video.hint") },
+    get hint() {
+      return t("newPane.video.hint")
+    },
     glyph: "video",
   },
   {
     commandId: "model.new",
-    get label() { return t("newPane.model") },
-    get hint() { return t("newPane.model.hint") },
+    get label() {
+      return t("newPane.model")
+    },
+    get hint() {
+      return t("newPane.model.hint")
+    },
     glyph: "model",
   },
   {
     commandId: "app.new",
-    get label() { return t("newPane.app") },
-    get hint() { return t("newPane.app.hint") },
+    get label() {
+      return t("newPane.app")
+    },
+    get hint() {
+      return t("newPane.app.hint")
+    },
     glyph: "app",
   },
   {
     commandId: "decisions.pane",
-    get label() { return t("newPane.decisions") },
-    get hint() { return t("newPane.decisions.hint") },
+    get label() {
+      return t("newPane.decisions")
+    },
+    get hint() {
+      return t("newPane.decisions.hint")
+    },
     glyph: "decisions",
   },
 ]

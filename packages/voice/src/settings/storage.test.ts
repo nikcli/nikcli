@@ -40,11 +40,21 @@ class MemoryStorage implements Storage {
 
 class ThrowingStorage implements Storage {
   length = 0
-  clear(): void { throw new Error("SecurityError: Access denied") }
-  getItem(): string | null { throw new Error("SecurityError: Access denied") }
-  key(): string | null { throw new Error("SecurityError: Access denied") }
-  removeItem(): void { throw new Error("SecurityError: Access denied") }
-  setItem(): void { throw new Error("QuotaExceededError") }
+  clear(): void {
+    throw new Error("SecurityError: Access denied")
+  }
+  getItem(): string | null {
+    throw new Error("SecurityError: Access denied")
+  }
+  key(): string | null {
+    throw new Error("SecurityError: Access denied")
+  }
+  removeItem(): void {
+    throw new Error("SecurityError: Access denied")
+  }
+  setItem(): void {
+    throw new Error("QuotaExceededError")
+  }
 }
 
 describe("settings/storage", () => {
@@ -63,7 +73,7 @@ describe("settings/storage", () => {
         transcriptionSend: "auto",
         language: "en",
       },
-      storage
+      storage,
     )
 
     const raw = storage.getItem(VOICE_SETTINGS_STORAGE_KEY)
@@ -83,10 +93,7 @@ describe("settings/storage", () => {
    */
   test("le scorciatoie riassegnate sopravvivono al riavvio", () => {
     const storage = new MemoryStorage()
-    saveVoiceSettings(
-      { agentChord: "mod+alt+space", transcriptionChord: "alt+shift+f9" },
-      storage
-    )
+    saveVoiceSettings({ agentChord: "mod+alt+space", transcriptionChord: "alt+shift+f9" }, storage)
 
     const reopened = loadVoiceSettings(storage)
     expect(reopened.agentChord).toBe("mod+alt+space")
@@ -98,10 +105,7 @@ describe("settings/storage", () => {
     const storage = new MemoryStorage()
     // Not written by the panel: the recorder refuses this. A hand-edited or
     // copied profile is the only way it gets here.
-    storage.setItem(
-      VOICE_SETTINGS_STORAGE_KEY,
-      JSON.stringify({ ...DEFAULT_VOICE_SETTINGS, agentChord: "k" })
-    )
+    storage.setItem(VOICE_SETTINGS_STORAGE_KEY, JSON.stringify({ ...DEFAULT_VOICE_SETTINGS, agentChord: "k" }))
 
     const loaded = loadVoiceSettings(storage)
     expect(loaded.agentChord).toBe(DEFAULT_VOICE_SETTINGS.agentChord)
@@ -115,9 +119,7 @@ describe("settings/storage", () => {
     const loaded = loadVoiceSettings(throwingStore)
     expect(loaded.mode).toBe("agent")
 
-    expect(() =>
-      saveVoiceSettings({ mode: "transcription" }, throwingStore)
-    ).not.toThrow()
+    expect(() => saveVoiceSettings({ mode: "transcription" }, throwingStore)).not.toThrow()
     const saved = saveVoiceSettings({ mode: "transcription" }, throwingStore)
     expect(saved.mode).toBe("transcription")
     expect(saved.corrections.length).toBeGreaterThan(0)
@@ -251,7 +253,10 @@ describe("0.7.0: a profile saved on the wake word", () => {
   })
   test("is written back on the shortcut, and told only the first time", () => {
     const store = new MemoryStorage()
-    store.setItem("voice.settings", JSON.stringify({ version: 3, activation: "wake-word", alwaysListen: true, mode: "agent" }))
+    store.setItem(
+      "voice.settings",
+      JSON.stringify({ version: 3, activation: "wake-word", alwaysListen: true, mode: "agent" }),
+    )
     const first = loadVoiceSettings(store)
     expect(first.settings.activation).toBe("push-to-talk")
     expect(first.migrations).toEqual(["shortcut-only"])
@@ -263,7 +268,10 @@ describe("0.7.0: a profile saved on the wake word", () => {
 describe("after 0.7.0: a profile saved on the shortcut", () => {
   test("is written back listening for the name, and told only the first time", () => {
     const store = new MemoryStorage()
-    store.setItem("voice.settings", JSON.stringify({ version: 5, activation: "push-to-talk", alwaysListen: false, mode: "agent" }))
+    store.setItem(
+      "voice.settings",
+      JSON.stringify({ version: 5, activation: "push-to-talk", alwaysListen: false, mode: "agent" }),
+    )
     const first = loadVoiceSettings(store)
     expect(first.settings.activation).toBe("wake-word")
     expect(first.settings.alwaysListen).toBe(true)

@@ -15,43 +15,17 @@
  */
 
 // Bridge and host contract
-export type {
-  AdeView,
-  PaneStatus,
-  PaneSummary,
-  VoiceHost,
-  VoiceStateSnapshot,
-} from "./bridge/host"
+export type { AdeView, PaneStatus, PaneSummary, VoiceHost, VoiceStateSnapshot } from "./bridge/host"
 
 // The agent console's record of the session
-export {
-  appendEntry,
-  groupIntoTurns,
-  MAX_AGENT_ENTRIES,
-  type AgentEntry,
-  type AgentTurn,
-} from "./agent/log"
+export { appendEntry, groupIntoTurns, MAX_AGENT_ENTRIES, type AgentEntry, type AgentTurn } from "./agent/log"
 
-export {
-  dispatch,
-  resolveTargetPane,
-  type DispatchContext,
-  type DispatchOutcome,
-} from "./bridge/dispatch"
+export { dispatch, resolveTargetPane, type DispatchContext, type DispatchOutcome } from "./bridge/dispatch"
 
 // Intent recognition and parsing
-export {
-  VOCABULARY,
-  type VoiceIntentSpec,
-  type VoiceSlotName,
-} from "./intent/vocabulary"
+export { VOCABULARY, type VoiceIntentSpec, type VoiceSlotName } from "./intent/vocabulary"
 
-export {
-  normalizeAccents,
-  normalizeUtterance,
-  stripFillers,
-  wordsToNumbers,
-} from "./intent/normalize"
+export { normalizeAccents, normalizeUtterance, stripFillers, wordsToNumbers } from "./intent/normalize"
 
 export {
   AMBIGUITY_MARGIN,
@@ -87,10 +61,7 @@ export {
   type TranscriptEvent,
 } from "./asr/transcriber"
 
-export {
-  createFakeTranscriber,
-  type FakeTranscriber,
-} from "./asr/fake"
+export { createFakeTranscriber, type FakeTranscriber } from "./asr/fake"
 
 // Audio level and silence detection
 export {
@@ -106,12 +77,7 @@ export {
   type SpeechState,
 } from "./audio/level"
 
-export {
-  createMicMeter,
-  type MicLevelCallback,
-  type MicMeter,
-  type MicMeterOptions,
-} from "./audio/meter"
+export { createMicMeter, type MicLevelCallback, type MicMeter, type MicMeterOptions } from "./audio/meter"
 
 // Text to speech (TTS)
 export {
@@ -149,17 +115,9 @@ export {
 } from "./ui/agent-orb-state"
 
 // Voice orchestration engine
-export {
-  createVoiceEngine,
-  holdsToTalk,
-  type VoiceEngine,
-  type VoiceEngineOptions,
-} from "./engine"
+export { createVoiceEngine, holdsToTalk, type VoiceEngine, type VoiceEngineOptions } from "./engine"
 
 // Solid UI components
-
-
-
 
 // Multi-engine microphone capture and audio pipeline
 export {
@@ -336,10 +294,7 @@ export {
   type LanguageOption,
 } from "./settings/languages"
 
-export {
-  matchesWakeWord,
-  type WakeWordMatch,
-} from "./settings/wake-word"
+export { matchesWakeWord, type WakeWordMatch } from "./settings/wake-word"
 
 export {
   VOICE_COMMAND_AGENT,
@@ -354,6 +309,3 @@ export {
   type ChordRisk,
   type ChordRiskLevel,
 } from "./settings/shortcuts"
-
-
-

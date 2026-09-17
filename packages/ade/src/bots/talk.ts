@@ -145,7 +145,12 @@ interface RunEvent {
     readonly type?: string
     readonly text?: string
     readonly tool?: string
-    readonly state?: { readonly title?: string; readonly output?: string; readonly input?: unknown; readonly status?: string }
+    readonly state?: {
+      readonly title?: string
+      readonly output?: string
+      readonly input?: unknown
+      readonly status?: string
+    }
     readonly tokens?: unknown
     readonly cost?: unknown
   }
@@ -191,10 +196,16 @@ const PERMISSION_RE = /Permission required:\s*([^\s(]+)\s*\(([^)]*)\)/
  * warning, the frame of the menu after the question.
  */
 export function applyLine(talk: Talk, line: string, at: number): Talk {
-  return applyJsonLine(talk, line, at, (current, parsed, when) => {
-    if (typeof (parsed as unknown as RunEvent).type !== "string") return current
-    return applyEvent(current, parsed as unknown as RunEvent, when)
-  }, noticePermission)
+  return applyJsonLine(
+    talk,
+    line,
+    at,
+    (current, parsed, when) => {
+      if (typeof (parsed as unknown as RunEvent).type !== "string") return current
+      return applyEvent(current, parsed as unknown as RunEvent, when)
+    },
+    noticePermission,
+  )
 }
 
 /**
@@ -252,7 +263,13 @@ function parseObject(line: string): Record<string, unknown> | undefined {
 /** A message put on the thread, with an id of its kind. Used by the runners' adapters. */
 export function appendMessage(
   talk: Talk,
-  message: { readonly role: TalkRole; readonly text: string; readonly tool?: string; readonly output?: string; readonly id?: string },
+  message: {
+    readonly role: TalkRole
+    readonly text: string
+    readonly tool?: string
+    readonly output?: string
+    readonly id?: string
+  },
   at: number,
 ): Talk {
   const prefix = message.role === "user" ? "u" : message.role === "bot" ? "b" : message.role === "tool" ? "t" : "e"

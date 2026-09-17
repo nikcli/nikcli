@@ -29,10 +29,7 @@ function io(files: Record<string, string>): DiscoveryIO {
 describe("parseDeclaredPlugins", () => {
   test("reads the same `plugin` array the TUI reads, in both spec forms", () => {
     const text = JSON.stringify({ plugin: ["file:///a/b", ["file:///c", { token: 1 }]] })
-    expect(parseDeclaredPlugins(text)).toEqual([
-      { spec: "file:///a/b" },
-      { spec: "file:///c", options: { token: 1 } },
-    ])
+    expect(parseDeclaredPlugins(text)).toEqual([{ spec: "file:///a/b" }, { spec: "file:///c", options: { token: 1 } }])
   })
 
   /*

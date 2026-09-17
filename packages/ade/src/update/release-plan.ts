@@ -13,7 +13,19 @@
 
 import { parseVersion } from "./release"
 
-export const COMMIT_TYPES = ["feat", "fix", "perf", "revert", "refactor", "docs", "test", "chore", "build", "ci", "style"] as const
+export const COMMIT_TYPES = [
+  "feat",
+  "fix",
+  "perf",
+  "revert",
+  "refactor",
+  "docs",
+  "test",
+  "chore",
+  "build",
+  "ci",
+  "style",
+] as const
 export type CommitType = (typeof COMMIT_TYPES)[number]
 
 /** Written anywhere in a commit message, keeps that commit from causing a release. */
@@ -97,7 +109,11 @@ export function planRelease(last: string | undefined, commits: readonly Commit[]
   const [major, minor, patch] = (last && parseVersion(last)) || [0, 0, 0]
   const effective: Bump = bump === "major" && major === 0 ? "minor" : bump
   const next =
-    effective === "major" ? [major + 1, 0, 0] : effective === "minor" ? [major, minor + 1, 0] : [major, minor, patch + 1]
+    effective === "major"
+      ? [major + 1, 0, 0]
+      : effective === "minor"
+        ? [major, minor + 1, 0]
+        : [major, minor, patch + 1]
 
   return { version: next.join("."), bump, notes: releaseNotes(commits) }
 }

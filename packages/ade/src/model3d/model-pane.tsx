@@ -55,9 +55,24 @@ export interface ModelPaneProps {
 
 const VIEW_BUTTONS: { preset: ViewPreset; readonly label: string }[] = [
   { preset: "iso", label: "Iso" },
-  { preset: "front", get label() { return t("model.view.front") } },
-  { preset: "right", get label() { return t("model.view.side") } },
-  { preset: "top", get label() { return t("model.view.top") } },
+  {
+    preset: "front",
+    get label() {
+      return t("model.view.front")
+    },
+  },
+  {
+    preset: "right",
+    get label() {
+      return t("model.view.side")
+    },
+  },
+  {
+    preset: "top",
+    get label() {
+      return t("model.view.top")
+    },
+  },
 ]
 
 export function ModelPane(props: ModelPaneProps) {
@@ -134,7 +149,12 @@ export function ModelPane(props: ModelPaneProps) {
     const before = await stampNow(expected)
     try {
       const scene = await ensureViewer()
-      const result = await scene.load(path, (file) => read(file, MAX_MODEL_BYTES), path !== framed, () => mine === generation)
+      const result = await scene.load(
+        path,
+        (file) => read(file, MAX_MODEL_BYTES),
+        path !== framed,
+        () => mine === generation,
+      )
       if (mine !== generation) return
       framed = path
       setStats(result.stats)
@@ -210,7 +230,11 @@ export function ModelPane(props: ModelPaneProps) {
 
     /* The stage's colours are the theme's; a switch repaints the scene. */
     const themeObserver = new MutationObserver(() => viewer?.syncTheme())
-    themeObserver.observe(document.documentElement, { attributes: true, subtree: true, attributeFilter: ["data-theme"] })
+    themeObserver.observe(document.documentElement, {
+      attributes: true,
+      subtree: true,
+      attributeFilter: ["data-theme"],
+    })
     const scheme = window.matchMedia?.("(prefers-color-scheme: dark)")
     const onScheme = () => viewer?.syncTheme()
     scheme?.addEventListener("change", onScheme)
@@ -271,7 +295,15 @@ export function ModelPane(props: ModelPaneProps) {
     >
       <header data-slot="pane-header">
         <span data-slot="pane-identity" aria-hidden="true">
-          <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+          <svg
+            viewBox="0 0 16 16"
+            width="12"
+            height="12"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.2"
+            stroke-linejoin="round"
+          >
             <path d="M8 1.8l5.6 3.1v6.2L8 14.2l-5.6-3.1V4.9z" />
             <path d="M2.4 4.9L8 8l5.6-3.1M8 8v6.2" />
           </svg>
@@ -280,14 +312,31 @@ export function ModelPane(props: ModelPaneProps) {
           {props.path ? (props.path.split(/[\\/]/).pop() ?? props.title) : props.title}
         </h2>
         <div data-slot="pane-actions">
-          <button type="button" data-slot="pane-action" onClick={() => props.onExpand?.()} aria-label={t("pane.expand")}>
+          <button
+            type="button"
+            data-slot="pane-action"
+            onClick={() => props.onExpand?.()}
+            aria-label={t("pane.expand")}
+          >
             <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
-              <path d="M1 4.5V1h3.5M11 7.5V11H7.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+              <path
+                d="M1 4.5V1h3.5M11 7.5V11H7.5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.2"
+                stroke-linecap="round"
+              />
             </svg>
           </button>
           <button type="button" data-slot="pane-action" onClick={() => props.onClose?.()} aria-label={t("pane.close")}>
             <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
-              <path d="M2.5 2.5l7 7M9.5 2.5l-7 7" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+              <path
+                d="M2.5 2.5l7 7M9.5 2.5l-7 7"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.2"
+                stroke-linecap="round"
+              />
             </svg>
           </button>
         </div>
@@ -338,7 +387,9 @@ export function ModelPane(props: ModelPaneProps) {
             )}
           </For>
           <span data-slot="model-stats" title={describeModelState(state())}>
-            {stats() ? t("model.triangles", stats()!.triangles.toLocaleString(locale() === "en" ? "en-US" : "it-IT")) : ""}
+            {stats()
+              ? t("model.triangles", stats()!.triangles.toLocaleString(locale() === "en" ? "en-US" : "it-IT"))
+              : ""}
           </span>
           <button
             type="button"
@@ -347,7 +398,15 @@ export function ModelPane(props: ModelPaneProps) {
             aria-label={t("model.reload")}
             title={t("model.reload")}
           >
-            <svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round">
+            <svg
+              viewBox="0 0 12 12"
+              width="12"
+              height="12"
+              fill="none"
+              stroke="currentColor"
+              stroke-width="1.2"
+              stroke-linecap="round"
+            >
               <path d="M10 6a4 4 0 1 1-1.2-2.8M10 1.5v2.2H7.8" />
             </svg>
           </button>

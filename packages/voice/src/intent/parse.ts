@@ -28,7 +28,7 @@ export const MATCH_CONFIDENCE_THRESHOLD = 0.58
  * both are above threshold, the parse result is classified as 'ambiguous' so
  * the dialogue manager can ask the user for clarification.
  */
-export const AMBIGUITY_MARGIN = 0.10
+export const AMBIGUITY_MARGIN = 0.1
 
 /**
  * Added to intents that accept a `url` slot when the utterance carried one.
@@ -86,16 +86,12 @@ interface ExtractedSlots {
   cleanedText: string
 }
 
-function extractSlotsFromUtterance(
-  normalized: string,
-  ctx: ParseContext
-): ExtractedSlots {
+function extractSlotsFromUtterance(normalized: string, ctx: ParseContext): ExtractedSlots {
   const slots: Record<string, any> = {}
   let cleaned = normalized
 
   // 1. Columns extraction: e.g. "imposta 3 colonne", "colonne 4"
-  const colMatch = cleaned.match(/\b(?:a|su)?\s*(\d+)\s+colonn[ea]\b/i) ||
-                    cleaned.match(/\bcolonn[ea]\s+(\d+)\b/i)
+  const colMatch = cleaned.match(/\b(?:a|su)?\s*(\d+)\s+colonn[ea]\b/i) || cleaned.match(/\bcolonn[ea]\s+(\d+)\b/i)
   if (colMatch) {
     slots.columns = parseInt(colMatch[1], 10)
     cleaned = cleaned.replace(colMatch[0], "colonne").trim()
@@ -162,7 +158,7 @@ function extractSlotsFromUtterance(
 
   // 6. Dictation and prompt text extraction: e.g. "invia all'agente crea un componente"
   const promptMatch = cleaned.match(
-    /\b(invia prompt|invia messaggio|detta compito|invia all agente|scrivi al pannello|manda compito|invia istruzione)\s+(.+)$/i
+    /\b(invia prompt|invia messaggio|detta compito|invia all agente|scrivi al pannello|manda compito|invia istruzione)\s+(.+)$/i,
   )
   if (promptMatch) {
     slots.text = promptMatch[2].trim()
@@ -171,7 +167,7 @@ function extractSlotsFromUtterance(
 
   // 7. Search query extraction: e.g. "cerca nel progetto parseUtterance"
   const searchMatch = cleaned.match(
-    /\b(cerca nel progetto|trova nel progetto|cerca (?:(?:il|un|i|dei|del|lo)\s)?file|ricerca nel progetto|trova simbolo)\s+(.+)$/i
+    /\b(cerca nel progetto|trova nel progetto|cerca (?:(?:il|un|i|dei|del|lo)\s)?file|ricerca nel progetto|trova simbolo)\s+(.+)$/i,
   )
   if (searchMatch) {
     slots.text = searchMatch[2].trim()
@@ -226,11 +222,38 @@ function extractSlotsFromUtterance(
  * that are largely made of these words — keep working.
  */
 const FILLER_TOKENS = new Set([
-  "il", "lo", "la", "i", "gli", "le", "un", "uno", "una",
-  "al", "allo", "alla", "ai", "agli", "alle",
-  "del", "dello", "della", "dei", "degli", "delle",
-  "questo", "questa", "quel", "quello", "quella",
-  "mi", "ti", "ci", "si", "che", "e",
+  "il",
+  "lo",
+  "la",
+  "i",
+  "gli",
+  "le",
+  "un",
+  "uno",
+  "una",
+  "al",
+  "allo",
+  "alla",
+  "ai",
+  "agli",
+  "alle",
+  "del",
+  "dello",
+  "della",
+  "dei",
+  "degli",
+  "delle",
+  "questo",
+  "questa",
+  "quel",
+  "quello",
+  "quella",
+  "mi",
+  "ti",
+  "ci",
+  "si",
+  "che",
+  "e",
 ])
 
 /** Cost applied to each content word of the utterance the phrase does not explain. */
@@ -247,10 +270,26 @@ const MIN_PREFIX_LEN = 4
  * says. These are too short for the prefix rule to catch.
  */
 const PREPOSITION_FORMS: Record<string, string> = {
-  sul: "su", sullo: "su", sulla: "su", sui: "su", sugli: "su", sulle: "su",
-  nel: "in", nello: "in", nella: "in", nei: "in", negli: "in", nelle: "in",
-  dal: "da", dallo: "da", dalla: "da", dai: "da", dagli: "da", dalle: "da",
-  col: "con", coi: "con",
+  sul: "su",
+  sullo: "su",
+  sulla: "su",
+  sui: "su",
+  sugli: "su",
+  sulle: "su",
+  nel: "in",
+  nello: "in",
+  nella: "in",
+  nei: "in",
+  negli: "in",
+  nelle: "in",
+  dal: "da",
+  dallo: "da",
+  dalla: "da",
+  dai: "da",
+  dagli: "da",
+  dalle: "da",
+  col: "con",
+  coi: "con",
 }
 
 /** True when an utterance token is the phrase token, allowing for speech-recognition slips. */
@@ -448,10 +487,7 @@ export function parseUtterance(rawText: string, ctx: ParseContext = {}): ParseRe
 
   if (candidateList.length > 1) {
     const runnerUp = candidateList[1]
-    if (
-      top.confidence - runnerUp.confidence < AMBIGUITY_MARGIN &&
-      top.intent.intent !== runnerUp.intent.intent
-    ) {
+    if (top.confidence - runnerUp.confidence < AMBIGUITY_MARGIN && top.intent.intent !== runnerUp.intent.intent) {
       return {
         outcome: "ambiguous",
         intent: top.intent,

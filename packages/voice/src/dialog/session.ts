@@ -23,13 +23,7 @@ import { VOCABULARY, type VoiceIntentSpec } from "../intent/vocabulary"
 // Types
 // ---------------------------------------------------------------------------
 
-export type DialogStatus =
-  | "asleep"
-  | "idle"
-  | "listening"
-  | "confirming"
-  | "dictating"
-  | "executing"
+export type DialogStatus = "asleep" | "idle" | "listening" | "confirming" | "dictating" | "executing"
 
 export interface PendingAction {
   /** The parsed intent awaiting explicit confirmation. */
@@ -132,7 +126,7 @@ export function transition(
   state: DialogState,
   event: DialogEvent,
   now: number,
-  ctx: ParseContext = {}
+  ctx: ParseContext = {},
 ): TransitionResult {
   const effects: DialogEffect[] = []
 
@@ -173,7 +167,7 @@ export function transition(
           paneId: event.paneId,
         },
       },
-      prompt
+      prompt,
     )
   }
 
@@ -197,10 +191,7 @@ export function transition(
   // 3. State: DICTATING
   if (state.status === "dictating") {
     if (event.type === "cancel") {
-      return withSpoken(
-        { ...state, status: "idle", dictation: undefined },
-        "Dettatura annullata."
-      )
+      return withSpoken({ ...state, status: "idle", dictation: undefined }, "Dettatura annullata.")
     }
 
     if (event.type === "utterance") {
@@ -216,12 +207,12 @@ export function transition(
           })
           return withSpoken(
             { ...state, status: "idle", dictation: undefined },
-            "Dettatura completata e inviata all'agente."
+            "Dettatura completata e inviata all'agente.",
           )
         } else {
           return withSpoken(
             { ...state, status: "idle", dictation: undefined },
-            "Dettatura vuota, nessun messaggio inviato."
+            "Dettatura vuota, nessun messaggio inviato.",
           )
         }
       }
@@ -254,7 +245,7 @@ export function transition(
           pendingAction: undefined,
           timeoutAt: undefined,
         },
-        "Non ho sentito risposta: lascio stare."
+        "Non ho sentito risposta: lascio stare.",
       )
     }
 
@@ -267,7 +258,7 @@ export function transition(
           pendingAction: undefined,
           timeoutAt: undefined,
         },
-        "Va bene, lascio stare."
+        "Va bene, lascio stare.",
       )
     }
 
@@ -278,10 +269,7 @@ export function transition(
       })
 
       // Confirmation positive
-      if (
-        parsed.intent?.intent === "dialog.confirm" ||
-        parsed.intent?.intent === "permission.allow"
-      ) {
+      if (parsed.intent?.intent === "dialog.confirm" || parsed.intent?.intent === "permission.allow") {
         effects.push({ type: "cancel_timer" })
         const action = state.pendingAction!
 
@@ -298,7 +286,7 @@ export function transition(
               pendingAction: undefined,
               timeoutAt: undefined,
             },
-            "Permesso accordato."
+            "Permesso accordato.",
           )
         } else {
           effects.push({
@@ -313,16 +301,13 @@ export function transition(
               pendingAction: undefined,
               timeoutAt: undefined,
             },
-            action.intent.readback
+            action.intent.readback,
           )
         }
       }
 
       // Confirmation negative / cancellation
-      if (
-        parsed.intent?.intent === "dialog.cancel" ||
-        parsed.intent?.intent === "permission.deny"
-      ) {
+      if (parsed.intent?.intent === "dialog.cancel" || parsed.intent?.intent === "permission.deny") {
         effects.push({ type: "cancel_timer" })
         const action = state.pendingAction!
 
@@ -339,7 +324,7 @@ export function transition(
               pendingAction: undefined,
               timeoutAt: undefined,
             },
-            "Permesso negato."
+            "Permesso negato.",
           )
         } else {
           return withSpoken(
@@ -349,16 +334,13 @@ export function transition(
               pendingAction: undefined,
               timeoutAt: undefined,
             },
-            "Va bene, lascio stare."
+            "Va bene, lascio stare.",
           )
         }
       }
 
       // Unrecognized confirmation answer
-      return withSpoken(
-        state,
-        "Sì o no?"
-      )
+      return withSpoken(state, "Sì o no?")
     }
 
     return { state, effects: [] }
@@ -402,10 +384,7 @@ export function transition(
       if (parsed.outcome === "ambiguous") {
         const first = parsed.candidates[0]?.intent.readback ?? "prima opzione"
         const second = parsed.candidates[1]?.intent.readback ?? "seconda opzione"
-        return withSpoken(
-          state,
-          `Comando ambiguo. Intendi ${first.toLowerCase()} oppure ${second.toLowerCase()}?`
-        )
+        return withSpoken(state, `Comando ambiguo. Intendi ${first.toLowerCase()} oppure ${second.toLowerCase()}?`)
       }
 
       const intent = parsed.intent!
@@ -416,8 +395,7 @@ export function transition(
       }
 
       if (intent.intent === "dialog.repeat") {
-        const textToRepeat =
-          state.lastSpokenText ?? "Nessun messaggio precedente da ripetere."
+        const textToRepeat = state.lastSpokenText ?? "Nessun messaggio precedente da ripetere."
         return withSpoken(state, textToRepeat)
       }
 
@@ -433,7 +411,7 @@ export function transition(
               chunks: [],
             },
           },
-          intent.readback
+          intent.readback,
         )
       }
 
@@ -464,7 +442,7 @@ export function transition(
               isPermission: false,
             },
           },
-          prompt
+          prompt,
         )
       }
 
@@ -480,7 +458,7 @@ export function transition(
           ...state,
           status: "executing",
         },
-        intent.readback
+        intent.readback,
       )
     }
   }

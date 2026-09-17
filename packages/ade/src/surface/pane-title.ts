@@ -10,6 +10,7 @@ import type { LaunchEntry } from "../session-new/launch"
  * when the language changes, and a rename is never undone.
  */
 export function defaultPaneTitle(role: LaunchEntry["role"], index: number, agent: string): string {
-  const label = role === "reviewer" ? t("paneTitle.reviewer") : role === "shell" ? t("paneTitle.shell") : t("paneTitle.agent")
+  const label =
+    role === "reviewer" ? t("paneTitle.reviewer") : role === "shell" ? t("paneTitle.shell") : t("paneTitle.agent")
   return `${label} ${index} — ${agent}`
 }

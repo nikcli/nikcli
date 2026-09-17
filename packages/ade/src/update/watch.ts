@@ -434,9 +434,7 @@ export function checkMessage(result: CheckResult): { kind: "info" | "error"; tex
     case "current":
       return {
         kind: "info",
-        text: result.currentVersion
-          ? t("update.current", result.currentVersion)
-          : t("update.none"),
+        text: result.currentVersion ? t("update.current", result.currentVersion) : t("update.none"),
       }
     case "dev":
       return {

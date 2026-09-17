@@ -60,24 +60,24 @@ export const SWARM_3D_NODES: Swarm3DNode[] = [
   // Left vertical column
   { id: "n_l1", x: -6.5, y: -5.0, z: -0.4, char: "N", letter: "N", pulseSpeed: 2.0, pulsePhase: 0.0 },
   { id: "n_l2", x: -6.5, y: -3.0, z: -0.2, char: "#", letter: "N", pulseSpeed: 2.1, pulsePhase: 0.3 },
-  { id: "n_l3", x: -6.5, y: -1.0, z: 0.0,  char: "+", letter: "N", pulseSpeed: 2.3, pulsePhase: 0.6 },
-  { id: "n_l4", x: -6.5, y: 1.0,  z: 0.2,  char: "+", letter: "N", pulseSpeed: 2.4, pulsePhase: 0.9 },
-  { id: "n_l5", x: -6.5, y: 3.0,  z: 0.4,  char: "#", letter: "N", pulseSpeed: 2.2, pulsePhase: 1.2 },
-  { id: "n_l6", x: -6.5, y: 5.0,  z: 0.6,  char: "N", letter: "N", pulseSpeed: 1.9, pulsePhase: 1.5 },
+  { id: "n_l3", x: -6.5, y: -1.0, z: 0.0, char: "+", letter: "N", pulseSpeed: 2.3, pulsePhase: 0.6 },
+  { id: "n_l4", x: -6.5, y: 1.0, z: 0.2, char: "+", letter: "N", pulseSpeed: 2.4, pulsePhase: 0.9 },
+  { id: "n_l5", x: -6.5, y: 3.0, z: 0.4, char: "#", letter: "N", pulseSpeed: 2.2, pulsePhase: 1.2 },
+  { id: "n_l6", x: -6.5, y: 5.0, z: 0.6, char: "N", letter: "N", pulseSpeed: 1.9, pulsePhase: 1.5 },
 
   // Diagonal
-  { id: "n_d1", x: -5.7, y: 3.0,  z: 0.4,  char: "\\", letter: "N", pulseSpeed: 2.5, pulsePhase: 0.5 },
-  { id: "n_d2", x: -4.9, y: 1.0,  z: 0.2,  char: "*", letter: "N", pulseSpeed: 2.6, pulsePhase: 0.8 },
-  { id: "n_d3", x: -4.1, y: -1.0, z: 0.0,  char: "x", letter: "N", pulseSpeed: 2.7, pulsePhase: 1.1 },
+  { id: "n_d1", x: -5.7, y: 3.0, z: 0.4, char: "\\", letter: "N", pulseSpeed: 2.5, pulsePhase: 0.5 },
+  { id: "n_d2", x: -4.9, y: 1.0, z: 0.2, char: "*", letter: "N", pulseSpeed: 2.6, pulsePhase: 0.8 },
+  { id: "n_d3", x: -4.1, y: -1.0, z: 0.0, char: "x", letter: "N", pulseSpeed: 2.7, pulsePhase: 1.1 },
   { id: "n_d4", x: -3.3, y: -3.0, z: -0.2, char: "\\", letter: "N", pulseSpeed: 2.4, pulsePhase: 1.4 },
 
   // Right vertical column
   { id: "n_r1", x: -2.5, y: -5.0, z: -0.4, char: "N", letter: "N", pulseSpeed: 1.9, pulsePhase: 0.2 },
   { id: "n_r2", x: -2.5, y: -3.0, z: -0.2, char: "#", letter: "N", pulseSpeed: 2.2, pulsePhase: 0.5 },
-  { id: "n_r3", x: -2.5, y: -1.0, z: 0.0,  char: "+", letter: "N", pulseSpeed: 2.4, pulsePhase: 0.8 },
-  { id: "n_r4", x: -2.5, y: 1.0,  z: 0.2,  char: "+", letter: "N", pulseSpeed: 2.3, pulsePhase: 1.1 },
-  { id: "n_r5", x: -2.5, y: 3.0,  z: 0.4,  char: "#", letter: "N", pulseSpeed: 2.1, pulsePhase: 1.4 },
-  { id: "n_r6", x: -2.5, y: 5.0,  z: 0.6,  char: "N", letter: "N", pulseSpeed: 1.8, pulsePhase: 1.7 },
+  { id: "n_r3", x: -2.5, y: -1.0, z: 0.0, char: "+", letter: "N", pulseSpeed: 2.4, pulsePhase: 0.8 },
+  { id: "n_r4", x: -2.5, y: 1.0, z: 0.2, char: "+", letter: "N", pulseSpeed: 2.3, pulsePhase: 1.1 },
+  { id: "n_r5", x: -2.5, y: 3.0, z: 0.4, char: "#", letter: "N", pulseSpeed: 2.1, pulsePhase: 1.4 },
+  { id: "n_r6", x: -2.5, y: 5.0, z: 0.6, char: "N", letter: "N", pulseSpeed: 1.8, pulsePhase: 1.7 },
 
   // ── Letter i ────────────────────────────────────────────────────────────
   // Dot of the i (central glowing coordinator)
@@ -93,15 +93,15 @@ export const SWARM_3D_NODES: Swarm3DNode[] = [
   // Vertical stem
   { id: "k_s1", x: 2.8, y: -5.0, z: -0.4, char: "K", letter: "K", pulseSpeed: 2.0, pulsePhase: 0.1 },
   { id: "k_s2", x: 2.8, y: -3.0, z: -0.2, char: "#", letter: "K", pulseSpeed: 2.2, pulsePhase: 0.4 },
-  { id: "k_s3", x: 2.8, y: -1.0, z: 0.0,  char: "+", letter: "K", pulseSpeed: 2.5, pulsePhase: 0.7 },
-  { id: "k_s4", x: 2.8, y: 1.0,  z: 0.2,  char: "+", letter: "K", pulseSpeed: 2.6, pulsePhase: 1.0 },
-  { id: "k_s5", x: 2.8, y: 3.0,  z: 0.4,  char: "#", letter: "K", pulseSpeed: 2.2, pulsePhase: 1.3 },
-  { id: "k_s6", x: 2.8, y: 5.0,  z: 0.6,  char: "K", letter: "K", pulseSpeed: 1.8, pulsePhase: 1.6 },
+  { id: "k_s3", x: 2.8, y: -1.0, z: 0.0, char: "+", letter: "K", pulseSpeed: 2.5, pulsePhase: 0.7 },
+  { id: "k_s4", x: 2.8, y: 1.0, z: 0.2, char: "+", letter: "K", pulseSpeed: 2.6, pulsePhase: 1.0 },
+  { id: "k_s5", x: 2.8, y: 3.0, z: 0.4, char: "#", letter: "K", pulseSpeed: 2.2, pulsePhase: 1.3 },
+  { id: "k_s6", x: 2.8, y: 5.0, z: 0.6, char: "K", letter: "K", pulseSpeed: 1.8, pulsePhase: 1.6 },
 
   // Upper branch
-  { id: "k_u1", x: 4.2, y: 1.2,  z: 0.3, char: "/", letter: "K", pulseSpeed: 2.4, pulsePhase: 0.6 },
-  { id: "k_u2", x: 5.7, y: 3.1,  z: 0.5, char: "*", letter: "K", pulseSpeed: 2.5, pulsePhase: 0.9 },
-  { id: "k_u3", x: 7.2, y: 5.0,  z: 0.7, char: "K", letter: "K", pulseSpeed: 2.1, pulsePhase: 1.2 },
+  { id: "k_u1", x: 4.2, y: 1.2, z: 0.3, char: "/", letter: "K", pulseSpeed: 2.4, pulsePhase: 0.6 },
+  { id: "k_u2", x: 5.7, y: 3.1, z: 0.5, char: "*", letter: "K", pulseSpeed: 2.5, pulsePhase: 0.9 },
+  { id: "k_u3", x: 7.2, y: 5.0, z: 0.7, char: "K", letter: "K", pulseSpeed: 2.1, pulsePhase: 1.2 },
 
   // Lower branch
   { id: "k_d1", x: 4.2, y: -1.2, z: -0.1, char: "\\", letter: "K", pulseSpeed: 2.4, pulsePhase: 0.8 },
@@ -186,7 +186,7 @@ export function project3D(
   rotX: number,
   width: number,
   height: number,
-  fov = 24
+  fov = 24,
 ): { sx: number; sy: number; scale: number; depth: number } {
   const cosY = Math.cos(rotY)
   const sinY = Math.sin(rotY)

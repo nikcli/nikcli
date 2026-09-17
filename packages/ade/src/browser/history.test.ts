@@ -125,7 +125,9 @@ describe("redactUrl on the path", () => {
     expect(redactUrl("https://app.test/reset/a8f3k2m9x1")).toBe("https://app.test/")
     expect(redactUrl("https://app.test/auth/magic-link/Zx81Qm0pLr")).toBe("https://app.test/")
     expect(redactUrl("https://files.test/s/k3J9dLq0PzX8vB2nR7tY5wQ1/report.pdf?x=1")).toBe("https://files.test/")
-    expect(redactUrl("http://localhost:3000/invite/eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOjF9.c2ln")).toBe("http://localhost:3000/")
+    expect(redactUrl("http://localhost:3000/invite/eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOjF9.c2ln")).toBe(
+      "http://localhost:3000/",
+    )
   })
 
   test("ordinary paths are kept as written", () => {

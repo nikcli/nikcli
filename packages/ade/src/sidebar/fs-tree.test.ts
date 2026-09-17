@@ -19,20 +19,19 @@ describe("fs-tree", () => {
 
   it("merges children correctly", () => {
     const root = { id: "/root", name: "root", path: "/root", kind: "directory" as const }
-    const entries: DirEntry[] = [
-      { name: "file.txt", path: "/root/file.txt", is_dir: false, size: 10, modified_ms: 0 },
-    ]
+    const entries: DirEntry[] = [{ name: "file.txt", path: "/root/file.txt", is_dir: false, size: 10, modified_ms: 0 }]
     const nextRoot = mergeChildren(root, "/root", entries, false)
     expect(nextRoot.children?.length).toBe(1)
     expect(nextRoot.children?.[0].path).toBe("/root/file.txt")
   })
 
   it("merges children deeply", () => {
-    const root = { 
-      id: "/root", name: "root", path: "/root", kind: "directory" as const, 
-      children: [
-        { id: "/root/dir", name: "dir", path: "/root/dir", kind: "directory" as const }
-      ]
+    const root = {
+      id: "/root",
+      name: "root",
+      path: "/root",
+      kind: "directory" as const,
+      children: [{ id: "/root/dir", name: "dir", path: "/root/dir", kind: "directory" as const }],
     }
     const entries: DirEntry[] = [
       { name: "file.txt", path: "/root/dir/file.txt", is_dir: false, size: 10, modified_ms: 0 },
@@ -54,9 +53,7 @@ describe("fs-tree", () => {
       name: "project",
       path: "C:/project",
       kind: "directory" as const,
-      children: [
-        { id: "C:/project/src", name: "src", path: "C:/project/src", kind: "directory" as const },
-      ],
+      children: [{ id: "C:/project/src", name: "src", path: "C:/project/src", kind: "directory" as const }],
     }
 
     const entries: DirEntry[] = [

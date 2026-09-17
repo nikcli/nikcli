@@ -23,9 +23,7 @@
       "@nikcli-ai/ade/*": ["../ade/*"]
     }
   },
-  "references": [
-    { "path": "../ade" }
-  ],
+  "references": [{ "path": "../ade" }],
   "include": ["src", "package.json"],
   "exclude": ["dist", "ts-dist"]
 }

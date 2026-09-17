@@ -119,9 +119,7 @@ export function AgentConsole(props: AgentConsoleProps) {
           the grammar cannot match: without a key the assistant still works,
           it just cannot plan. That is a setup fact, not an error. */}
       <Show when={!props.canPlan}>
-        <p data-slot="agent-notice">
-          {t("agent.noPlanner")}
-        </p>
+        <p data-slot="agent-notice">{t("agent.noPlanner")}</p>
       </Show>
 
       <div data-slot="agent-scroll" ref={(el) => (scroller = el)}>
@@ -130,9 +128,7 @@ export function AgentConsole(props: AgentConsoleProps) {
           fallback={
             <div data-slot="agent-empty">
               <p data-slot="agent-empty-title">{t("agent.empty.title")}</p>
-              <p data-slot="agent-empty-body">
-                {t("agent.empty.body")}
-              </p>
+              <p data-slot="agent-empty-body">{t("agent.empty.body")}</p>
               <ul data-slot="agent-examples" lang="it">
                 <li>«avvia quattro sessioni claude su questo progetto»</li>
                 <li>«apri il pannello due»</li>
@@ -216,9 +212,7 @@ function Reply(props: { entry: Exclude<AgentEntry, { kind: "user" }> }) {
       <div data-slot="agent-plan">
         <div data-slot="agent-plan-head">
           {t("agent.plan")}
-          <span data-slot="agent-plan-count">
-            {t("agent.plan.count", entry.ok, entry.ok + entry.failed)}
-          </span>
+          <span data-slot="agent-plan-count">{t("agent.plan.count", entry.ok, entry.ok + entry.failed)}</span>
         </div>
         <ol data-slot="agent-plan-steps">
           <For each={entry.steps}>

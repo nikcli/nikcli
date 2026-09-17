@@ -70,7 +70,9 @@ describe("planResume", () => {
   test("Claude Code's transcript is looked for where Claude Code writes it", () => {
     const path = RESUME["claude-code"]!.transcript!("C:\\Users\\me", "C:\\Users\\me\\Favorites\\nikcli", "abc")
     expect(path).toBe("C:\\Users\\me\\.claude\\projects\\C--Users-me-Favorites-nikcli\\abc.jsonl")
-    expect(RESUME["claude-code"]!.transcript!("/home/me/", "/w/a.b", "x")).toBe("/home/me/.claude/projects/-w-a-b/x.jsonl")
+    expect(RESUME["claude-code"]!.transcript!("/home/me/", "/w/a.b", "x")).toBe(
+      "/home/me/.claude/projects/-w-a-b/x.jsonl",
+    )
     // Past 200 characters Claude Code hashes the name: unknown, so trusted.
     expect(RESUME["claude-code"]!.transcript!("/h", `/${"a".repeat(220)}`, "x")).toBeUndefined()
   })
@@ -86,7 +88,11 @@ describe("planResume", () => {
     expect(latest.read(text, "C:\\Users\\me\\elsewhere")).toBeUndefined()
     expect(latest.read("not json", "C:\\Users\\me")).toBeUndefined()
     expect(latest.path("C:\\Users\\me")).toBe("C:\\Users\\me\\.gemini\\antigravity-cli\\cache\\last_conversations.json")
-    expect(planResume({ agentId: "agy", resumeId: "x" })).toEqual({ kind: "resume", via: "id", args: ["--conversation", "x"] })
+    expect(planResume({ agentId: "agy", resumeId: "x" })).toEqual({
+      kind: "resume",
+      via: "id",
+      args: ["--conversation", "x"],
+    })
     // No `--session-id` for agy: a vanished conversation cannot be re-pinned.
     expect(planResume({ agentId: "agy", resumeId: "x", missing: true })).toEqual({ kind: "fresh" })
   })

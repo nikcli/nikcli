@@ -220,7 +220,12 @@ describe("the runtime", () => {
 
     await runtime.start("C:/repo")
 
-    expect(runtime.status().filter((item) => item.active).map((item) => item.spec)).toEqual(["same.id"])
+    expect(
+      runtime
+        .status()
+        .filter((item) => item.active)
+        .map((item) => item.spec),
+    ).toEqual(["same.id"])
     expect(runtime.status().find((item) => item.spec === "./p.js")?.error).toContain("già caricato")
     // The built-in keeps its registration, and the impostor gets none.
     expect(runtime.registry.commands().map((item) => item.commandId)).toEqual(["go"])

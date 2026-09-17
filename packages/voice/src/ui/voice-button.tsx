@@ -66,8 +66,7 @@ export function VoiceButton(props: VoiceButtonProps) {
 
   /* Whether the open microphone is this button's. Without a mode the button
      owns whatever is running, which is the single-control behaviour. */
-  const isMine = () =>
-    isRunning() && (props.mode === undefined || props.engine.activeMode() === props.mode)
+  const isMine = () => isRunning() && (props.mode === undefined || props.engine.activeMode() === props.mode)
 
   const ariaLabel = createMemo(() =>
     props.mode === "transcription"

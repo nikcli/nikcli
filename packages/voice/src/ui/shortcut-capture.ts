@@ -14,12 +14,7 @@ import {
   VOICE_COMMAND_TRANSCRIPTION,
 } from "../settings/shortcuts"
 import type { VoiceSettings } from "../settings/model"
-import {
-  normalizeKeyName,
-  parseChord,
-  type Binding,
-  type Platform,
-} from "@nikcli-ai/ade/keyboard/keymap"
+import { normalizeKeyName, parseChord, type Binding, type Platform } from "@nikcli-ai/ade/keyboard/keymap"
 import { DEFAULT_BINDINGS } from "@nikcli-ai/ade/keyboard/bindings"
 import type { LanguageOption } from "../settings/languages"
 import { t } from "@nikcli-ai/ade/i18n"
@@ -54,8 +49,7 @@ export interface ConflictCheckResult {
  * hole in the collision check: the panel would happily record a chord ADE had
  * just claimed, and the user would find the shortcut dead with nothing said.
  */
-export const DEFAULT_ADE_SHORTCUT_BINDINGS: readonly { chord: string; commandId: string }[] =
-  DEFAULT_BINDINGS
+export const DEFAULT_ADE_SHORTCUT_BINDINGS: readonly { chord: string; commandId: string }[] = DEFAULT_BINDINGS
 
 export { describeCommandId } from "../settings/shortcuts"
 
@@ -79,10 +73,7 @@ export function getPlatform(): Platform {
  * - Modifier-only key presses return modifier_only status.
  * - Valid combinations are normalized to portable chord syntax (e.g. "mod+shift+k").
  */
-export function captureKeyboardEvent(
-  event: KeyInput,
-  platform: Platform
-): ShortcutCaptureResult {
+export function captureKeyboardEvent(event: KeyInput, platform: Platform): ShortcutCaptureResult {
   if (event.key === "Escape" || event.key === "Esc") {
     return { type: "cancel" }
   }
@@ -159,7 +150,7 @@ export function checkShortcutConflict(
   targetCommand: string,
   currentSettings: VoiceSettings,
   existingBindings: readonly Binding[] = [],
-  platform: Platform = "other"
+  platform: Platform = "other",
 ): ConflictCheckResult {
   const risk = describeChordRisk(proposedChord, platform)
   if (risk.level === "refuse") {
@@ -171,12 +162,9 @@ export function checkShortcutConflict(
 
   const candidateSettings: VoiceSettings = {
     ...currentSettings,
-    agentChord:
-      targetCommand === VOICE_COMMAND_AGENT ? proposedChord : currentSettings.agentChord,
+    agentChord: targetCommand === VOICE_COMMAND_AGENT ? proposedChord : currentSettings.agentChord,
     transcriptionChord:
-      targetCommand === VOICE_COMMAND_TRANSCRIPTION
-        ? proposedChord
-        : currentSettings.transcriptionChord,
+      targetCommand === VOICE_COMMAND_TRANSCRIPTION ? proposedChord : currentSettings.transcriptionChord,
   }
 
   const defaultBindings: Binding[] = DEFAULT_ADE_SHORTCUT_BINDINGS.map((b) => ({
@@ -190,8 +178,7 @@ export function checkShortcutConflict(
 
   if (targetConflict) {
     const conflictingCommand =
-      targetConflict.commandIds.find((id) => id !== targetCommand) ??
-      targetConflict.commandIds[0]
+      targetConflict.commandIds.find((id) => id !== targetCommand) ?? targetConflict.commandIds[0]
 
     return {
       hasConflict: true,
@@ -211,7 +198,7 @@ export function checkShortcutConflict(
  */
 export function suggestClosestLanguage(
   currentCode: string,
-  available: readonly LanguageOption[]
+  available: readonly LanguageOption[],
 ): LanguageOption | undefined {
   if (available.length === 0) return undefined
 

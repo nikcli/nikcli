@@ -34,10 +34,7 @@ export function addRecent(
 }
 
 /** Removes a project by root (case-insensitive). */
-export function removeRecent(
-  list: readonly RecentEntry[],
-  root: string,
-): RecentEntry[] {
+export function removeRecent(list: readonly RecentEntry[], root: string): RecentEntry[] {
   const key = recentKey(root)
   return list.filter((e) => recentKey(e.root) !== key)
 }

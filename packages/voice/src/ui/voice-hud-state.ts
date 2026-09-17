@@ -89,7 +89,8 @@ export function latestExchange(history: readonly AgentEntry[]): { utterance?: st
   let answer: string | undefined
   for (let i = history.length - 1; i >= 0; i--) {
     const entry = history[i]!
-    if (entry.kind === "user") return answer === undefined ? { utterance: entry.text } : { utterance: entry.text, answer }
+    if (entry.kind === "user")
+      return answer === undefined ? { utterance: entry.text } : { utterance: entry.text, answer }
     // The newest assistant line after the sentence is its answer.
     if (entry.kind === "assistant" && answer === undefined) answer = entry.text
   }
@@ -176,9 +177,7 @@ export function preparingHudState(progress: HudPreparation): HudState {
  * rise and fall as a single block. These weights give it the shape of a voice
  * without claiming to be a spectrum nobody measured.
  */
-export const HUD_WAVE: readonly number[] = [
-  0.32, 0.58, 0.86, 1, 0.72, 0.94, 0.66, 0.4, 0.78, 0.5,
-]
+export const HUD_WAVE: readonly number[] = [0.32, 0.58, 0.86, 1, 0.72, 0.94, 0.66, 0.4, 0.78, 0.5]
 
 /**
  * Height of one waveform bar, as a percentage of the row.

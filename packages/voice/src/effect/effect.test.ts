@@ -1,15 +1,6 @@
 import { DEFAULT_VOICE_SETTINGS } from "../settings/model"
 import { describe, expect, test } from "bun:test"
-import {
-  Clock,
-  Duration,
-  Effect,
-  Exit,
-  Layer,
-  Scope,
-  TestClock,
-  TestContext,
-} from "effect"
+import { Clock, Duration, Effect, Exit, Layer, Scope, TestClock, TestContext } from "effect"
 
 import {
   ApiKeyInvalid,
@@ -27,21 +18,11 @@ import {
   spokenMessage,
 } from "./errors"
 import { Speaker, Transcriber, VoiceHostService } from "./services"
-import {
-  SpeakerFake,
-  TranscriberFake,
-  VoiceHostLive,
-  bridgeTranscriber,
-} from "./layers"
+import { SpeakerFake, TranscriberFake, VoiceHostLive, bridgeTranscriber } from "./layers"
 import { makeVoiceProgram } from "./program"
 import { createFakeTranscriber } from "../asr/fake"
 import { createFakeSpeaker } from "../tts/speaker"
-import type {
-  PaneSummary,
-  VoiceHost,
-  VoiceStateSnapshot,
-  AdeView,
-} from "../bridge/host"
+import type { PaneSummary, VoiceHost, VoiceStateSnapshot, AdeView } from "../bridge/host"
 
 class MockVoiceHost implements VoiceHost {
   calls: { method: string; args: any[] }[] = []
@@ -209,14 +190,10 @@ describe("Effect-TS Voice Backend", () => {
     expect(spokenMessage(new Error("wrapped", { cause: missing }))).toBe(expected)
 
     // Two levels of it, as a Cause tree nests
-    expect(
-      spokenMessage({ _tag: "Fail", cause: { _tag: "Die", error: missing } })
-    ).toBe(expected)
+    expect(spokenMessage({ _tag: "Fail", cause: { _tag: "Die", error: missing } })).toBe(expected)
 
     // What Effect.runPromise actually rejects with
-    const failure = await Effect.runPromise(Effect.fail(missing)).catch(
-      (err: unknown) => err
-    )
+    const failure = await Effect.runPromise(Effect.fail(missing)).catch((err: unknown) => err)
     expect(spokenMessage(failure)).toBe(expected)
 
     // And an untagged failure still gets the generic rather than a crash
@@ -229,23 +206,19 @@ describe("Effect-TS Voice Backend", () => {
     const fakeSpeaker = createFakeSpeaker()
     const mockHost = new MockVoiceHost()
 
-    const appLayer = Layer.mergeAll(
-      TranscriberFake(fakeTranscriber),
-      SpeakerFake(fakeSpeaker),
-      VoiceHostLive(mockHost)
-    )
+    const appLayer = Layer.mergeAll(TranscriberFake(fakeTranscriber), SpeakerFake(fakeSpeaker), VoiceHostLive(mockHost))
 
     const testProgram = Effect.gen(function* () {
-      const handle = yield* makeVoiceProgram({ getSettings: () => ({ ...DEFAULT_VOICE_SETTINGS, activation: "toggle" }) })
+      const handle = yield* makeVoiceProgram({
+        getSettings: () => ({ ...DEFAULT_VOICE_SETTINGS, activation: "toggle" }),
+      })
       // Emit recognized command
       fakeTranscriber.emit("nuova sessione", true)
       yield* Effect.sleep(Duration.millis(30))
       return handle
     })
 
-    await Effect.runPromise(
-      Effect.scoped(testProgram.pipe(Effect.provide(appLayer)))
-    )
+    await Effect.runPromise(Effect.scoped(testProgram.pipe(Effect.provide(appLayer))))
 
     expect(mockHost.calls).toContainEqual({
       method: "runCommand",
@@ -271,20 +244,16 @@ describe("Effect-TS Voice Backend", () => {
     const failingProgram = Effect.gen(function* () {
       yield* Effect.acquireRelease(
         Effect.sync(() => mockHardwareMic.start()),
-        () => Effect.sync(() => mockHardwareMic.stop())
+        () => Effect.sync(() => mockHardwareMic.stop()),
       )
       // Catastrophic failure halfway through
-      yield* Effect.fail(
-        new TranscriptionFailed({ cause: new Error("Hardware fault") })
-      )
+      yield* Effect.fail(new TranscriptionFailed({ cause: new Error("Hardware fault") }))
     })
 
     const scope = Effect.runSync(Scope.make())
 
     // Run program inside scope; it should fail
-    const result = await Effect.runPromise(
-      Scope.extend(failingProgram, scope).pipe(Effect.either)
-    )
+    const result = await Effect.runPromise(Scope.extend(failingProgram, scope).pipe(Effect.either))
     expect(result._tag).toBe("Left")
     expect(micAcquisitions).toBe(1)
 
@@ -301,11 +270,7 @@ describe("Effect-TS Voice Backend", () => {
     const fakeSpeaker = createFakeSpeaker()
     const mockHost = new MockVoiceHost()
 
-    const appLayer = Layer.mergeAll(
-      TranscriberFake(fakeTranscriber),
-      SpeakerFake(fakeSpeaker),
-      VoiceHostLive(mockHost)
-    )
+    const appLayer = Layer.mergeAll(TranscriberFake(fakeTranscriber), SpeakerFake(fakeSpeaker), VoiceHostLive(mockHost))
 
     const program = Effect.gen(function* () {
       yield* makeVoiceProgram({ getSettings: () => ({ ...DEFAULT_VOICE_SETTINGS, activation: "toggle" }) })
@@ -331,9 +296,7 @@ describe("Effect-TS Voice Backend", () => {
       })
     })
 
-    await Effect.runPromise(
-      Effect.scoped(program.pipe(Effect.provide(appLayer)))
-    )
+    await Effect.runPromise(Effect.scoped(program.pipe(Effect.provide(appLayer))))
   })
 
   test("dialogue timeouts advance deterministically via TestClock with zero real waiting", async () => {
@@ -341,16 +304,14 @@ describe("Effect-TS Voice Backend", () => {
     const fakeSpeaker = createFakeSpeaker()
     const mockHost = new MockVoiceHost()
 
-    const appLayer = Layer.mergeAll(
-      TranscriberFake(fakeTranscriber),
-      SpeakerFake(fakeSpeaker),
-      VoiceHostLive(mockHost)
-    )
+    const appLayer = Layer.mergeAll(TranscriberFake(fakeTranscriber), SpeakerFake(fakeSpeaker), VoiceHostLive(mockHost))
 
     const startTime = Date.now()
 
     const testProgram = Effect.gen(function* () {
-      const handle = yield* makeVoiceProgram({ getSettings: () => ({ ...DEFAULT_VOICE_SETTINGS, activation: "toggle" }) })
+      const handle = yield* makeVoiceProgram({
+        getSettings: () => ({ ...DEFAULT_VOICE_SETTINGS, activation: "toggle" }),
+      })
 
       // "termina processo" is a destructive command requiring confirmation
       yield* handle.submitText("termina processo")
@@ -374,12 +335,7 @@ describe("Effect-TS Voice Backend", () => {
     })
 
     await Effect.runPromise(
-      Effect.scoped(
-        testProgram.pipe(
-          Effect.provide(appLayer),
-          Effect.provide(TestContext.TestContext)
-        )
-      )
+      Effect.scoped(testProgram.pipe(Effect.provide(appLayer), Effect.provide(TestContext.TestContext))),
     )
 
     const elapsedTime = Date.now() - startTime

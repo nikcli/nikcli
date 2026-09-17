@@ -60,7 +60,7 @@ function cleanTarget(target: string | undefined): string | undefined {
 
 function extractKindAndTarget(
   text: string,
-  contextLines: string[]
+  contextLines: string[],
 ): { kind: "shell" | "write" | "network" | "unknown"; target?: string } {
   const combined = [...contextLines, text].join("\n")
 
@@ -84,7 +84,7 @@ function extractKindAndTarget(
       return { kind: "shell", target: cleanTarget(backtickMatch[1]) }
     }
     const cmdPrefixMatch = combined.match(
-      /(?:run shell command|run command|execute command|run shell|command|run|execute|comando):\s*(.+)/i
+      /(?:run shell command|run command|execute command|run shell|command|run|execute|comando):\s*(.+)/i,
     )
     if (cmdPrefixMatch) {
       return { kind: "shell", target: cleanTarget(cmdPrefixMatch[1]) }
@@ -97,7 +97,7 @@ function extractKindAndTarget(
   if (
     filePathMatch &&
     /\b(?:write|create|modify|edit|overwrite|delete|save|file|apply|patch|disk|salva|scrittura|modifica)\b/i.test(
-      combined
+      combined,
     )
   ) {
     return { kind: "write", target: cleanTarget(filePathMatch[0]) }
@@ -123,7 +123,7 @@ function mapChoiceLabelToItalian(rawText: string): string {
 
   if (
     /^(?:yes,?\s+and\s+don't\s+ask\s+again|always\s+allow|allow\s+always|yes,?\s+always|allow\s+for\s+session|consenti\s+sempre)$/i.test(
-      t
+      t,
     )
   ) {
     return "Sì, e non chiedere più"
@@ -235,7 +235,7 @@ export const PERMISSION_SCHEMAS: readonly PermissionSchema[] = [
       const lastLine = lines[endIndex].trim()
       if (
         /^(?:Select(?:\s+an\s+option)?|Choice|Enter\s+number|Input|Opt|\>|\:)\s*(?:\[[\d\s,-]+\])?\s*[:?]?\s*$/i.test(
-          lastLine
+          lastLine,
         )
       ) {
         endIndex--
@@ -262,21 +262,17 @@ export const PERMISSION_SCHEMAS: readonly PermissionSchema[] = [
 
       const whatLine = lines[questionIndex].trim()
       // If the header looks like an action plan instead of a permission prompt, skip
-      if (
-        /^(?:steps?|plan|tasks?|summary|overview|instructions?|here\s+are\s+the\s+steps)\b/i.test(
-          whatLine
-        )
-      ) {
+      if (/^(?:steps?|plan|tasks?|summary|overview|instructions?|here\s+are\s+the\s+steps)\b/i.test(whatLine)) {
         return undefined
       }
 
       // Check if options look like actionable choices
-      const isChoiceList = options.every(opt => {
+      const isChoiceList = options.every((opt) => {
         const t = opt.text.toLowerCase()
         return (
           t.length <= 40 &&
           /^(?:yes|no|allow|deny|approve|reject|cancel|skip|proceed|always|once|sì|nega|rifiuta|annulla|salta|always allow|allow always)/i.test(
-            t
+            t,
           )
         )
       })
@@ -387,10 +383,10 @@ export const PERMISSION_SCHEMAS: readonly PermissionSchema[] = [
       // Must have detectable confirmation intent or command/file/network target
       const isPermissionIntent =
         /\b(?:allow|permit|execute|run|proceed|continue|apply|perform|confirm|authorize|conferma|consenti|esegui)\b/i.test(
-          lastLine
+          lastLine,
         ) ||
         kind !== "unknown" ||
-        contextLines.some(l => /^\s*\$/.test(l))
+        contextLines.some((l) => /^\s*\$/.test(l))
 
       if (!isPermissionIntent) return undefined
 
@@ -482,15 +478,14 @@ export function detectPermission(lines: string[], agentId: string): PermissionRe
  * just the one line that arrived: a frame is many lines, and one of them says
  * nothing about whether the prompt is gone.
  */
-export function isResolved(
-  request: PermissionRequest,
-  recentLines: string[],
-  agentId: string,
-): boolean {
+export function isResolved(request: PermissionRequest, recentLines: string[], agentId: string): boolean {
   if (!recentLines || recentLines.length === 0) return false
 
   // Strip ANSI and filter empty lines
-  const stripped = recentLines.map(stripAnsi).map(l => l.trim()).filter(l => l.length > 0)
+  const stripped = recentLines
+    .map(stripAnsi)
+    .map((l) => l.trim())
+    .filter((l) => l.length > 0)
   if (stripped.length === 0) return false
 
   const reqWhatTrimmed = stripAnsi(request.what).trim()
@@ -503,7 +498,7 @@ export function isResolved(
 
   // If the new lines only echo the prompt or question itself, it is not resolved
   const isOnlyPromptEcho = stripped.every(
-    line => line === reqWhatTrimmed || line === ">" || line === ":" || line === "?"
+    (line) => line === reqWhatTrimmed || line === ">" || line === ":" || line === "?",
   )
   if (isOnlyPromptEcho) {
     return false

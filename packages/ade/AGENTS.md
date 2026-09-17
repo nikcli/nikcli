@@ -6,14 +6,14 @@ apply to any agent changing ADE or `packages/voice`.
 
 ## Two apps, never mixed
 
-| | Official ADE | ADE Test |
-|---|---|---|
-| Identifier | `ai.nikcli.ade` (`tauri.conf.json`) | `ai.nikcli.ade.test` (`src-tauri/tauri.test.conf.json`) |
-| Built by | the `ade-release` workflow from an `ade-v*` tag, or `bun run native:build` | `bun run native:dev`, `bun run native:build:test` |
-| Executable | `ade-desktop.exe` | `ade-test.exe` (`native:dev` runs the `ade-test` binary; `mainBinaryName` names it in `native:build:test`) |
-| Data, WebView2 profile, install folder | its own | its own |
-| Global voice hotkeys | registered | not registered |
-| Update notices | yes, from published `ade-v*` releases | never (version `0.0.0`) |
+|                                        | Official ADE                                                               | ADE Test                                                                                                   |
+| -------------------------------------- | -------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------------- |
+| Identifier                             | `ai.nikcli.ade` (`tauri.conf.json`)                                        | `ai.nikcli.ade.test` (`src-tauri/tauri.test.conf.json`)                                                    |
+| Built by                               | the `ade-release` workflow from an `ade-v*` tag, or `bun run native:build` | `bun run native:dev`, `bun run native:build:test`                                                          |
+| Executable                             | `ade-desktop.exe`                                                          | `ade-test.exe` (`native:dev` runs the `ade-test` binary; `mainBinaryName` names it in `native:build:test`) |
+| Data, WebView2 profile, install folder | its own                                                                    | its own                                                                                                    |
+| Global voice hotkeys                   | registered                                                                 | not registered                                                                                             |
+| Update notices                         | yes, from published `ade-v*` releases                                      | never (version `0.0.0`)                                                                                    |
 
 - The official ADE is what the user works in. **Never start, stop, restart,
   rebuild into, or measure it.** If a task needs a running app, use ADE Test.
@@ -49,7 +49,7 @@ bun run test:app stop     # stop this worktree's instance, and only that
   badge name the worktree, so several open instances can be told apart.
 - **Do not start ADE Test with plain `tauri dev` while another worktree runs
   one.** Vite is `strictPort`: the second Vite exits on the busy port and the
-  window loads the *other* worktree's code from it, with nothing on screen to
+  window loads the _other_ worktree's code from it, with nothing on screen to
   say so. `test:app` gives each worktree its own port for this reason.
 - Stop your instance with `test:app stop`, never by killing processes by
   name: it stops only processes that carry this worktree's config, profile or

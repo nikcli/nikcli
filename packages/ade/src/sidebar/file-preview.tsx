@@ -78,12 +78,14 @@ export function FilePreview(props: FilePreviewProps) {
         <Show when={content() !== null}>
           <pre data-slot="preview-content">
             <code>
-              {content()?.split('\n').map((line, i) => (
-                <div data-slot="preview-line">
-                  <span data-slot="preview-line-num">{i + 1}</span>
-                  <span data-slot="preview-line-text">{line}</span>
-                </div>
-              ))}
+              {content()
+                ?.split("\n")
+                .map((line, i) => (
+                  <div data-slot="preview-line">
+                    <span data-slot="preview-line-num">{i + 1}</span>
+                    <span data-slot="preview-line-text">{line}</span>
+                  </div>
+                ))}
             </code>
           </pre>
         </Show>

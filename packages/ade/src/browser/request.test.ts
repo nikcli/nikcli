@@ -145,7 +145,12 @@ describe("captureArea", () => {
   const frame = { x: 400, y: 100, w: 800, h: 600 }
 
   test("the selected boxes, with a margin, moved into ADE's pixels", () => {
-    expect(captureArea(frame, 1, [{ top: 100, left: 50, width: 80, height: 30 }])).toEqual({ x: 426, y: 176, w: 128, h: 78 })
+    expect(captureArea(frame, 1, [{ top: 100, left: 50, width: 80, height: 30 }])).toEqual({
+      x: 426,
+      y: 176,
+      w: 128,
+      h: 78,
+    })
   })
 
   test("scaled with the page, and never outside the frame", () => {
@@ -154,7 +159,12 @@ describe("captureArea", () => {
       { top: 2000, left: 2000, width: 10, height: 10 },
     ])
     expect(area).toEqual({ x: 400, y: 100, w: 800, h: 600 })
-    expect(captureArea(frame, 0.5, [{ top: 200, left: 200, width: 100, height: 100 }])).toEqual({ x: 476, y: 176, w: 98, h: 98 })
+    expect(captureArea(frame, 0.5, [{ top: 200, left: 200, width: 100, height: 100 }])).toEqual({
+      x: 476,
+      y: 176,
+      w: 98,
+      h: 98,
+    })
   })
 
   test("no usable box, the whole frame", () => {

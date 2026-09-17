@@ -657,4 +657,4 @@ export const INSPECTOR_BRIDGE_SCRIPT = `
   // Notify parent that bridge is ready
   window.parent.postMessage({ type: 'visual-editor:ready' }, '*');
 })();
-`;
+`

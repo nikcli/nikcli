@@ -84,15 +84,15 @@ export function CommandPalette(props: CommandPaletteProps) {
 
   const onKeyDown = (e: KeyboardEvent) => {
     if (e.isComposing) return
-    
+
     const list = hits()
-    
+
     if (e.key === "ArrowDown" || (e.ctrlKey && e.key === "n")) {
       e.preventDefault()
-      setSelectedIndex(prev => moveSelection(list, prev, 1))
+      setSelectedIndex((prev) => moveSelection(list, prev, 1))
     } else if (e.key === "ArrowUp" || (e.ctrlKey && e.key === "p")) {
       e.preventDefault()
-      setSelectedIndex(prev => moveSelection(list, prev, -1))
+      setSelectedIndex((prev) => moveSelection(list, prev, -1))
     } else if (e.key === "Home") {
       e.preventDefault()
       setSelectedIndex(moveSelection(list, -1, 1))
@@ -146,8 +146,8 @@ export function CommandPalette(props: CommandPaletteProps) {
             />
           </div>
           <div data-slot="listbox" role="listbox" id="ade-cp-listbox" ref={listboxRef}>
-            <Show 
-              when={hits().length > 0} 
+            <Show
+              when={hits().length > 0}
               fallback={<div data-slot="empty">{props.emptyLabel ?? "No commands found."}</div>}
             >
               <For each={groups()}>
@@ -174,9 +174,7 @@ export function CommandPalette(props: CommandPaletteProps) {
                               if (!disabled) props.onRun(hit.command.id)
                             }}
                           >
-                            <div data-slot="option-title">
-                              {highlightText(hit.command.title, hit.titleRanges)}
-                            </div>
+                            <div data-slot="option-title">{highlightText(hit.command.title, hit.titleRanges)}</div>
                             <Show when={hit.command.shortcut}>
                               {/* Already formatted for this platform by whoever
                                   built the command: re-parsing it would only

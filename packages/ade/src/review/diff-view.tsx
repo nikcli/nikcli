@@ -20,7 +20,7 @@ export function DiffView(props: DiffViewProps) {
    * two files changed — that click has only one possible answer.
    */
   const selected = () => props.selectedPath ?? internalPath() ?? props.diff?.files[0]?.path
-  
+
   const selectFile = (path: string) => {
     setInternalPath(path)
     props.onSelectPath?.(path)
@@ -28,7 +28,7 @@ export function DiffView(props: DiffViewProps) {
 
   const selectedFile = () => {
     const p = selected()
-    return p ? props.diff?.files.find(f => f.path === p) : undefined
+    return p ? props.diff?.files.find((f) => f.path === p) : undefined
   }
 
   return (
@@ -36,9 +36,11 @@ export function DiffView(props: DiffViewProps) {
       <Show when={props.loading}>
         <div data-slot="empty">{t("review.loading")}</div>
       </Show>
-      
+
       <Show when={!props.loading && props.diff?.error}>
-        <div data-slot="empty" data-error="true">{props.diff?.error}</div>
+        <div data-slot="empty" data-error="true">
+          {props.diff?.error}
+        </div>
       </Show>
 
       <Show when={!props.loading && !props.diff?.error && (!props.diff || props.diff.files.length === 0)}>
@@ -47,9 +49,7 @@ export function DiffView(props: DiffViewProps) {
 
       <Show when={!props.loading && !props.diff?.error && props.diff && props.diff.files.length > 0}>
         <div data-slot="sidebar">
-          <div data-slot="header">
-            {t("review.header", props.diff?.added ?? 0, props.diff?.removed ?? 0)}
-          </div>
+          <div data-slot="header">{t("review.header", props.diff?.added ?? 0, props.diff?.removed ?? 0)}</div>
           <div data-slot="file-list">
             <For each={props.diff?.files}>
               {(f) => (
@@ -59,7 +59,9 @@ export function DiffView(props: DiffViewProps) {
                   onClick={() => selectFile(f.path)}
                 >
                   <span data-slot="status" data-status={f.status} title={f.status} />
-                  <span data-slot="file-path" title={f.path}>{f.path}</span>
+                  <span data-slot="file-path" title={f.path}>
+                    {f.path}
+                  </span>
                   <span data-slot="stats">
                     <Show when={f.added > 0}>
                       <span data-slot="added">+{f.added}</span>
@@ -73,12 +75,10 @@ export function DiffView(props: DiffViewProps) {
             </For>
           </div>
         </div>
-        
+
         <div data-slot="content">
           <Show when={props.diff?.truncated}>
-            <div data-slot="banner">
-              {t("review.truncated")}
-            </div>
+            <div data-slot="banner">{t("review.truncated")}</div>
           </Show>
 
           <Show when={selectedFile()}>
@@ -90,23 +90,24 @@ export function DiffView(props: DiffViewProps) {
                     <span data-slot="rename"> {t("review.renamedFrom", file().oldPath ?? "")}</span>
                   </Show>
                 </div>
-                
+
                 <Show when={file().binary}>
-                  <div data-slot="placeholder">
-                    {t("review.binary")}
-                  </div>
+                  <div data-slot="placeholder">{t("review.binary")}</div>
                 </Show>
 
                 <Show when={!file().binary && props.diff?.truncated}>
-                  <div data-slot="placeholder">
-                    {t("review.tooLarge")}
-                  </div>
+                  <div data-slot="placeholder">{t("review.tooLarge")}</div>
                 </Show>
 
-                <Show when={!file().binary && !props.diff?.truncated && file().hunks.length === 0 && (file().added > 0 || file().removed > 0 || file().status === 'modified')}>
-                   <div data-slot="placeholder">
-                    {t("review.unparsable")}
-                  </div>
+                <Show
+                  when={
+                    !file().binary &&
+                    !props.diff?.truncated &&
+                    file().hunks.length === 0 &&
+                    (file().added > 0 || file().removed > 0 || file().status === "modified")
+                  }
+                >
+                  <div data-slot="placeholder">{t("review.unparsable")}</div>
                 </Show>
 
                 <Show when={!file().binary && !props.diff?.truncated && file().hunks.length > 0}>
@@ -137,9 +138,7 @@ export function DiffView(props: DiffViewProps) {
             )}
           </Show>
           <Show when={!selectedFile() && !props.diff?.truncated}>
-            <div data-slot="placeholder">
-              {t("review.pick")}
-            </div>
+            <div data-slot="placeholder">{t("review.pick")}</div>
           </Show>
         </div>
       </Show>

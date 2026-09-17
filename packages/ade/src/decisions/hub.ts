@@ -109,7 +109,8 @@ export function createDecisionsHub(deps: {
         deps.onAnswered(decision, event)
       })
     },
-    defer: (decision, until) => write(decision.k, () => deps.register.append(deferEvent(decision.k, until, new Date()))),
+    defer: (decision, until) =>
+      write(decision.k, () => deps.register.append(deferEvent(decision.k, until, new Date()))),
     reopen: (decision) => write(decision.k, () => deps.register.append(reopenEvent(decision.k, new Date()))),
   }
 }

@@ -23,10 +23,7 @@ import {
   isWebGpuAvailable,
   type ParakeetTranscriberOptions,
 } from "./parakeet-local"
-import {
-  createOpenRouterTranscriber,
-  type OpenRouterTranscriberOptions,
-} from "./openrouter"
+import { createOpenRouterTranscriber, type OpenRouterTranscriberOptions } from "./openrouter"
 import { t } from "@nikcli-ai/ade/i18n"
 
 // ---------------------------------------------------------------------------
@@ -77,9 +74,7 @@ export interface SelectTranscriberOptions {
  *
  * Guarantees: Never throws.
  */
-export function describeBackends(
-  options: SelectTranscriberOptions = {}
-): BackendDescriptions {
+export function describeBackends(options: SelectTranscriberOptions = {}): BackendDescriptions {
   try {
     // 1. Parakeet Local
     const parakeetStatus: BackendStatus = describeParakeetReadiness({
@@ -87,8 +82,7 @@ export function describeBackends(
     })
 
     // 2. OpenRouter Cloud
-    const candidateKey =
-      options.apiKey ?? options.openRouterOptions?.apiKey
+    const candidateKey = options.apiKey ?? options.openRouterOptions?.apiKey
     const hasValidKey = Boolean(candidateKey && candidateKey.trim().length > 0)
     const openrouterStatus: BackendStatus = hasValidKey
       ? { usable: true }
@@ -122,10 +116,7 @@ export function describeBackends(
 /**
  * Creates a Transcriber instance for the requested backend.
  */
-export function createTranscriberFor(
-  backend: TranscriberBackend,
-  options: SelectTranscriberOptions = {}
-): Transcriber {
+export function createTranscriberFor(backend: TranscriberBackend, options: SelectTranscriberOptions = {}): Transcriber {
   switch (backend) {
     case "parakeet":
       return createParakeetTranscriber({

@@ -208,8 +208,7 @@ export function newSessionId(): string {
     return crypto.randomUUID()
   }
   // A host without `crypto` is a test harness; the shape is what matters.
-  const hex = (length: number) =>
-    Array.from({ length }, () => Math.floor(Math.random() * 16).toString(16)).join("")
+  const hex = (length: number) => Array.from({ length }, () => Math.floor(Math.random() * 16).toString(16)).join("")
   return `${hex(8)}-${hex(4)}-4${hex(3)}-a${hex(3)}-${hex(12)}`
 }
 

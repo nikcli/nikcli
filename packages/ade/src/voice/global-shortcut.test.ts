@@ -149,7 +149,9 @@ describe("globalVoiceAction", () => {
       kind: "press",
       mode: "transcription",
     })
-    expect(globalVoiceAction({ chord: "control+Space", state: "released" }, settings, "other")).toEqual({ kind: "release" })
+    expect(globalVoiceAction({ chord: "control+Space", state: "released" }, settings, "other")).toEqual({
+      kind: "release",
+    })
   })
 
   test("a chord ADE cannot place is said, never turned into dictation", () => {

@@ -53,8 +53,7 @@ export function createPaneRecord<T>(): PaneRecord<T> {
 
   record.get = (id) => all()[id]
 
-  record.set = (id, value) =>
-    setAll((current) => (current[id] === value ? current : { ...current, [id]: value }))
+  record.set = (id, value) => setAll((current) => (current[id] === value ? current : { ...current, [id]: value }))
 
   record.update = (id, change) =>
     setAll((current) => {

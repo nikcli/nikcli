@@ -23,9 +23,7 @@ const TEST_WORKSPACES: Workspace[] = [
   {
     id: "ws-2",
     name: "Workspace 2",
-    sessions: [
-      { id: "s3", title: "Session 3", status: "done" },
-    ],
+    sessions: [{ id: "s3", title: "Session 3", status: "done" }],
   },
 ]
 
@@ -41,9 +39,7 @@ const TEST_FILES: FileNode[] = [
         name: "ade",
         path: "packages/ade",
         kind: "directory",
-        children: [
-          { id: "f-pkg", name: "package.json", path: "packages/ade/package.json", kind: "file" },
-        ],
+        children: [{ id: "f-pkg", name: "package.json", path: "packages/ade/package.json", kind: "file" }],
       },
     ],
   },
@@ -160,11 +156,7 @@ describe("Sidebar pure logic and reactive helpers", () => {
 
   test("Defect 9: deriveDefaultExpandedDirs derives top-level dirs and ancestors of selected file", () => {
     const defaultDirs = deriveDefaultExpandedDirs(TEST_FILES, "packages/ade/package.json")
-    expect(defaultDirs.sort()).toEqual([
-      "empty-folder",
-      "packages",
-      "packages/ade",
-    ])
+    expect(defaultDirs.sort()).toEqual(["empty-folder", "packages", "packages/ade"])
 
     // Fallback when no files provided
     expect(deriveDefaultExpandedDirs([]).sort()).toEqual(["packages", "src"])

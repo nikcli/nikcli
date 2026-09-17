@@ -70,9 +70,7 @@ const QUICK_ACTION_PROMPTS: Record<string, string> = {
 /** One selected element rendered as compact, agent-readable context. */
 function describeElement(element: InspectedElement, index: number) {
   const id = element.id ? `#${element.id}` : ""
-  const classes = element.className
-    ? `.${element.className.split(/\s+/).filter(Boolean).slice(0, 3).join(".")}`
-    : ""
+  const classes = element.className ? `.${element.className.split(/\s+/).filter(Boolean).slice(0, 3).join(".")}` : ""
   const styles = element.styles
   const lines = [
     `${index + 1}. <${element.tagName}${id}${classes}> (${element.detectedLanguage})`,
@@ -103,9 +101,7 @@ export function BrowserVisualEditor(props: BrowserVisualEditorProps): JSX.Elemen
 
   const currentDirectory = createMemo(() => decode64(params.dir) ?? "")
 
-  const [url, setUrl] = createSignal(
-    preview.urls[currentDirectory()] || props.initialUrl || "http://localhost:3000",
-  )
+  const [url, setUrl] = createSignal(preview.urls[currentDirectory()] || props.initialUrl || "http://localhost:3000")
   const [inputUrl, setInputUrl] = createSignal(url())
   const [srcdoc, setSrcdoc] = createSignal<string | null>(null)
   // Bumped on every load so the iframe is recreated; reassigning an identical
@@ -447,9 +443,7 @@ export function BrowserVisualEditor(props: BrowserVisualEditorProps): JSX.Elemen
     {
       id: "browser.designMode",
       title: language.t("command.browser.designMode"),
-      description: language.t(
-        designMode() ? "command.browser.designMode.on" : "command.browser.designMode.off",
-      ),
+      description: language.t(designMode() ? "command.browser.designMode.on" : "command.browser.designMode.off"),
       category: language.t("command.category.view"),
       keybind: "mod+shift+e",
       onSelect: () => setDesignMode((value) => !value),
@@ -748,9 +742,7 @@ export function BrowserVisualEditor(props: BrowserVisualEditorProps): JSX.Elemen
       <Show when={state() !== "unreachable" && (fidelity() === "mirror" || fidelity() === "none")}>
         <div class="px-2.5 py-1.5 bg-surface-base border-b border-border-weak-base flex items-center gap-2 shrink-0 text-11-regular text-text-weak min-w-0">
           <Icon name="window-cursor" size="small" class="shrink-0" />
-          <span class="shrink-0 text-text-strong">
-            {fidelity() === "mirror" ? "Mirrored copy" : "Not inspectable"}
-          </span>
+          <span class="shrink-0 text-text-strong">{fidelity() === "mirror" ? "Mirrored copy" : "Not inspectable"}</span>
           <span class="min-w-0 truncate">
             {fidelity() === "mirror"
               ? "Client-side routing may misbehave. Add the bridge to inspect the page on its own origin."
@@ -778,7 +770,9 @@ export function BrowserVisualEditor(props: BrowserVisualEditorProps): JSX.Elemen
             when={selection().length > 0}
             fallback={
               <span class="text-11-regular text-text-weak min-w-0 truncate">
-                <span class="hidden @md:inline">Click elements to attach them to the chat. Drag to reorder. Esc to exit.</span>
+                <span class="hidden @md:inline">
+                  Click elements to attach them to the chat. Drag to reorder. Esc to exit.
+                </span>
                 <span class="@md:hidden">Click to attach, drag to reorder.</span>
               </span>
             }

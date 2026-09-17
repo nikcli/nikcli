@@ -258,7 +258,9 @@ describe("settings/model replyVoice", () => {
     expect(absent.settings.replyVoice).toBe("ugo")
     expect(absent.corrections).toEqual([])
     // Giorgio was offered before D19 kept only Ugo and Paola.
-    expect(normalizeSettings({ ...DEFAULT_VOICE_SETTINGS, replyVoice: "giorgio" } as never).settings.replyVoice).toBe("ugo")
+    expect(normalizeSettings({ ...DEFAULT_VOICE_SETTINGS, replyVoice: "giorgio" } as never).settings.replyVoice).toBe(
+      "ugo",
+    )
     expect(normalizeSettings({ ...DEFAULT_VOICE_SETTINGS, replyVoice: "paola" }).settings.replyVoice).toBe("paola")
     const unknown = normalizeSettings({ ...DEFAULT_VOICE_SETTINGS, replyVoice: "kokoro" } as never)
     expect(unknown.settings.replyVoice).toBe("ugo")
@@ -293,7 +295,13 @@ describe("after 0.7.0: only the name starts the assistant", () => {
   })
 
   test("a 0.7.0 profile on the shortcut moves to the name once, told and without an error", () => {
-    const saved = { ...DEFAULT_VOICE_SETTINGS, version: 5, mode: "transcription", activation: "push-to-talk", alwaysListen: false }
+    const saved = {
+      ...DEFAULT_VOICE_SETTINGS,
+      version: 5,
+      mode: "transcription",
+      activation: "push-to-talk",
+      alwaysListen: false,
+    }
     const moved = normalizeSettings(saved)
     expect(moved.activation).toBe("wake-word")
     expect(moved.alwaysListen).toBe(true)
@@ -307,7 +315,9 @@ describe("after 0.7.0: only the name starts the assistant", () => {
     expect(normalizeSettings({ ...saved, activation: "toggle" }).activation).toBe("wake-word")
     expect(normalizeSettings({ activation: "push-to-talk" }).migrations).toEqual(["name-only"])
     // A caller stating the current version keeps what it asked for.
-    expect(normalizeSettings({ version: CURRENT_SETTINGS_VERSION, activation: "push-to-talk" }).activation).toBe("push-to-talk")
+    expect(normalizeSettings({ version: CURRENT_SETTINGS_VERSION, activation: "push-to-talk" }).activation).toBe(
+      "push-to-talk",
+    )
   })
 })
 
@@ -324,7 +334,14 @@ describe("0.7.0: the assistant starts only from its shortcut", () => {
 
   test("a saved wake word, always-on or not, goes back to the shortcut once, told and without an error", () => {
     // A whole profile, as the app writes it.
-    const saved = { ...DEFAULT_VOICE_SETTINGS, version: 3, mode: "agent", activation: "wake-word", alwaysListen: true, wakeWord: "ei nik" }
+    const saved = {
+      ...DEFAULT_VOICE_SETTINGS,
+      version: 3,
+      mode: "agent",
+      activation: "wake-word",
+      alwaysListen: true,
+      wakeWord: "ei nik",
+    }
     const moved = normalizeSettings(saved)
     expect(moved.activation).toBe("push-to-talk")
     expect(moved.migrations).toEqual(["shortcut-only"])

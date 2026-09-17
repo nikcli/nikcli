@@ -35,13 +35,18 @@ export interface ExportResult {
 }
 
 /** MP4 when the webview can write it (Chromium 126+), WebM otherwise. */
-export function pickExportMime(isSupported: (type: string) => boolean): { mimeType: string; extension: "mp4" | "webm" } {
+export function pickExportMime(isSupported: (type: string) => boolean): {
+  mimeType: string
+  extension: "mp4" | "webm"
+} {
   const candidates = [
     { mimeType: "video/mp4;codecs=avc1.640028,mp4a.40.2", extension: "mp4" as const },
     { mimeType: "video/mp4", extension: "mp4" as const },
     { mimeType: "video/webm;codecs=vp9,opus", extension: "webm" as const },
   ]
-  return candidates.find((candidate) => isSupported(candidate.mimeType)) ?? { mimeType: "video/webm", extension: "webm" }
+  return (
+    candidates.find((candidate) => isSupported(candidate.mimeType)) ?? { mimeType: "video/webm", extension: "webm" }
+  )
 }
 
 /** Mono noise of one sample step (-90 dBFS), 8 kHz, as long as the take plus a second. */
@@ -103,7 +108,9 @@ export async function exportPromo(input: ExportInput): Promise<ExportResult> {
    * and a file of pure zeros do not count.
    */
   const bed =
-    input.voice || input.mic ? undefined : URL.createObjectURL(new Blob([quietWav(video.duration)], { type: "audio/wav" }))
+    input.voice || input.mic
+      ? undefined
+      : URL.createObjectURL(new Blob([quietWav(video.duration)], { type: "audio/wav" }))
   for (const path of [input.voice, input.mic, bed]) {
     if (!path) continue
     const player = new Audio(path === bed ? path : mediaUrl(path))

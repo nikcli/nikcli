@@ -119,10 +119,7 @@ export function createPanelRouter(clock: () => number = Date.now): PanelRouter {
     const handler = handlers.get(request.panel)
     if (!handler) {
       const open = [...handlers.keys()]
-      const detail =
-        open.length === 0
-          ? "nessun pannello aperto"
-          : `pannelli aperti: ${open.join(", ")}`
+      const detail = open.length === 0 ? "nessun pannello aperto" : `pannelli aperti: ${open.join(", ")}`
       return formatReply(request, { ok: false, reason: `«${request.panel}» non è aperto; ${detail}` })
     }
 

@@ -105,10 +105,12 @@ export function AgentOrb(props: AgentOrbProps) {
           setBox(reduced ? centerBox() : dockBox())
           setMounted(true)
           // Two frames: the element must exist at the dock before it can fly from it.
-          requestAnimationFrame(() => requestAnimationFrame(() => {
-            setBox(centerBox())
-            setCentered(true)
-          }))
+          requestAnimationFrame(() =>
+            requestAnimationFrame(() => {
+              setBox(centerBox())
+              setCentered(true)
+            }),
+          )
         } else {
           setBox(centerBox())
           setCentered(true)

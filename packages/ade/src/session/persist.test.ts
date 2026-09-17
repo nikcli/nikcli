@@ -1,17 +1,9 @@
 import { describe, expect, test } from "bun:test"
-import {
-  serializeWorkspace,
-  parseWorkspace,
-  migrateWorkspace,
-  CURRENT_VERSION,
-  type WorkspaceState,
-} from "./persist"
+import { serializeWorkspace, parseWorkspace, migrateWorkspace, CURRENT_VERSION, type WorkspaceState } from "./persist"
 
 const validState: WorkspaceState = {
   version: CURRENT_VERSION,
-  panes: [
-    { id: "p1", title: "Sessione 1", agent: "agy", cwd: "/project", branch: "main", status: "running" },
-  ],
+  panes: [{ id: "p1", title: "Sessione 1", agent: "agy", cwd: "/project", branch: "main", status: "running" }],
   focusedPaneId: "p1",
   pinnedColumns: 2,
   currentView: "grid",

@@ -148,7 +148,13 @@ export function ShotTray(props: ShotTrayProps) {
                     title={t("shots.dismiss")}
                   >
                     <svg viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
-                      <path d="M3 3l6 6M9 3l-6 6" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" />
+                      <path
+                        d="M3 3l6 6M9 3l-6 6"
+                        fill="none"
+                        stroke="currentColor"
+                        stroke-width="1.4"
+                        stroke-linecap="round"
+                      />
                     </svg>
                   </button>
                 </figure>
@@ -162,12 +168,7 @@ export function ShotTray(props: ShotTrayProps) {
           is being looked at for a second, not worked in. */}
       <Show when={opened()}>
         {(shot) => (
-          <div
-            data-component="shot-viewer"
-            role="dialog"
-            aria-label={shot().name}
-            onClick={() => setOpened(undefined)}
-          >
+          <div data-component="shot-viewer" role="dialog" aria-label={shot().name} onClick={() => setOpened(undefined)}>
             <figure data-slot="shot-viewer-frame" onClick={(event) => event.stopPropagation()}>
               <Thumb shot={shot()} load={props.load} />
               <figcaption data-slot="shot-viewer-caption">

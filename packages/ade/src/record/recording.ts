@@ -49,7 +49,13 @@ export type RecordEvent =
     }
   /** Where the pointer was, in window coordinates. */
   | { readonly kind: "pointer"; readonly at: number; readonly x: number; readonly y: number }
-  | { readonly kind: "click"; readonly at: number; readonly x: number; readonly y: number; readonly button: "left" | "right" | "middle" }
+  | {
+      readonly kind: "click"
+      readonly at: number
+      readonly x: number
+      readonly y: number
+      readonly button: "left" | "right" | "middle"
+    }
   /** The pane that took focus: the export zooms to it. */
   | { readonly kind: "pane"; readonly at: number; readonly paneId: string }
   /** A command the user ran, by id, so the export can caption it. */

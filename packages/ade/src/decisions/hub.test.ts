@@ -31,7 +31,14 @@ describe("the register and the hub", () => {
     const answered: DecisionEvent[] = []
     await createRoot(async (dispose) => {
       const register = createDecisionsRegister({ path: () => "/p/.ade/decisions.jsonl", io: async () => io })
-      const hub = createDecisionsHub({ register, recipient: () => ({ state: "non scelta" }), sessions: () => [], choose: () => {}, delivery: () => ({ state: "in coda" }), onAnswered: (_, event) => void answered.push(event) })
+      const hub = createDecisionsHub({
+        register,
+        recipient: () => ({ state: "non scelta" }),
+        sessions: () => [],
+        choose: () => {},
+        delivery: () => ({ state: "in coda" }),
+        onAnswered: (_, event) => void answered.push(event),
+      })
       await register.refresh()
       const decision = register.state()!.decisions[0] as Decision
 

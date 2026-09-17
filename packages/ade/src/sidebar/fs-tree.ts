@@ -24,13 +24,13 @@ export function sortEntries(entries: DirEntry[]): DirEntry[] {
 
 export function filterEntries(entries: DirEntry[], showHidden: boolean): DirEntry[] {
   if (showHidden) return entries
-  return entries.filter(e => !isHidden(e.name))
+  return entries.filter((e) => !isHidden(e.name))
 }
 
 export function dirEntriesToNodes(entries: DirEntry[], showHidden: boolean): FileNode[] {
   const filtered = filterEntries(entries, showHidden)
   const sorted = sortEntries(filtered)
-  return sorted.map(e => {
+  return sorted.map((e) => {
     const p = normalizePath(e.path)
     return {
       id: p,
@@ -42,18 +42,13 @@ export function dirEntriesToNodes(entries: DirEntry[], showHidden: boolean): Fil
   })
 }
 
-export function mergeChildren(
-  root: FileNode,
-  parentPath: string,
-  entries: DirEntry[],
-  showHidden: boolean
-): FileNode {
+export function mergeChildren(root: FileNode, parentPath: string, entries: DirEntry[], showHidden: boolean): FileNode {
   if (pathEquals(root.path, parentPath)) {
     // Merge keeping existing children (if already expanded) to preserve their expanded state
     const newChildrenNodes = dirEntriesToNodes(entries, showHidden)
-    const existingChildrenMap = new Map(root.children?.map(c => [normalizePath(c.path).toLowerCase(), c]))
-    
-    const mergedChildren = newChildrenNodes.map(newNode => {
+    const existingChildrenMap = new Map(root.children?.map((c) => [normalizePath(c.path).toLowerCase(), c]))
+
+    const mergedChildren = newChildrenNodes.map((newNode) => {
       const existing = existingChildrenMap.get(newNode.path.toLowerCase())
       if (existing) {
         return {
@@ -63,7 +58,7 @@ export function mergeChildren(
       }
       return newNode
     })
-    
+
     return {
       ...root,
       children: mergedChildren,
@@ -72,7 +67,7 @@ export function mergeChildren(
 
   if (root.kind === "directory" && root.children) {
     let changed = false
-    const newChildren = root.children.map(child => {
+    const newChildren = root.children.map((child) => {
       if (child.kind === "directory") {
         const newChild = mergeChildren(child, parentPath, entries, showHidden)
         if (newChild !== child) {
@@ -90,10 +85,7 @@ export function mergeChildren(
   return root
 }
 
-export function markDirectoryError(
-  root: FileNode,
-  parentPath: string
-): FileNode {
+export function markDirectoryError(root: FileNode, parentPath: string): FileNode {
   if (pathEquals(root.path, parentPath)) {
     // If it's an error, we can just mark it empty to stop loading
     return { ...root, children: [] }
@@ -101,7 +93,7 @@ export function markDirectoryError(
 
   if (root.kind === "directory" && root.children) {
     let changed = false
-    const newChildren = root.children.map(child => {
+    const newChildren = root.children.map((child) => {
       if (child.kind === "directory") {
         const newChild = markDirectoryError(child, parentPath)
         if (newChild !== child) {

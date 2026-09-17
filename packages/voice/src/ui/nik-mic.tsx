@@ -57,13 +57,7 @@ function Cradle(props: { width: number }) {
         stroke-width={props.width}
         stroke-linecap="round"
       />
-      <path
-        d="M12 20v2"
-        fill="none"
-        stroke="currentColor"
-        stroke-width={props.width}
-        stroke-linecap="round"
-      />
+      <path d="M12 20v2" fill="none" stroke="currentColor" stroke-width={props.width} stroke-linecap="round" />
     </>
   )
 }

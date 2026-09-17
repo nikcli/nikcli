@@ -7,7 +7,18 @@ const typed = (text: string) => triageWhileThinking(parseUtterance(text), { type
 
 describe("dialog/while-thinking", () => {
   test("stop words stop, heard or typed", () => {
-    for (const text of ["annulla", "Stop.", "basta", "fermati", "lascia stare", "annulla la richiesta", "ferma la domanda", "basta così nik", "interrompi pure", "lascia perdere la richiesta"]) {
+    for (const text of [
+      "annulla",
+      "Stop.",
+      "basta",
+      "fermati",
+      "lascia stare",
+      "annulla la richiesta",
+      "ferma la domanda",
+      "basta così nik",
+      "interrompi pure",
+      "lascia perdere la richiesta",
+    ]) {
       expect(heard(text)).toBe("stop")
       expect(typed(text)).toBe("stop")
     }
@@ -37,7 +48,8 @@ describe("dialog/while-thinking", () => {
   })
 
   test("«invia questa» sends the held sentence; a bare «invia» does not", () => {
-    for (const text of ["invia questa", "Invia questa.", "mandala", "manda questa frase"]) expect(isSendHeld(text)).toBe(true)
+    for (const text of ["invia questa", "Invia questa.", "mandala", "manda questa frase"])
+      expect(isSendHeld(text)).toBe(true)
     for (const text of ["invia", "invia il messaggio al pannello due"]) expect(isSendHeld(text)).toBe(false)
   })
 })

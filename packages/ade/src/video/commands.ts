@@ -48,10 +48,7 @@ export interface VideoController {
 /** The verbs this module implements, for `describeCapabilities`. */
 export const VERBS = VIDEO_VERBS
 
-export async function runVideoCommand(
-  controller: VideoController,
-  request: PanelRequest,
-): Promise<PanelOutcome> {
+export async function runVideoCommand(controller: VideoController, request: PanelRequest): Promise<PanelOutcome> {
   const argument = request.args[0]
 
   switch (request.verb) {

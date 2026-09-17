@@ -176,13 +176,7 @@ function WorkspaceHeaderRow(props: {
       aria-expanded={props.row.isExpanded}
       onClick={() => props.onToggle(props.row.id)}
     >
-      <svg
-        data-slot="workspace-chevron"
-        viewBox="0 0 12 12"
-        width="12"
-        height="12"
-        aria-hidden="true"
-      >
+      <svg data-slot="workspace-chevron" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
         <path
           d="M4.5 2.5l3.5 3.5-3.5 3.5"
           fill="none"
@@ -196,10 +190,14 @@ function WorkspaceHeaderRow(props: {
         {props.row.workspace.name}
       </span>
       <Show when={props.row.workspace.path?.startsWith("ssh://")}>
-        <Badge tone="accent" data-slot="space-badge" title={props.row.workspace.path}>ssh</Badge>
+        <Badge tone="accent" data-slot="space-badge" title={props.row.workspace.path}>
+          ssh
+        </Badge>
       </Show>
       <Show when={props.isActive}>
-        <Badge tone="waiting" data-slot="space-badge">{t("sidebar.active")}</Badge>
+        <Badge tone="waiting" data-slot="space-badge">
+          {t("sidebar.active")}
+        </Badge>
       </Show>
       <span data-slot="workspace-count" data-empty={props.row.sessionCount === 0 ? "true" : undefined}>
         {props.row.sessionCount}
@@ -236,11 +234,7 @@ function rangesWithin(ranges: [number, number][], start: number, end: number): [
   return out
 }
 
-function SessionChildRow(props: {
-  row: FlatSessionChildRow
-  now: number
-  onSelect?: (id: string) => void
-}) {
+function SessionChildRow(props: { row: FlatSessionChildRow; now: number; onSelect?: (id: string) => void }) {
   const displayStatus = () => mapAgentStatus(props.row.session.status)
   const folder = () => {
     if (props.row.session.cwd) {
@@ -273,9 +267,7 @@ function SessionChildRow(props: {
       </div>
       <div data-slot="session-main">
         <div data-slot="session-top">
-          <span data-slot="session-title">
-            {props.row.session.title}
-          </span>
+          <span data-slot="session-title">{props.row.session.title}</span>
           <span
             data-slot="agent-status-dot"
             data-status={props.row.session.status}
@@ -287,15 +279,32 @@ function SessionChildRow(props: {
         <div data-slot="session-meta">
           <span data-slot="agent-card-loc">
             <svg data-slot="agent-card-icon" viewBox="0 0 14 14" width="11" height="11" aria-hidden="true">
-              <path d="M1.5 3.5C1.5 2.67 2.17 2 3 2H5.5L7 3.5H11C11.83 3.5 12.5 4.17 12.5 5V10.5C12.5 11.33 11.83 12 11 12H3C2.17 12 1.5 11.33 1.5 10.5V3.5Z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" />
+              <path
+                d="M1.5 3.5C1.5 2.67 2.17 2 3 2H5.5L7 3.5H11C11.83 3.5 12.5 4.17 12.5 5V10.5C12.5 11.33 11.83 12 11 12H3C2.17 12 1.5 11.33 1.5 10.5V3.5Z"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.2"
+                stroke-linejoin="round"
+              />
             </svg>
-            <span data-slot="agent-card-folder" title={props.row.session.cwd || folder()}>{folder()}</span>
+            <span data-slot="agent-card-folder" title={props.row.session.cwd || folder()}>
+              {folder()}
+            </span>
             <Show when={branch()}>
               <span data-slot="agent-card-sep">•</span>
               <svg data-slot="agent-card-icon" viewBox="0 0 14 14" width="11" height="11" aria-hidden="true">
-                <path d="M4 3.5a1.5 1.5 0 1 1 3 0v4a1.5 1.5 0 1 1-1.5 1.5V6a2 2 0 0 1 2-2h1.5M10.5 4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
+                <path
+                  d="M4 3.5a1.5 1.5 0 1 1 3 0v4a1.5 1.5 0 1 1-1.5 1.5V6a2 2 0 0 1 2-2h1.5M10.5 4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
               </svg>
-              <span data-slot="agent-card-branch" title={branch()}>{branch()}</span>
+              <span data-slot="agent-card-branch" title={branch()}>
+                {branch()}
+              </span>
             </Show>
           </span>
           <Show when={props.row.session.startTime}>
@@ -347,9 +356,7 @@ function ActiveAgentRow(props: {
       </div>
       <div data-slot="active-agent-body">
         <div data-slot="active-agent-top">
-          <span data-slot="active-agent-title">
-            {props.session.title}
-          </span>
+          <span data-slot="active-agent-title">{props.session.title}</span>
           <span
             data-slot="agent-status-dot"
             data-status={props.session.status}
@@ -361,15 +368,32 @@ function ActiveAgentRow(props: {
         <div data-slot="active-agent-meta">
           <span data-slot="agent-card-loc">
             <svg data-slot="agent-card-icon" viewBox="0 0 14 14" width="11" height="11" aria-hidden="true">
-              <path d="M1.5 3.5C1.5 2.67 2.17 2 3 2H5.5L7 3.5H11C11.83 3.5 12.5 4.17 12.5 5V10.5C12.5 11.33 11.83 12 11 12H3C2.17 12 1.5 11.33 1.5 10.5V3.5Z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round" />
+              <path
+                d="M1.5 3.5C1.5 2.67 2.17 2 3 2H5.5L7 3.5H11C11.83 3.5 12.5 4.17 12.5 5V10.5C12.5 11.33 11.83 12 11 12H3C2.17 12 1.5 11.33 1.5 10.5V3.5Z"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.2"
+                stroke-linejoin="round"
+              />
             </svg>
-            <span data-slot="agent-card-folder" title={props.session.cwd || folder()}>{folder()}</span>
+            <span data-slot="agent-card-folder" title={props.session.cwd || folder()}>
+              {folder()}
+            </span>
             <Show when={branch()}>
               <span data-slot="agent-card-sep">•</span>
               <svg data-slot="agent-card-icon" viewBox="0 0 14 14" width="11" height="11" aria-hidden="true">
-                <path d="M4 3.5a1.5 1.5 0 1 1 3 0v4a1.5 1.5 0 1 1-1.5 1.5V6a2 2 0 0 1 2-2h1.5M10.5 4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round" />
+                <path
+                  d="M4 3.5a1.5 1.5 0 1 1 3 0v4a1.5 1.5 0 1 1-1.5 1.5V6a2 2 0 0 1 2-2h1.5M10.5 4a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3z"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
               </svg>
-              <span data-slot="agent-card-branch" title={branch()}>{branch()}</span>
+              <span data-slot="agent-card-branch" title={branch()}>
+                {branch()}
+              </span>
             </Show>
           </span>
           <Show when={props.session.startTime}>
@@ -391,13 +415,7 @@ function WorkspaceTreeRow(props: {
   onSelectSession?: (id: string) => void
 }) {
   if (props.row.type === "workspace") {
-    return (
-      <WorkspaceHeaderRow
-        row={props.row}
-        isActive={props.isActiveSpace}
-        onToggle={props.onToggleWorkspace}
-      />
-    )
+    return <WorkspaceHeaderRow row={props.row} isActive={props.isActiveSpace} onToggle={props.onToggleWorkspace} />
   }
   return <SessionChildRow row={props.row} now={props.now} onSelect={props.onSelectSession} />
 }
@@ -438,7 +456,9 @@ function FileTreeRow(props: {
       data-expanded={props.item.isExpanded ? "true" : undefined}
       data-selected={props.item.isSelected ? "true" : undefined}
       aria-selected={props.item.isSelected}
-      aria-expanded={props.item.kind === "directory" ? (props.item.hasChildren ? props.item.isExpanded : undefined) : undefined}
+      aria-expanded={
+        props.item.kind === "directory" ? (props.item.hasChildren ? props.item.isExpanded : undefined) : undefined
+      }
       /*
        * Both files and directories can be dragged onto a session.
        *
@@ -455,9 +475,7 @@ function FileTreeRow(props: {
       onDragStart={(event) => {
         if (!event.dataTransfer) return
         const path =
-          props.item.kind === "directory" && !props.item.path.endsWith("/")
-            ? `${props.item.path}/`
-            : props.item.path
+          props.item.kind === "directory" && !props.item.path.endsWith("/") ? `${props.item.path}/` : props.item.path
         writeDraggedPaths(event.dataTransfer, [path])
         event.dataTransfer.effectAllowed = "copy"
       }}
@@ -472,9 +490,7 @@ function FileTreeRow(props: {
     >
       <Show when={props.item.depth > 0}>
         <div data-slot="tree-indent" aria-hidden="true">
-          <For each={Array.from({ length: props.item.depth })}>
-            {() => <span data-slot="tree-guide" />}
-          </For>
+          <For each={Array.from({ length: props.item.depth })}>{() => <span data-slot="tree-guide" />}</For>
         </div>
       </Show>
 
@@ -483,40 +499,20 @@ function FileTreeRow(props: {
         fallback={
           <>
             <span data-slot="tree-spacer" aria-hidden="true" />
-            <svg
-            data-slot="tree-icon"
-            viewBox="0 0 14 14"
-            width="14"
-            height="14"
-            aria-hidden="true"
-          >
-            <path
-              d="M3 1.5h5.5l3 3V12.5C11.5 13.05 11.05 13.5 10.5 13.5H3C2.45 13.5 2 13.05 2 12.5V2.5C2 1.95 2.45 1.5 3 1.5z"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.1"
-            />
-            <path
-              d="M8.5 1.5V4.5H11.5"
-              fill="none"
-              stroke="currentColor"
-              stroke-width="1.1"
-            />
-          </svg>
+            <svg data-slot="tree-icon" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true">
+              <path
+                d="M3 1.5h5.5l3 3V12.5C11.5 13.05 11.05 13.5 10.5 13.5H3C2.45 13.5 2 13.05 2 12.5V2.5C2 1.95 2.45 1.5 3 1.5z"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.1"
+              />
+              <path d="M8.5 1.5V4.5H11.5" fill="none" stroke="currentColor" stroke-width="1.1" />
+            </svg>
           </>
         }
       >
-        <Show
-          when={props.item.hasChildren}
-          fallback={<span data-slot="tree-spacer" aria-hidden="true" />}
-        >
-          <svg
-            data-slot="tree-chevron"
-            viewBox="0 0 12 12"
-            width="12"
-            height="12"
-            aria-hidden="true"
-          >
+        <Show when={props.item.hasChildren} fallback={<span data-slot="tree-spacer" aria-hidden="true" />}>
+          <svg data-slot="tree-chevron" viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
             <path
               d="M4.5 2.5l3.5 3.5-3.5 3.5"
               fill="none"
@@ -527,13 +523,7 @@ function FileTreeRow(props: {
             />
           </svg>
         </Show>
-        <svg
-          data-slot="tree-icon"
-          viewBox="0 0 14 14"
-          width="14"
-          height="14"
-          aria-hidden="true"
-        >
+        <svg data-slot="tree-icon" viewBox="0 0 14 14" width="14" height="14" aria-hidden="true">
           <path
             d="M1.5 3.5C1.5 2.67 2.17 2 3 2h2.5c.4 0 .78.16 1.06.44l1 1c.28.28.66.44 1.06.44H11c.83 0 1.5.67 1.5 1.5v5.5c0 .83-.67 1.5-1.5 1.5H3c-.83 0-1.5-.67-1.5-1.5v-7z"
             fill="none"
@@ -594,9 +584,7 @@ export function Sidebar(props: SidebarProps) {
     safeGetStorage(storage, STORAGE_KEY_EXPANDED_WORKSPACES),
     props.workspaces.map((w) => w.id),
   )
-  const [expandedWorkspaces, setExpandedWorkspaces] = createSignal<Set<string>>(
-    initialExpandedWorkspaces,
-  )
+  const [expandedWorkspaces, setExpandedWorkspaces] = createSignal<Set<string>>(initialExpandedWorkspaces)
 
   const initialExpandedDirs = deserializeSet(
     safeGetStorage(storage, STORAGE_KEY_EXPANDED_DIRS),
@@ -619,7 +607,7 @@ export function Sidebar(props: SidebarProps) {
     if (!host?.readDir) return
     try {
       const entries = await host.readDir(dirPath)
-      setRootNode(prev => {
+      setRootNode((prev) => {
         if (!prev) return prev
         return mergeChildren(prev, dirPath, entries, false)
       })
@@ -638,7 +626,7 @@ export function Sidebar(props: SidebarProps) {
         if (open.has(path)) void loadDir(path)
       }
     } catch {
-      setRootNode(prev => {
+      setRootNode((prev) => {
         if (!prev) return prev
         return markDirectoryError(prev, dirPath)
       })
@@ -744,7 +732,8 @@ export function Sidebar(props: SidebarProps) {
         list.push({
           session: {
             ...session,
-            branch: session.branch || ws.branch || (props.project?.name === ws.name ? props.project?.branch : undefined),
+            branch:
+              session.branch || ws.branch || (props.project?.name === ws.name ? props.project?.branch : undefined),
           },
           workspaceName: ws.name,
           isSelected: session.id === props.selectedSessionId,
@@ -784,16 +773,18 @@ export function Sidebar(props: SidebarProps) {
         let parentPath = node.parentPath
         while (parentPath) {
           parentsToKeep.add(parentPath)
-          const p = all.find(n => n.path === parentPath)
+          const p = all.find((n) => n.path === parentPath)
           parentPath = p?.parentPath
         }
       }
     }
 
-    return all.filter(node => matches.has(node.path) || parentsToKeep.has(node.path)).map(node => ({
-      ...node,
-      ranges: matches.get(node.path)
-    }))
+    return all
+      .filter((node) => matches.has(node.path) || parentsToKeep.has(node.path))
+      .map((node) => ({
+        ...node,
+        ranges: matches.get(node.path),
+      }))
   })
 
   const keyedFiles = createKeyedList(searchFilteredFiles, (item) => item.path)
@@ -914,7 +905,15 @@ export function Sidebar(props: SidebarProps) {
       pointerId: event.pointerId,
       coordinate: (e) => e.clientX,
       onMove: (clientX) => {
-        setWidth(calculateResize(startX, clientX, startWidth, props.minWidth ?? MIN_SIDEBAR_WIDTH, props.maxWidth ?? MAX_SIDEBAR_WIDTH))
+        setWidth(
+          calculateResize(
+            startX,
+            clientX,
+            startWidth,
+            props.minWidth ?? MIN_SIDEBAR_WIDTH,
+            props.maxWidth ?? MAX_SIDEBAR_WIDTH,
+          ),
+        )
       },
       onEnd: () => {
         setIsResizing(false)
@@ -969,13 +968,17 @@ export function Sidebar(props: SidebarProps) {
       <Show when={project() && !props.content}>
         <header data-slot="sidebar-header-project">
           <div data-slot="project-name">
-            <span data-slot="project-name-text" title={project()!.name}>{project()!.name}</span>
+            <span data-slot="project-name-text" title={project()!.name}>
+              {project()!.name}
+            </span>
             <Show when={project()!.branch}>
               {/* Truncated at the end rather than the start, and given the
                   whole leftover width: a branch called
                   `feat/browser-visual-editor-cursor` overflows 260px, and the
                   half that identifies it is the half that was being cut. */}
-              <span data-slot="project-branch" title={project()!.branch}>{project()!.branch}</span>
+              <span data-slot="project-branch" title={project()!.branch}>
+                {project()!.branch}
+              </span>
             </Show>
           </div>
           <span data-slot="project-path" title={project()!.root}>
@@ -1026,39 +1029,68 @@ export function Sidebar(props: SidebarProps) {
               onClick={() => toggleOpen("progetti")}
             >
               <svg data-slot="section-chevron" viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
-                <path d="M2.5 4.5l3.5 3.5 3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                <path
+                  d="M2.5 4.5l3.5 3.5 3.5-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
               </svg>
               <span data-slot="section-label">{t("sidebar.spaces")}</span>
               <span data-slot="section-count">{props.workspaces.length}</span>
             </button>
             <div data-slot="section-actions">
-            <Show when={props.onAddProject}>
-              <button
-                type="button"
-                data-slot="section-add"
-                aria-label={t("sidebar.addSpace")}
-                title={t("sidebar.addSpace")}
-                onClick={() => props.onAddProject?.()}
-              >
-                <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
-                  <path d="M6 2v8M2 6h8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
-                </svg>
-              </button>
-            </Show>
-            <Show when={props.onAddRemote}>
-              <button
-                type="button"
-                data-slot="section-add"
-                aria-label={t("sidebar.addRemote")}
-                title={t("sidebar.addRemote")}
-                onClick={() => props.onAddRemote?.()}
-              >
-                <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
-                  <rect x="1.5" y="2" width="9" height="6" rx="1" fill="none" stroke="currentColor" stroke-width="1.1" />
-                  <path d="M3.5 4l1.3 1-1.3 1M6 6h2M4 10h4" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linecap="round" stroke-linejoin="round" />
-                </svg>
-              </button>
-            </Show>
+              <Show when={props.onAddProject}>
+                <button
+                  type="button"
+                  data-slot="section-add"
+                  aria-label={t("sidebar.addSpace")}
+                  title={t("sidebar.addSpace")}
+                  onClick={() => props.onAddProject?.()}
+                >
+                  <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
+                    <path
+                      d="M6 2v8M2 6h8"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.3"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                </button>
+              </Show>
+              <Show when={props.onAddRemote}>
+                <button
+                  type="button"
+                  data-slot="section-add"
+                  aria-label={t("sidebar.addRemote")}
+                  title={t("sidebar.addRemote")}
+                  onClick={() => props.onAddRemote?.()}
+                >
+                  <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
+                    <rect
+                      x="1.5"
+                      y="2"
+                      width="9"
+                      height="6"
+                      rx="1"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.1"
+                    />
+                    <path
+                      d="M3.5 4l1.3 1-1.3 1M6 6h2M4 10h4"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.1"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </button>
+              </Show>
             </div>
           </div>
 
@@ -1121,25 +1153,38 @@ export function Sidebar(props: SidebarProps) {
               onClick={() => toggleOpen("agenti")}
             >
               <svg data-slot="section-chevron" viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
-                <path d="M2.5 4.5l3.5 3.5 3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                <path
+                  d="M2.5 4.5l3.5 3.5 3.5-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
               </svg>
               <span data-slot="section-label">{t("sidebar.agents")}</span>
               <span data-slot="section-count">{allSessions().length}</span>
             </button>
             <div data-slot="section-actions">
-            <Show when={props.onNewSession}>
-              <button
-                type="button"
-                data-slot="section-add"
-                aria-label={t("sidebar.newAgentSession")}
-                title={t("sidebar.newAgentSession")}
-                onClick={() => props.onNewSession?.()}
-              >
-                <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
-                  <path d="M6 2v8M2 6h8" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" />
-                </svg>
-              </button>
-            </Show>
+              <Show when={props.onNewSession}>
+                <button
+                  type="button"
+                  data-slot="section-add"
+                  aria-label={t("sidebar.newAgentSession")}
+                  title={t("sidebar.newAgentSession")}
+                  onClick={() => props.onNewSession?.()}
+                >
+                  <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
+                    <path
+                      d="M6 2v8M2 6h8"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.3"
+                      stroke-linecap="round"
+                    />
+                  </svg>
+                </button>
+              </Show>
             </div>
           </div>
 
@@ -1151,11 +1196,7 @@ export function Sidebar(props: SidebarProps) {
                   <div data-slot="active-agents-empty">
                     <p data-slot="section-empty">{t("sidebar.noAgents")}</p>
                     <Show when={props.onNewSession}>
-                      <button
-                        type="button"
-                        data-slot="empty-action-btn"
-                        onClick={() => props.onNewSession?.()}
-                      >
+                      <button type="button" data-slot="empty-action-btn" onClick={() => props.onNewSession?.()}>
                         {t("sidebar.startAgent")}
                       </button>
                     </Show>
@@ -1194,7 +1235,14 @@ export function Sidebar(props: SidebarProps) {
               onClick={() => toggleOpen("file")}
             >
               <svg data-slot="section-chevron" viewBox="0 0 12 12" width="10" height="10" aria-hidden="true">
-                <path d="M2.5 4.5l3.5 3.5 3.5-3.5" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round" />
+                <path
+                  d="M2.5 4.5l3.5 3.5 3.5-3.5"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.4"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
               </svg>
               <span data-slot="section-label">{t("sidebar.files")}</span>
             </button>
@@ -1202,183 +1250,191 @@ export function Sidebar(props: SidebarProps) {
           </div>
 
           <Show when={isOpen("file")}>
-
-          <div data-slot="search-box">
-            {/* The input sits inside a field rather than being one: on a card
+            <div data-slot="search-box">
+              {/* The input sits inside a field rather than being one: on a card
                 a bare input has no edge of its own, and the focus ring has
                 nothing to sit on. The magnifier is what makes it read as
                 search before the placeholder is read. */}
-            <div data-slot="search-field">
-              <svg
-                data-slot="search-leading"
-                viewBox="0 0 16 16"
-                width="12"
-                height="12"
-                aria-hidden="true"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.4"
-              >
-                <circle cx="7" cy="7" r="4.2" />
-                <path d="M10.2 10.2L14 14" stroke-linecap="round" />
-              </svg>
-              <input
-                type="text"
-                data-slot="search-input"
-                placeholder={props.searchFiles ? t("sidebar.search.project") : t("sidebar.search.open")}
-                title={t("sidebar.search.help")}
-                value={searchQuery()}
-                onInput={onSearchInput}
-                onKeyDown={onSearchKeyDown}
-              />
-              <Show when={searchQuery()}>
+              <div data-slot="search-field">
+                <svg
+                  data-slot="search-leading"
+                  viewBox="0 0 16 16"
+                  width="12"
+                  height="12"
+                  aria-hidden="true"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.4"
+                >
+                  <circle cx="7" cy="7" r="4.2" />
+                  <path d="M10.2 10.2L14 14" stroke-linecap="round" />
+                </svg>
+                <input
+                  type="text"
+                  data-slot="search-input"
+                  placeholder={props.searchFiles ? t("sidebar.search.project") : t("sidebar.search.open")}
+                  title={t("sidebar.search.help")}
+                  value={searchQuery()}
+                  onInput={onSearchInput}
+                  onKeyDown={onSearchKeyDown}
+                />
+                <Show when={searchQuery()}>
+                  <button
+                    type="button"
+                    data-slot="search-clear"
+                    aria-label={t("sidebar.search.clear")}
+                    onClick={() => setSearchQuery("")}
+                  >
+                    ×
+                  </button>
+                </Show>
+              </div>
+              {/* Two chips that cannot both be off: turning off the last one
+                turns the other on (`toggleKind`). */}
+              <div data-slot="search-kinds" role="group" aria-label={t("sidebar.search.show")}>
                 <button
                   type="button"
-                  data-slot="search-clear"
-                  aria-label={t("sidebar.search.clear")}
-                  onClick={() => setSearchQuery("")}
+                  data-slot="search-kind"
+                  aria-pressed={kinds().has("file")}
+                  data-active={kinds().has("file") ? "true" : undefined}
+                  onClick={() => flipKind("file")}
                 >
-                  ×
+                  {t("sidebar.search.files")}
                 </button>
-              </Show>
+                <button
+                  type="button"
+                  data-slot="search-kind"
+                  aria-pressed={kinds().has("directory")}
+                  data-active={kinds().has("directory") ? "true" : undefined}
+                  onClick={() => flipKind("directory")}
+                >
+                  {t("sidebar.search.folders")}
+                </button>
+                <Show when={props.searchFiles && searchQuery().trim() && !searching()}>
+                  <span data-slot="search-count">{projectHits().length >= 200 ? "200+" : projectHits().length}</span>
+                </Show>
+              </div>
             </div>
-            {/* Two chips that cannot both be off: turning off the last one
-                turns the other on (`toggleKind`). */}
-            <div data-slot="search-kinds" role="group" aria-label={t("sidebar.search.show")}>
-              <button
-                type="button"
-                data-slot="search-kind"
-                aria-pressed={kinds().has("file")}
-                data-active={kinds().has("file") ? "true" : undefined}
-                onClick={() => flipKind("file")}
-              >
-                {t("sidebar.search.files")}
-              </button>
-              <button
-                type="button"
-                data-slot="search-kind"
-                aria-pressed={kinds().has("directory")}
-                data-active={kinds().has("directory") ? "true" : undefined}
-                onClick={() => flipKind("directory")}
-              >
-                {t("sidebar.search.folders")}
-              </button>
-              <Show when={props.searchFiles && searchQuery().trim() && !searching()}>
-                <span data-slot="search-count">
-                  {projectHits().length >= 200 ? "200+" : projectHits().length}
-                </span>
-              </Show>
-            </div>
-          </div>
 
-          {/* While a project-wide query stands, its results take the tree's
+            {/* While a project-wide query stands, its results take the tree's
               place: showing both would make the same file appear twice with
               two different meanings. */}
-          <Show when={props.searchFiles && searchQuery().trim().length >= 1}>
-            <div data-slot="section-content" data-component="file-results" role="listbox">
+            <Show when={props.searchFiles && searchQuery().trim().length >= 1}>
+              <div data-slot="section-content" data-component="file-results" role="listbox">
+                <Show
+                  when={projectHits().length > 0}
+                  fallback={
+                    <p data-slot="section-empty">
+                      {searching()
+                        ? t("sidebar.search.searching")
+                        : kinds().size === 2
+                          ? t("sidebar.search.noMatch")
+                          : kinds().has("file")
+                            ? t("sidebar.search.noFile")
+                            : t("sidebar.search.noFolder")}
+                    </p>
+                  }
+                >
+                  <For each={projectHits()}>
+                    {(hit, index) => {
+                      const nameStart = hit.rel.lastIndexOf("/") + 1
+                      const name = hit.rel.slice(nameStart)
+                      const folder = hit.rel.slice(0, Math.max(0, nameStart - 1))
+                      const isDir = hit.kind === "directory"
+                      return (
+                        <div
+                          role="option"
+                          tabindex={-1}
+                          data-slot="file-result"
+                          data-kind={hit.kind}
+                          data-index={index()}
+                          data-active={activeHit() === index() ? "true" : undefined}
+                          aria-selected={activeHit() === index()}
+                          data-selected={props.selectedFilePath === hit.path ? "true" : undefined}
+                          title={hit.path}
+                          draggable={true}
+                          onDragStart={(event) => {
+                            if (!event.dataTransfer) return
+                            // A folder leaves with its trailing slash, as from the tree.
+                            writeDraggedPaths(event.dataTransfer, [
+                              isDir ? `${hit.path.replace(/[/\\]+$/, "")}/` : hit.path,
+                            ])
+                            event.dataTransfer.effectAllowed = "copy"
+                          }}
+                          onPointerEnter={() => setActiveHit(index())}
+                          onClick={() => pickHit(hit)}
+                        >
+                          <span data-slot="file-result-icon" aria-hidden="true">
+                            <Show
+                              when={isDir}
+                              fallback={
+                                <svg
+                                  viewBox="0 0 14 14"
+                                  width="12"
+                                  height="12"
+                                  fill="none"
+                                  stroke="currentColor"
+                                  stroke-width="1.1"
+                                >
+                                  <path d="M3 1.5h5.5l3 3V12.5C11.5 13.05 11.05 13.5 10.5 13.5H3C2.45 13.5 2 13.05 2 12.5V2.5C2 1.95 2.45 1.5 3 1.5z" />
+                                  <path d="M8.5 1.5V4.5H11.5" />
+                                </svg>
+                              }
+                            >
+                              <svg
+                                viewBox="0 0 14 14"
+                                width="12"
+                                height="12"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.1"
+                                stroke-linejoin="round"
+                              >
+                                <path d="M1.5 3.5C1.5 2.67 2.17 2 3 2h2.5c.4 0 .78.16 1.06.44l1 1c.28.28.66.44 1.06.44H11c.83 0 1.5.67 1.5 1.5v5.5c0 .83-.67 1.5-1.5 1.5H3c-.83 0-1.5-.67-1.5-1.5v-7z" />
+                              </svg>
+                            </Show>
+                          </span>
+                          <span data-slot="file-result-name">
+                            {highlightMatch(name, rangesWithin(hit.ranges, nameStart, hit.rel.length))}
+                          </span>
+                          <Show when={folder}>
+                            <span data-slot="file-result-path">
+                              {/* Isolated LTR inside the RTL box: the box truncates from the
+                                left, the path still reads left to right. */}
+                              <bdi dir="ltr">{highlightMatch(folder, rangesWithin(hit.ranges, 0, folder.length))}</bdi>
+                            </span>
+                          </Show>
+                        </div>
+                      )
+                    }}
+                  </For>
+                </Show>
+              </div>
+            </Show>
+
+            <div
+              data-slot="section-content"
+              data-component="file-tree"
+              role="tree"
+              data-hidden={props.searchFiles && searchQuery().trim().length >= 1 ? "true" : undefined}
+            >
               <Show
-                when={projectHits().length > 0}
+                when={keyedFiles().length > 0}
                 fallback={
                   <p data-slot="section-empty">
-                    {searching()
-                      ? t("sidebar.search.searching")
-                      : kinds().size === 2
-                        ? t("sidebar.search.noMatch")
-                        : kinds().has("file")
-                          ? t("sidebar.search.noFile")
-                          : t("sidebar.search.noFolder")}
+                    {/* Two different absences: nothing matched, or there is no
+                      disk to read at all. Saying "vuoto" for both is a lie. */}
+                    {searchQuery() ? t("sidebar.search.noFile") : t("sidebar.files.noProject")}
                   </p>
                 }
               >
-                <For each={projectHits()}>
-                  {(hit, index) => {
-                    const nameStart = hit.rel.lastIndexOf("/") + 1
-                    const name = hit.rel.slice(nameStart)
-                    const folder = hit.rel.slice(0, Math.max(0, nameStart - 1))
-                    const isDir = hit.kind === "directory"
-                    return (
-                      <div
-                        role="option"
-                        tabindex={-1}
-                        data-slot="file-result"
-                        data-kind={hit.kind}
-                        data-index={index()}
-                        data-active={activeHit() === index() ? "true" : undefined}
-                        aria-selected={activeHit() === index()}
-                        data-selected={props.selectedFilePath === hit.path ? "true" : undefined}
-                        title={hit.path}
-                        draggable={true}
-                        onDragStart={(event) => {
-                          if (!event.dataTransfer) return
-                          // A folder leaves with its trailing slash, as from the tree.
-                          writeDraggedPaths(event.dataTransfer, [isDir ? `${hit.path.replace(/[/\\]+$/, "")}/` : hit.path])
-                          event.dataTransfer.effectAllowed = "copy"
-                        }}
-                        onPointerEnter={() => setActiveHit(index())}
-                        onClick={() => pickHit(hit)}
-                      >
-                        <span data-slot="file-result-icon" aria-hidden="true">
-                          <Show
-                            when={isDir}
-                            fallback={
-                              <svg viewBox="0 0 14 14" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.1">
-                                <path d="M3 1.5h5.5l3 3V12.5C11.5 13.05 11.05 13.5 10.5 13.5H3C2.45 13.5 2 13.05 2 12.5V2.5C2 1.95 2.45 1.5 3 1.5z" />
-                                <path d="M8.5 1.5V4.5H11.5" />
-                              </svg>
-                            }
-                          >
-                            <svg viewBox="0 0 14 14" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.1" stroke-linejoin="round">
-                              <path d="M1.5 3.5C1.5 2.67 2.17 2 3 2h2.5c.4 0 .78.16 1.06.44l1 1c.28.28.66.44 1.06.44H11c.83 0 1.5.67 1.5 1.5v5.5c0 .83-.67 1.5-1.5 1.5H3c-.83 0-1.5-.67-1.5-1.5v-7z" />
-                            </svg>
-                          </Show>
-                        </span>
-                        <span data-slot="file-result-name">
-                          {highlightMatch(name, rangesWithin(hit.ranges, nameStart, hit.rel.length))}
-                        </span>
-                        <Show when={folder}>
-                          <span data-slot="file-result-path">
-                            {/* Isolated LTR inside the RTL box: the box truncates from the
-                                left, the path still reads left to right. */}
-                            <bdi dir="ltr">{highlightMatch(folder, rangesWithin(hit.ranges, 0, folder.length))}</bdi>
-                          </span>
-                        </Show>
-                      </div>
-                    )
-                  }}
+                <For each={keyedFiles()}>
+                  {(entry) => (
+                    <FileTreeRow item={entry.data()} onToggleDir={toggleDir} onSelectFile={props.onSelectFile} />
+                  )}
                 </For>
               </Show>
             </div>
-          </Show>
-
-          <div
-            data-slot="section-content"
-            data-component="file-tree"
-            role="tree"
-            data-hidden={props.searchFiles && searchQuery().trim().length >= 1 ? "true" : undefined}
-          >
-            <Show
-              when={keyedFiles().length > 0}
-              fallback={
-                <p data-slot="section-empty">
-                  {/* Two different absences: nothing matched, or there is no
-                      disk to read at all. Saying "vuoto" for both is a lie. */}
-                  {searchQuery()
-                    ? t("sidebar.search.noFile")
-                    : t("sidebar.files.noProject")}
-                </p>
-              }
-            >
-              <For each={keyedFiles()}>
-                {(entry) => (
-                  <FileTreeRow
-                    item={entry.data()}
-                    onToggleDir={toggleDir}
-                    onSelectFile={props.onSelectFile}
-                  />
-                )}
-              </For>
-            </Show>
-          </div>
           </Show>
         </section>
 
@@ -1413,34 +1469,34 @@ export function Sidebar(props: SidebarProps) {
             {/* Gear, theme and bell as one tight group on the left; what the
                 machine is spending fills the rest of the row. */}
             <div data-slot="sidebar-footer-group">
-            <Show when={props.onOpenSettings}>
-            <button
-              type="button"
-              data-slot="sidebar-settings"
-              onClick={() => props.onOpenSettings?.()}
-              aria-label={t("sidebar.settings")}
-              title={t("sidebar.settings")}
-            >
-              <svg
-                viewBox="0 0 24 24"
-                width="16"
-                height="16"
-                aria-hidden="true"
-                fill="none"
-                stroke="currentColor"
-                stroke-width="1.8"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              >
-                <circle cx="12" cy="12" r="3" />
-                <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
-              </svg>
-              <span data-slot="sidebar-settings-label">{t("sidebar.settings")}</span>
-            </button>
-            </Show>
-            <Show when={props.footerActions}>
-              <div data-slot="sidebar-footer-actions">{props.footerActions}</div>
-            </Show>
+              <Show when={props.onOpenSettings}>
+                <button
+                  type="button"
+                  data-slot="sidebar-settings"
+                  onClick={() => props.onOpenSettings?.()}
+                  aria-label={t("sidebar.settings")}
+                  title={t("sidebar.settings")}
+                >
+                  <svg
+                    viewBox="0 0 24 24"
+                    width="16"
+                    height="16"
+                    aria-hidden="true"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
+                    <circle cx="12" cy="12" r="3" />
+                    <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z" />
+                  </svg>
+                  <span data-slot="sidebar-settings-label">{t("sidebar.settings")}</span>
+                </button>
+              </Show>
+              <Show when={props.footerActions}>
+                <div data-slot="sidebar-footer-actions">{props.footerActions}</div>
+              </Show>
             </div>
             <Show when={stats()}>
               {(view) => (
@@ -1448,23 +1504,71 @@ export function Sidebar(props: SidebarProps) {
                   {/* Marks instead of words: three labels were most of the
                       row's width. The words stay in the tooltip and in
                       aria-label for whoever does not read the marks. */}
-                  <span data-slot="sidebar-stat" data-load={view().cpu.load} title={view().cpu.title} aria-label={view().cpu.title}>
-                    <svg data-slot="sidebar-stat-icon" viewBox="0 0 16 16" width="11" height="11" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+                  <span
+                    data-slot="sidebar-stat"
+                    data-load={view().cpu.load}
+                    title={view().cpu.title}
+                    aria-label={view().cpu.title}
+                  >
+                    <svg
+                      data-slot="sidebar-stat-icon"
+                      viewBox="0 0 16 16"
+                      width="11"
+                      height="11"
+                      aria-hidden="true"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.3"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
                       <rect x="4" y="4" width="8" height="8" rx="1.2" />
                       <rect x="6.5" y="6.5" width="3" height="3" rx="0.4" />
                       <path d="M6 1.5v2M10 1.5v2M6 12.5v2M10 12.5v2M1.5 6h2M1.5 10h2M12.5 6h2M12.5 10h2" />
                     </svg>
                     {view().cpu.text}
                   </span>
-                  <span data-slot="sidebar-stat" data-load={view().ram.load} title={view().ram.title} aria-label={view().ram.title}>
-                    <svg data-slot="sidebar-stat-icon" viewBox="0 0 16 16" width="11" height="11" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+                  <span
+                    data-slot="sidebar-stat"
+                    data-load={view().ram.load}
+                    title={view().ram.title}
+                    aria-label={view().ram.title}
+                  >
+                    <svg
+                      data-slot="sidebar-stat-icon"
+                      viewBox="0 0 16 16"
+                      width="11"
+                      height="11"
+                      aria-hidden="true"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.3"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
                       <rect x="1.5" y="4.5" width="13" height="6" rx="1" />
                       <path d="M4.5 6.8v1.4M7 6.8v1.4M9.5 6.8v1.4M12 6.8v1.4M3.5 10.5v2M6.5 10.5v2M9.5 10.5v2M12.5 10.5v2" />
                     </svg>
                     {view().ram.text}
                   </span>
-                  <span data-slot="sidebar-stat" data-load={view().mem.load} title={view().mem.title} aria-label={view().mem.title}>
-                    <svg data-slot="sidebar-stat-icon" viewBox="0 0 16 16" width="11" height="11" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round">
+                  <span
+                    data-slot="sidebar-stat"
+                    data-load={view().mem.load}
+                    title={view().mem.title}
+                    aria-label={view().mem.title}
+                  >
+                    <svg
+                      data-slot="sidebar-stat-icon"
+                      viewBox="0 0 16 16"
+                      width="11"
+                      height="11"
+                      aria-hidden="true"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.3"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
                       <circle cx="8" cy="8" r="6" />
                       <path d="M8 2v6h6" />
                     </svg>

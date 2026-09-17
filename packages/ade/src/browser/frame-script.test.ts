@@ -112,7 +112,8 @@ function makeWindow(input: { name?: string; nested?: boolean; top?: boolean; hre
     chrome: { webview },
     location: new URL(input.href ?? "http://localhost:5173/"),
   })
-  const fromParent = (data: unknown) => win.dispatchEvent(new BrowserMessageEvent("message", { data, source: win.parent }))
+  const fromParent = (data: unknown) =>
+    win.dispatchEvent(new BrowserMessageEvent("message", { data, source: win.parent }))
   const fromPage = (data: unknown) => win.dispatchEvent(new BrowserMessageEvent("message", { data, source: win }))
   return { win, topPosted, transfers, seen, webview, fromParent, fromPage, wipeListeners: () => win.wipe() }
 }
@@ -348,7 +349,11 @@ describe("FrameGate", () => {
     const script = asker()
     g.ask(script.pane)
     expect(script.state.hello).toBe("secret-1".padEnd(20, "0"))
-    script.frame.postMessage({ type: FRAME_ENVELOPE, secret: script.state.hello, message: { type: "visual-editor:ready" } })
+    script.frame.postMessage({
+      type: FRAME_ENVELOPE,
+      secret: script.state.hello,
+      message: { type: "visual-editor:ready" },
+    })
     script.frame.postMessage({ type: FRAME_ENVELOPE, secret: "forged-secret-000000", message: { type: "x" } })
     expect(heard).toEqual([{ type: "visual-editor:ready" }])
   })

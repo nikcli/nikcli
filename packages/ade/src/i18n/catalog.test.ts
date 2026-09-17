@@ -10,7 +10,21 @@ import { it } from "./it"
  */
 
 /** Texts that are the same word in both languages, or are names. */
-const SAME_IN_BOTH = new Set<string>(["settings.language.it", "settings.language.en", "preset.solo", "sidebar.spaces", "pane.quota", "settings.grid.auto", "record.consent.no", "vui.hud.no", "pane.video.title", "vui.audio.title", "browser.owner.ready", "bots.card.file", "bots.form.persona"])
+const SAME_IN_BOTH = new Set<string>([
+  "settings.language.it",
+  "settings.language.en",
+  "preset.solo",
+  "sidebar.spaces",
+  "pane.quota",
+  "settings.grid.auto",
+  "record.consent.no",
+  "vui.hud.no",
+  "pane.video.title",
+  "vui.audio.title",
+  "browser.owner.ready",
+  "bots.card.file",
+  "bots.form.persona",
+])
 
 type Key = keyof typeof it
 
@@ -51,7 +65,10 @@ describe("the catalogs", () => {
   test("every value a text takes shows up in it, in both languages", () => {
     const dropped: string[] = []
     for (const key of Object.keys(it) as Key[]) {
-      for (const [name, entry] of [["it", it[key]], ["en", en[key]]] as const) {
+      for (const [name, entry] of [
+        ["it", it[key]],
+        ["en", en[key]],
+      ] as const) {
         if (typeof entry !== "function") continue
         const text = sample(entry)
         for (let i = 0; i < entry.length; i++) if (!text.includes(`«${i}»`)) dropped.push(`${name} ${key} #${i}`)

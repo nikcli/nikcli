@@ -186,12 +186,9 @@ describe("adaptV2AdePlugin", () => {
   test("setup must return a cleanup or nothing", async () => {
     clearPluginStorage()
     const runtime = host()
-    await expect(
-      adaptV2AdePlugin(
-        { id: "example.plugin", setup: () => 42 as never },
-        runtime.value,
-      ),
-    ).rejects.toThrow("must return a cleanup function or void")
+    await expect(adaptV2AdePlugin({ id: "example.plugin", setup: () => 42 as never }, runtime.value)).rejects.toThrow(
+      "must return a cleanup function or void",
+    )
   })
 })
 

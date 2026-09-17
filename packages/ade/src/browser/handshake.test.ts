@@ -39,10 +39,7 @@ describe("handshakeReducer", () => {
     })
 
     test("load-error event transitions pending to none with error message", () => {
-      const next = handshakeReducer(
-        { fidelity: "pending" },
-        { type: "load-error", error: "Connection refused" },
-      )
+      const next = handshakeReducer({ fidelity: "pending" }, { type: "load-error", error: "Connection refused" })
       expect(next.fidelity).toBe("none")
       expect(next.error).toBe("Connection refused")
     })
@@ -180,7 +177,10 @@ describe("handshakeReducer", () => {
 
 describe("no-bridge event", () => {
   test("settles pending on the real page, without inspection", () => {
-    expect(handshakeReducer({ fidelity: "pending" }, { type: "no-bridge" })).toEqual({ fidelity: "none", error: undefined })
+    expect(handshakeReducer({ fidelity: "pending" }, { type: "no-bridge" })).toEqual({
+      fidelity: "none",
+      error: undefined,
+    })
   })
 
   test("is a no-op once the handshake has settled", () => {
@@ -203,7 +203,9 @@ describe("framingBlocked", () => {
   })
 
   test("frame-ancestors without * blocks, with * does not", () => {
-    expect(framingBlocked(headers({ "content-security-policy": "default-src 'self'; frame-ancestors 'none'" }))).toBe(true)
+    expect(framingBlocked(headers({ "content-security-policy": "default-src 'self'; frame-ancestors 'none'" }))).toBe(
+      true,
+    )
     expect(framingBlocked(headers({ "content-security-policy": "frame-ancestors https://example.com" }))).toBe(true)
     expect(framingBlocked(headers({ "content-security-policy": "frame-ancestors *" }))).toBe(false)
   })

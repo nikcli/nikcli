@@ -201,7 +201,12 @@ describe("a damaged store", () => {
           cwd: "C:/repo",
           branch: "main",
           status: "done",
-          lines: [{ kind: "error\" onload=alert(1)", text: "ciao" }, { kind: 42, text: "due" }, { text: "senza tipo" }, "non un oggetto"],
+          lines: [
+            { kind: 'error" onload=alert(1)', text: "ciao" },
+            { kind: 42, text: "due" },
+            { text: "senza tipo" },
+            "non un oggetto",
+          ],
         },
       ],
       currentView: "plancia",
@@ -242,7 +247,11 @@ describe("browser panes across a restart", () => {
     workspaceId: "sito",
     browserUrl: "https://bastelli-cmp.vercel.app/#top",
     browserHistory: {
-      entries: ["http://localhost:3000/", "https://bastelli-cmp.vercel.app/#top", "https://bastelli-cmp.vercel.app/catalogo"],
+      entries: [
+        "http://localhost:3000/",
+        "https://bastelli-cmp.vercel.app/#top",
+        "https://bastelli-cmp.vercel.app/catalogo",
+      ],
       index: 1,
     },
     ...over,
@@ -309,7 +318,9 @@ describe("browser panes across a restart", () => {
   })
 
   test("a state saved before browser panes were kept still reads, with none", () => {
-    const saved = parseWorkspace(JSON.stringify({ version: CURRENT_VERSION, panes: [], currentView: "code", sidebarWidth: 260 }))
+    const saved = parseWorkspace(
+      JSON.stringify({ version: CURRENT_VERSION, panes: [], currentView: "code", sidebarWidth: 260 }),
+    )
     expect(saved?.browsers).toEqual([])
     expect(fromWorkspaceState(saved!, "proj").panes).toEqual([])
   })
@@ -318,7 +329,10 @@ describe("browser panes across a restart", () => {
     const { saved, restored } = roundTrip([
       browser({
         browserUrl: "http://localhost:8888/lab?token=SECRET",
-        browserHistory: { entries: ["https://a.test/cb?code=C1&state=s", "http://localhost:8888/lab?token=SECRET"], index: 1 },
+        browserHistory: {
+          entries: ["https://a.test/cb?code=C1&state=s", "http://localhost:8888/lab?token=SECRET"],
+          index: 1,
+        },
       }),
     ])
     expect(JSON.stringify(saved)).not.toContain("SECRET")

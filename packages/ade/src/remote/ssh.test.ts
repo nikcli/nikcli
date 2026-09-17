@@ -80,7 +80,11 @@ describe("targets and roots", () => {
   test("what the user types", () => {
     expect(parseTargetInput("devbox")).toEqual({ destination: "devbox" })
     expect(parseTargetInput("niko@10.0.0.5:2222")).toEqual({ destination: "niko@10.0.0.5", port: 2222 })
-    expect(parseTargetInput("niko@host:2222/srv/app")).toEqual({ destination: "niko@host", port: 2222, dir: "/srv/app" })
+    expect(parseTargetInput("niko@host:2222/srv/app")).toEqual({
+      destination: "niko@host",
+      port: 2222,
+      dir: "/srv/app",
+    })
     expect(parseTargetInput("host:~/app")).toEqual({ destination: "host", dir: "~/app" })
     expect(parseTargetInput("ssh://host/srv")).toEqual({ destination: "host", dir: "/srv" })
     for (const bad of ["", "-oProxyCommand=calc", "host:99999", "host:/it's", "a b", "host:relative/dir"]) {

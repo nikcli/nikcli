@@ -24,9 +24,10 @@ export function checkName(raw: string): { name: string } | { error: string } {
   const name = raw.trim()
   if (!name) return { error: "il nome è vuoto" }
   if (name.length > MAX_NAME) return { error: `il nome supera ${MAX_NAME} caratteri` }
-  if (/^\d+$/.test(name)) return { error: "il nome non può essere solo un numero (i numeri sono le posizioni in ade-msg list)" }
+  if (/^\d+$/.test(name))
+    return { error: "il nome non può essere solo un numero (i numeri sono le posizioni in ade-msg list)" }
   // eslint-disable-next-line no-control-regex
-  if (/[\\/\u0000-\u001f"]/.test(name)) return { error: "il nome non può contenere / \\ \" o caratteri di controllo" }
+  if (/[\\/\u0000-\u001f"]/.test(name)) return { error: 'il nome non può contenere / \\ " o caratteri di controllo' }
   return { name }
 }
 
@@ -176,9 +177,13 @@ export function effortArgs(agentId: string, effort: string, model?: string): str
   if (!levels.includes(value)) return { error: `effort "${effort}" non valido per ${agentId}: ${levels.join(", ")}` }
   if (agentId === "agy") {
     const suffix = /-(low|medium|high)$/.exec(model?.trim() ?? "")?.[1]
-    if (!model) return { error: `per agy l'effort è nel nome del modello: usa --model, per esempio gemini-3.8-flash-${value}` }
+    if (!model)
+      return { error: `per agy l'effort è nel nome del modello: usa --model, per esempio gemini-3.8-flash-${value}` }
     if (!suffix) return { error: `il modello ${model} di agy non ha livelli di effort: togli --effort` }
-    if (suffix !== value) return { error: `per agy l'effort è nel nome del modello: usa ${model.replace(/-(low|medium|high)$/, `-${value}`)}` }
+    if (suffix !== value)
+      return {
+        error: `per agy l'effort è nel nome del modello: usa ${model.replace(/-(low|medium|high)$/, `-${value}`)}`,
+      }
     return []
   }
   if (agentId === "claude-code" && /haiku/i.test(model ?? "")) {
@@ -227,9 +232,9 @@ export function dispatchChoice(json: string, profile: string, agentId: string): 
   }
   const classes = (data as { classes?: unknown }).classes
   if (!Array.isArray(classes)) return { error: "dispatch.json non ha classes" }
-  const named = classes.find((entry) => entry && typeof entry === "object" && (entry as { when?: unknown }).when === profile) as
-    | { candidates?: unknown }
-    | undefined
+  const named = classes.find(
+    (entry) => entry && typeof entry === "object" && (entry as { when?: unknown }).when === profile,
+  ) as { candidates?: unknown } | undefined
   if (!named) {
     const names = classes.map((entry) => (entry as { when?: unknown })?.when).filter((name) => typeof name === "string")
     return { error: `profilo "${profile}" non trovato in dispatch.json: ${names.join(", ")}` }
@@ -240,7 +245,8 @@ export function dispatchChoice(json: string, profile: string, agentId: string): 
     const agents = candidates.map((candidate) => candidate?.agent).filter((agent) => typeof agent === "string")
     return { error: `il profilo "${profile}" non prevede ${agentId}: candidati ${agents.join(", ") || "nessuno"}` }
   }
-  const text = (key: string) => (typeof hit[key] === "string" && (hit[key] as string).trim() ? (hit[key] as string).trim() : undefined)
+  const text = (key: string) =>
+    typeof hit[key] === "string" && (hit[key] as string).trim() ? (hit[key] as string).trim() : undefined
   const model = text("model")
   const effort = text("effort")
   const why = text("why")

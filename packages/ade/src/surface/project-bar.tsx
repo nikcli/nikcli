@@ -25,7 +25,16 @@ export function ProjectBar(props: ProjectBarProps) {
           <Show when={project().branch}>
             {(branch) => (
               <span data-slot="ade-project-branch">
-                <svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.3" stroke-linecap="round">
+                <svg
+                  viewBox="0 0 16 16"
+                  width="11"
+                  height="11"
+                  aria-hidden="true"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.3"
+                  stroke-linecap="round"
+                >
                   <path d="M4 2v8" />
                   <circle cx="12" cy="4" r="2" />
                   <circle cx="4" cy="12" r="2" />
@@ -36,10 +45,7 @@ export function ProjectBar(props: ProjectBarProps) {
             )}
           </Show>
           <Show when={!project().git}>
-            <span
-              data-slot="ade-project-warning"
-              title={t("projectBar.noGit")}
-            >
+            <span data-slot="ade-project-warning" title={t("projectBar.noGit")}>
               {t("projectBar.noGit.short")}
             </span>
           </Show>

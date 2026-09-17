@@ -273,12 +273,7 @@ export function VoiceHud(props: VoiceHudProps) {
                   {t("vui.hud.settings")}
                 </button>
               </Show>
-              <button
-                type="button"
-                data-slot="hud-esc"
-                onClick={dismiss}
-                aria-label={t("vui.hud.close")}
-              >
+              <button type="button" data-slot="hud-esc" onClick={dismiss} aria-label={t("vui.hud.close")}>
                 esc
               </button>
             </section>
@@ -286,19 +281,19 @@ export function VoiceHud(props: VoiceHudProps) {
         </Show>
 
         <Show when={!failure()}>
-        <Show
-          when={mode() === "transcription"}
-          fallback={
-            /* ── agente ───────────────────────────────────────────────── */
-            <section
-              data-slot="hud-pill"
-              data-kind="agent"
-              data-tone={state().tone}
-              role="status"
-              aria-live="polite"
-              aria-label={t("vui.hud.agent.label")}
-            >
-              {/*
+          <Show
+            when={mode() === "transcription"}
+            fallback={
+              /* ── agente ───────────────────────────────────────────────── */
+              <section
+                data-slot="hud-pill"
+                data-kind="agent"
+                data-tone={state().tone}
+                role="status"
+                aria-live="polite"
+                aria-label={t("vui.hud.agent.label")}
+              >
+                {/*
                 The same orb the toolbar draws, at the widget's size.
 
                 It used to be this file's own disc: an ink circle with the
@@ -308,129 +303,121 @@ export function VoiceHud(props: VoiceHudProps) {
                 two drifted, because nothing held them together. One drawing
                 now, and the widget inherits every state the orb learns.
               */}
-              <span data-slot="hud-orb">
+                <span data-slot="hud-orb">
+                  <OrbMark
+                    awake={running()}
+                    status={status()}
+                    mode={mode()}
+                    level={orbLevel(level(), running())}
+                    rim={rim()}
+                  />
+                </span>
+
+                <span data-slot="hud-body">
+                  <span data-slot="hud-label">{state().label}</span>
+                  <span data-slot="hud-line" data-quoted={state().quoted ? "true" : undefined}>
+                    {state().line}
+                  </span>
+                </span>
+
+                <Wave level={level()} running={running()} />
+
+                {/* A destructive command asks before it runs; the voice answer is
+                  the point, and the buttons are the way out when the room is
+                  loud enough that saying it twice has already failed. */}
+                <Show when={status() === "confirming" && dialog().pendingAction}>
+                  <span data-slot="hud-actions">
+                    <button type="button" data-slot="hud-btn" onClick={() => void props.engine.submitText("annulla")}>
+                      {t("vui.hud.no")}
+                    </button>
+                    <button
+                      type="button"
+                      data-slot="hud-btn"
+                      data-primary="true"
+                      onClick={() => void props.engine.submitText("conferma")}
+                    >
+                      {t("vui.hud.yes")}
+                    </button>
+                  </span>
+                </Show>
+
+                <Show when={candidates().length >= 2}>
+                  <span data-slot="hud-actions">
+                    <For each={candidates()}>
+                      {(candidate, index) => (
+                        <button
+                          type="button"
+                          data-slot="hud-btn"
+                          title={candidate.intent.readback}
+                          onClick={() => void props.engine.submitText(index() === 0 ? "la prima" : "la seconda")}
+                        >
+                          {index() === 0 ? t("vui.hud.first") : t("vui.hud.second")}
+                        </button>
+                      )}
+                    </For>
+                  </span>
+                </Show>
+
+                <button type="button" data-slot="hud-esc" onClick={dismiss} aria-label={t("vui.hud.cancel")}>
+                  esc
+                </button>
+              </section>
+            }
+          >
+            {/* ── trascrizione ───────────────────────────────────────────── */}
+            <section
+              data-slot="hud-pill"
+              data-kind="transcription"
+              data-tone={preparing() ? "working" : partial().length > 0 ? "listening" : "armed"}
+              role="status"
+              aria-live="polite"
+              aria-label={t("vui.hud.transcription.label")}
+            >
+              <span data-slot="hud-mark">
                 <OrbMark
                   awake={running()}
                   status={status()}
-                  mode={mode()}
+                  mode="transcription"
                   level={orbLevel(level(), running())}
                   rim={rim()}
                 />
               </span>
 
-              <span data-slot="hud-body">
-                <span data-slot="hud-label">{state().label}</span>
-                <span data-slot="hud-line" data-quoted={state().quoted ? "true" : undefined}>
-                  {state().line}
-                </span>
-              </span>
-
               <Wave level={level()} running={running()} />
 
-              {/* A destructive command asks before it runs; the voice answer is
-                  the point, and the buttons are the way out when the room is
-                  loud enough that saying it twice has already failed. */}
-              <Show when={status() === "confirming" && dialog().pendingAction}>
-                <span data-slot="hud-actions">
-                  <button
-                    type="button"
-                    data-slot="hud-btn"
-                    onClick={() => void props.engine.submitText("annulla")}
-                  >
-                    {t("vui.hud.no")}
-                  </button>
-                  <button
-                    type="button"
-                    data-slot="hud-btn"
-                    data-primary="true"
-                    onClick={() => void props.engine.submitText("conferma")}
-                  >
-                    {t("vui.hud.yes")}
-                  </button>
-                </span>
-              </Show>
+              {/*
+              The words are the widget. They run to the right edge and are
+              clipped from the left, the way a caret keeps the newest text in
+              view — what was said thirty seconds ago is already in the pane.
+            */}
+              <span data-slot="hud-said" data-empty={dictated().length === 0 ? "true" : undefined}>
+                {preparing() ? state().line : dictated().length > 0 ? dictated() : t("vui.hud.listeningNow")}
+              </span>
 
-              <Show when={candidates().length >= 2}>
-                <span data-slot="hud-actions">
-                  <For each={candidates()}>
-                    {(candidate, index) => (
-                      <button
-                        type="button"
-                        data-slot="hud-btn"
-                        title={candidate.intent.readback}
-                        onClick={() =>
-                          void props.engine.submitText(index() === 0 ? "la prima" : "la seconda")
-                        }
-                      >
-                        {index() === 0 ? t("vui.hud.first") : t("vui.hud.second")}
-                      </button>
-                    )}
-                  </For>
-                </span>
+              <Show when={props.target && !preparing()}>
+                <button
+                  type="button"
+                  data-slot="hud-target"
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    props.onCycleTarget?.()
+                  }}
+                  title={
+                    props.onCycleTarget
+                      ? t("vui.hud.target.cycle", props.target ?? "")
+                      : t("vui.hud.target", props.target ?? "")
+                  }
+                  style={props.onCycleTarget ? { cursor: "pointer" } : undefined}
+                >
+                  → {props.target}
+                </button>
               </Show>
 
               <button type="button" data-slot="hud-esc" onClick={dismiss} aria-label={t("vui.hud.cancel")}>
                 esc
               </button>
             </section>
-          }
-        >
-          {/* ── trascrizione ───────────────────────────────────────────── */}
-          <section
-            data-slot="hud-pill"
-            data-kind="transcription"
-            data-tone={
-              preparing() ? "working" : partial().length > 0 ? "listening" : "armed"
-            }
-            role="status"
-            aria-live="polite"
-            aria-label={t("vui.hud.transcription.label")}
-          >
-            <span data-slot="hud-mark">
-              <OrbMark
-                awake={running()}
-                status={status()}
-                mode="transcription"
-                level={orbLevel(level(), running())}
-                rim={rim()}
-              />
-            </span>
-
-            <Wave level={level()} running={running()} />
-
-            {/*
-              The words are the widget. They run to the right edge and are
-              clipped from the left, the way a caret keeps the newest text in
-              view — what was said thirty seconds ago is already in the pane.
-            */}
-            <span data-slot="hud-said" data-empty={dictated().length === 0 ? "true" : undefined}>
-              {preparing()
-                ? state().line
-                : dictated().length > 0
-                  ? dictated()
-                  : t("vui.hud.listeningNow")}
-            </span>
-
-            <Show when={props.target && !preparing()}>
-              <button
-                type="button"
-                data-slot="hud-target"
-                onClick={(e) => {
-                  e.stopPropagation()
-                  props.onCycleTarget?.()
-                }}
-                title={props.onCycleTarget ? t("vui.hud.target.cycle", props.target ?? "") : t("vui.hud.target", props.target ?? "")}
-                style={props.onCycleTarget ? { cursor: "pointer" } : undefined}
-              >
-                → {props.target}
-              </button>
-            </Show>
-
-            <button type="button" data-slot="hud-esc" onClick={dismiss} aria-label={t("vui.hud.cancel")}>
-              esc
-            </button>
-          </section>
-        </Show>
+          </Show>
         </Show>
 
         {/* Errors ride under the pill rather than replacing it: the mic is

@@ -127,10 +127,7 @@ function asId(value: unknown): string | undefined {
  * the previous run that used the same pane id; the nonce alone would accept
  * one about a different pane. Together they identify one spawn.
  */
-export function acceptsReport(
-  report: LinkReport,
-  expected: { pane: string; nonce: string },
-): boolean {
+export function acceptsReport(report: LinkReport, expected: { pane: string; nonce: string }): boolean {
   return report.pane === expected.pane && report.nonce === expected.nonce
 }
 

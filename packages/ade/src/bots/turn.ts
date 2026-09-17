@@ -111,7 +111,8 @@ export interface Turn {
 
 /* See `@nikcli-ai/voice` `timing.ts`: a no-op unless a harness is measuring. */
 export function markTurn(mark: string, detail?: string): void {
-  const timeline = (globalThis as { __adeVoiceTimeline?: Array<{ at: number; mark: string; detail?: string }> }).__adeVoiceTimeline
+  const timeline = (globalThis as { __adeVoiceTimeline?: Array<{ at: number; mark: string; detail?: string }> })
+    .__adeVoiceTimeline
   if (Array.isArray(timeline)) timeline.push({ at: Date.now(), mark, ...(detail ? { detail } : {}) })
 }
 

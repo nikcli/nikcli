@@ -28,7 +28,8 @@ export function DecisionsPane(props: {
   const [showClosed, setShowClosed] = createSignal(false)
   const now = () => props.hub.register.now()
   // The first open decision is answerable in place; another one once clicked.
-  const active = () => expanded() && buckets().forYou.some((d) => d.k === expanded()) ? expanded() : buckets().forYou[0]?.k
+  const active = () =>
+    expanded() && buckets().forYou.some((d) => d.k === expanded()) ? expanded() : buckets().forYou[0]?.k
   const problems = createMemo(() => {
     const loaded = props.hub.register.loaded()
     return loaded ? describeProblems(loaded.problems, state()?.rejected ?? []) : []
@@ -63,17 +64,35 @@ export function DecisionsPane(props: {
           <DecisionsGlyph />
         </span>
         <h2 data-slot="pane-title" title={props.hub.register.path()}>
-          {t("decisions.title")}{buckets().forYou.length > 0 ? ` · ${t("decisions.openCount", buckets().forYou.length)}` : ""}
+          {t("decisions.title")}
+          {buckets().forYou.length > 0 ? ` · ${t("decisions.openCount", buckets().forYou.length)}` : ""}
         </h2>
         <div data-slot="pane-actions">
-          <button type="button" data-slot="pane-action" onClick={() => props.onExpand?.()} aria-label={t("pane.expand")}>
+          <button
+            type="button"
+            data-slot="pane-action"
+            onClick={() => props.onExpand?.()}
+            aria-label={t("pane.expand")}
+          >
             <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
-              <path d="M1 4.5V1h3.5M11 7.5V11H7.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+              <path
+                d="M1 4.5V1h3.5M11 7.5V11H7.5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.2"
+                stroke-linecap="round"
+              />
             </svg>
           </button>
           <button type="button" data-slot="pane-action" onClick={() => props.onClose?.()} aria-label={t("pane.close")}>
             <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
-              <path d="M2.5 2.5l7 7M9.5 2.5l-7 7" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+              <path
+                d="M2.5 2.5l7 7M9.5 2.5l-7 7"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.2"
+                stroke-linecap="round"
+              />
             </svg>
           </button>
         </div>
@@ -87,7 +106,9 @@ export function DecisionsPane(props: {
           </div>
         </Show>
         <Show when={props.hub.register.error()}>
-          <div data-slot="decision-problem" role="alert">{t("decisions.unreadable", String(props.hub.register.error()))}</div>
+          <div data-slot="decision-problem" role="alert">
+            {t("decisions.unreadable", String(props.hub.register.error()))}
+          </div>
         </Show>
         <Show when={problems().length > 0}>
           <details data-slot="decisions-problems">
@@ -99,7 +120,10 @@ export function DecisionsPane(props: {
         </Show>
 
         <Show when={props.hub.register.path()}>
-          <RecipientPicker hub={props.hub} queued={buckets().answered.filter((decision) => props.hub.delivery(decision).state === "in coda").length} />
+          <RecipientPicker
+            hub={props.hub}
+            queued={buckets().answered.filter((decision) => props.hub.delivery(decision).state === "in coda").length}
+          />
           <h4 data-slot="decisions-section">{t("decisions.section.open")}</h4>
           <Show when={buckets().forYou.length > 0} fallback={<p data-slot="decisions-none">{t("decisions.none")}</p>}>
             <div data-slot="decisions-list">
@@ -131,14 +155,18 @@ export function DecisionsPane(props: {
                     <header data-slot="decision-head">
                       <span data-slot="decision-key">{decision.k}</span>
                       <h3 data-slot="decision-title">{decision.title}</h3>
-                      <span data-slot="decision-pill" data-tone="done">{t("decisions.pill.answered")}</span>
+                      <span data-slot="decision-pill" data-tone="done">
+                        {t("decisions.pill.answered")}
+                      </span>
                     </header>
                     <div data-slot="decision-answer">
                       <b>{decision.answer?.choice ?? decision.answer?.words}</b>
                       <Show when={decision.answer?.choice && decision.answer?.note}> · {decision.answer?.note}</Show>
                     </div>
                     <Show when={props.hub.problem(decision.k)}>
-                      <div data-slot="decision-problem" role="alert">{props.hub.problem(decision.k)}</div>
+                      <div data-slot="decision-problem" role="alert">
+                        {props.hub.problem(decision.k)}
+                      </div>
                     </Show>
                     <div data-slot="decision-actions">
                       <span data-slot="decision-hint">{deliveryText(props.hub, decision, now())}</span>
@@ -272,9 +300,7 @@ function RecipientPicker(props: { hub: DecisionsHub; queued: number }) {
       </label>
       <Show when={pending()}>
         <div data-slot="decisions-recipient-confirm" role="alert">
-          <span>
-            {t("decisions.recipient.confirm", props.queued, String(pendingTitle() ?? ""))}
-          </span>
+          <span>{t("decisions.recipient.confirm", props.queued, String(pendingTitle() ?? ""))}</span>
           <button
             type="button"
             data-slot="decision-submit"
@@ -305,7 +331,15 @@ function RecipientPicker(props: { hub: DecisionsHub; queued: number }) {
 
 export function DecisionsGlyph() {
   return (
-    <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.2" aria-hidden="true">
+    <svg
+      viewBox="0 0 16 16"
+      width="12"
+      height="12"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.2"
+      aria-hidden="true"
+    >
       <path d="M8 1.8v3.4M8 5.2L3.2 9.4M8 5.2l4.8 4.2" stroke-linecap="round" stroke-linejoin="round" />
       <circle cx="3.2" cy="11.6" r="2.2" />
       <circle cx="12.8" cy="11.6" r="2.2" />

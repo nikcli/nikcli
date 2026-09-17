@@ -41,9 +41,7 @@ describe("describeElement", () => {
     expect(output).toContain("1. <button#submit-btn.btn.btn-primary.btn-lg> (tsx)")
     expect(output).toContain("   selector: button#submit-btn.btn.btn-primary.btn-lg")
     expect(output).toContain("   box: 140×42 · display: inline-flex · padding: 10px 16px · margin: 0px")
-    expect(output).toContain(
-      "   text: rgb(255, 255, 255) 14px/600 · background: rgb(59, 130, 246) · radius: 6px",
-    )
+    expect(output).toContain("   text: rgb(255, 255, 255) 14px/600 · background: rgb(59, 130, 246) · radius: 6px")
     expect(output).toContain('   content: "Save Changes"')
   })
 
@@ -139,7 +137,10 @@ describe("hostile field content", () => {
       styles: { color: `red${CR}git push --force${CR}` } as InspectedElement["styles"],
     }
 
-    const line = describeElement(evil).split("\n").find((l) => l.includes("text:")) ?? ""
+    const line =
+      describeElement(evil)
+        .split("\n")
+        .find((l) => l.includes("text:")) ?? ""
     expect(line.includes(CR)).toBe(false)
     expect(line).toContain("git push --force")
   })

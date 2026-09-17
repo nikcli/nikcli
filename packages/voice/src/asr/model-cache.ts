@@ -207,9 +207,7 @@ export async function inspectLocalFilesystemModel(): Promise<{
 }> {
   // 1. Try Node.js / Bun runtime filesystem if available
   try {
-    const isNodeLike =
-      typeof process !== "undefined" &&
-      Boolean(process.versions?.node || (process as any).isBun)
+    const isNodeLike = typeof process !== "undefined" && Boolean(process.versions?.node || (process as any).isBun)
     if (isNodeLike) {
       const fs = await import("fs")
       const path = await import("path")
@@ -298,12 +296,11 @@ export async function inspectLocalFilesystemModel(): Promise<{
   // 2. Try Tauri desktop host if running inside Tauri WebView
   try {
     const tauriGlobal =
-      typeof window !== "undefined" &&
-      Boolean((window as any).__TAURI_INTERNALS__ || (window as any).__TAURI__)
+      typeof window !== "undefined" && Boolean((window as any).__TAURI_INTERNALS__ || (window as any).__TAURI__)
     if (tauriGlobal) {
       let invoke: ((cmd: string, args?: Record<string, unknown>) => Promise<any>) | undefined
       try {
-        const tauriCore: any = await (new Function('return import("@tauri-apps/api/core")')().catch(() => null))
+        const tauriCore: any = await new Function('return import("@tauri-apps/api/core")')().catch(() => null)
         if (tauriCore && typeof tauriCore.invoke === "function") {
           invoke = tauriCore.invoke
         } else if (typeof (window as any).__TAURI_INTERNALS__?.invoke === "function") {
@@ -329,8 +326,16 @@ export async function inspectLocalFilesystemModel(): Promise<{
               (await invoke("read_dir", { path: hub })) || []
 
             entries.sort((a: any, b: any) => {
-              const aTdt = String(a.name || "").toLowerCase().includes("tdt-0.6b-v3") ? 1 : 0
-              const bTdt = String(b.name || "").toLowerCase().includes("tdt-0.6b-v3") ? 1 : 0
+              const aTdt = String(a.name || "")
+                .toLowerCase()
+                .includes("tdt-0.6b-v3")
+                ? 1
+                : 0
+              const bTdt = String(b.name || "")
+                .toLowerCase()
+                .includes("tdt-0.6b-v3")
+                ? 1
+                : 0
               return bTdt - aTdt
             })
 
@@ -360,16 +365,22 @@ export async function inspectLocalFilesystemModel(): Promise<{
                   const snapFiles: Array<{ name: string; path: string; size: number }> =
                     (await invoke("read_dir", { path: snap.path })) || []
                   snapFiles.sort((a: any, b: any) => {
-                    const aTdt = String(a.name || "").toLowerCase().includes("tdt-0.6b-v3") ? 1 : 0
-                    const bTdt = String(b.name || "").toLowerCase().includes("tdt-0.6b-v3") ? 1 : 0
+                    const aTdt = String(a.name || "")
+                      .toLowerCase()
+                      .includes("tdt-0.6b-v3")
+                      ? 1
+                      : 0
+                    const bTdt = String(b.name || "")
+                      .toLowerCase()
+                      .includes("tdt-0.6b-v3")
+                      ? 1
+                      : 0
                     return bTdt - aTdt
                   })
                   for (const sf of snapFiles) {
                     const sfLower = String(sf.name || "").toLowerCase()
                     if (
-                      (sfLower.endsWith(".gguf") ||
-                        sfLower.endsWith(".onnx") ||
-                        sfLower.endsWith(".bin")) &&
+                      (sfLower.endsWith(".gguf") || sfLower.endsWith(".onnx") || sfLower.endsWith(".bin")) &&
                       sf.size > 10_000_000
                     ) {
                       return {
@@ -543,9 +554,7 @@ export interface DownloadParakeetOptions {
  * Directly downloads the quantized Parakeet model weights into local IndexedDB
  * storage, making the local transcriber immediately ready for offline use.
  */
-export async function downloadParakeetModel(
-  options: DownloadParakeetOptions = {}
-): Promise<CachedModel> {
+export async function downloadParakeetModel(options: DownloadParakeetOptions = {}): Promise<CachedModel> {
   await requestPersistentStorage()
 
   let getModel = options.getParakeetModel
@@ -554,9 +563,7 @@ export async function downloadParakeetModel(
       const pkg: any = await import("parakeet.js")
       getModel = pkg.getParakeetModel ?? pkg.default?.getParakeetModel
     } catch (err: any) {
-      throw new Error(
-        `Impossibile caricare parakeet.js per il download: ${err?.message ?? "modulo mancante"}`
-      )
+      throw new Error(`Impossibile caricare parakeet.js per il download: ${err?.message ?? "modulo mancante"}`)
     }
   }
 
@@ -581,14 +588,8 @@ export async function downloadParakeetModel(
     }
     lastFile = p.file
 
-    const currentTotalLoaded = Math.min(
-      TOTAL_ESTIMATED_BYTES,
-      completedFilesBytes + (p.loaded || 0)
-    )
-    const percent = Math.min(
-      99,
-      Math.max(1, Math.round((currentTotalLoaded / TOTAL_ESTIMATED_BYTES) * 100))
-    )
+    const currentTotalLoaded = Math.min(TOTAL_ESTIMATED_BYTES, completedFilesBytes + (p.loaded || 0))
+    const percent = Math.min(99, Math.max(1, Math.round((currentTotalLoaded / TOTAL_ESTIMATED_BYTES) * 100)))
     const mbLoaded = (currentTotalLoaded / (1024 * 1024)).toFixed(0)
     const mbTotal = (TOTAL_ESTIMATED_BYTES / (1024 * 1024)).toFixed(0)
 

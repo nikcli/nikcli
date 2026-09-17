@@ -1,5 +1,14 @@
 import { describe, expect, test } from "bun:test"
-import { parseChord, matchesChord, formatChord, normalizeKeyName, resolveBinding, findConflicts, type Binding, type KeyInput } from "./keymap"
+import {
+  parseChord,
+  matchesChord,
+  formatChord,
+  normalizeKeyName,
+  resolveBinding,
+  findConflicts,
+  type Binding,
+  type KeyInput,
+} from "./keymap"
 
 describe("normalizeKeyName", () => {
   test("the space bar's own event.key becomes the name a chord can carry", () => {

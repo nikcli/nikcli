@@ -13,21 +13,45 @@ export type PaneState = "work" | "perm" | "ask" | "err" | "limit" | "idle"
 
 /* Getters, so each read is in the language of that moment (S41). */
 export const STATE_FULL: Readonly<Record<PaneState, string>> = {
-  get work() { return t("paneState.work") },
-  get perm() { return t("paneState.perm") },
-  get ask() { return t("paneState.ask") },
-  get err() { return t("paneState.err") },
-  get limit() { return t("paneState.limit") },
-  get idle() { return t("paneState.idle") },
+  get work() {
+    return t("paneState.work")
+  },
+  get perm() {
+    return t("paneState.perm")
+  },
+  get ask() {
+    return t("paneState.ask")
+  },
+  get err() {
+    return t("paneState.err")
+  },
+  get limit() {
+    return t("paneState.limit")
+  },
+  get idle() {
+    return t("paneState.idle")
+  },
 }
 
 export const STATE_SHORT: Readonly<Record<PaneState, string>> = {
-  get work() { return t("paneState.work") },
-  get perm() { return t("paneState.short.perm") },
-  get ask() { return t("paneState.short.ask") },
-  get err() { return t("paneState.err") },
-  get limit() { return t("paneState.short.limit") },
-  get idle() { return t("paneState.idle") },
+  get work() {
+    return t("paneState.work")
+  },
+  get perm() {
+    return t("paneState.short.perm")
+  },
+  get ask() {
+    return t("paneState.short.ask")
+  },
+  get err() {
+    return t("paneState.err")
+  },
+  get limit() {
+    return t("paneState.short.limit")
+  },
+  get idle() {
+    return t("paneState.idle")
+  },
 }
 
 /**

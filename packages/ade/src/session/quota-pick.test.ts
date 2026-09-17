@@ -27,11 +27,15 @@ afterEach(() => setProviderPicker())
 describe("pickByQuota", () => {
   test("an old Limite does not reroute: the window may have reset since", () => {
     const old = report(claude(0), codex(80))
-    expect(pickByQuota({ agent: "claude-code", from: "m" }, old, written + 31 * 60_000)).toEqual({ agent: "claude-code" })
+    expect(pickByQuota({ agent: "claude-code", from: "m" }, old, written + 31 * 60_000)).toEqual({
+      agent: "claude-code",
+    })
   })
 
   test("an agent with quota left is started as asked, with nothing to explain", () => {
-    expect(pickByQuota({ agent: "claude-code", from: "m" }, report(claude(60), codex(0)), now)).toEqual({ agent: "claude-code" })
+    expect(pickByQuota({ agent: "claude-code", from: "m" }, report(claude(60), codex(0)), now)).toEqual({
+      agent: "claude-code",
+    })
   })
 
   test("an agent in Limite is replaced by one with quota, and the receipt says why", () => {
@@ -72,12 +76,10 @@ describe("pickByQuota", () => {
   })
 
   test("the best replacement is the one with the most quota left", () => {
-    const picked = pickByQuota(
-      { agent: "claude-code", from: "m" },
-      report(claude(0), codex(80)),
-      now,
-      ["claude-code", "codex"],
-    )
+    const picked = pickByQuota({ agent: "claude-code", from: "m" }, report(claude(0), codex(80)), now, [
+      "claude-code",
+      "codex",
+    ])
     expect(picked.agent).toBe("codex")
   })
 })

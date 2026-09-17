@@ -7,13 +7,7 @@
 export type { AdeView, PaneStatus, PaneSummary, VoiceHost, VoiceStateSnapshot } from "./bridge/host"
 
 // The agent console's record of the session
-export {
-  appendEntry,
-  groupIntoTurns,
-  MAX_AGENT_ENTRIES,
-  type AgentEntry,
-  type AgentTurn,
-} from "./agent/log"
+export { appendEntry, groupIntoTurns, MAX_AGENT_ENTRIES, type AgentEntry, type AgentTurn } from "./agent/log"
 
 export { dispatch, resolveTargetPane, type DispatchContext, type DispatchOutcome } from "./bridge/dispatch"
 

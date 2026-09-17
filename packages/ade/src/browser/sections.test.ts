@@ -73,7 +73,11 @@ describe("sections", () => {
       <footer><p id="legal">© 2026</p></footer>
     `)
     expect(click("#home").section).toEqual({ name: "nav", label: "nav", selector: "#main-nav" })
-    expect(click("#start").section).toEqual({ name: "hero", label: "hero «Build faster»", selector: "body > div.HeroSection" })
+    expect(click("#start").section).toEqual({
+      name: "hero",
+      label: "hero «Build faster»",
+      selector: "body > div.HeroSection",
+    })
     expect(click("#buy").section?.label).toBe("pricing «Plans»")
     expect(click("#legal").section?.name).toBe("footer")
   })

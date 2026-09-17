@@ -376,7 +376,11 @@ export async function setHook(host: HookHost, target: HookTarget, install: boole
   const current = files.configText ?? undefined
   if (install) {
     const command = hookCommand(files.scriptPath)
-    await write(target.id, installHook(current, command, target.matcher, target.activityEvents), hookScript(target.agent))
+    await write(
+      target.id,
+      installHook(current, command, target.matcher, target.activityEvents),
+      hookScript(target.agent),
+    )
   } else {
     await write(target.id, removeHook(current), null)
   }
@@ -407,7 +411,9 @@ export async function refreshHookScript(
   // An install from before the activity events gets them too; otherwise the config goes back as it was read.
   const missing = missingActivityEvents(files.configText, target.activityEvents)
   const config =
-    missing.length > 0 ? installHook(files.configText, command, target.matcher, target.activityEvents) : files.configText
+    missing.length > 0
+      ? installHook(files.configText, command, target.matcher, target.activityEvents)
+      : files.configText
   await host.writeAgentHook(target.id, config, script)
   return script
 }

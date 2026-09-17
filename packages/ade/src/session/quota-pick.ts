@@ -76,7 +76,10 @@ export function pickByQuota(
   // The ranking answers with the provider's id ("claude"); the spawn needs the agent's.
   const chosen = Object.keys(usable).find((agent) => usable[agent]!.id === choice.chosen)
   if (!chosen) {
-    return { agent: input.agent, reason: `${spent} e nessun altro agente ha quota disponibile: avvio ${input.agent} come chiesto` }
+    return {
+      agent: input.agent,
+      reason: `${spent} e nessun altro agente ha quota disponibile: avvio ${input.agent} come chiesto`,
+    }
   }
   const left = quotaForAgent(chosen, snapshot, now)
   const leftText = left && !isQuotaUnavailable(left) ? `, ${left.displayValue} rimasto` : ""

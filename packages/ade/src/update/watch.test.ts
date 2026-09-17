@@ -401,7 +401,11 @@ describe("checkMessage", () => {
   test("says something whatever happened", () => {
     const at = 0
     const cases: CheckResult[] = [
-      { status: "update", at, update: { version: "1.2.0", url: "https://github.com/SandroHub013/nikcli/releases/tag/ade-v1.2.0" } },
+      {
+        status: "update",
+        at,
+        update: { version: "1.2.0", url: "https://github.com/SandroHub013/nikcli/releases/tag/ade-v1.2.0" },
+      },
       { status: "current", at, currentVersion: "1.2.0" },
       { status: "dev", at, currentVersion: "0.0.0" },
       { status: "skipped", at, problem: "Controllato da poco." },

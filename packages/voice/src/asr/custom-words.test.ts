@@ -1,10 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import {
-  DEFAULT_WORD_CORRECTION_THRESHOLD,
-  correctCustomWords,
-  editDistance,
-  normalizeForMatch,
-} from "./custom-words"
+import { DEFAULT_WORD_CORRECTION_THRESHOLD, correctCustomWords, editDistance, normalizeForMatch } from "./custom-words"
 
 /** The vocabulary this project actually loses to a speech model. */
 const WORDS = ["nikcli", "opencode", "worktree", "codex", "xterm", "Tauri"]

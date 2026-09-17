@@ -48,20 +48,14 @@ describe("shapeDevices", () => {
    * panel has to be able to tell that from "no devices".
    */
   test("reports that nothing is named when the browser withholds labels", () => {
-    const shaped = shapeDevices([
-      device({ deviceId: "a", label: "" }),
-      device({ deviceId: "b", label: "" }),
-    ])
+    const shaped = shapeDevices([device({ deviceId: "a", label: "" }), device({ deviceId: "b", label: "" })])
     expect(shaped.labelled).toBe(false)
     expect(shaped.inputs.map((d) => d.label)).toEqual([SYSTEM_DEFAULT.label, "Microfono 1", "Microfono 2"])
     expect(shaped.inputs.slice(1).every((d) => d.named)).toBe(false)
   })
 
   test("one real label is enough to call the list named", () => {
-    const shaped = shapeDevices([
-      device({ deviceId: "a", label: "" }),
-      device({ deviceId: "b", label: "Yeti" }),
-    ])
+    const shaped = shapeDevices([device({ deviceId: "a", label: "" }), device({ deviceId: "b", label: "Yeti" })])
     expect(shaped.labelled).toBe(true)
   })
 })

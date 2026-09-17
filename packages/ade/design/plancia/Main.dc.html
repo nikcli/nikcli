@@ -1,285 +1,1006 @@
 <!doctype html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <script src="./support.js"></script>
-</head>
-<body>
-<x-dc>
-<helmet>
-  <style>
-    body {
-      margin: 0;
-      font-family: "Inter", "Inter Fallback", -apple-system, "Segoe UI", system-ui, sans-serif;
-      font-feature-settings: "ss03" 1;
-      background: #131010;
-      color: #fdfbfbf0;
-      -webkit-font-smoothing: antialiased;
-    }
-    a { color: #89b5ff; } a:hover { color: #a8c8ff; }
-    button { font: inherit; cursor: pointer; }
-    .pl-mono { font-family: "IBM Plex Mono", ui-monospace, "Cascadia Mono", monospace; }
-  </style>
-</helmet>
+  <head>
+    <meta charset="utf-8" />
+    <script src="./support.js"></script>
+  </head>
+  <body>
+    <x-dc>
+      <helmet>
+        <style>
+          body {
+            margin: 0;
+            font-family:
+              "Inter",
+              "Inter Fallback",
+              -apple-system,
+              "Segoe UI",
+              system-ui,
+              sans-serif;
+            font-feature-settings: "ss03" 1;
+            background: #131010;
+            color: #fdfbfbf0;
+            -webkit-font-smoothing: antialiased;
+          }
+          a {
+            color: #89b5ff;
+          }
+          a:hover {
+            color: #a8c8ff;
+          }
+          button {
+            font: inherit;
+            cursor: pointer;
+          }
+          .pl-mono {
+            font-family: "IBM Plex Mono", ui-monospace, "Cascadia Mono", monospace;
+          }
+        </style>
+      </helmet>
 
-<div style="display: flex; width: 1440px; height: 900px; background: #131010">
-
-  <!-- Rail: workspaces, and under the open one its live sessions.
+      <div style="display: flex; width: 1440px; height: 900px; background: #131010">
+        <!-- Rail: workspaces, and under the open one its live sessions.
        A project owns its sessions, its terminals and its windows, so it is
        the thing that never leaves the screen. -->
-  <div style="display: flex; flex-direction: column; width: 208px; flex: 0 0 auto; border-right: 1px solid #f5e8e831; background: #151313">
-    <div style="display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 12px">
-      <span style="display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; border-radius: 5px; background: #f1ecec; color: #131010; font-size: 11px; font-weight: 700">n</span>
-      <span style="font-size: 13px; font-weight: 600; color: #fdfbfbf0">nikcli</span>
-      <span style="flex-grow: 1"></span>
-      <span class="pl-mono" style="font-size: 10px; color: #faf5f477">4</span>
-    </div>
+        <div
+          style="
+            display: flex;
+            flex-direction: column;
+            width: 208px;
+            flex: 0 0 auto;
+            border-right: 1px solid #f5e8e831;
+            background: #151313;
+          "
+        >
+          <div style="display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 12px">
+            <span
+              style="
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                width: 20px;
+                height: 20px;
+                border-radius: 5px;
+                background: #f1ecec;
+                color: #131010;
+                font-size: 11px;
+                font-weight: 700;
+              "
+              >n</span
+            >
+            <span style="font-size: 13px; font-weight: 600; color: #fdfbfbf0">nikcli</span>
+            <span style="flex-grow: 1"></span>
+            <span class="pl-mono" style="font-size: 10px; color: #faf5f477">4</span>
+          </div>
 
-    <div style="display: flex; flex-direction: column; gap: 1px; padding: 6px 8px">
-      <div style="display: flex; align-items: center; gap: 8px; height: 26px; padding: 0 8px; border-radius: 5px; font-size: 12px; color: #fcf9f9b2">Plancia</div>
-      <div style="display: flex; align-items: center; gap: 8px; height: 26px; padding: 0 8px; border-radius: 5px; font-size: 12px; color: #fcf9f9b2">Routine</div>
-      <div style="display: flex; align-items: center; gap: 8px; height: 26px; padding: 0 8px; border-radius: 5px; font-size: 12px; color: #fcf9f9b2">Agenti</div>
-      <div style="display: flex; align-items: center; gap: 8px; height: 26px; padding: 0 8px; border-radius: 5px; font-size: 12px; color: #fcf9f9b2">Impostazioni</div>
-    </div>
+          <div style="display: flex; flex-direction: column; gap: 1px; padding: 6px 8px">
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                height: 26px;
+                padding: 0 8px;
+                border-radius: 5px;
+                font-size: 12px;
+                color: #fcf9f9b2;
+              "
+            >
+              Plancia
+            </div>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                height: 26px;
+                padding: 0 8px;
+                border-radius: 5px;
+                font-size: 12px;
+                color: #fcf9f9b2;
+              "
+            >
+              Routine
+            </div>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                height: 26px;
+                padding: 0 8px;
+                border-radius: 5px;
+                font-size: 12px;
+                color: #fcf9f9b2;
+              "
+            >
+              Agenti
+            </div>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                height: 26px;
+                padding: 0 8px;
+                border-radius: 5px;
+                font-size: 12px;
+                color: #fcf9f9b2;
+              "
+            >
+              Impostazioni
+            </div>
+          </div>
 
-    <div style="display: flex; align-items: center; gap: 6px; padding: 12px 12px 6px">
-      <span style="font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #faf5f477">Progetti</span>
-      <span style="flex-grow: 1"></span>
-      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 3.4v9.2M3.4 8h9.2" stroke="#faf5f477" stroke-width="1.4" stroke-linecap="round"></path></svg>
-    </div>
+          <div style="display: flex; align-items: center; gap: 6px; padding: 12px 12px 6px">
+            <span
+              style="
+                font-size: 10px;
+                font-weight: 600;
+                letter-spacing: 0.06em;
+                text-transform: uppercase;
+                color: #faf5f477;
+              "
+              >Progetti</span
+            >
+            <span style="flex-grow: 1"></span>
+            <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+              <path d="M8 3.4v9.2M3.4 8h9.2" stroke="#faf5f477" stroke-width="1.4" stroke-linecap="round"></path>
+            </svg>
+          </div>
 
-    <div style="display: flex; flex-direction: column; gap: 1px; padding: 0 8px; flex-grow: 1; overflow-y: auto">
+          <div style="display: flex; flex-direction: column; gap: 1px; padding: 0 8px; flex-grow: 1; overflow-y: auto">
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                height: 28px;
+                padding: 0 8px;
+                border-radius: 5px;
+                background: #edd5d516;
+                font-size: 12px;
+                color: #fdfbfbf0;
+              "
+            >
+              <span>nikcli</span>
+              <span style="flex-grow: 1"></span>
+              <span class="pl-mono" style="font-size: 10px; color: #faf5f477">4</span>
+            </div>
 
-      <div style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 5px; background: #edd5d516; font-size: 12px; color: #fdfbfbf0">
-        <span>nikcli</span>
-        <span style="flex-grow: 1"></span>
-        <span class="pl-mono" style="font-size: 10px; color: #faf5f477">4</span>
-      </div>
+            <div
+              class="pl-mono"
+              style="
+                display: flex;
+                align-items: center;
+                gap: 6px;
+                height: 24px;
+                padding: 0 8px 0 18px;
+                border-radius: 5px;
+                font-size: 10px;
+                color: #faf5f477;
+              "
+            >
+              <svg width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path
+                  d="M4.6 3.8v5.4M4.6 12.6a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4zM4.6 3.8a1.7 1.7 0 1 0 0-.1M11.4 6.6a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4zM11.4 6.6v1a2.4 2.4 0 0 1-2.4 2.4H6.4"
+                  stroke="#faf5f477"
+                  stroke-width="1.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                ></path>
+              </svg>
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">feat/browser-visual…</span>
+            </div>
 
-      <div class="pl-mono" style="display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px 0 18px; border-radius: 5px; font-size: 10px; color: #faf5f477">
-        <svg width="10" height="10" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4.6 3.8v5.4M4.6 12.6a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4zM4.6 3.8a1.7 1.7 0 1 0 0-.1M11.4 6.6a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4zM11.4 6.6v1a2.4 2.4 0 0 1-2.4 2.4H6.4" stroke="#faf5f477" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">feat/browser-visual…</span>
-      </div>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 7px;
+                height: 26px;
+                padding: 0 8px 0 18px;
+                border-radius: 5px;
+                font-size: 11px;
+                color: #fcf9f9b2;
+              "
+            >
+              <span style="width: 6px; height: 6px; border-radius: 3px; background: #89b5ff"></span>
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Unificare protocol.ts</span>
+            </div>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 7px;
+                height: 26px;
+                padding: 0 8px 0 18px;
+                border-radius: 5px;
+                font-size: 11px;
+                color: #fcf9f9b2;
+              "
+            >
+              <span style="width: 6px; height: 6px; border-radius: 3px; background: #12c905"></span>
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Scala tipografica</span>
+            </div>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 7px;
+                height: 26px;
+                padding: 0 8px 0 18px;
+                border-radius: 5px;
+                font-size: 11px;
+                color: #fcf9f9b2;
+              "
+            >
+              <span style="width: 6px; height: 6px; border-radius: 3px; background: #ffb224"></span>
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Ritmo trascrizione</span>
+            </div>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 7px;
+                height: 26px;
+                padding: 0 8px 0 18px;
+                border-radius: 5px;
+                font-size: 11px;
+                color: #fcf9f9b2;
+              "
+            >
+              <span style="width: 6px; height: 6px; border-radius: 3px; background: #fc533a"></span>
+              <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">githubPrCreate</span>
+            </div>
 
-      <div style="display: flex; align-items: center; gap: 7px; height: 26px; padding: 0 8px 0 18px; border-radius: 5px; font-size: 11px; color: #fcf9f9b2">
-        <span style="width: 6px; height: 6px; border-radius: 3px; background: #89b5ff"></span>
-        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Unificare protocol.ts</span>
-      </div>
-      <div style="display: flex; align-items: center; gap: 7px; height: 26px; padding: 0 8px 0 18px; border-radius: 5px; font-size: 11px; color: #fcf9f9b2">
-        <span style="width: 6px; height: 6px; border-radius: 3px; background: #12c905"></span>
-        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Scala tipografica</span>
-      </div>
-      <div style="display: flex; align-items: center; gap: 7px; height: 26px; padding: 0 8px 0 18px; border-radius: 5px; font-size: 11px; color: #fcf9f9b2">
-        <span style="width: 6px; height: 6px; border-radius: 3px; background: #ffb224"></span>
-        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Ritmo trascrizione</span>
-      </div>
-      <div style="display: flex; align-items: center; gap: 7px; height: 26px; padding: 0 8px 0 18px; border-radius: 5px; font-size: 11px; color: #fcf9f9b2">
-        <span style="width: 6px; height: 6px; border-radius: 3px; background: #fc533a"></span>
-        <span style="overflow: hidden; text-overflow: ellipsis; white-space: nowrap">githubPrCreate</span>
-      </div>
+            <div style="height: 8px"></div>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                height: 28px;
+                padding: 0 8px;
+                border-radius: 5px;
+                font-size: 12px;
+                color: #fcf9f9b2;
+              "
+            >
+              <span>herdr</span><span style="flex-grow: 1"></span
+              ><span class="pl-mono" style="font-size: 10px; color: #faf5f477">1</span>
+            </div>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                height: 28px;
+                padding: 0 8px;
+                border-radius: 5px;
+                font-size: 12px;
+                color: #fcf9f9b2;
+              "
+            >
+              <span>html2d</span><span style="flex-grow: 1"></span
+              ><span class="pl-mono" style="font-size: 10px; color: #faf5f477">0</span>
+            </div>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                height: 28px;
+                padding: 0 8px;
+                border-radius: 5px;
+                font-size: 12px;
+                color: #fcf9f9b2;
+              "
+            >
+              <span>AgentDeck</span><span style="flex-grow: 1"></span
+              ><span class="pl-mono" style="font-size: 10px; color: #faf5f477">2</span>
+            </div>
+          </div>
 
-      <div style="height: 8px"></div>
-      <div style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 5px; font-size: 12px; color: #fcf9f9b2"><span>herdr</span><span style="flex-grow: 1"></span><span class="pl-mono" style="font-size: 10px; color: #faf5f477">1</span></div>
-      <div style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 5px; font-size: 12px; color: #fcf9f9b2"><span>html2d</span><span style="flex-grow: 1"></span><span class="pl-mono" style="font-size: 10px; color: #faf5f477">0</span></div>
-      <div style="display: flex; align-items: center; gap: 8px; height: 28px; padding: 0 8px; border-radius: 5px; font-size: 12px; color: #fcf9f9b2"><span>AgentDeck</span><span style="flex-grow: 1"></span><span class="pl-mono" style="font-size: 10px; color: #faf5f477">2</span></div>
-    </div>
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              height: 38px;
+              padding: 0 12px;
+              border-top: 1px solid #f5e8e831;
+            "
+          >
+            <span style="font-size: 10px; color: #faf5f477">Crediti</span>
+            <span style="flex-grow: 1"></span>
+            <span class="pl-mono" style="font-size: 10px; color: #fcf9f9b2">19.396</span>
+          </div>
+        </div>
 
-    <div style="display: flex; align-items: center; gap: 8px; height: 38px; padding: 0 12px; border-top: 1px solid #f5e8e831">
-      <span style="font-size: 10px; color: #faf5f477">Crediti</span>
-      <span style="flex-grow: 1"></span>
-      <span class="pl-mono" style="font-size: 10px; color: #fcf9f9b2">19.396</span>
-    </div>
-  </div>
+        <div style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0">
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: 8px;
+              height: 42px;
+              padding: 0 14px;
+              border-bottom: 1px solid #f5e8e831;
+              background: #151313;
+              flex: 0 0 auto;
+            "
+          >
+            <button
+              type="button"
+              style="
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                height: 24px;
+                padding: 0 8px;
+                border: 1px solid #f5e8e831;
+                border-radius: 5px;
+                background: transparent;
+                color: #fcf9f9b2;
+                font-size: 11px;
+              "
+            >
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path
+                  d="M4.6 3.8v5.4M4.6 12.6a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4zM4.6 3.8a1.7 1.7 0 1 0 0-.1M11.4 6.6a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4zM11.4 6.6v1a2.4 2.4 0 0 1-2.4 2.4H6.4"
+                  stroke="#fcf9f9b2"
+                  stroke-width="1.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                ></path>
+              </svg>
+              <span class="pl-mono">feat/browser-visual-editor-cursor</span>
+              <span class="pl-mono" style="color: #ffb224">↑2</span>
+            </button>
+            <button
+              type="button"
+              style="
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                height: 24px;
+                padding: 0 8px;
+                border: 1px solid #f5e8e831;
+                border-radius: 5px;
+                background: transparent;
+                color: #fcf9f9b2;
+                font-size: 11px;
+              "
+            >
+              worktree principale
+            </button>
 
-  <div style="display: flex; flex-direction: column; flex-grow: 1; min-width: 0">
+            <span style="flex-grow: 1"></span>
 
-    <div style="display: flex; align-items: center; gap: 8px; height: 42px; padding: 0 14px; border-bottom: 1px solid #f5e8e831; background: #151313; flex: 0 0 auto">
-      <button type="button" style="display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border: 1px solid #f5e8e831; border-radius: 5px; background: transparent; color: #fcf9f9b2; font-size: 11px">
-        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4.6 3.8v5.4M4.6 12.6a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4zM4.6 3.8a1.7 1.7 0 1 0 0-.1M11.4 6.6a1.7 1.7 0 1 0 0-3.4 1.7 1.7 0 0 0 0 3.4zM11.4 6.6v1a2.4 2.4 0 0 1-2.4 2.4H6.4" stroke="#fcf9f9b2" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-        <span class="pl-mono">feat/browser-visual-editor-cursor</span>
-        <span class="pl-mono" style="color: #ffb224">↑2</span>
-      </button>
-      <button type="button" style="display: inline-flex; align-items: center; gap: 6px; height: 24px; padding: 0 8px; border: 1px solid #f5e8e831; border-radius: 5px; background: transparent; color: #fcf9f9b2; font-size: 11px">
-        worktree principale
-      </button>
-
-      <span style="flex-grow: 1"></span>
-
-      <!-- Windows this project can open. Terminals belong here, next to the
+            <!-- Windows this project can open. Terminals belong here, next to the
            browser and the editor: they are the project's, not a session's. -->
-      <div style="display: flex; align-items: center; gap: 2px; padding: 2px; border: 1px solid #f5e8e831; border-radius: 6px">
-        <button type="button" style="display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border: 0; border-radius: 4px; background: transparent; color: #fcf9f9b2; font-size: 11px">
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.6 4.4h4l1.4 1.8h5.4v6.4a1 1 0 0 1-1 1H3.6a1 1 0 0 1-1-1z" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round"></path></svg>
-          File
-        </button>
-        <button type="button" style="display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border: 0; border-radius: 4px; background: transparent; color: #fcf9f9b2; font-size: 11px">
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M6 5.4L3.4 8 6 10.6M10 5.4L12.6 8 10 10.6" stroke="currentColor" stroke-width="1.3" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-          Editor
-        </button>
-        <button type="button" style="display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border: 0; border-radius: 4px; background: #edd5d516; color: #fdfbfbf0; font-size: 11px">
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2.6 3.6h10.8v8.8H2.6zM5.2 7l1.8 1.6-1.8 1.6M8.6 10.6h2.4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-          Terminali
-          <span class="pl-mono" style="font-size: 10px; color: #faf5f477">3</span>
-        </button>
-        <button type="button" style="display: inline-flex; align-items: center; gap: 5px; height: 22px; padding: 0 8px; border: 0; border-radius: 4px; background: transparent; color: #fcf9f9b2; font-size: 11px">
-          <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><circle cx="8" cy="8" r="5.4" stroke="currentColor" stroke-width="1.2"></circle><path d="M2.6 8h10.8M8 2.6c1.6 1.7 2.4 3.5 2.4 5.4S9.6 11.7 8 13.4c-1.6-1.7-2.4-3.5-2.4-5.4S6.4 4.3 8 2.6z" stroke="currentColor" stroke-width="1.2"></path></svg>
-          Browser
-        </button>
-      </div>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 2px;
+                padding: 2px;
+                border: 1px solid #f5e8e831;
+                border-radius: 6px;
+              "
+            >
+              <button
+                type="button"
+                style="
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 5px;
+                  height: 22px;
+                  padding: 0 8px;
+                  border: 0;
+                  border-radius: 4px;
+                  background: transparent;
+                  color: #fcf9f9b2;
+                  font-size: 11px;
+                "
+              >
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path
+                    d="M2.6 4.4h4l1.4 1.8h5.4v6.4a1 1 0 0 1-1 1H3.6a1 1 0 0 1-1-1z"
+                    stroke="currentColor"
+                    stroke-width="1.2"
+                    stroke-linejoin="round"
+                  ></path>
+                </svg>
+                File
+              </button>
+              <button
+                type="button"
+                style="
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 5px;
+                  height: 22px;
+                  padding: 0 8px;
+                  border: 0;
+                  border-radius: 4px;
+                  background: transparent;
+                  color: #fcf9f9b2;
+                  font-size: 11px;
+                "
+              >
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path
+                    d="M6 5.4L3.4 8 6 10.6M10 5.4L12.6 8 10 10.6"
+                    stroke="currentColor"
+                    stroke-width="1.3"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  ></path>
+                </svg>
+                Editor
+              </button>
+              <button
+                type="button"
+                style="
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 5px;
+                  height: 22px;
+                  padding: 0 8px;
+                  border: 0;
+                  border-radius: 4px;
+                  background: #edd5d516;
+                  color: #fdfbfbf0;
+                  font-size: 11px;
+                "
+              >
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path
+                    d="M2.6 3.6h10.8v8.8H2.6zM5.2 7l1.8 1.6-1.8 1.6M8.6 10.6h2.4"
+                    stroke="currentColor"
+                    stroke-width="1.2"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  ></path>
+                </svg>
+                Terminali
+                <span class="pl-mono" style="font-size: 10px; color: #faf5f477">3</span>
+              </button>
+              <button
+                type="button"
+                style="
+                  display: inline-flex;
+                  align-items: center;
+                  gap: 5px;
+                  height: 22px;
+                  padding: 0 8px;
+                  border: 0;
+                  border-radius: 4px;
+                  background: transparent;
+                  color: #fcf9f9b2;
+                  font-size: 11px;
+                "
+              >
+                <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <circle cx="8" cy="8" r="5.4" stroke="currentColor" stroke-width="1.2"></circle>
+                  <path
+                    d="M2.6 8h10.8M8 2.6c1.6 1.7 2.4 3.5 2.4 5.4S9.6 11.7 8 13.4c-1.6-1.7-2.4-3.5-2.4-5.4S6.4 4.3 8 2.6z"
+                    stroke="currentColor"
+                    stroke-width="1.2"
+                  ></path>
+                </svg>
+                Browser
+              </button>
+            </div>
 
-      <button type="button" style="display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 11px; border: 0; border-radius: 6px; background: #f1ecec; color: #131010; font-size: 12px; font-weight: 600">
-        <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 3.4v9.2M3.4 8h9.2" stroke="#131010" stroke-width="1.6" stroke-linecap="round"></path></svg>
-        Sessione
-      </button>
-    </div>
+            <button
+              type="button"
+              style="
+                display: inline-flex;
+                align-items: center;
+                gap: 6px;
+                height: 26px;
+                padding: 0 11px;
+                border: 0;
+                border-radius: 6px;
+                background: #f1ecec;
+                color: #131010;
+                font-size: 12px;
+                font-weight: 600;
+              "
+            >
+              <svg width="12" height="12" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M8 3.4v9.2M3.4 8h9.2" stroke="#131010" stroke-width="1.6" stroke-linecap="round"></path>
+              </svg>
+              Sessione
+            </button>
+          </div>
 
-    <!-- The board: every tile is a live session, not a summary of one.
+          <!-- The board: every tile is a live session, not a summary of one.
          You read the tail and answer without opening anything. -->
-    <div style="display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); grid-auto-rows: 1fr; gap: 10px; flex-grow: 1; min-height: 0; padding: 10px; overflow: hidden">
+          <div
+            style="
+              display: grid;
+              grid-template-columns: repeat(3, minmax(0, 1fr));
+              grid-auto-rows: 1fr;
+              gap: 10px;
+              flex-grow: 1;
+              min-height: 0;
+              padding: 10px;
+              overflow: hidden;
+            "
+          >
+            <div
+              style="
+                display: flex;
+                flex-direction: column;
+                border: 1px solid #89b5ff;
+                border-radius: 8px;
+                background: #151313;
+                overflow: hidden;
+              "
+            >
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 6px;
+                  height: 26px;
+                  padding: 0 8px;
+                  border-bottom: 1px solid #f5e8e831;
+                "
+              >
+                <span style="width: 6px; height: 6px; border-radius: 3px; background: #89b5ff"></span>
+                <span
+                  style="
+                    flex-grow: 1;
+                    font-size: 11px;
+                    font-weight: 500;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                  "
+                  >Unificare protocol.ts in util</span
+                >
+                <span class="pl-mono" style="font-size: 10px; color: #faf5f477">84K/500K</span>
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path
+                    d="M2 5.5V2h3.5M14 10.5V14h-3.5"
+                    stroke="#faf5f477"
+                    stroke-width="1.3"
+                    stroke-linecap="round"
+                  ></path>
+                </svg>
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M4 4l8 8M12 4l-8 8" stroke="#faf5f477" stroke-width="1.3" stroke-linecap="round"></path>
+                </svg>
+              </div>
+              <div
+                class="pl-mono"
+                style="
+                  flex-grow: 1;
+                  min-height: 0;
+                  padding: 7px 9px;
+                  font-size: 10px;
+                  line-height: 15px;
+                  color: #fcf9f9b2;
+                  overflow: hidden;
+                "
+              >
+                <div style="color: #faf5f477">~/Favorites/nikcli</div>
+                <div>Ho unificato i tipi in <span style="color: #89b5ff">@nikcli-ai/util</span>.</div>
+                <div>I due consumatori ora ri-esportano.</div>
+                <div style="color: #fdfbfbf0">Vuoi che tenga la firma vecchia</div>
+                <div style="color: #fdfbfbf0">come alias, o la rimuovo?</div>
+                <div style="color: #faf5f477; margin-top: 4px">Ragionato per 21,9s</div>
+              </div>
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 6px;
+                  height: 26px;
+                  margin: 0 7px;
+                  padding: 0 7px;
+                  border: 1px solid #89b5ff;
+                  border-radius: 5px;
+                  background: #131010;
+                "
+              >
+                <span class="pl-mono" style="font-size: 11px; color: #89b5ff">&rsaquo;</span>
+                <span class="pl-mono" style="font-size: 10px; color: #faf5f477">rispondi qui</span>
+                <span style="flex-grow: 1"></span>
+                <span class="pl-mono" style="font-size: 10px; color: #89b5ff">▊</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px">
+                <span class="pl-mono" style="font-size: 9px; color: #faf5f477">agy · effort high</span>
+                <span style="flex-grow: 1"></span>
+                <span class="pl-mono" style="font-size: 9px; color: #89b5ff">aspetta te · 4m</span>
+              </div>
+            </div>
 
-      <div style="display: flex; flex-direction: column; border: 1px solid #89b5ff; border-radius: 8px; background: #151313; overflow: hidden">
-        <div style="display: flex; align-items: center; gap: 6px; height: 26px; padding: 0 8px; border-bottom: 1px solid #f5e8e831">
-          <span style="width: 6px; height: 6px; border-radius: 3px; background: #89b5ff"></span>
-          <span style="flex-grow: 1; font-size: 11px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Unificare protocol.ts in util</span>
-          <span class="pl-mono" style="font-size: 10px; color: #faf5f477">84K/500K</span>
-          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 5.5V2h3.5M14 10.5V14h-3.5" stroke="#faf5f477" stroke-width="1.3" stroke-linecap="round"></path></svg>
-          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="#faf5f477" stroke-width="1.3" stroke-linecap="round"></path></svg>
-        </div>
-        <div class="pl-mono" style="flex-grow: 1; min-height: 0; padding: 7px 9px; font-size: 10px; line-height: 15px; color: #fcf9f9b2; overflow: hidden">
-          <div style="color: #faf5f477">~/Favorites/nikcli</div>
-          <div>Ho unificato i tipi in <span style="color: #89b5ff">@nikcli-ai/util</span>.</div>
-          <div>I due consumatori ora ri-esportano.</div>
-          <div style="color: #fdfbfbf0">Vuoi che tenga la firma vecchia</div>
-          <div style="color: #fdfbfbf0">come alias, o la rimuovo?</div>
-          <div style="color: #faf5f477; margin-top: 4px">Ragionato per 21,9s</div>
-        </div>
-        <div style="display: flex; align-items: center; gap: 6px; height: 26px; margin: 0 7px; padding: 0 7px; border: 1px solid #89b5ff; border-radius: 5px; background: #131010">
-          <span class="pl-mono" style="font-size: 11px; color: #89b5ff">&rsaquo;</span>
-          <span class="pl-mono" style="font-size: 10px; color: #faf5f477">rispondi qui</span>
-          <span style="flex-grow: 1"></span>
-          <span class="pl-mono" style="font-size: 10px; color: #89b5ff">▊</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px">
-          <span class="pl-mono" style="font-size: 9px; color: #faf5f477">agy · effort high</span>
-          <span style="flex-grow: 1"></span>
-          <span class="pl-mono" style="font-size: 9px; color: #89b5ff">aspetta te · 4m</span>
+            <div
+              style="
+                display: flex;
+                flex-direction: column;
+                border: 1px solid #f5e8e831;
+                border-radius: 8px;
+                background: #151313;
+                overflow: hidden;
+              "
+            >
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 6px;
+                  height: 26px;
+                  padding: 0 8px;
+                  border-bottom: 1px solid #f5e8e831;
+                "
+              >
+                <span style="width: 6px; height: 6px; border-radius: 3px; background: #12c905"></span>
+                <span
+                  style="
+                    flex-grow: 1;
+                    font-size: 11px;
+                    font-weight: 500;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                  "
+                  >Scala tipografica</span
+                >
+                <span class="pl-mono" style="font-size: 10px; color: #faf5f477">85K/500K</span>
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path
+                    d="M2 5.5V2h3.5M14 10.5V14h-3.5"
+                    stroke="#faf5f477"
+                    stroke-width="1.3"
+                    stroke-linecap="round"
+                  ></path>
+                </svg>
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M4 4l8 8M12 4l-8 8" stroke="#faf5f477" stroke-width="1.3" stroke-linecap="round"></path>
+                </svg>
+              </div>
+              <div
+                class="pl-mono"
+                style="
+                  flex-grow: 1;
+                  min-height: 0;
+                  padding: 7px 9px;
+                  font-size: 10px;
+                  line-height: 15px;
+                  color: #fcf9f9b2;
+                  overflow: hidden;
+                "
+              >
+                <div style="color: #faf5f477">$ rg -l "text-12-" packages</div>
+                <div>61 file</div>
+                <div style="color: #12c905">+ utilities.css rinominato</div>
+                <div>Rinomino i richiami…</div>
+                <div style="color: #ffb224">packages/enterprise · 4</div>
+                <div style="color: #faf5f477; margin-top: 4px">Lavora da 1m22s</div>
+              </div>
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 6px;
+                  height: 26px;
+                  margin: 0 7px;
+                  padding: 0 7px;
+                  border: 1px solid #f5e8e831;
+                  border-radius: 5px;
+                "
+              >
+                <span class="pl-mono" style="font-size: 11px; color: #faf5f477">&rsaquo;</span>
+                <span style="flex-grow: 1"></span>
+                <span class="pl-mono" style="font-size: 9px; color: #faf5f477">esc ferma</span>
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px">
+                <span class="pl-mono" style="font-size: 9px; color: #faf5f477">kimi · auto</span>
+                <span style="flex-grow: 1"></span>
+                <span class="pl-mono" style="font-size: 9px; color: #12c905">sta scrivendo</span>
+              </div>
+            </div>
+
+            <div
+              style="
+                display: flex;
+                flex-direction: column;
+                border: 1px solid #fc533a;
+                border-radius: 8px;
+                background: #151313;
+                overflow: hidden;
+              "
+            >
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 6px;
+                  height: 26px;
+                  padding: 0 8px;
+                  border-bottom: 1px solid #f5e8e831;
+                "
+              >
+                <span style="width: 6px; height: 6px; border-radius: 3px; background: #fc533a"></span>
+                <span
+                  style="
+                    flex-grow: 1;
+                    font-size: 11px;
+                    font-weight: 500;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                  "
+                  >Endpoint githubPrCreate</span
+                >
+                <span class="pl-mono" style="font-size: 10px; color: #faf5f477">92K/500K</span>
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path
+                    d="M2 5.5V2h3.5M14 10.5V14h-3.5"
+                    stroke="#faf5f477"
+                    stroke-width="1.3"
+                    stroke-linecap="round"
+                  ></path>
+                </svg>
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M4 4l8 8M12 4l-8 8" stroke="#faf5f477" stroke-width="1.3" stroke-linecap="round"></path>
+                </svg>
+              </div>
+              <div
+                class="pl-mono"
+                style="
+                  flex-grow: 1;
+                  min-height: 0;
+                  padding: 7px 9px;
+                  font-size: 10px;
+                  line-height: 15px;
+                  color: #fcf9f9b2;
+                  overflow: hidden;
+                "
+              >
+                <div style="color: #faf5f477">$ tsc --build packages/nikcli</div>
+                <div style="color: #fc533a">error TS2322: Type 'Handlers&lt;…&gt;'</div>
+                <div style="color: #fc533a">is not assignable to type</div>
+                <div style="color: #fc533a">'Endpoint not handled: githubPrCreate'</div>
+                <div style="color: #faf5f477; margin-top: 4px">Fermo da 6m</div>
+              </div>
+              <div style="display: flex; gap: 6px; margin: 0 7px">
+                <button
+                  type="button"
+                  style="
+                    flex-grow: 1;
+                    height: 26px;
+                    border: 1px solid #f5e8e831;
+                    border-radius: 5px;
+                    background: transparent;
+                    color: #fcf9f9b2;
+                    font-size: 11px;
+                  "
+                >
+                  Log
+                </button>
+                <button
+                  type="button"
+                  style="
+                    height: 26px;
+                    padding: 0 10px;
+                    border: 1px solid #f5e8e831;
+                    border-radius: 5px;
+                    background: transparent;
+                    color: #fdfbfbf0;
+                    font-size: 11px;
+                    font-weight: 500;
+                  "
+                >
+                  Riprova
+                </button>
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px">
+                <span class="pl-mono" style="font-size: 9px; color: #faf5f477">agy · effort high</span>
+                <span style="flex-grow: 1"></span>
+                <span class="pl-mono" style="font-size: 9px; color: #fc533a">si è fermata</span>
+              </div>
+            </div>
+
+            <div
+              style="
+                display: flex;
+                flex-direction: column;
+                border: 1px solid #f5e8e831;
+                border-radius: 8px;
+                background: #151313;
+                overflow: hidden;
+              "
+            >
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 6px;
+                  height: 26px;
+                  padding: 0 8px;
+                  border-bottom: 1px solid #f5e8e831;
+                "
+              >
+                <span style="width: 6px; height: 6px; border-radius: 3px; background: #ffb224"></span>
+                <span
+                  style="
+                    flex-grow: 1;
+                    font-size: 11px;
+                    font-weight: 500;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                  "
+                  >Ritmo della trascrizione</span
+                >
+                <span class="pl-mono" style="font-size: 10px; color: #faf5f477">74K/500K</span>
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path
+                    d="M2 5.5V2h3.5M14 10.5V14h-3.5"
+                    stroke="#faf5f477"
+                    stroke-width="1.3"
+                    stroke-linecap="round"
+                  ></path>
+                </svg>
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M4 4l8 8M12 4l-8 8" stroke="#faf5f477" stroke-width="1.3" stroke-linecap="round"></path>
+                </svg>
+              </div>
+              <div
+                class="pl-mono"
+                style="
+                  flex-grow: 1;
+                  min-height: 0;
+                  padding: 7px 9px;
+                  font-size: 10px;
+                  line-height: 15px;
+                  color: #fcf9f9b2;
+                  overflow: hidden;
+                "
+              >
+                <div>Misurato: 18 / 77 / 18 / 77</div>
+                <div style="color: #12c905">Ora: 16 / 32 / 16 / 32</div>
+                <div style="color: #ffb224">Serve permesso: message-part.css</div>
+                <div style="color: #faf5f477; margin-top: 4px">In attesa di risposta</div>
+              </div>
+              <div style="display: flex; gap: 6px; margin: 0 7px">
+                <button
+                  type="button"
+                  style="
+                    flex-grow: 1;
+                    height: 26px;
+                    border: 1px solid #f5e8e831;
+                    border-radius: 5px;
+                    background: transparent;
+                    color: #fcf9f9b2;
+                    font-size: 11px;
+                  "
+                >
+                  Nega
+                </button>
+                <button
+                  type="button"
+                  style="
+                    height: 26px;
+                    padding: 0 10px;
+                    border: 0;
+                    border-radius: 5px;
+                    background: #89b5ff;
+                    color: #131010;
+                    font-size: 11px;
+                    font-weight: 600;
+                  "
+                >
+                  Concedi
+                </button>
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px">
+                <span class="pl-mono" style="font-size: 9px; color: #faf5f477">kimi · chiedi</span>
+                <span style="flex-grow: 1"></span>
+                <span class="pl-mono" style="font-size: 9px; color: #ffb224">aspetta te · 1m</span>
+              </div>
+            </div>
+
+            <div
+              style="
+                display: flex;
+                flex-direction: column;
+                border: 1px solid #f5e8e831;
+                border-radius: 8px;
+                background: #151313;
+                overflow: hidden;
+              "
+            >
+              <div
+                style="
+                  display: flex;
+                  align-items: center;
+                  gap: 6px;
+                  height: 26px;
+                  padding: 0 8px;
+                  border-bottom: 1px solid #f5e8e831;
+                "
+              >
+                <span style="width: 6px; height: 6px; border-radius: 3px; background: #faf5f477"></span>
+                <span
+                  style="
+                    flex-grow: 1;
+                    font-size: 11px;
+                    font-weight: 500;
+                    color: #fcf9f9b2;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                    white-space: nowrap;
+                  "
+                  >Contrasto WCAG</span
+                >
+                <span class="pl-mono" style="font-size: 10px; color: #faf5f477">fatta</span>
+                <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                  <path d="M4 4l8 8M12 4l-8 8" stroke="#faf5f477" stroke-width="1.3" stroke-linecap="round"></path>
+                </svg>
+              </div>
+              <div
+                class="pl-mono"
+                style="
+                  flex-grow: 1;
+                  min-height: 0;
+                  padding: 7px 9px;
+                  font-size: 10px;
+                  line-height: 15px;
+                  color: #faf5f477;
+                  overflow: hidden;
+                "
+              >
+                <div>8 su 15 sotto soglia</div>
+                <div style="color: #12c905">0 su 13 · piu debole 4,63</div>
+                <div>chiaro e scuro</div>
+              </div>
+              <div style="display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px">
+                <span class="pl-mono" style="font-size: 9px; color: #faf5f477">kimi · 3m 41s</span>
+                <span style="flex-grow: 1"></span>
+                <span class="pl-mono" style="font-size: 9px; color: #12c905">finita</span>
+              </div>
+            </div>
+
+            <button
+              type="button"
+              style="
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                justify-content: center;
+                gap: 7px;
+                border: 1px dashed #f5e8e831;
+                border-radius: 8px;
+                background: transparent;
+                color: #faf5f477;
+              "
+            >
+              <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                <path d="M8 3.4v9.2M3.4 8h9.2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></path>
+              </svg>
+              <span style="font-size: 11px">Nuova sessione</span>
+              <span class="pl-mono" style="font-size: 9px">o trascina qui una finestra</span>
+            </button>
+          </div>
         </div>
       </div>
+    </x-dc>
 
-      <div style="display: flex; flex-direction: column; border: 1px solid #f5e8e831; border-radius: 8px; background: #151313; overflow: hidden">
-        <div style="display: flex; align-items: center; gap: 6px; height: 26px; padding: 0 8px; border-bottom: 1px solid #f5e8e831">
-          <span style="width: 6px; height: 6px; border-radius: 3px; background: #12c905"></span>
-          <span style="flex-grow: 1; font-size: 11px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Scala tipografica</span>
-          <span class="pl-mono" style="font-size: 10px; color: #faf5f477">85K/500K</span>
-          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 5.5V2h3.5M14 10.5V14h-3.5" stroke="#faf5f477" stroke-width="1.3" stroke-linecap="round"></path></svg>
-          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="#faf5f477" stroke-width="1.3" stroke-linecap="round"></path></svg>
-        </div>
-        <div class="pl-mono" style="flex-grow: 1; min-height: 0; padding: 7px 9px; font-size: 10px; line-height: 15px; color: #fcf9f9b2; overflow: hidden">
-          <div style="color: #faf5f477">$ rg -l "text-12-" packages</div>
-          <div>61 file</div>
-          <div style="color: #12c905">+ utilities.css rinominato</div>
-          <div>Rinomino i richiami…</div>
-          <div style="color: #ffb224">packages/enterprise · 4</div>
-          <div style="color: #faf5f477; margin-top: 4px">Lavora da 1m22s</div>
-        </div>
-        <div style="display: flex; align-items: center; gap: 6px; height: 26px; margin: 0 7px; padding: 0 7px; border: 1px solid #f5e8e831; border-radius: 5px">
-          <span class="pl-mono" style="font-size: 11px; color: #faf5f477">&rsaquo;</span>
-          <span style="flex-grow: 1"></span>
-          <span class="pl-mono" style="font-size: 9px; color: #faf5f477">esc ferma</span>
-        </div>
-        <div style="display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px">
-          <span class="pl-mono" style="font-size: 9px; color: #faf5f477">kimi · auto</span>
-          <span style="flex-grow: 1"></span>
-          <span class="pl-mono" style="font-size: 9px; color: #12c905">sta scrivendo</span>
-        </div>
-      </div>
-
-      <div style="display: flex; flex-direction: column; border: 1px solid #fc533a; border-radius: 8px; background: #151313; overflow: hidden">
-        <div style="display: flex; align-items: center; gap: 6px; height: 26px; padding: 0 8px; border-bottom: 1px solid #f5e8e831">
-          <span style="width: 6px; height: 6px; border-radius: 3px; background: #fc533a"></span>
-          <span style="flex-grow: 1; font-size: 11px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Endpoint githubPrCreate</span>
-          <span class="pl-mono" style="font-size: 10px; color: #faf5f477">92K/500K</span>
-          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 5.5V2h3.5M14 10.5V14h-3.5" stroke="#faf5f477" stroke-width="1.3" stroke-linecap="round"></path></svg>
-          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="#faf5f477" stroke-width="1.3" stroke-linecap="round"></path></svg>
-        </div>
-        <div class="pl-mono" style="flex-grow: 1; min-height: 0; padding: 7px 9px; font-size: 10px; line-height: 15px; color: #fcf9f9b2; overflow: hidden">
-          <div style="color: #faf5f477">$ tsc --build packages/nikcli</div>
-          <div style="color: #fc533a">error TS2322: Type 'Handlers&lt;…&gt;'</div>
-          <div style="color: #fc533a">is not assignable to type</div>
-          <div style="color: #fc533a">'Endpoint not handled: githubPrCreate'</div>
-          <div style="color: #faf5f477; margin-top: 4px">Fermo da 6m</div>
-        </div>
-        <div style="display: flex; gap: 6px; margin: 0 7px">
-          <button type="button" style="flex-grow: 1; height: 26px; border: 1px solid #f5e8e831; border-radius: 5px; background: transparent; color: #fcf9f9b2; font-size: 11px">Log</button>
-          <button type="button" style="height: 26px; padding: 0 10px; border: 1px solid #f5e8e831; border-radius: 5px; background: transparent; color: #fdfbfbf0; font-size: 11px; font-weight: 500">Riprova</button>
-        </div>
-        <div style="display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px">
-          <span class="pl-mono" style="font-size: 9px; color: #faf5f477">agy · effort high</span>
-          <span style="flex-grow: 1"></span>
-          <span class="pl-mono" style="font-size: 9px; color: #fc533a">si è fermata</span>
-        </div>
-      </div>
-
-      <div style="display: flex; flex-direction: column; border: 1px solid #f5e8e831; border-radius: 8px; background: #151313; overflow: hidden">
-        <div style="display: flex; align-items: center; gap: 6px; height: 26px; padding: 0 8px; border-bottom: 1px solid #f5e8e831">
-          <span style="width: 6px; height: 6px; border-radius: 3px; background: #ffb224"></span>
-          <span style="flex-grow: 1; font-size: 11px; font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Ritmo della trascrizione</span>
-          <span class="pl-mono" style="font-size: 10px; color: #faf5f477">74K/500K</span>
-          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M2 5.5V2h3.5M14 10.5V14h-3.5" stroke="#faf5f477" stroke-width="1.3" stroke-linecap="round"></path></svg>
-          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="#faf5f477" stroke-width="1.3" stroke-linecap="round"></path></svg>
-        </div>
-        <div class="pl-mono" style="flex-grow: 1; min-height: 0; padding: 7px 9px; font-size: 10px; line-height: 15px; color: #fcf9f9b2; overflow: hidden">
-          <div>Misurato: 18 / 77 / 18 / 77</div>
-          <div style="color: #12c905">Ora: 16 / 32 / 16 / 32</div>
-          <div style="color: #ffb224">Serve permesso: message-part.css</div>
-          <div style="color: #faf5f477; margin-top: 4px">In attesa di risposta</div>
-        </div>
-        <div style="display: flex; gap: 6px; margin: 0 7px">
-          <button type="button" style="flex-grow: 1; height: 26px; border: 1px solid #f5e8e831; border-radius: 5px; background: transparent; color: #fcf9f9b2; font-size: 11px">Nega</button>
-          <button type="button" style="height: 26px; padding: 0 10px; border: 0; border-radius: 5px; background: #89b5ff; color: #131010; font-size: 11px; font-weight: 600">Concedi</button>
-        </div>
-        <div style="display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px">
-          <span class="pl-mono" style="font-size: 9px; color: #faf5f477">kimi · chiedi</span>
-          <span style="flex-grow: 1"></span>
-          <span class="pl-mono" style="font-size: 9px; color: #ffb224">aspetta te · 1m</span>
-        </div>
-      </div>
-
-      <div style="display: flex; flex-direction: column; border: 1px solid #f5e8e831; border-radius: 8px; background: #151313; overflow: hidden">
-        <div style="display: flex; align-items: center; gap: 6px; height: 26px; padding: 0 8px; border-bottom: 1px solid #f5e8e831">
-          <span style="width: 6px; height: 6px; border-radius: 3px; background: #faf5f477"></span>
-          <span style="flex-grow: 1; font-size: 11px; font-weight: 500; color: #fcf9f9b2; overflow: hidden; text-overflow: ellipsis; white-space: nowrap">Contrasto WCAG</span>
-          <span class="pl-mono" style="font-size: 10px; color: #faf5f477">fatta</span>
-          <svg width="11" height="11" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="#faf5f477" stroke-width="1.3" stroke-linecap="round"></path></svg>
-        </div>
-        <div class="pl-mono" style="flex-grow: 1; min-height: 0; padding: 7px 9px; font-size: 10px; line-height: 15px; color: #faf5f477; overflow: hidden">
-          <div>8 su 15 sotto soglia</div>
-          <div style="color: #12c905">0 su 13 · piu debole 4,63</div>
-          <div>chiaro e scuro</div>
-        </div>
-        <div style="display: flex; align-items: center; gap: 6px; height: 24px; padding: 0 9px">
-          <span class="pl-mono" style="font-size: 9px; color: #faf5f477">kimi · 3m 41s</span>
-          <span style="flex-grow: 1"></span>
-          <span class="pl-mono" style="font-size: 9px; color: #12c905">finita</span>
-        </div>
-      </div>
-
-      <button type="button" style="display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 7px; border: 1px dashed #f5e8e831; border-radius: 8px; background: transparent; color: #faf5f477">
-        <svg width="18" height="18" viewBox="0 0 16 16" fill="none" aria-hidden="true"><path d="M8 3.4v9.2M3.4 8h9.2" stroke="currentColor" stroke-width="1.3" stroke-linecap="round"></path></svg>
-        <span style="font-size: 11px">Nuova sessione</span>
-        <span class="pl-mono" style="font-size: 9px">o trascina qui una finestra</span>
-      </button>
-    </div>
-  </div>
-</div>
-</x-dc>
-
-<script data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
-class Component extends DCLogic {
-  renderVals() {
-    return {}
-  }
-}
-</script>
-</body>
+    <script data-dc-script data-props='{"$preview":{"width":1440,"height":900}}'>
+      class Component extends DCLogic {
+        renderVals() {
+          return {}
+        }
+      }
+    </script>
+  </body>
 </html>

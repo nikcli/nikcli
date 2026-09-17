@@ -50,9 +50,7 @@ describe("boundPaneTranscript", () => {
   test("the defaults are the documented ones", () => {
     const kept = boundPaneTranscript(lines(5_000))
     expect(kept).toHaveLength(MAX_LINES_PER_PANE)
-    expect(kept.reduce((sum, line) => sum + line.text.length, 0)).toBeLessThanOrEqual(
-      MAX_CHARS_PER_PANE,
-    )
+    expect(kept.reduce((sum, line) => sum + line.text.length, 0)).toBeLessThanOrEqual(MAX_CHARS_PER_PANE)
   })
 
   test("an empty transcript stays empty", () => {
@@ -76,10 +74,7 @@ describe("boundWorkspaceTranscripts", () => {
   test("over budget, the total comes down", () => {
     const panes = [pane("a", 40), pane("b", 40), pane("c", 40)]
     const out = boundWorkspaceTranscripts(panes, "c", 2_000)
-    const total = out.reduce(
-      (sum, p) => sum + (p.lines ?? []).reduce((n, line) => n + line.text.length, 0),
-      0,
-    )
+    const total = out.reduce((sum, p) => sum + (p.lines ?? []).reduce((n, line) => n + line.text.length, 0), 0)
     expect(total).toBeLessThanOrEqual(2_000)
   })
 

@@ -14,11 +14,11 @@ describe("loadSessionDiff", () => {
           return {
             code: 0,
             stdout: `diff --git a/test b/test\n--- a/test\n+++ b/test\n@@ -1,1 +1,2 @@\n-a\n+b\n+c`,
-            stderr: ""
+            stderr: "",
           }
         }
         return { code: 0, stdout: "", stderr: "" }
-      })
+      }),
     } as any
 
     const diff = await loadSessionDiff({ host, cwd: "/test", baseRef: "main" })
@@ -40,7 +40,7 @@ describe("loadSessionDiff", () => {
           return { code: 0, stdout: "M\tfile1\nA\tfile2\n", stderr: "" }
         }
         return { code: 0, stdout: "", stderr: "" }
-      })
+      }),
     } as any
 
     const diff = await loadSessionDiff({ host, cwd: "/test", baseRef: "main" })

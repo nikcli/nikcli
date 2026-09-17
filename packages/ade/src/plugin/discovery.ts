@@ -193,8 +193,7 @@ export async function resolveDeclaredPlugin(
   if (!isPathSpec(declared.spec)) {
     return {
       ...declared,
-      reason:
-        "i plugin npm non si possono installare dalla finestra desktop: aggiungilo dal terminale, poi riapri ADE",
+      reason: "i plugin npm non si possono installare dalla finestra desktop: aggiungilo dal terminale, poi riapri ADE",
     }
   }
 

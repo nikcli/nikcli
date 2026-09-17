@@ -55,8 +55,7 @@ export interface BotRoots {
 export async function resolveRoots(projectRoot?: string): Promise<BotRoots> {
   const host = await getHost()
   const home = await host?.homeDir?.()
-  const platform =
-    typeof navigator !== "undefined" && /win/i.test(navigator.userAgent ?? "") ? "windows" : "posix"
+  const platform = typeof navigator !== "undefined" && /win/i.test(navigator.userAgent ?? "") ? "windows" : "posix"
 
   return {
     ...(projectRoot ? { project: projectRoot } : {}),
@@ -214,12 +213,15 @@ export async function createBot(input: CreateBotInput, roots: BotRoots): Promise
   }
 
   if (!host.nikcliBot) return { ok: false, problem: "Questo host non può eseguire nikcli." }
-  const result = await host.nikcliBot(createArgs({
-    home,
-    description: input.description,
-    mode,
-    ...(input.tools ? { tools: input.tools } : {}),
-  }), base)
+  const result = await host.nikcliBot(
+    createArgs({
+      home,
+      description: input.description,
+      mode,
+      ...(input.tools ? { tools: input.tools } : {}),
+    }),
+    base,
+  )
 
   const created = parseCreatedPath(result.stdout)
   if (!created) {
@@ -275,10 +277,11 @@ async function writeBot(
     return { ok: false, problem: "Questo host non può scrivere file." }
   }
 
-  const existing = await listBots(
-    input.scope === "project" ? { project: input.base } : { global: input.base },
+  const existing = await listBots(input.scope === "project" ? { project: input.base } : { global: input.base })
+  const identifier = identifierFor(
+    input.name,
+    existing.map((bot) => bot.identifier),
   )
-  const identifier = identifierFor(input.name, existing.map((bot) => bot.identifier))
   // `agent`, not `agents`: nikcli reads both but writes the first, and a
   // roster split across two spellings is one the user has to think about.
   const path = joinPath(agentDir(input.base, input.scope), `${identifier}.md`)

@@ -71,15 +71,14 @@ describe("cleanTranscript", () => {
   const line = (text: string) => ({ kind: "step" as const, text })
 
   test("drops the frames and keeps the words, in order", () => {
-    expect(
-      cleanTranscript([line("avvio"), line("─".repeat(40)), line("⠋⠙⠹⠸"), line("fatto")]),
-    ).toEqual([line("avvio"), line("fatto")])
+    expect(cleanTranscript([line("avvio"), line("─".repeat(40)), line("⠋⠙⠹⠸"), line("fatto")])).toEqual([
+      line("avvio"),
+      line("fatto"),
+    ])
   })
 
   test("a frame redrawn ten times is one line", () => {
-    expect(cleanTranscript(Array.from({ length: 10 }, () => line("In esecuzione")))).toEqual([
-      line("In esecuzione"),
-    ])
+    expect(cleanTranscript(Array.from({ length: 10 }, () => line("In esecuzione")))).toEqual([line("In esecuzione")])
   })
 
   /*

@@ -46,7 +46,8 @@ const CODEX = JSON.stringify(
         {
           hooks: [
             {
-              command: 'powershell -NoProfile -ExecutionPolicy Bypass -File "C:\\Users\\x\\.codex\\herdr-agent-state.ps1" session',
+              command:
+                'powershell -NoProfile -ExecutionPolicy Bypass -File "C:\\Users\\x\\.codex\\herdr-agent-state.ps1" session',
               timeout: 10,
               type: "command",
             },
@@ -281,7 +282,9 @@ describe("readHookStatus and setHook", () => {
     await setHook(host, claude, true)
 
     const groups = JSON.parse(state.configText).hooks.SessionStart
-    expect(groups.some((g: { hooks: { command: string }[] }) => g.hooks[0].command === "another-tool --hook")).toBe(true)
+    expect(groups.some((g: { hooks: { command: string }[] }) => g.hooks[0].command === "another-tool --hook")).toBe(
+      true,
+    )
     expect(installedCommand(state.configText)).toBe(hookCommand(CLAUDE_SCRIPT))
   })
 

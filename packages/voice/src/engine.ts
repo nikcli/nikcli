@@ -26,11 +26,7 @@ import type { Speaker } from "./tts/speaker"
 import { playCue, type CueKind } from "./audio/cue"
 import type { MicMeter } from "./audio/meter"
 import { createTranscriberFor, type SelectTranscriberOptions, type TranscriberBackend } from "./asr/select"
-import {
-  disposeParakeetModel,
-  warmupParakeetModel,
-  type ParakeetProgress,
-} from "./asr/parakeet-local"
+import { disposeParakeetModel, warmupParakeetModel, type ParakeetProgress } from "./asr/parakeet-local"
 import { CURRENT_SETTINGS_VERSION, normalizeSettings, type VoiceMode, type VoiceSettings } from "./settings/model"
 import { matchesWakeWord } from "./settings/wake-word"
 import { firstWords } from "./dialog/while-thinking"
@@ -472,8 +468,7 @@ export function createVoiceEngine(options: VoiceEngineOptions): VoiceEngine {
     if (transcriber.finish) transcriber.finish()
     else transcriber.commit?.()
 
-    const settled = async () =>
-      !transcriber.hasInFlight && (await Effect.runPromise(handle.isIdle))
+    const settled = async () => !transcriber.hasInFlight && (await Effect.runPromise(handle.isIdle))
 
     /*
      * Settled twice, one macrotask apart: a final transcript can sit between
@@ -781,39 +776,39 @@ export function createVoiceEngine(options: VoiceEngineOptions): VoiceEngine {
 
   /** What the program says through: nothing in pure transcription mode. */
   const speakerService: SpeakerService = {
-      speak: (text: string) => {
-        // Pure transcription mode must NEVER speak: it is strictly a silent speech-to-text bridge.
-        if (activeMode() === "transcription") {
-          return Effect.void
-        }
-        return Effect.tryPromise({
-          try: () => {
-            // A whole reply replaces whatever was queued.
-            speechGeneration++
-            speechTail = Promise.resolve()
-            return Promise.resolve(speaker.speak(text))
-          },
-          catch: (err) =>
-            new HostActionFailed({
-              action: "speak",
-              cause: err,
-              message: "Errore durante la sintesi vocale.",
-            }),
-        })
-      },
-      cancel: Effect.sync(() => cancelSpeech()),
-      append: (text: string) => {
-        if (activeMode() === "transcription") return Effect.void
-        return Effect.tryPromise({
-          try: () => appendSpeech(text),
-          catch: (err) =>
-            new HostActionFailed({
-              action: "speak",
-              cause: err,
-              message: "Errore durante la sintesi vocale.",
-            }),
-        })
-      },
+    speak: (text: string) => {
+      // Pure transcription mode must NEVER speak: it is strictly a silent speech-to-text bridge.
+      if (activeMode() === "transcription") {
+        return Effect.void
+      }
+      return Effect.tryPromise({
+        try: () => {
+          // A whole reply replaces whatever was queued.
+          speechGeneration++
+          speechTail = Promise.resolve()
+          return Promise.resolve(speaker.speak(text))
+        },
+        catch: (err) =>
+          new HostActionFailed({
+            action: "speak",
+            cause: err,
+            message: "Errore durante la sintesi vocale.",
+          }),
+      })
+    },
+    cancel: Effect.sync(() => cancelSpeech()),
+    append: (text: string) => {
+      if (activeMode() === "transcription") return Effect.void
+      return Effect.tryPromise({
+        try: () => appendSpeech(text),
+        catch: (err) =>
+          new HostActionFailed({
+            action: "speak",
+            cause: err,
+            message: "Errore durante la sintesi vocale.",
+          }),
+      })
+    },
   }
 
   const programOptions = (): Parameters<typeof makeVoiceProgram>[0] => ({
@@ -906,10 +901,7 @@ export function createVoiceEngine(options: VoiceEngineOptions): VoiceEngine {
       const message =
         typeof err === "string"
           ? err
-          : spokenMessage(err) ||
-            (err && typeof err === "object" && err instanceof Error
-              ? err.message
-              : undefined)
+          : spokenMessage(err) || (err && typeof err === "object" && err instanceof Error ? err.message : undefined)
       noteError(err, message)
       if (message) record({ kind: "error", text: message, at: now() })
       if (activeMode() !== "agent" && pressHolds() && !chordHeld && !openedWithoutChord) {
@@ -1094,7 +1086,11 @@ export function createVoiceEngine(options: VoiceEngineOptions): VoiceEngine {
           await stop()
           /* Said as well as written, when someone asked for the microphone:
              whoever is not looking would otherwise hear nothing at all. */
-          if (!startOptions?.waitForName && activeMode() !== "transcription" && currentSettings().speakReplies !== false) {
+          if (
+            !startOptions?.waitForName &&
+            activeMode() !== "transcription" &&
+            currentSettings().speakReplies !== false
+          ) {
             void Promise.resolve(speaker.speak(message)).catch(() => {})
           }
         }

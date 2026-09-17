@@ -6,9 +6,7 @@ describe("the Bayer matrix", () => {
     // Transposing or mistyping one entry still dithers — just with a visible
     // diagonal bias that nobody notices until the animation is running.
     expect(BAYER_8.length).toBe(BAYER_SIZE * BAYER_SIZE)
-    expect([...BAYER_8].sort((a, b) => a - b)).toEqual(
-      Array.from({ length: 64 }, (_, i) => i),
-    )
+    expect([...BAYER_8].sort((a, b) => a - b)).toEqual(Array.from({ length: 64 }, (_, i) => i))
   })
 
   test("thresholds sit strictly inside 0…1", () => {

@@ -245,9 +245,7 @@ export function agentDirs(base: string, scope: AgentScope): string[] {
  * in the wrong place: every write goes through a path nikcli itself printed.
  */
 export function globalConfigDir(home: string, platform: "windows" | "posix"): string {
-  return platform === "windows"
-    ? joinPath(home, "AppData", "Roaming", "nikcli")
-    : joinPath(home, ".config", "nikcli")
+  return platform === "windows" ? joinPath(home, "AppData", "Roaming", "nikcli") : joinPath(home, ".config", "nikcli")
 }
 
 export interface CreateArgsInput {

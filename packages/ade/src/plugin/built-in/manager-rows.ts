@@ -42,16 +42,18 @@ export function managerRows(input: ManagerInput): ManagerRow[] {
   const count = <T extends { pluginId: string }>(list: readonly T[], id: string) =>
     list.reduce((total, item) => (item.pluginId === id ? total + 1 : total), 0)
 
-  const rows = input.status.map((entry): ManagerRow => ({
-    id: entry.id,
-    spec: entry.spec,
-    source: entry.source,
-    active: entry.active,
-    error: entry.error,
-    commands: count(input.commands, entry.id),
-    panes: count(input.panes, entry.id),
-    sections: count(input.sections, entry.id),
-  }))
+  const rows = input.status.map(
+    (entry): ManagerRow => ({
+      id: entry.id,
+      spec: entry.spec,
+      source: entry.source,
+      active: entry.active,
+      error: entry.error,
+      commands: count(input.commands, entry.id),
+      panes: count(input.panes, entry.id),
+      sections: count(input.sections, entry.id),
+    }),
+  )
 
   // A stable partition, not a sort: `toSorted` with a boolean comparator would
   // be stable too, but this says what is happening.

@@ -17,7 +17,17 @@ describe("layoutAttrs", () => {
   })
 
   test("every option has a key the primitives take out of the element props", () => {
-    const options = { gap: 1, pad: 1, padX: 4, padY: 2, align: "start", justify: "end", border: "top", wrap: true, grow: true } as const
+    const options = {
+      gap: 1,
+      pad: 1,
+      padX: 4,
+      padY: 2,
+      align: "start",
+      justify: "end",
+      border: "top",
+      wrap: true,
+      grow: true,
+    } as const
     expect(Object.keys(options).sort()).toEqual([...LAYOUT_KEYS].sort())
   })
 
@@ -44,11 +54,14 @@ describe("layout.css covers every value the types allow", () => {
   test("inline and block padding, alignment, justification, borders, tones", () => {
     for (const step of [4, 5, 6, 7]) expect(has(`[data-pad-x="${step}"]`)).toBe(true)
     for (const step of [2, 3, 4, 5]) expect(has(`[data-pad-y="${step}"]`)).toBe(true)
-    for (const value of ["start", "center", "end", "baseline", "stretch"]) expect(has(`[data-align="${value}"]`)).toBe(true)
+    for (const value of ["start", "center", "end", "baseline", "stretch"])
+      expect(has(`[data-align="${value}"]`)).toBe(true)
     for (const value of ["start", "center", "end", "between"]) expect(has(`[data-justify="${value}"]`)).toBe(true)
     for (const value of ["top", "bottom"]) expect(has(`[data-border="${value}"]`)).toBe(true)
-    for (const tone of ["accent", "working", "waiting", "done", "error"]) expect(has(`[data-tone="${tone}"]`)).toBe(true)
-    for (const kind of ["stack", "row", "grid", "scroll", "overlay", "surface"]) expect(has(`[data-layout="${kind}"]`)).toBe(true)
+    for (const tone of ["accent", "working", "waiting", "done", "error"])
+      expect(has(`[data-tone="${tone}"]`)).toBe(true)
+    for (const kind of ["stack", "row", "grid", "scroll", "overlay", "surface"])
+      expect(has(`[data-layout="${kind}"]`)).toBe(true)
   })
 
   test("zero specificity, so a component's own rules always win", () => {

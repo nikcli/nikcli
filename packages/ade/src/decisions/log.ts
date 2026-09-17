@@ -140,7 +140,8 @@ export function toEvent(value: unknown): DecisionEvent | string {
   if (!value || typeof value !== "object" || Array.isArray(value)) return t("decisions.log.notObject")
   const record = value as Record<string, unknown>
   const type = record.type
-  if (typeof type !== "string" || !DECISION_EVENT_TYPES.includes(type as DecisionEventType)) return t("decisions.log.type")
+  if (typeof type !== "string" || !DECISION_EVENT_TYPES.includes(type as DecisionEventType))
+    return t("decisions.log.type")
   const k = text(record.k)
   if (!k || !isDecisionKey(k)) return t("decisions.log.key")
   const at = text(record.at)
@@ -171,7 +172,13 @@ export function toEvent(value: unknown): DecisionEvent | string {
     case "risposta": {
       const words = text(record.words)
       if (!words) return t("decisions.log.words")
-      return compact({ type: "risposta", ...base, words, choice: text(record.choice), note: text(record.note) }) as AnsweredEvent
+      return compact({
+        type: "risposta",
+        ...base,
+        words,
+        choice: text(record.choice),
+        note: text(record.note),
+      }) as AnsweredEvent
     }
     case "rimandata": {
       const until = text(record.until)

@@ -8,8 +8,13 @@ test("with no picker registered, spawn starts the agent asked for", async () => 
 })
 
 test("a registered picker can send the session elsewhere, with a reason", async () => {
-  setProviderPicker(async ({ agent }) => (agent === "claude-code" ? { agent: "codex", reason: "quota Claude esaurita fino alle 18:00" } : { agent }))
-  expect(await pickProvider({ agent: "claude-code", from: "a" })).toEqual({ agent: "codex", reason: "quota Claude esaurita fino alle 18:00" })
+  setProviderPicker(async ({ agent }) =>
+    agent === "claude-code" ? { agent: "codex", reason: "quota Claude esaurita fino alle 18:00" } : { agent },
+  )
+  expect(await pickProvider({ agent: "claude-code", from: "a" })).toEqual({
+    agent: "codex",
+    reason: "quota Claude esaurita fino alle 18:00",
+  })
 })
 
 test("a picker that fails or answers nothing changes nothing", async () => {

@@ -46,9 +46,7 @@ export function digestConsoleErrors(logs: readonly ConsoleLine[]): ConsoleDigest
   // are its consequences, and sorting by count would bury it. Which is also why
   // the cap keeps the head rather than a sample.
   const shown = [...counted.entries()].slice(0, MAX_DISTINCT)
-  const body = shown
-    .map(([message, count]) => (count > 1 ? `${message}\n  (×${count})` : message))
-    .join("\n\n")
+  const body = shown.map(([message, count]) => (count > 1 ? `${message}\n  (×${count})` : message)).join("\n\n")
 
   return {
     distinct: counted.size,

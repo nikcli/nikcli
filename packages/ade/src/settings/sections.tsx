@@ -4,14 +4,7 @@ import { providerState, type ProviderState } from "../bots/providers"
 import { RUNNERS, runnerAccount, type Runner } from "../bots/runners"
 import { listBots, resolveRoots } from "../bots/store"
 import { MAX_PARALLEL_TURNS } from "../bots/terms"
-import {
-  LOCALE_PREFERENCES,
-  locale,
-  localePreference,
-  setLocalePreference,
-  t,
-  type LocalePreference,
-} from "../i18n"
+import { LOCALE_PREFERENCES, locale, localePreference, setLocalePreference, t, type LocalePreference } from "../i18n"
 import "./sections.css"
 
 /**
@@ -103,8 +96,8 @@ export function BotSection(props: BotSectionProps) {
           Bot
         </h3>
         <p data-slot="section-desc">
-          Gli agenti di nikcli che questa macchina conosce: con quale modello girano, e se
-          appartengono al progetto o a tutti. Si creano e si modificano nella vista Bot.
+          Gli agenti di nikcli che questa macchina conosce: con quale modello girano, e se appartengono al progetto o a
+          tutti. Si creano e si modificano nella vista Bot.
         </p>
       </div>
 
@@ -112,9 +105,7 @@ export function BotSection(props: BotSectionProps) {
         when={roster().length > 0}
         fallback={
           <p data-slot="settings-empty">
-            {ready()
-              ? "Nessun agente nikcli. Se ne crea uno dalla vista Bot."
-              : "Lettura delle cartelle di nikcli…"}
+            {ready() ? "Nessun agente nikcli. Se ne crea uno dalla vista Bot." : "Lettura delle cartelle di nikcli…"}
           </p>
         }
       >
@@ -127,9 +118,7 @@ export function BotSection(props: BotSectionProps) {
                 </span>
                 <span data-slot="settings-name">{bot.identifier}</span>
                 <span data-slot="settings-meta">{bot.model ?? "modello di nikcli"}</span>
-                <span data-slot="settings-meta">
-                  {bot.scope === "project" ? "progetto" : "globale"}
-                </span>
+                <span data-slot="settings-meta">{bot.scope === "project" ? "progetto" : "globale"}</span>
               </li>
             )}
           </For>
@@ -167,17 +156,15 @@ export function SkillsSection(props: SkillsSectionProps) {
           Strumenti
         </h3>
         <p data-slot="section-desc">
-          Quali strumenti sono stati tolti a un bot. Chi non compare qui li ha tutti: nikcli
-          registra nel file solo le rinunce.
+          Quali strumenti sono stati tolti a un bot. Chi non compare qui li ha tutti: nikcli registra nel file solo le
+          rinunce.
         </p>
       </div>
 
       <Show
         when={restricted().length > 0}
         fallback={
-          <p data-slot="settings-empty">
-            Nessun bot ha limitazioni: tutti possono usare ogni strumento di nikcli.
-          </p>
+          <p data-slot="settings-empty">Nessun bot ha limitazioni: tutti possono usare ogni strumento di nikcli.</p>
         }
       >
         <ul data-slot="settings-list">
@@ -273,9 +260,7 @@ export function GridSection(props: GridSectionProps) {
         <h3 data-slot="section-title" tabIndex={-1}>
           {t("settings.grid.title")}
         </h3>
-        <p data-slot="section-desc">
-          {t("settings.grid.desc")}
-        </p>
+        <p data-slot="section-desc">{t("settings.grid.desc")}</p>
       </div>
 
       <div data-slot="settings-choices" role="group" aria-label={t("settings.grid.columns")}>
@@ -341,16 +326,15 @@ export function ProviderSection(props: ProviderSectionProps) {
           Provider
         </h3>
         <p data-slot="section-desc">
-          I programmi su cui può girare un bot, ognuno con l'account della propria CLI: l'abbonamento
-          Anthropic passa da Claude Code, quello ChatGPT da Codex, le chiavi e gli altri abbonamenti
-          da nikcli. Il motore, il modello e lo sforzo si scelgono nella scheda di ogni bot.
+          I programmi su cui può girare un bot, ognuno con l'account della propria CLI: l'abbonamento Anthropic passa da
+          Claude Code, quello ChatGPT da Codex, le chiavi e gli altri abbonamenti da nikcli. Il motore, il modello e lo
+          sforzo si scelgono nella scheda di ogni bot.
         </p>
         <p data-slot="section-desc">
-          ADE non chiede né legge le credenziali: l'accesso si fa nel flusso ufficiale di ogni CLI. Gli
-          abbonamenti sono per uso personale e ADE tiene al massimo {MAX_PARALLEL_TURNS} turni insieme
-          per ognuno; per automazioni intensive o non presidiate accedi alla CLI con una chiave API
-          (Claude Code accetta la chiave della Console Anthropic, Codex la chiave OpenAI con{" "}
-          <code>codex login --with-api-key</code>).
+          ADE non chiede né legge le credenziali: l'accesso si fa nel flusso ufficiale di ogni CLI. Gli abbonamenti sono
+          per uso personale e ADE tiene al massimo {MAX_PARALLEL_TURNS} turni insieme per ognuno; per automazioni
+          intensive o non presidiate accedi alla CLI con una chiave API (Claude Code accetta la chiave della Console
+          Anthropic, Codex la chiave OpenAI con <code>codex login --with-api-key</code>).
         </p>
       </div>
 
@@ -395,11 +379,5 @@ export function ProviderSection(props: ProviderSectionProps) {
 
 /** Servers ADE would speak the Model Context Protocol to. */
 export function McpSection() {
-  return (
-    <NotBuiltYet
-      title="MCP"
-      what={t("settings.mcp.desc")}
-      instead={t("settings.mcp.instead")}
-    />
-  )
+  return <NotBuiltYet title="MCP" what={t("settings.mcp.desc")} instead={t("settings.mcp.instead")} />
 }

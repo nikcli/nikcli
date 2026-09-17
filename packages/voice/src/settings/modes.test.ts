@@ -135,10 +135,7 @@ describe("Voice Modes & Settings Interaction", () => {
       speaker,
       transcriber,
       now: () => Date.now(),
-      settings: { activation: "toggle",
-        mode: "transcription",
-        transcriptionSend: "manual",
-      },
+      settings: { activation: "toggle", mode: "transcription", transcriptionSend: "manual" },
     })
 
     await engine.start()
@@ -168,10 +165,7 @@ describe("Voice Modes & Settings Interaction", () => {
       speaker,
       transcriber,
       now: () => Date.now(),
-      settings: { activation: "toggle",
-        mode: "transcription",
-        transcriptionSend: "auto",
-      },
+      settings: { activation: "toggle", mode: "transcription", transcriptionSend: "auto" },
     })
 
     await engine.start()
@@ -224,9 +218,7 @@ describe("Voice Modes & Settings Interaction", () => {
 
     // 2. Spoken with wake word (and ASR variation 'ehi nick') -> executes command immediately
     await heard(transcriber, "ehi nick nuova sessione")
-    const newSessionCalls = host.calls.filter(
-      (c) => c.method === "runCommand" && c.args[0] === "session.new"
-    )
+    const newSessionCalls = host.calls.filter((c) => c.method === "runCommand" && c.args[0] === "session.new")
     expect(newSessionCalls).toHaveLength(1)
 
     await engine.stop()
@@ -248,17 +240,12 @@ describe("Voice Modes & Settings Interaction", () => {
         activation: "push-to-talk",
       },
     })
-    const palette = () =>
-      host.calls.filter((c) => c.method === "runCommand" && c.args[0] === "palette.open")
+    const palette = () => host.calls.filter((c) => c.method === "runCommand" && c.args[0] === "palette.open")
 
     // Held: accepted
     await engine.pressToTalk()
     await engine.submitText("nuova sessione")
-    expect(
-      host.calls.filter(
-        (c) => c.method === "runCommand" && c.args[0] === "session.new"
-      )
-    ).toHaveLength(1)
+    expect(host.calls.filter((c) => c.method === "runCommand" && c.args[0] === "session.new")).toHaveLength(1)
 
     // Released: writing is its own deliberate act, and still runs
     holdChord()
@@ -299,11 +286,7 @@ describe("Voice Modes & Settings Interaction", () => {
     await engine.start()
     await engine.submitText("nuova sessione")
 
-    expect(
-      host.calls.filter(
-        (c) => c.method === "runCommand" && c.args[0] === "session.new"
-      )
-    ).toHaveLength(1)
+    expect(host.calls.filter((c) => c.method === "runCommand" && c.args[0] === "session.new")).toHaveLength(1)
 
     // And stopping ends it: the next start is judged on its own.
     await engine.stop()
@@ -338,11 +321,7 @@ describe("Voice Modes & Settings Interaction", () => {
     // Allow Effect loop to settle
     await new Promise((r) => setTimeout(r, 50))
 
-    expect(
-      host.calls.filter(
-        (c) => c.method === "runCommand" && c.args[0] === "session.new"
-      )
-    ).toHaveLength(1)
+    expect(host.calls.filter((c) => c.method === "runCommand" && c.args[0] === "session.new")).toHaveLength(1)
 
     // Engine must automatically stop / deactivate
     expect(engine.isRunning()).toBe(false)
@@ -458,9 +437,7 @@ describe("Voice Modes & Settings Interaction", () => {
       expect(engine.activeMode()).toBe("agent")
 
       await engine.submitText("nuova sessione")
-      expect(
-        host.calls.filter((c) => c.method === "runCommand" && c.args[0] === "session.new")
-      ).toHaveLength(1)
+      expect(host.calls.filter((c) => c.method === "runCommand" && c.args[0] === "session.new")).toHaveLength(1)
 
       await engine.stop()
     })
@@ -499,9 +476,7 @@ describe("Voice Modes & Settings Interaction", () => {
       speaker,
       createTranscriber: mockTranscriberFactory,
       now: () => Date.now(),
-      settings: { activation: "toggle",
-        backend: "openrouter",
-      },
+      settings: { activation: "toggle", backend: "openrouter" },
     })
 
     await engine.start()
@@ -515,19 +490,10 @@ describe("Voice Modes & Settings Interaction", () => {
     await engine.updateSettings({ backend: "parakeet" })
 
     // Verify order: transcriberA.stop MUST come before transcriberB.start!
-    expect(eventOrder).toEqual([
-      "transcriberA.start",
-      "transcriberA.stop",
-      "transcriberB.start",
-    ])
+    expect(eventOrder).toEqual(["transcriberA.start", "transcriberA.stop", "transcriberB.start"])
 
     await engine.stop()
-    expect(eventOrder).toEqual([
-      "transcriberA.start",
-      "transcriberA.stop",
-      "transcriberB.start",
-      "transcriberB.stop",
-    ])
+    expect(eventOrder).toEqual(["transcriberA.start", "transcriberA.stop", "transcriberB.start", "transcriberB.stop"])
   })
 
   test("push to talk: rapid re-press cancels previous release timers and preserves new session", async () => {

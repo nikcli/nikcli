@@ -138,13 +138,15 @@ export interface PanelVerb {
  */
 export function panelsHelp(panels: readonly { panel: string; verbs: readonly PanelVerb[] }[]): string {
   const width = Math.max(0, ...panels.map(({ panel }) => panel.length)) + 1
-  return [
-    `pannelli (se aperti in ADE): scrivi da sola nella tua risposta la riga ${REQUEST_PREFIX} <pannello> <comando>;`,
-    `  ADE risponde con una riga "${REPLY_PREFIX} <pannello> <comando> ok|errore — …"`,
-    ...panels.map(({ panel, verbs }) =>
-      `  ${`${panel}:`.padEnd(width + 1)}${verbs.map((verb) => verb.usage).join(" | ")}`,
-    ),
-  ].join("\n") + "\n"
+  return (
+    [
+      `pannelli (se aperti in ADE): scrivi da sola nella tua risposta la riga ${REQUEST_PREFIX} <pannello> <comando>;`,
+      `  ADE risponde con una riga "${REPLY_PREFIX} <pannello> <comando> ok|errore — …"`,
+      ...panels.map(
+        ({ panel, verbs }) => `  ${`${panel}:`.padEnd(width + 1)}${verbs.map((verb) => verb.usage).join(" | ")}`,
+      ),
+    ].join("\n") + "\n"
+  )
 }
 
 /**

@@ -16,11 +16,7 @@ import type {
   TranscriberOptions,
   TranscriptEvent,
 } from "./transcriber"
-import {
-  createMicCapture,
-  type MicCapture,
-  type MicCaptureOptions,
-} from "../audio/capture"
+import { createMicCapture, type MicCapture, type MicCaptureOptions } from "../audio/capture"
 import { requestPersistentStorage } from "./model-cache"
 import { bundledOrtPaths } from "./ort-assets"
 import { t } from "@nikcli-ai/ade/i18n"
@@ -54,9 +50,7 @@ export interface ParakeetReadiness {
  * Distinguishes between lack of hardware/runtime support (neither WebGPU nor WASM)
  * and pending initial model download.
  */
-export function describeParakeetReadiness(options?: {
-  isModelDownloaded?: boolean
-}): ParakeetReadiness {
+export function describeParakeetReadiness(options?: { isModelDownloaded?: boolean }): ParakeetReadiness {
   const hasGpu = isWebGpuAvailable()
   const hasWasm = isWasmAvailable()
 
@@ -279,7 +273,7 @@ async function resolveParakeetLib(options: ParakeetTranscriberOptions) {
       }
     }
     throw new Error(
-      `Libreria parakeet.js non trovata. Installa 'parakeet.js' e 'onnxruntime-web' per abilitare la trascrizione locale: ${err?.message ?? "modulo mancante"}`
+      `Libreria parakeet.js non trovata. Installa 'parakeet.js' e 'onnxruntime-web' per abilitare la trascrizione locale: ${err?.message ?? "modulo mancante"}`,
     )
   }
 }
@@ -297,9 +291,7 @@ interface SharedParakeetState {
 
 let globalSharedParakeet: SharedParakeetState | null = null
 
-export function createParakeetTranscriber(
-  options: ParakeetTranscriberOptions = {}
-): ParakeetTranscriber {
+export function createParakeetTranscriber(options: ParakeetTranscriberOptions = {}): ParakeetTranscriber {
   const modelId = options.modelId ?? "parakeet-tdt-0.6b-v3"
 
   let partialCb: PartialTranscriptCallback = options.onPartial ?? (() => {})
@@ -307,8 +299,7 @@ export function createParakeetTranscriber(
   let errorCb: TranscriberErrorCallback = options.onError ?? (() => {})
   let progressCb: ParakeetProgressCallback = options.onProgress ?? (() => {})
 
-  const micCapture: MicCapture =
-    options.capture ?? createMicCapture(options.captureOptions)
+  const micCapture: MicCapture = options.capture ?? createMicCapture(options.captureOptions)
 
   const isCustomMock = Boolean(options.fromHub)
   const keepWarm = options.keepWarm ?? !isCustomMock
@@ -381,8 +372,7 @@ export function createParakeetTranscriber(
       }
 
       const progressBridge = (p: { loaded: number; total: number; file?: string }) => {
-        const percent =
-          p.total > 0 ? Math.min(100, Math.round((p.loaded / p.total) * 100)) : undefined
+        const percent = p.total > 0 ? Math.min(100, Math.round((p.loaded / p.total) * 100)) : undefined
         const msg =
           percent !== undefined
             ? `Scaricamento del modello Parakeet: ${percent}%...`
@@ -443,7 +433,7 @@ export function createParakeetTranscriber(
         throw new Error(
           `WebGPU è stato richiesto esplicitamente ma non è riuscito a inizializzarsi${
             gpuFailure ? ` (${gpuFailure})` : ""
-          }. Scegli 'automatico' o 'WASM' nelle impostazioni vocali.`
+          }. Scegli 'automatico' o 'WASM' nelle impostazioni vocali.`,
         )
       }
 
@@ -472,7 +462,7 @@ export function createParakeetTranscriber(
         } catch (wasmErr: any) {
           statusMessage = "Inizializzazione fallita"
           throw new Error(
-            `Impossibile inizializzare il modello Parakeet sia con WebGPU che con WASM: ${wasmErr?.message ?? "errore sconosciuto"}`
+            `Impossibile inizializzare il modello Parakeet sia con WebGPU che con WASM: ${wasmErr?.message ?? "errore sconosciuto"}`,
           )
         }
       }
@@ -565,11 +555,7 @@ export function createParakeetTranscriber(
           confidence: 1.0,
         })
       } catch (err: any) {
-        errorCb(
-          new Error(
-            `Errore finalizzazione trascrizione Parakeet: ${err?.message ?? "sconosciuto"}`
-          )
-        )
+        errorCb(new Error(`Errore finalizzazione trascrizione Parakeet: ${err?.message ?? "sconosciuto"}`))
       } finally {
         isFinalizing = false
         receivedPcmChunks = 0
@@ -594,11 +580,7 @@ export function createParakeetTranscriber(
           partialCb(r.text.trim())
         }
       } catch (err: any) {
-        errorCb(
-          new Error(
-            `Errore elaborazione chunk audio Parakeet: ${err?.message ?? "sconosciuto"}`
-          )
-        )
+        errorCb(new Error(`Errore elaborazione chunk audio Parakeet: ${err?.message ?? "sconosciuto"}`))
       }
     })
   })
@@ -680,7 +662,7 @@ export function createParakeetTranscriber(
         userStopped = true
         statusMessage = "Avvio fallito"
         const failure = new Error(
-          `Errore durante l'avvio della trascrizione Parakeet: ${err?.message ?? "sconosciuto"}`
+          `Errore durante l'avvio della trascrizione Parakeet: ${err?.message ?? "sconosciuto"}`,
         )
         errorCb(failure)
         /*
@@ -761,9 +743,7 @@ export interface WarmupParakeetOptions extends ParakeetTranscriberOptions {
  * Preloads and warms up the Parakeet model into memory in the background,
  * so subsequent activations start instantly with 0ms delay.
  */
-export async function warmupParakeetModel(
-  options: WarmupParakeetOptions = {}
-): Promise<void> {
+export async function warmupParakeetModel(options: WarmupParakeetOptions = {}): Promise<void> {
   const modelId = options.modelId ?? "parakeet-tdt-0.6b-v3"
   const preference = options.executionBackend ?? "auto"
 

@@ -34,10 +34,7 @@ export interface FlatFileNode {
 /**
  * Toggles a directory's expanded state, returning a new immutable Set.
  */
-export function toggleDirectoryExpansion(
-  expanded: ReadonlySet<string>,
-  dirPath: string,
-): Set<string> {
+export function toggleDirectoryExpansion(expanded: ReadonlySet<string>, dirPath: string): Set<string> {
   const next = new Set(expanded)
   if (next.has(dirPath)) {
     next.delete(dirPath)
@@ -50,10 +47,7 @@ export function toggleDirectoryExpansion(
 /**
  * Checks whether a directory path is marked as expanded.
  */
-export function isDirectoryExpanded(
-  expanded: ReadonlySet<string>,
-  dirPath: string,
-): boolean {
+export function isDirectoryExpanded(expanded: ReadonlySet<string>, dirPath: string): boolean {
   return expanded.has(dirPath)
 }
 
@@ -71,10 +65,7 @@ export function isDirectoryExpanded(
  * produced matched nothing in the tree, and `deriveDefaultExpandedDirs` sat
  * there expanding directories that did not exist.
  */
-export function expandDirectoryParents(
-  targetPath: string,
-  expanded: ReadonlySet<string>,
-): Set<string> {
+export function expandDirectoryParents(targetPath: string, expanded: ReadonlySet<string>): Set<string> {
   const next = new Set(expanded)
   let current = dirname(normalizePath(targetPath))
 
@@ -110,17 +101,15 @@ export function compareFileNodes(a: FileNode, b: FileNode): number {
  * Recursively sorts all nested children.
  */
 export function sortFileNodes(nodes: readonly FileNode[]): FileNode[] {
-  return [...nodes]
-    .sort(compareFileNodes)
-    .map((node) => {
-      if (node.kind === "directory" && node.children) {
-        return {
-          ...node,
-          children: sortFileNodes(node.children),
-        }
+  return [...nodes].sort(compareFileNodes).map((node) => {
+    if (node.kind === "directory" && node.children) {
+      return {
+        ...node,
+        children: sortFileNodes(node.children),
       }
-      return node
-    })
+    }
+    return node
+  })
 }
 
 /**
@@ -169,9 +158,7 @@ export function flattenFileTree(
     })
 
     if (isDir && isExpanded && node.children && node.children.length > 0) {
-      result.push(
-        ...flattenFileTree(node.children, expanded, selectedPath, depth + 1, node.path),
-      )
+      result.push(...flattenFileTree(node.children, expanded, selectedPath, depth + 1, node.path))
     }
   }
 
@@ -181,10 +168,7 @@ export function flattenFileTree(
 /**
  * Recursively locates a node by its full path.
  */
-export function findFileNodeByPath(
-  nodes: readonly FileNode[],
-  targetPath: string,
-): FileNode | undefined {
+export function findFileNodeByPath(nodes: readonly FileNode[], targetPath: string): FileNode | undefined {
   for (const node of nodes) {
     if (node.path === targetPath) return node
     if (node.kind === "directory" && node.children) {
@@ -217,10 +201,7 @@ export function collectDirectoryPaths(nodes: readonly FileNode[]): string[] {
  * Ensures that top-level directories and any ancestor directories leading to the
  * selected file are visible upon first launch when no stored preferences exist.
  */
-export function deriveDefaultExpandedDirs(
-  files?: readonly FileNode[],
-  selectedFilePath?: string,
-): string[] {
+export function deriveDefaultExpandedDirs(files?: readonly FileNode[], selectedFilePath?: string): string[] {
   const topDirs = (files ?? []).filter((f) => f.kind === "directory").map((f) => f.path)
   const fallback = topDirs.length > 0 ? topDirs : ["packages", "src"]
   const initial = new Set(fallback)

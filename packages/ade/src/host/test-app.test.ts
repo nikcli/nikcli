@@ -63,13 +63,26 @@ describe("host/test-app", () => {
     const plan = planTestApp({ root, branch: "ade/test-app" })
     const otherPlan = planTestApp({ root: other, branch: "feat/ade" })
     const rows: ProcessRow[] = [
-      { pid: 10, ppid: 1, cmd: `bun.exe x tauri dev --config src-tauri/tauri.test.conf.json --config ${plan.configPath}` },
+      {
+        pid: 10,
+        ppid: 1,
+        cmd: `bun.exe x tauri dev --config src-tauri/tauri.test.conf.json --config ${plan.configPath}`,
+      },
       { pid: 11, ppid: 10, cmd: `node "${root}\\packages\\ade\\node_modules\\@tauri-apps\\cli\\tauri.js" dev` },
       { pid: 12, ppid: 11, cmd: "cargo run --no-default-features" },
-      { pid: 13, ppid: 12, exe: `${root}\\packages\\ade\\src-tauri\\target\\debug\\ade-desktop.exe`, cmd: "target\\debug\\ade-desktop.exe" },
+      {
+        pid: 13,
+        ppid: 12,
+        exe: `${root}\\packages\\ade\\src-tauri\\target\\debug\\ade-desktop.exe`,
+        cmd: "target\\debug\\ade-desktop.exe",
+      },
       { pid: 14, ppid: 13, cmd: `msedgewebview2.exe --user-data-dir="${plan.profileDir}\\EBWebView"` },
       // Orphaned: its parent shell is gone, but it is still this port's Vite.
-      { pid: 15, ppid: 999, cmd: `node "${root}\\packages\\ade\\node_modules\\vite\\bin\\vite.js" --port 5270 --strictPort` },
+      {
+        pid: 15,
+        ppid: 999,
+        cmd: `node "${root}\\packages\\ade\\node_modules\\vite\\bin\\vite.js" --port 5270 --strictPort`,
+      },
       { pid: 16, ppid: 15, exe: `${root}\\node_modules\\esbuild.exe` },
       // Another worktree, whose path is a prefix of this one's.
       { pid: 20, ppid: 1, cmd: `bun.exe x tauri dev --config ${otherPlan.configPath}` },
@@ -81,7 +94,9 @@ describe("host/test-app", () => {
     ]
 
     test("the whole tree, orphans included, and nothing of the other worktree", () => {
-      const pids = instanceProcesses(rows, plan, root, 5270).map((row) => row.pid).sort((a, b) => a - b)
+      const pids = instanceProcesses(rows, plan, root, 5270)
+        .map((row) => row.pid)
+        .sort((a, b) => a - b)
       expect(pids).toEqual([10, 11, 12, 13, 14, 15, 16])
       expect(instanceRunning(instanceProcesses(rows, plan, root, 5270), plan, root)).toBe(true)
     })
@@ -97,14 +112,18 @@ describe("host/test-app", () => {
       const timed = rows.map((row) => at(row, startedAt + row.pid))
 
       test("the instance it started, orphans included", () => {
-        const pids = instanceProcesses(timed, plan, root, 5270, startedAt).map((row) => row.pid).sort((a, b) => a - b)
+        const pids = instanceProcesses(timed, plan, root, 5270, startedAt)
+          .map((row) => row.pid)
+          .sort((a, b) => a - b)
         expect(pids).toEqual([10, 11, 12, 13, 14, 15, 16])
       })
 
       test("a process naming the same paths but started before is someone else's, with its tree", () => {
         const earlier = timed.map((row) => (row.pid === 10 ? at(row, startedAt - 60_000) : row))
         // 11 and 12 hang below it and stay with it; 13 and 15 are roots of their own.
-        const pids = instanceProcesses(earlier, plan, root, 5270, startedAt).map((row) => row.pid).sort((a, b) => a - b)
+        const pids = instanceProcesses(earlier, plan, root, 5270, startedAt)
+          .map((row) => row.pid)
+          .sort((a, b) => a - b)
         expect(pids).toEqual([13, 14, 15, 16])
       })
 
@@ -133,9 +152,9 @@ describe("host/test-app", () => {
 
   test("start failures are recognised in tauri dev output", () => {
     expect(startFailure("Error Port 5321 is already in use")).toContain("5321")
-    expect(startFailure("Failed to setup app: error encountered during setup hook: Accesso negato. (os error 5)")).toContain(
-      "Accesso negato",
-    )
+    expect(
+      startFailure("Failed to setup app: error encountered during setup hook: Accesso negato. (os error 5)"),
+    ).toContain("Accesso negato")
     expect(startFailure("     Running `target\\debug\\ade-desktop.exe`")).toBeUndefined()
   })
 
@@ -143,7 +162,13 @@ describe("host/test-app", () => {
     const before = '[[bin]]\nname = "ade-desktop"\n'
     const after = before + '[[bin]]\nname = "ade-test"\nrequired-features = ["test-exe"]\n\n[features]\ntest-exe = []\n'
     expect(tauriDevArgs("C:/w/.ade-test/tauri.dev.json", before)).not.toContain("--features")
-    expect(tauriDevArgs("C:/w/.ade-test/tauri.dev.json", after).slice(-5)).toEqual(["--features", "test-exe", "--", "--bin", "ade-test"])
+    expect(tauriDevArgs("C:/w/.ade-test/tauri.dev.json", after).slice(-5)).toEqual([
+      "--features",
+      "test-exe",
+      "--",
+      "--bin",
+      "ade-test",
+    ])
     // The bin's own required-features line is not the feature's declaration.
     expect(tauriDevArgs("x", '[[bin]]\nrequired-features = ["test-exe"]\n')).not.toContain("--features")
     expect(appStarted("     Running `target\\debug\\ade-desktop.exe`")).toBe(true)

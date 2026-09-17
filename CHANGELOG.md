@@ -3,6 +3,259 @@
 <!-- UNRELEASED:START -->
 <!-- UNRELEASED:END -->
 
+## v1.368.0 (September 2026)
+
+## Core
+
+- Replace unsupported ADE logo HTML entities (@nikomatt69)
+- Finish removing the storybook feature plugin (@nikomatt69)
+- Fall back to gpt-reserve when the ChatGPT plan's main models run out (@nikomatt69)
+
+**Thank you to 2 community contributors:**
+
+- @SandroHub013:
+  - feat(ade): run the app being built inside a phone or a resizable desktop window
+  - docs(ade): the user tries feat/ade in its own worktree [skip release]
+  - fix(ade): a voice turn cannot change the project
+  - fix(ade): test:app stops only the processes its own start created
+  - feat(voice): say the agent's terms where its engine is chosen [skip release]
+  - chore(ade): test:app start timeout can be shortened to try its cleanup
+  - fix(ade): test:app runs the ade-test binary where Cargo.toml has it
+  - fix(ade): each ADE Test gets its own ade-msg mailbox
+  - test(ade): an ADE Test's mailbox lives in its worktree
+  - fix(ade): the voice turn's Codex sandbox writes to the mailbox mailbox.rs uses
+  - fix(ade): strip a trailing backslash from the mailbox path too
+  - build(ade): give test builds their own executable name
+  - build(ade): run ADE Test in development as ade-test.exe
+  - docs(ade): releases are the maintainer's call, and ADE Test has its own executable
+  - test(ade): a timed-out or lost ADE Test start leaves no process and no record
+  - fix(ade): cap model reads in the host, show only the latest 3D load, and free lines and points
+  - fix(ade): keep the open panel answering when another of its kind closes, and believe only the latest probe
+  - feat(ade): record decisions as append-only events [skip release]
+  - feat(ade): compute where each decision stands and append to the register [skip release]
+  - feat(ade): answer decisions from a badge in the bar, one at a time, and see them all in a panel [skip release]
+  - fix(ade): find Master in any project, deliver long answers through the inbox, and append decisions for real
+  - fix(voice): the HUD shows the request during an agent turn and its answer after
+  - feat(voice): replies in a natural offline voice, Piper Ugo by default
+  - feat(voice): load the reply voice when the microphone opens
+  - docs(ade): why the resident Piper process needs no exit hook [skip release]
+  - feat(voice): Maschile and Femminile reply voices, with their licence and source
+  - feat(ade): keep API keys in the system keychain and pass the chosen ones to agents at launch [skip release]
+  - fix(ade): offer API keys to the Terminal too, and keep the masked tail out of the key index [skip release]
+  - Merge branch 'ade/s15-piper' into ade/integrazione-0.5.0
+  - Merge branch 'ade/voice-hud' into ade/integrazione-0.5.0
+  - feat(ade): add verified MCP catalog and project config merge
+  - Merge branch 'feat/ade-panels' into ade/integrazione-0.5.0
+  - Merge branch 'feat/ade-decisions' into ade/integrazione-0.5.0
+  - feat(ade): choose effort per spawned session, and model and effort from a dispatch profile
+  - fix(ade): refuse an effort the model would ignore, for haiku and agy
+  - fix(ade): keep Piper's IO off async workers and repair a cut-short install
+  - fix(ade): keep a busy turn busy when its activity cannot be read
+  - feat(ade): one Estensioni page for MCP servers and plugins, with the verified catalog [skip release]
+  - fix(ade): name a server's publisher only when it is someone else [skip release]
+  - fix(ade): stop typing panel capabilities into sessions and rerunning redrawn requests
+  - fix(ade): decide in the host which agent gets an API key, from the command it starts
+  - feat(ade): list the panel commands in ade-msg help
+  - fix(ade): say when a panel request is skipped, and forget repeats at a new turn
+  - Merge branch 'feat/ade-extensions' into ade/integrazione-0.5.0
+  - Merge branch 'feat/ade-keys' into ade/integrazione-0.5.0
+  - fix(ade): time a panel reply from when it is typed, not from the request
+  - feat(ade): the user chooses which session receives decision answers
+  - fix(ade): a stray Enter does not answer a decision
+  - Merge commit '8cf79bbcb' into ade/integrazione-0.5.0
+  - fix(ade): write remote MCP servers with the type Claude Code needs
+  - Merge commit '80d40d7d0' into ade/integrazione-0.5.0
+  - feat(ade): drag, swap and resize sessions anywhere in the grid
+  - fix(ade): size every session the same by default, whatever its title
+  - fix(ade): keep the layout readable by earlier builds, and keep the move chord out of the panes
+  - fix(ade): confirm before the recipient selector sends queued answers; a calm note for MCP servers without type
+  - Merge commit '1532526bc' into ade/integrazione-0.6.0
+  - fix(ade): keep the voice HUD above the agent console's text box
+  - Merge commit '193546287' into ade/integrazione-0.6.0
+  - Merge commit '3bf60b789' into ade/integrazione-0.6.0
+  - fix(ade): stop ADE Test by closing its window before killing anything
+  - chore(ade): drop the stale plugin-dialog entry that bun 1.3.5 rejects
+  - fix(voice): answer text typed with the microphone off
+  - fix(voice): typed text needs no held key and no wake word
+  - fix(ade): leave the app's pids alone when the process table cannot be reread
+  - Merge ade/s34-orderly-stop (d50e73b20) into ade/integrazione-0.6.0
+  - feat(ade): core quota module with readiness score and deterministic backoff
+  - fix(ade): resolve multi-window cooldown and clamp remaining quota
+  - feat(ade): implement proposal a dense session pane header with quota horizon
+  - fix(ade): enhance provider normalization and type exports for proposal a pane header
+  - fix(ade): connect pane header to live quota-axi cache and display weekly binding window
+  - feat(voice): the agent speaks through its own sphere of particles
+  - fix(voice): the sphere stays under dialogs and leaves Escape to them
+  - fix(ade): normalize window labels in quota-axi snapshot
+  - fix(ade): show real quota or n/d in the pane bar, and keep the header's tree, mode and cost
+  - Merge ade/s8-bar (6950aad5a) into ade/integrazione-0.6.0
+  - fix(ade): count quota resets in minutes, match OpenAI models as words, and name the pane bar's quiet controls
+  - fix(ade): the recipient selector shows the session answers go to
+  - fix(voice): the sphere stays up while Piper prepares a long reply
+  - fix(ade): grant ADE's own page the microphone instead of prompting for it
+  - fix(voice): point a denied microphone at the system's privacy settings
+  - fix(voice): a rate-limited transcription tries the fallback model instead of failing
+  - fix(voice): a sentence while the agent thinks is handled, not dropped
+  - fix(ade): a pane alone fills the grid, and the browser pane can be dragged by its toolbar
+  - test(ade): relaunch without --note is refused, with the reason
+  - test(ade): the voice agent keeps the plan's turn cap and never retries a limit
+  - feat(ade): route spawn by quota when the agent asked for is at its limit
+  - test(ade): prove the voice host's path to runTurn by calling it, not by reading the source
+  - Merge ade/s13-voice-terms into ade/integrazione-0.6.0
+  - fix(voice): open the video, 3D, simulator and decisions panels by voice
+  - fix(ade): show what a voice command opened, and keep @ade lines out of spoken answers
+  - Merge ade/s29-followup (0dc313f53) into ade/integrazione-0.6.0
+  - fix(ade): leave a spawn with a profile or effort on the agent asked for, and keep the last quota reading through a failed read
+  - Merge ade/s9-provider-pick (952f11b06) into ade/integrazione-0.6.0
+  - fix(ade): stop a CLI turn that runs past its time, with its child processes
+  - fix(ade): a stopped turn ends and gives its slot back
+  - fix(voice): say on screen when a new sentence replaces the one being answered
+  - fix(ade): kill a turn's process tree by start time, not by parent id alone
+  - Merge ade/turn-timeout (5fef1a404) into ade/integrazione-0.6.0
+  - fix(voice): reach the planner when the agent cannot answer, keep sleep and confirmations, say information aloud
+  - Merge ade/voice-0.6.0 into ade/integrazione-0.6.0 (10839b2bc)
+  - fix(voice): say when a command did nothing instead of reporting success
+  - fix(voice): bound the waits that could keep the assistant silent
+  - fix(ade): a stalled voice download gives up instead of holding the install lock
+  - fix(ade): answer ConPTY's startup questions so a pty speaks at once
+  - fix(ade): end a CLI turn at its final event, not at the process exit
+  - Merge ade/voice-0.6.0 (38bdfb461) into ade/integrazione-0.6.0
+  - fix(voice): the planner does not redo a sentence an agent turn already started
+  - fix(voice): only a stop or a real request ends a turn that is thinking
+  - fix(voice): «cerca file X» searches for X instead of dropping the query
+  - fix(ade): a voice download gives up when stalled, not after a fixed time
+  - fix(voice): a free sentence heard while thinking is held, not obeyed
+  - fix(ade): answer ConPTY only on Windows, and kill a CLI that hangs after its result
+  - fix(ade): start a restarted pane on a clean screen
+  - Merge ade/pty-fast-start (947ed79d7) into ade/integrazione-0.6.0
+  - fix(voice): a command that cannot be carried out is said once
+  - Merge ade/voice-p3 (93c6dc936) into ade/integrazione-0.6.0
+  - test(ade): the voice agent's S13 tests expect the ran flag voice-p3 added
+  - fix(voice): a stopped turn leaves the held sentence to the turn that replaced it
+  - fix(voice): «cerca il file X» searches for X too
+  - fix(voice): typed text is answered with the microphone closed (P2)
+  - fix(voice): «tema chiaro» sets the light theme instead of flipping it
+  - fix(ade): «cosa sta succedendo» counts sessions, not panels
+  - Merge ade/voice-typed (e58ceb07c) into ade/integrazione-0.6.0
+  - fix(ade): a session without turn hooks stays at work until it answers the request
+  - fix(ade): the state chip is not a button, so the middle of the header drags again
+  - fix(ade): one busy voice chord no longer turns both shortcuts off
+  - fix(ade): a system shortcut ADE cannot place says so instead of opening the microphone
+  - feat(voice): the assistant answers when it is called by name
+  - feat(ade): the profile moved to the wake word says so where it can be undone
+  - Merge ade/voice-wake (a2063dcdf) into ade/integrazione-0.6.0
+  - feat(ade): record a video of ADE in use, with the events a promo cut needs [skip release]
+  - fix(voice): the wake-word rule, as it behaves in use
+  - fix(ade): ADE Test does not restart itself under whoever is using it
+  - fix(ade): the hold on a session that owes an answer has to expire
+  - fix(ade): the state chip is not a live region, and shows its focus
+  - Merge ade/s14-stato (980be4bab) into ade/integrazione-0.6.0
+  - feat(ade): start and stop a recording from the palette or an agent, with a REC badge [skip release]
+  - feat(ade): three recording qualities, with the size a minute costs beside each [skip release]
+  - feat(ade): notice a release in minutes, and let anyone ask
+  - fix(ade): fit a lighter take inside its size instead of squashing it, and bill the bitrate the label promises [skip release]
+  - fix(ade): pin the bitrate of each recording quality, so the file weighs what the label says [skip release]
+  - fix(ade): an unchanged answer still knows about the release, and a refusal is waited out
+  - fix(ade): remember which release the stored tag stands for
+  - Merge ade/s38-update-notice (7dba8a951) into ade/integrazione-0.7.0
+  - feat(ade): keep the voice and the microphone as their own tracks, and export a take with zoom and click rings [skip release]
+  - fix(voice): move the old name "hei nik" to "nik" once
+  - fix(ade): let the export read a take back into a canvas
+  - Merge ade/voice-wake-name (9cc815673) into ade/integrazione-0.7.0
+  - fix(ade): no CORS answer for the sandboxed browser pane
+  - feat(voice): listen all the time for «ei nik»
+  - feat(voice): always-on listening pauses only for a locked or sleeping PC
+  - fix(voice): keep the name filter on through a turn, and let the name expire
+  - fix(voice): rebuild the listening pill between paused and listening
+  - fix(voice): an answered question does not keep the assistant awake
+  - fix(ade): no take without the user, no microphone unless asked
+  - fix(ade): export a take without audio at its full length
+  - fix(ade): no CORS answer from the media scheme
+  - fix(ade): play media from the URL form WebView2 answers
+  - Merge ade/voice-always-on (e879505e4) into ade/integrazione-0.7.0
+  - fix(ade): cover secrets before the first frame, and say when the microphone records
+  - Merge ade/fix-media-cors (00f3d7067) into ade/integrazione-0.7.0
+  - Merge ade/s36-record (27dd4853f) into ade/integrazione-0.7.0
+  - feat(voice): a section the host has hidden is refused, not switched to
+  - feat(ade): hide Chat and Bot behind one switch
+  - Merge ade/s40-hide-chat-bot (d7bae8458) into ade/integrazione-0.7.0
+  - feat(ade): choose the interface language, Italian or English
+  - feat(ade): speak English in the chrome
+  - fix(ade): keep pane states as codes and translate only their labels
+  - feat(ade): speak English in the panels
+  - fix(ade): finish the review points on S41 and widen the text check
+  - fix(ade): show MCP configuration and decision log errors in the interface language
+  - feat(voice): speak the interface language in the voice controls
+  - feat(voice): translate microphone errors, settings repairs and shortcut warnings
+  - fix(ade): name options and states in the language shown, keep agent reasons Italian
+  - Merge feat/ade (842ddd32c, ade-v0.6.1) into ade/integrazione-0.7.0
+  - feat(ade): read agy's quota from its status line file
+  - fix(ade): distrust future quota dates, name windows in the interface language
+  - fix(ade): show expand and close on every pane, video included
+  - feat(ade): open a video from the tree in a video pane
+  - fix(ade): keep the video pane wide, one open button, paths compared as paths
+  - feat(voice): start the assistant only from its shortcut
+  - feat(voice): take out toggle too: one press, one turn
+  - fix(voice): close the microphone when the turn is over, after the voice
+  - fix(voice): a profile with no version and toggle goes to the shortcut too
+  - Merge upstream live-main into feat/ade
+  - fix(ade): name new sessions in the interface language
+  - fix(ade): a take after a long export no longer fails until restart
+  - fix(ade): the REC badge no longer covers the window buttons
+  - test(ade): run the two encoder fallback tests one at a time
+  - Merge branch 'ade/s36-presa-lunga' into ade/feat-ade-integra
+  - Merge branch 'ade/fix-nome-sessione' into ade/feat-ade-integra
+  - Merge remote-tracking branch 'upstream/feat/ade' into ade/feat-ade-integra
+  - fix(ade): keep Claude's quota on the bar between quota-axi runs
+  - fix(ade): keep a session's own limit urgent under an old quota, date the reading against now
+  - feat(voice): start the assistant only by voice, with «nik» or «ei nik»
+  - fix(voice): only the name itself wakes the assistant
+  - fix(voice): dictation is held on its key when the name calls the assistant
+  - Merge commit 'd81898ee8' into ade/feat-ade-integra
+  - feat(voice): read the agent's answer as it is written
+  - feat(voice): go on talking for 8 s after an answer without the name
+  - feat(voice): its name or a tap over its voice stops it and listens
+  - feat(voice): a fast model for spoken answers, changeable in the settings
+  - feat(voice): talk like a colleague, and say problems in plain words
+  - fix(voice): «ok nik» does not call the assistant
+  - fix(voice): «E Nick ha detto…» from the television is not a call
+  - fix(voice): one follow-up, then the name; a failed command said in plain words
+  - fix(voice): after «e» or «eh», the name counts only with a pause or alone
+  - Merge commit '6e55165ef' into ade/feat-ade-integra
+  - fix(ade): keep the real page in the browser pane instead of swapping in the mirror
+  - fix(ade): reopen the browser pane on the page the user left it on
+  - fix(ade): save browser URLs without credentials, and explain an empty frame
+  - fix(ade): keep path tokens out of saved URLs, and do not wait for the framing probe
+  - feat(ade): inspect the real page, and keep Tauri's IPC out of every frame
+  - chore(voice): mark where a spoken turn spends its time
+  - feat(ade): bind a browser pane to the session working on the site
+  - feat(ade): send page sections, edits and a picture to the bound session
+  - feat(ade): offer a web pane when a session starts a dev server
+  - perf(voice): keep Claude Code running between spoken requests
+  - fix(ade): hand the frame secret over a port, and select only on real input
+  - feat(ade): take the pane's picture in the official ADE too, on the user's click
+  - fix(ade): cover every secret field, and keep page text out of the sent line
+  - perf(voice): notice the end of a sentence when it happens
+  - perf(voice): listen for the name while the sentence is still being said
+  - perf(voice): say the first clause of a reply before its sentence ends
+  - fix(voice): resume a conversation only in its project, and let go when the voice stops
+  - fix(voice): do not learn to cut the pauses a speaker thinks in
+  - Merge commit '82dc59872' into ade/feat-ade-integra
+  - fix(voice): keep a process and a conversation per project, and close after the turn
+  - feat(i18n): translate chat and bot sections to English
+  - fix(voice): settle a killed turn at once, instead of leaving it hanging
+  - fix(i18n): unify terms and runner account sources, refine bot phrasing
+  - fix(ade): run a nikcli pane's tools in the pane, not in the shared server
+  - Merge commit 'ea4960b52' into ade/feat-ade-integra
+  - Merge commit '61a16352c' into ade/feat-ade-integra
+- @nikomatt69:
+  - feat(openai): fall back to gpt-reserve when the ChatGPT plan's main models run out
+  - chore(tui): finish removing the storybook feature plugin
+  - refactor(styles): enhance button interactions and transitions across various components
+  - Merge branch 'feat/ade' into live-main
+  - Merge origin/live-main (v1.367.0) into the feat/ade merge
+  - fix(ci): replace unsupported ADE logo HTML entities
+
 ## v1.367.0 (September 2026)
 
 ## Core

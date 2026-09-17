@@ -42,12 +42,72 @@ export interface Device {
  * of forty phones is a list nobody picks from.
  */
 export const DEVICES: readonly Device[] = [
-  { id: "iphone-15", label: "iPhone 15", kind: "phone", width: 393, height: 852, radius: 48, bezel: 12, cutout: "island", statusBar: 54 },
-  { id: "iphone-se", label: "iPhone SE", kind: "phone", width: 375, height: 667, radius: 0, bezel: 14, cutout: "none", statusBar: 20 },
-  { id: "pixel-8", label: "Pixel 8", kind: "phone", width: 412, height: 915, radius: 36, bezel: 11, cutout: "punch", statusBar: 36 },
-  { id: "galaxy-s24", label: "Galaxy S24", kind: "phone", width: 360, height: 780, radius: 32, bezel: 10, cutout: "punch", statusBar: 32 },
-  { id: "ipad-air", label: "iPad Air", kind: "tablet", width: 820, height: 1180, radius: 18, bezel: 20, cutout: "none", statusBar: 24 },
-  { id: "window", label: "Finestra desktop", kind: "window", width: 1280, height: 800, radius: 8, bezel: 0, cutout: "none", statusBar: 0 },
+  {
+    id: "iphone-15",
+    label: "iPhone 15",
+    kind: "phone",
+    width: 393,
+    height: 852,
+    radius: 48,
+    bezel: 12,
+    cutout: "island",
+    statusBar: 54,
+  },
+  {
+    id: "iphone-se",
+    label: "iPhone SE",
+    kind: "phone",
+    width: 375,
+    height: 667,
+    radius: 0,
+    bezel: 14,
+    cutout: "none",
+    statusBar: 20,
+  },
+  {
+    id: "pixel-8",
+    label: "Pixel 8",
+    kind: "phone",
+    width: 412,
+    height: 915,
+    radius: 36,
+    bezel: 11,
+    cutout: "punch",
+    statusBar: 36,
+  },
+  {
+    id: "galaxy-s24",
+    label: "Galaxy S24",
+    kind: "phone",
+    width: 360,
+    height: 780,
+    radius: 32,
+    bezel: 10,
+    cutout: "punch",
+    statusBar: 32,
+  },
+  {
+    id: "ipad-air",
+    label: "iPad Air",
+    kind: "tablet",
+    width: 820,
+    height: 1180,
+    radius: 18,
+    bezel: 20,
+    cutout: "none",
+    statusBar: 24,
+  },
+  {
+    id: "window",
+    label: "Finestra desktop",
+    kind: "window",
+    width: 1280,
+    height: 800,
+    radius: 8,
+    bezel: 0,
+    cutout: "none",
+    statusBar: 0,
+  },
 ]
 
 export const DEFAULT_DEVICE_ID = "iphone-15"
@@ -121,7 +181,9 @@ export interface FrameFit {
 export function fitFrame(input: FrameInput): FrameFit {
   const { device } = input
   const base =
-    device.kind === "window" && input.windowSize ? clampWindowSize(input.windowSize.width, input.windowSize.height) : device
+    device.kind === "window" && input.windowSize
+      ? clampWindowSize(input.windowSize.width, input.windowSize.height)
+      : device
   const rotate = input.landscape && device.kind !== "window"
   const screenWidth = rotate ? base.height : base.width
   const screenHeight = rotate ? base.width : base.height
@@ -133,7 +195,10 @@ export function fitFrame(input: FrameInput): FrameFit {
   const padding = input.padding ?? 16
   const availableWidth = Math.max(0, input.containerWidth - padding * 2)
   const availableHeight = Math.max(0, input.containerHeight - padding * 2)
-  const scale = availableWidth <= 0 || availableHeight <= 0 ? 0 : Math.min(1, availableWidth / outerWidth, availableHeight / outerHeight)
+  const scale =
+    availableWidth <= 0 || availableHeight <= 0
+      ? 0
+      : Math.min(1, availableWidth / outerWidth, availableHeight / outerHeight)
 
   return {
     screenWidth,
@@ -195,9 +260,12 @@ export function guessDevServers(config: ProjectConfig): DevServerGuess[] {
 
   const tauri = parseJson(config.tauriConf) as { build?: { devUrl?: unknown; devPath?: unknown } } | undefined
   const devUrl = tauri?.build?.devUrl ?? tauri?.build?.devPath
-  if (typeof devUrl === "string" && /^https?:\/\//i.test(devUrl)) add({ label: "Tauri (devUrl)", url: stripSlash(devUrl) })
+  if (typeof devUrl === "string" && /^https?:\/\//i.test(devUrl))
+    add({ label: "Tauri (devUrl)", url: stripSlash(devUrl) })
 
-  const pkg = parseJson(config.packageJson) as { scripts?: Record<string, unknown>; dependencies?: Record<string, unknown> } | undefined
+  const pkg = parseJson(config.packageJson) as
+    | { scripts?: Record<string, unknown>; dependencies?: Record<string, unknown> }
+    | undefined
   const scripts = pkg?.scripts && typeof pkg.scripts === "object" ? pkg.scripts : {}
   const preferred = ["web", "dev", "start", "serve"]
   const names = Object.keys(scripts).sort((a, b) => rank(a, preferred) - rank(b, preferred))
@@ -211,7 +279,9 @@ export function guessDevServers(config: ProjectConfig): DevServerGuess[] {
     add({ label: tool.label, url: `http://localhost:${port}`, command: `${name}` })
   }
 
-  const isExpo = Boolean(parseJson(config.appJson) && (parseJson(config.appJson) as { expo?: unknown }).expo) || Boolean(pkg?.dependencies?.expo)
+  const isExpo =
+    Boolean(parseJson(config.appJson) && (parseJson(config.appJson) as { expo?: unknown }).expo) ||
+    Boolean(pkg?.dependencies?.expo)
   if (isExpo) add({ label: "Expo (web)", url: "http://localhost:8081", command: "web" })
 
   return guesses
@@ -304,8 +374,16 @@ export function describeSimulator(state: SimulatorState): string {
 }
 
 export const SIMULATOR_VERBS = [
-  { name: "open", usage: "open <url>", summary: "carica l'app servita dal dev server, es. 5173 o http://localhost:8081" },
-  { name: "device", usage: "device <id>", summary: `cambia dispositivo: ${DEVICES.map((device) => device.id).join(", ")}` },
+  {
+    name: "open",
+    usage: "open <url>",
+    summary: "carica l'app servita dal dev server, es. 5173 o http://localhost:8081",
+  },
+  {
+    name: "device",
+    usage: "device <id>",
+    summary: `cambia dispositivo: ${DEVICES.map((device) => device.id).join(", ")}`,
+  },
   { name: "rotate", usage: "rotate", summary: "gira il telefono o il tablet" },
   { name: "size", usage: "size <larghezza>x<altezza>", summary: "ridimensiona la finestra desktop" },
   { name: "reload", usage: "reload", summary: "ricarica l'app" },

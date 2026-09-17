@@ -42,7 +42,8 @@ describe("tts/natural-speaker", () => {
   test("an installed voice reads every sentence in order through Piper", async () => {
     const h = harness({
       // The second sentence comes back first: order is the reply's, not the host's.
-      synthesize: (_voice, text) => new Promise((resolve) => setTimeout(() => resolve(wav(text)), text.startsWith("Ho") ? 20 : 1)),
+      synthesize: (_voice, text) =>
+        new Promise((resolve) => setTimeout(() => resolve(wav(text)), text.startsWith("Ho") ? 20 : 1)),
     })
     await createNaturalSpeaker(h.deps).speak("Ho aperto una sessione Codex. Ti avviso quando ha finito.")
     expect(h.played).toEqual(["Ho aperto una sessione Codex.", "Ti avviso quando ha finito."])
@@ -110,7 +111,8 @@ describe("tts/natural-speaker", () => {
   test("a Piper that never answers does not keep the reply silent: the old voice takes over", async () => {
     const h = harness({
       synthesisLimitMs: 30,
-      synthesize: (_voice, text) => (text.startsWith("Seconda") ? new Promise<ArrayBuffer>(() => {}) : Promise.resolve(wav(text))),
+      synthesize: (_voice, text) =>
+        text.startsWith("Seconda") ? new Promise<ArrayBuffer>(() => {}) : Promise.resolve(wav(text)),
     })
     await createNaturalSpeaker(h.deps).speak("Prima frase lunga. Seconda frase lunga.")
     expect(h.played).toEqual(["Prima frase lunga."])

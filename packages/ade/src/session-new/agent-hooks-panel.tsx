@@ -52,14 +52,10 @@ export function AgentHooksSection(props: AgentHooksSectionProps) {
         <h3 data-slot="section-title" tabIndex={-1}>
           {t("hooks.title")}
         </h3>
-        <p data-slot="section-desc">
-          {t("hooks.desc")}
-        </p>
+        <p data-slot="section-desc">{t("hooks.desc")}</p>
       </div>
 
-      <p data-slot="section-desc">
-        {t("hooks.files")}
-      </p>
+      <p data-slot="section-desc">{t("hooks.files")}</p>
 
       <ul data-slot="hook-list">
         <For each={HOOK_TARGETS}>
@@ -86,9 +82,7 @@ export function AgentHooksSection(props: AgentHooksSectionProps) {
                 </div>
 
                 <Show when={state()?.broken}>
-                  <p data-slot="hook-note">
-                    {t("hooks.broken")}
-                  </p>
+                  <p data-slot="hook-note">{t("hooks.broken")}</p>
                 </Show>
 
                 <Show when={state() && !state()?.error}>
@@ -132,9 +126,7 @@ export function AgentHooksSection(props: AgentHooksSectionProps) {
         <p data-slot="hook-note">{failure()}</p>
       </Show>
 
-      <p data-slot="section-desc">
-        {t("hooks.outside")}
-      </p>
+      <p data-slot="section-desc">{t("hooks.outside")}</p>
     </>
   )
 }

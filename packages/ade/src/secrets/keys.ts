@@ -40,21 +40,45 @@ export function nameProblem(name: string): string | undefined {
 }
 
 const RESERVED_ENV = new Set([
-  "PATH", "PATHEXT", "TERM", "COLORTERM", "HOME", "USERPROFILE", "APPDATA", "LOCALAPPDATA",
-  "SYSTEMROOT", "SYSTEMDRIVE", "WINDIR", "COMSPEC", "TEMP", "TMP", "SHELL", "PWD", "LD_PRELOAD",
-  "LD_LIBRARY_PATH", "DYLD_INSERT_LIBRARIES", "NODE_OPTIONS",
+  "PATH",
+  "PATHEXT",
+  "TERM",
+  "COLORTERM",
+  "HOME",
+  "USERPROFILE",
+  "APPDATA",
+  "LOCALAPPDATA",
+  "SYSTEMROOT",
+  "SYSTEMDRIVE",
+  "WINDIR",
+  "COMSPEC",
+  "TEMP",
+  "TMP",
+  "SHELL",
+  "PWD",
+  "LD_PRELOAD",
+  "LD_LIBRARY_PATH",
+  "DYLD_INSERT_LIBRARIES",
+  "NODE_OPTIONS",
 ])
 
 /**
  * Mirrors `check_env` in `secrets.rs`. In the interface language, except
  * where an agent reads it (`@ade keys ask`), which passes Italian.
  */
-export function envProblem(env: string, others: readonly KeyInfo[] = [], name = "", language: Locale = locale()): string | undefined {
+export function envProblem(
+  env: string,
+  others: readonly KeyInfo[] = [],
+  name = "",
+  language: Locale = locale(),
+): string | undefined {
   const trimmed = env.trim()
   if (!trimmed) return translate(language, "keys.problem.noEnv")
   if (!/^[A-Z_][A-Z0-9_]{0,63}$/.test(trimmed)) return translate(language, "keys.problem.envChars")
-  if (RESERVED_ENV.has(trimmed) || trimmed.startsWith("ADE_")) return translate(language, "keys.problem.reserved", trimmed)
-  if (others.some((key) => key.env === trimmed && key.name !== name.trim())) return translate(language, "keys.problem.taken", trimmed)
+  if (RESERVED_ENV.has(trimmed) || trimmed.startsWith("ADE_"))
+    return translate(language, "keys.problem.reserved", trimmed)
+  if (others.some((key) => key.env === trimmed && key.name !== name.trim()))
+    return translate(language, "keys.problem.taken", trimmed)
   return undefined
 }
 
@@ -89,7 +113,10 @@ export function keysForAgent(keys: readonly KeyInfo[], agentId: string): string[
  * can reach. Claude Code with `ANTHROPIC_API_KEY` in its environment uses the
  * key instead of the subscription; codex with `OPENAI_API_KEY` likewise.
  */
-const BILLING_SWITCH: Record<string, { agent: string; label: string; account: "keys.billing.claude" | "keys.billing.chatgpt" }> = {
+const BILLING_SWITCH: Record<
+  string,
+  { agent: string; label: string; account: "keys.billing.claude" | "keys.billing.chatgpt" }
+> = {
   ANTHROPIC_API_KEY: { agent: "claude-code", label: "Claude Code", account: "keys.billing.claude" },
   OPENAI_API_KEY: { agent: "codex", label: "Codex", account: "keys.billing.chatgpt" },
 }

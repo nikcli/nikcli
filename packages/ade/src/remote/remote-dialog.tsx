@@ -14,7 +14,11 @@ import { Badge, Overlay, Row, Scroll, Stack, Surface } from "../ui/layout"
 import "./remote.css"
 import { t } from "../i18n"
 
-export function RemoteSpaceDialog(props: { open: boolean; onClose: () => void; onConnect: (target: RemoteTarget) => void }) {
+export function RemoteSpaceDialog(props: {
+  open: boolean
+  onClose: () => void
+  onConnect: (target: RemoteTarget) => void
+}) {
   return (
     <Show when={props.open}>
       <Dialog onClose={props.onClose} onConnect={props.onConnect} />
@@ -110,20 +114,18 @@ function Dialog(props: { onClose: () => void; onConnect: (target: RemoteTarget) 
           <Show when={!found.loading} fallback={<p data-slot="empty">{t("remote.searching")}</p>}>
             <Show
               when={hosts().length > 0}
-              fallback={
-                <p data-slot="empty">
-                  {query().trim()
-                    ? t("remote.noKnownHost")
-                    : t("remote.noHosts")}
-                </p>
-              }
+              fallback={<p data-slot="empty">{query().trim() ? t("remote.noKnownHost") : t("remote.noHosts")}</p>}
             >
               <For each={hosts()}>
                 {(host) => (
                   <button type="button" data-slot="host" role="option" onClick={() => connect(host)}>
                     <span data-slot="alias">{host.alias}</span>
                     <span data-slot="detail">
-                      {[host.user && `${host.user}@`, host.hostName && host.hostName !== host.alias ? host.hostName : "", host.port ? `:${host.port}` : ""]
+                      {[
+                        host.user && `${host.user}@`,
+                        host.hostName && host.hostName !== host.alias ? host.hostName : "",
+                        host.port ? `:${host.port}` : "",
+                      ]
                         .filter(Boolean)
                         .join("")}
                     </span>

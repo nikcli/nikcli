@@ -14,12 +14,32 @@ export function PaneActions(props: { onExpand?: () => void; onClose?: () => void
   return (
     <span class="acts" data-slot="pane-actions">
       {props.children}
-      <button type="button" class="act" data-slot="pane-action" onClick={() => props.onExpand?.()} aria-label={t("pane.expand")} title={t("pane.expand")}>
+      <button
+        type="button"
+        class="act"
+        data-slot="pane-action"
+        onClick={() => props.onExpand?.()}
+        aria-label={t("pane.expand")}
+        title={t("pane.expand")}
+      >
         <svg class="gi" viewBox="0 0 16 16" aria-hidden="true">
-          <path d="M3 6V3h3M10 3h3v3M13 10v3h-3M6 13H3v-3" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+          <path
+            d="M3 6V3h3M10 3h3v3M13 10v3h-3M6 13H3v-3"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.2"
+            stroke-linecap="round"
+          />
         </svg>
       </button>
-      <button type="button" class="act" data-slot="pane-action" onClick={() => props.onClose?.()} aria-label={t("pane.close")} title={t("pane.close")}>
+      <button
+        type="button"
+        class="act"
+        data-slot="pane-action"
+        onClick={() => props.onClose?.()}
+        aria-label={t("pane.close")}
+        title={t("pane.close")}
+      >
         <svg class="gi" viewBox="0 0 16 16" aria-hidden="true">
           <path d="M4 4l8 8M12 4l-8 8" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
         </svg>

@@ -1130,7 +1130,9 @@ export function makeVoiceProgram(
          * The dialogue keeps them, and says what it expects.
          */
         const openToModels =
-          currentState.status !== "dictating" && currentState.status !== "asleep" && currentState.status !== "confirming"
+          currentState.status !== "dictating" &&
+          currentState.status !== "asleep" &&
+          currentState.status !== "confirming"
 
         if (!thinking) clearHeld()
 
@@ -1213,7 +1215,8 @@ export function makeVoiceProgram(
          * returns the text unchanged.
          */
         const trimmed = correctCustomWords(rawText, currentSettings.customWords).text.trim()
-        const isPtt = typed || (options.isPushToTalkActive !== undefined ? options.isPushToTalkActive() : isPushToTalkPressed)
+        const isPtt =
+          typed || (options.isPushToTalkActive !== undefined ? options.isPushToTalkActive() : isPushToTalkPressed)
 
         if (!trimmed) {
           if (currentSettings.activation === "push-to-talk" && !isPtt) {
@@ -1248,7 +1251,9 @@ export function makeVoiceProgram(
           // Typing is not the conversation the window was left open for.
           closeFollowUp()
           const match = matchesWakeWord(trimmed, currentSettings.wakeWord)
-          yield* executeAgentUtterance(match.matched && match.remainder.length > 0 ? match.remainder : trimmed, { typed: true })
+          yield* executeAgentUtterance(match.matched && match.remainder.length > 0 ? match.remainder : trimmed, {
+            typed: true,
+          })
           return
         }
 

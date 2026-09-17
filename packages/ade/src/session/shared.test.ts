@@ -33,7 +33,9 @@ describe("kv store", () => {
     let space = emptySpace()
     space = applyKv(space, req("set", "build/status", "verde"), alice, 1000, everyoneAlive).space
     expect(applyKv(space, req("get", "build/status"), bob, 2000, everyoneAlive).reply).toBe("ok\nverde")
-    expect(applyKv(space, req("list", "build/"), bob, 2000, everyoneAlive).reply).toContain("build/status = verde  (alice")
+    expect(applyKv(space, req("list", "build/"), bob, 2000, everyoneAlive).reply).toContain(
+      "build/status = verde  (alice",
+    )
     const deleted = applyKv(space, req("del", "build/status"), bob, 3000, everyoneAlive)
     expect(deleted.reply).toBe("ok: build/status cancellata")
     expect(applyKv(deleted.space, req("get", "build/status"), bob, 3000, everyoneAlive).reply).toStartWith("errore")
@@ -52,7 +54,9 @@ describe("kv store", () => {
     expect(applyKv(space, req("lock", "src/auth"), bob, 1000, everyoneAlive).reply).toContain('bloccata da "alice"')
     expect(applyKv(space, req("set", "src/auth", "x"), bob, 1000, everyoneAlive).reply).toStartWith("errore")
     expect(applyKv(space, req("unlock", "src/auth"), bob, 1000, everyoneAlive).reply).toStartWith("errore")
-    expect(applyKv(space, req("unlock", "src/auth", "", { force: true }), bob, 1000, everyoneAlive).reply).toBe("ok: src/auth rilasciata")
+    expect(applyKv(space, req("unlock", "src/auth", "", { force: true }), bob, 1000, everyoneAlive).reply).toBe(
+      "ok: src/auth rilasciata",
+    )
     // Expired.
     expect(applyKv(space, req("lock", "src/auth"), bob, 61_000, everyoneAlive).reply).toStartWith("ok")
     // Owner gone.
@@ -63,13 +67,19 @@ describe("kv store", () => {
 
   test("limits and keys", () => {
     expect(applyKv(emptySpace(), req("set", "bad key", "v"), alice, 0, everyoneAlive).reply).toStartWith("errore")
-    expect(applyKv(emptySpace(), req("set", "k", "x".repeat(KV_MAX_VALUE + 1)), alice, 0, everyoneAlive).reply).toStartWith("errore")
+    expect(
+      applyKv(emptySpace(), req("set", "k", "x".repeat(KV_MAX_VALUE + 1)), alice, 0, everyoneAlive).reply,
+    ).toStartWith("errore")
     expect(applyKv(emptySpace(), req("list", ""), alice, 0, everyoneAlive).reply).toBe("ok\n(vuoto)")
   })
 
   test("a saved store survives a round trip and drops what is malformed", () => {
     const space = applyKv(emptySpace(), req("set", "k", "v"), alice, 5, everyoneAlive).space
-    const raw = JSON.stringify({ proj: space, junk: 3, other: { entries: { "bad key": { value: "v", by: "x", at: 1 } } } })
+    const raw = JSON.stringify({
+      proj: space,
+      junk: 3,
+      other: { entries: { "bad key": { value: "v", by: "x", at: 1 } } },
+    })
     const parsed = parseKvStore(raw)
     expect(parsed.proj).toEqual(space)
     expect(parsed.other).toEqual(emptySpace())
@@ -109,8 +119,17 @@ describe("cache stats", () => {
 
   test("the table has a row per session and a total", () => {
     const table = statsTable([
-      { title: "orchestra", agent: "claude-code", project: "nikcli", usage: { input: 100, cacheRead: 9900, cacheWrite: 0, output: 50, requests: 4 } },
-      { title: "worker", agent: "codex", usage: { input: 1000, cacheRead: 1000, cacheWrite: 0, output: 10, requests: 1 } },
+      {
+        title: "orchestra",
+        agent: "claude-code",
+        project: "nikcli",
+        usage: { input: 100, cacheRead: 9900, cacheWrite: 0, output: 50, requests: 4 },
+      },
+      {
+        title: "worker",
+        agent: "codex",
+        usage: { input: 1000, cacheRead: 1000, cacheWrite: 0, output: 10, requests: 1 },
+      },
     ])
     expect(table).toContain("99%")
     expect(table).toContain("nikcli/orchestra (claude-code)")
@@ -128,13 +147,25 @@ describe("messages and forks", () => {
       text: "v",
       ttl: 0,
     })
-    expect(parseMessage(JSON.stringify({ from: "p1", kind: "kv", op: "list", key: "" }))).toMatchObject({ kind: "kv", op: "list" })
+    expect(parseMessage(JSON.stringify({ from: "p1", kind: "kv", op: "list", key: "" }))).toMatchObject({
+      kind: "kv",
+      op: "list",
+    })
     expect(parseMessage(JSON.stringify({ from: "p1", kind: "kv", op: "set", key: "k", text: " " }))).toBeUndefined()
     expect(parseMessage(JSON.stringify({ from: "p1", kind: "kv", op: "drop", key: "k" }))).toBeUndefined()
-    expect(parseMessage(JSON.stringify({ from: "p1", kind: "kv", op: "lock", key: "k", ttl: 30.7 }))).toMatchObject({ ttl: 30 })
-    expect(parseMessage(JSON.stringify({ from: "p1", kind: "memory", op: "show" }))).toMatchObject({ kind: "memory", op: "show" })
-    expect(parseMessage(JSON.stringify({ from: "p1", kind: "memory", op: "add", type: "fatto", text: "x" }))).toMatchObject({ type: "fatto" })
-    expect(parseMessage(JSON.stringify({ from: "p1", kind: "spawn", agent: "claude", fork: true, text: "t" }))).toMatchObject({ fork: true })
+    expect(parseMessage(JSON.stringify({ from: "p1", kind: "kv", op: "lock", key: "k", ttl: 30.7 }))).toMatchObject({
+      ttl: 30,
+    })
+    expect(parseMessage(JSON.stringify({ from: "p1", kind: "memory", op: "show" }))).toMatchObject({
+      kind: "memory",
+      op: "show",
+    })
+    expect(
+      parseMessage(JSON.stringify({ from: "p1", kind: "memory", op: "add", type: "fatto", text: "x" })),
+    ).toMatchObject({ type: "fatto" })
+    expect(
+      parseMessage(JSON.stringify({ from: "p1", kind: "spawn", agent: "claude", fork: true, text: "t" })),
+    ).toMatchObject({ fork: true })
   })
 
   test("a fork plan for the CLIs that can fork", () => {

@@ -16,12 +16,7 @@ const dateLocale = () => (locale() === "en" ? "en-GB" : "it-IT")
 // Tipi fondamentali
 // ---------------------------------------------------------------------------
 
-export type QuotaStatus =
-  | "ok"
-  | "partial"
-  | "rate_limited"
-  | "unauthenticated"
-  | "error"
+export type QuotaStatus = "ok" | "partial" | "rate_limited" | "unauthenticated" | "error"
 
 export interface QuotaMetric {
   readonly label: string
@@ -156,7 +151,12 @@ export function calculateReadiness(quota: ProviderQuota, now: number): ProviderR
     }
   }
 
-  const baseScore = worstRemaining !== undefined ? Math.max(0.01, Math.min(1.0, worstRemaining / 100)) : quota.status === "ok" ? 1.0 : 0.5
+  const baseScore =
+    worstRemaining !== undefined
+      ? Math.max(0.01, Math.min(1.0, worstRemaining / 100))
+      : quota.status === "ok"
+        ? 1.0
+        : 0.5
   const clampedScore = Math.max(0, Math.min(1.0, Math.round(baseScore * 100) / 100))
 
   return {
@@ -166,7 +166,8 @@ export function calculateReadiness(quota: ProviderQuota, now: number): ProviderR
     cooldownMs: 0,
     worstRemainingPct: worstRemaining,
     resetAt: bindingResetAt,
-    reason: worstRemaining !== undefined ? `${worstRemaining}% di quota residua` : "disponibile (senza limite esplicito)",
+    reason:
+      worstRemaining !== undefined ? `${worstRemaining}% di quota residua` : "disponibile (senza limite esplicito)",
   }
 }
 
@@ -291,7 +292,13 @@ export function parseClaudeSnapshot(raw: unknown): ProviderQuota {
   const rateLimits = data && typeof data === "object" ? (data as Record<string, unknown>).rateLimits : undefined
 
   if (!rateLimits || typeof rateLimits !== "object") {
-    return { id: "claude", name: "Claude Code", status: "partial", metrics: [], message: "nessuna finestra rate_limits attiva" }
+    return {
+      id: "claude",
+      name: "Claude Code",
+      status: "partial",
+      metrics: [],
+      message: "nessuna finestra rate_limits attiva",
+    }
   }
 
   const limits = rateLimits as Record<string, Record<string, unknown>>
@@ -319,7 +326,10 @@ export function parseClaudeSnapshot(raw: unknown): ProviderQuota {
     name: "Claude Code",
     status: isRateLimited ? "rate_limited" : "ok",
     metrics,
-    sourceUpdatedAt: typeof (raw as Record<string, unknown>).capturedAt === "string" ? ((raw as Record<string, unknown>).capturedAt as string) : undefined,
+    sourceUpdatedAt:
+      typeof (raw as Record<string, unknown>).capturedAt === "string"
+        ? ((raw as Record<string, unknown>).capturedAt as string)
+        : undefined,
   }
 }
 
@@ -334,12 +344,20 @@ export function parseAntigravitySnapshot(raw: unknown): ProviderQuota {
 
   const data = (raw as Record<string, unknown>).data
   const quotaMap = data && typeof data === "object" ? (data as Record<string, unknown>).quota : undefined
-  const planTier = data && typeof data === "object" && typeof (data as Record<string, unknown>).planTier === "string"
-    ? ((data as Record<string, unknown>).planTier as string)
-    : undefined
+  const planTier =
+    data && typeof data === "object" && typeof (data as Record<string, unknown>).planTier === "string"
+      ? ((data as Record<string, unknown>).planTier as string)
+      : undefined
 
   if (!quotaMap || typeof quotaMap !== "object") {
-    return { id: "gemini", name: "Gemini", status: "partial", metrics: [], plan: planTier, message: "nessun bucket quota attivo" }
+    return {
+      id: "gemini",
+      name: "Gemini",
+      status: "partial",
+      metrics: [],
+      plan: planTier,
+      message: "nessun bucket quota attivo",
+    }
   }
 
   const metrics: QuotaMetric[] = []
@@ -365,7 +383,10 @@ export function parseAntigravitySnapshot(raw: unknown): ProviderQuota {
     status: isRateLimited ? "rate_limited" : "ok",
     plan: planTier,
     metrics,
-    sourceUpdatedAt: typeof (raw as Record<string, unknown>).capturedAt === "string" ? ((raw as Record<string, unknown>).capturedAt as string) : undefined,
+    sourceUpdatedAt:
+      typeof (raw as Record<string, unknown>).capturedAt === "string"
+        ? ((raw as Record<string, unknown>).capturedAt as string)
+        : undefined,
   }
 }
 
@@ -626,9 +647,13 @@ export function readClaudeQuota(raw: unknown): StatusLineReading | undefined {
   const record = raw as Record<string, unknown>
   if (record.provider !== undefined && record.provider !== "claude") return undefined
   const data = record.data && typeof record.data === "object" ? (record.data as Record<string, unknown>) : {}
-  const limits = data.rateLimits && typeof data.rateLimits === "object" ? (data.rateLimits as Record<string, unknown>) : {}
+  const limits =
+    data.rateLimits && typeof data.rateLimits === "object" ? (data.rateLimits as Record<string, unknown>) : {}
   const metrics: QuotaMetric[] = []
-  for (const [key, label] of [["five_hour", "5h"], ["seven_day", t("quota.week")]] as const) {
+  for (const [key, label] of [
+    ["five_hour", "5h"],
+    ["seven_day", t("quota.week")],
+  ] as const) {
     const window = limits[key]
     if (!window || typeof window !== "object") continue
     const used = (window as Record<string, unknown>).used_percentage
@@ -682,7 +707,12 @@ export function readAgyQuota(raw: unknown): AgyQuotaReading | undefined {
       // A bucket without a fraction says nothing about the quota.
       metrics: parsed.metrics
         .filter((metric) => metric.remaining !== undefined)
-        .map((metric) => ({ ...metric, label: agyBucketLabel(metric.label), limit: 100, isRateLimited: metric.remaining! <= 0 })),
+        .map((metric) => ({
+          ...metric,
+          label: agyBucketLabel(metric.label),
+          limit: 100,
+          isRateLimited: metric.remaining! <= 0,
+        })),
     },
   }
 }
@@ -749,7 +779,9 @@ export function readQuotaAxiSnapshot(raw: unknown): QuotaSnapshot {
       else if (windowLabel.endsWith(" window")) shortLabel = windowLabel.replace(" window", "")
 
       const remaining =
-        typeof win.percentRemaining === "number" ? Math.max(0, Math.min(100, Math.round(win.percentRemaining))) : undefined
+        typeof win.percentRemaining === "number"
+          ? Math.max(0, Math.min(100, Math.round(win.percentRemaining)))
+          : undefined
       const used = typeof win.percentUsed === "number" ? Math.round(win.percentUsed) : undefined
       const resetAt = typeof win.resetsAt === "string" ? win.resetsAt : undefined
       // A window with neither figure says nothing about the quota.
@@ -787,7 +819,12 @@ export function readQuotaAxiSnapshot(raw: unknown): QuotaSnapshot {
 const VENDOR_NAMES: Record<string, string> = { claude: "Anthropic", codex: "OpenAI", agy: "Google", nikcli: "nikcli" }
 
 function clock(epoch: number): string {
-  return new Date(epoch).toLocaleString(dateLocale(), { day: "2-digit", month: "2-digit", hour: "2-digit", minute: "2-digit" })
+  return new Date(epoch).toLocaleString(dateLocale(), {
+    day: "2-digit",
+    month: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+  })
 }
 
 /** One source's reading of a provider, as `currentReading` weighs it. */
@@ -831,9 +868,11 @@ export function currentReading(
   if (id === "agy" || id === "claude") {
     const at = line?.capturedAt
     if (!line) reasons.push(id === "agy" ? t("quota.na.agy.noFile") : t("quota.na.claude.noFile"))
-    else if (line.quota.metrics.length === 0) reasons.push(id === "agy" ? t("quota.na.agy.noBuckets") : t("quota.na.claude.noWindows"))
+    else if (line.quota.metrics.length === 0)
+      reasons.push(id === "agy" ? t("quota.na.agy.noBuckets") : t("quota.na.claude.noWindows"))
     else if (at === undefined) reasons.push(id === "agy" ? t("quota.na.agy.noTime") : t("quota.na.claude.noTime"))
-    else if (at > now) reasons.push(id === "agy" ? t("quota.na.agy.future", clock(at)) : t("quota.na.future", clock(at)))
+    else if (at > now)
+      reasons.push(id === "agy" ? t("quota.na.agy.future", clock(at)) : t("quota.na.future", clock(at)))
     else {
       // The plan is only in quota-axi's report: borrow it for the name.
       const name = id === "claude" ? (snapshot?.providers.claude?.name ?? line.quota.name) : line.quota.name
@@ -881,7 +920,11 @@ export function quotaForAgent(
   const view = formatSessionQuota(quota, now)
   const time = clock(readAt)
   const from =
-    source === "axi" ? t("quota.readAxi", time) : source === "agy" ? t("quota.readAgy", time) : t("quota.readClaude", time)
+    source === "axi"
+      ? t("quota.readAxi", time)
+      : source === "agy"
+        ? t("quota.readAgy", time)
+        : t("quota.readClaude", time)
   const lines = [view.tooltip, from, ...(stale ? [t("quota.staleNote")] : [])]
   return { ...view, stale, readAt: shortClock(readAt, now), tooltip: lines.join("\n") }
 }
@@ -906,7 +949,14 @@ export function normalizeProviderId(agent: string): string {
    */
   const words = low.split(/[^a-z0-9]+/)
   const openAiModel = words.some((word) => /^o[134]$/.test(word))
-  if (low.includes("claude") || low.includes("anthropic") || low.includes("sonnet") || low.includes("opus") || low.includes("haiku")) return "claude"
+  if (
+    low.includes("claude") ||
+    low.includes("anthropic") ||
+    low.includes("sonnet") ||
+    low.includes("opus") ||
+    low.includes("haiku")
+  )
+    return "claude"
   if (low.includes("codex") || low.includes("openai") || low.includes("gpt") || openAiModel) return "codex"
   if (low.includes("agy") || low.includes("gemini") || low.includes("google")) return "agy"
   if (low.includes("nikcli") || low.includes("openrouter")) return "nikcli"

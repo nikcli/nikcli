@@ -15,7 +15,8 @@ import { t } from "../i18n"
 export function RecordConsentDialog(props: { target: RecordTarget; onAnswer: (answer: RecordConsent) => void }) {
   const [mic, setMic] = createSignal(false)
   const refuse = () => props.onAnswer({ allowed: false, mic: false })
-  const what = () => (props.target.kind === "pane" ? t("record.consent.pane", props.target.paneId) : t("record.consent.window"))
+  const what = () =>
+    props.target.kind === "pane" ? t("record.consent.pane", props.target.paneId) : t("record.consent.window")
   return (
     <Overlay
       data-component="record-consent"
@@ -31,9 +32,7 @@ export function RecordConsentDialog(props: { target: RecordTarget; onAnswer: (an
         </header>
         <div data-slot="record-consent-body">
           <p>{t("record.consent.ask", what())}</p>
-          <p data-slot="record-consent-note">
-            {t("record.consent.note")}
-          </p>
+          <p data-slot="record-consent-note">{t("record.consent.note")}</p>
           <label data-slot="record-consent-mic">
             <input type="checkbox" checked={mic()} onChange={(event) => setMic(event.currentTarget.checked)} />
             {t("record.consent.mic")}

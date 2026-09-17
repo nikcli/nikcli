@@ -195,7 +195,12 @@ describe("la faccia scelta", () => {
   })
 
   test("si cambia e si toglie senza toccare il resto", () => {
-    const text = serializeAgentFile({ description: "Revisiona", mode: "primary", avatar: "hex/red", prompt: "Sei un revisore." })
+    const text = serializeAgentFile({
+      description: "Revisiona",
+      mode: "primary",
+      avatar: "hex/red",
+      prompt: "Sei un revisore.",
+    })
     const changed = editedAgentFile(text, { avatar: "drop/blue" })
     expect(changed).toContain('avatar: "drop/blue"')
     expect(changed).not.toContain("hex/red")
@@ -207,14 +212,28 @@ describe("la faccia scelta", () => {
 
 describe("il motore scelto", () => {
   test("nikcli non si scrive, gli altri sì, e tornano indietro", () => {
-    expect(serializeAgentFile({ description: "d", mode: "primary", runner: "nikcli", prompt: "p" })).not.toContain("runner:")
-    const text = serializeAgentFile({ description: "d", mode: "primary", runner: "claude", model: "sonnet", prompt: "p" })
+    expect(serializeAgentFile({ description: "d", mode: "primary", runner: "nikcli", prompt: "p" })).not.toContain(
+      "runner:",
+    )
+    const text = serializeAgentFile({
+      description: "d",
+      mode: "primary",
+      runner: "claude",
+      model: "sonnet",
+      prompt: "p",
+    })
     expect(text).toContain('runner: "claude"')
     expect(readAgentFile({ path: "/p/.nikcli/agent/x.md", scope: "project", text }).runner).toBe("claude")
   })
 
   test("si cambia e si toglie senza toccare il resto", () => {
-    const text = serializeAgentFile({ description: "d", mode: "primary", runner: "codex", avatar: "hex/red", prompt: "p" })
+    const text = serializeAgentFile({
+      description: "d",
+      mode: "primary",
+      runner: "codex",
+      avatar: "hex/red",
+      prompt: "p",
+    })
     expect(editedAgentFile(text, { runner: "claude" })).toContain('runner: "claude"')
     const cleared = editedAgentFile(text, { runner: undefined })
     expect(cleared).not.toContain("runner:")
@@ -412,7 +431,7 @@ describe("parseModelList", () => {
   })
 
   test("scarta tutto ciò che non è un identificativo di modello", () => {
-    expect(parseModelList("Models cache refreshed\n{\n  \"cost\": 1\n}\nx/y")).toEqual(["x/y"])
+    expect(parseModelList('Models cache refreshed\n{\n  "cost": 1\n}\nx/y')).toEqual(["x/y"])
   })
 
   test("non ripete un modello elencato due volte", () => {

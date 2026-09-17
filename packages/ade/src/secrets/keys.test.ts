@@ -87,9 +87,14 @@ describe("@ade keys", () => {
   test("ask opens the dialog with the variable and the reason", async () => {
     const asked: string[][] = []
     const controller = { list: async () => [], ask: (env: string, reason: string) => void asked.push([env, reason]) }
-    expect(await runKeysCommand(controller, request("ask", "STRIPE_SECRET_KEY", "per", "i", "test"))).toMatchObject({ ok: true })
+    expect(await runKeysCommand(controller, request("ask", "STRIPE_SECRET_KEY", "per", "i", "test"))).toMatchObject({
+      ok: true,
+    })
     expect(asked).toEqual([["STRIPE_SECRET_KEY", "per i test"]])
-    expect(await runKeysCommand(controller, request("ask", "PATH"))).toEqual({ ok: false, reason: "variabile: PATH è riservata" })
+    expect(await runKeysCommand(controller, request("ask", "PATH"))).toEqual({
+      ok: false,
+      reason: "variabile: PATH è riservata",
+    })
     expect(asked).toHaveLength(1)
   })
 })

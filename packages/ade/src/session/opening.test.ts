@@ -1,11 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import {
-  OPENING_QUIET_MS,
-  OPENING_SETTLE_MS,
-  OPENING_TIMEOUT_MS,
-  decideOpening,
-  type OpeningInput,
-} from "./opening"
+import { OPENING_QUIET_MS, OPENING_SETTLE_MS, OPENING_TIMEOUT_MS, decideOpening, type OpeningInput } from "./opening"
 
 const at = (overrides: Partial<OpeningInput>): OpeningInput => ({
   startedAt: 0,

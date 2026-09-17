@@ -79,10 +79,10 @@ describe("listProjectsFrom", () => {
   })
 
   test("il progetto aperto vince la deduplica anche se scritto diversamente", () => {
-    const list = listProjectsFrom(
-      [{ root: "C:\\Users\\x\\repo", name: "repo" }],
-      { root: "C:/Users/x/repo", name: "repo" },
-    )
+    const list = listProjectsFrom([{ root: "C:\\Users\\x\\repo", name: "repo" }], {
+      root: "C:/Users/x/repo",
+      name: "repo",
+    })
 
     expect(list).toHaveLength(1)
     expect(list[0]!.isOpen).toBe(true)

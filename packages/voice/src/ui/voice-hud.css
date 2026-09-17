@@ -68,12 +68,9 @@
    */
   --hud-halo: light-dark(rgb(250 249 248 / 0.92), rgb(16 14 14 / 0.92));
   --hud-rim: light-dark(rgb(255 255 255 / 0.95), rgb(255 255 255 / 0.22));
-  --hud-edge: light-dark(rgb(0 0 0 / 0.10), rgb(255 255 255 / 0.07));
-  --hud-sheen: light-dark(rgb(255 255 255 / 0.75), rgb(255 255 255 / 0.10));
-  --hud-cast: light-dark(
-    0 12px 32px rgb(0 0 0 / 0.14),
-    0 14px 40px rgb(0 0 0 / 0.55)
-  );
+  --hud-edge: light-dark(rgb(0 0 0 / 0.1), rgb(255 255 255 / 0.07));
+  --hud-sheen: light-dark(rgb(255 255 255 / 0.75), rgb(255 255 255 / 0.1));
+  --hud-cast: light-dark(0 12px 32px rgb(0 0 0 / 0.14), 0 14px 40px rgb(0 0 0 / 0.55));
 }
 
 /*
@@ -128,12 +125,7 @@
    * text pays for its own legibility, in `--hud-halo` below.
    */
   background:
-    linear-gradient(
-      to bottom,
-      color-mix(in srgb, var(--hud-rim) 26%, transparent),
-      transparent 46%
-    ),
-    var(--hud-tint);
+    linear-gradient(to bottom, color-mix(in srgb, var(--hud-rim) 26%, transparent), transparent 46%), var(--hud-tint);
   backdrop-filter: blur(13px) saturate(190%);
   -webkit-backdrop-filter: blur(13px) saturate(190%);
 
@@ -181,12 +173,7 @@
   inset: -40% -60%;
   z-index: -1;
   pointer-events: none;
-  background: linear-gradient(
-    100deg,
-    transparent 36%,
-    var(--hud-sheen) 50%,
-    transparent 64%
-  );
+  background: linear-gradient(100deg, transparent 36%, var(--hud-sheen) 50%, transparent 64%);
   opacity: 0.55;
   animation: ade-hud-sheen 11s var(--ade-ease, ease-in-out) infinite;
 }
@@ -282,8 +269,12 @@
 /* The one state that earns the alert colour at full strength: nothing is
    listening, and the user is owed the reason rather than a button that looked
    pressed. */
-[data-slot="hud-pill"][data-tone="failed"] { border-color: var(--ade-error); }
-[data-slot="hud-pill"][data-tone="failed"] [data-slot="hud-label"] { color: var(--ade-error); }
+[data-slot="hud-pill"][data-tone="failed"] {
+  border-color: var(--ade-error);
+}
+[data-slot="hud-pill"][data-tone="failed"] [data-slot="hud-label"] {
+  color: var(--ade-error);
+}
 /*
  * A failure's line stays on one line like every other.
  *
@@ -534,12 +525,18 @@ button[data-slot="hud-target"]:hover {
  * is worth saying, but not at the cost of the text itself.
  */
 @media (max-width: 520px) {
-  [data-slot="hud-target"] { display: none; }
-  [data-slot="hud-pill"] { gap: var(--ade-space-4); }
+  [data-slot="hud-target"] {
+    display: none;
+  }
+  [data-slot="hud-pill"] {
+    gap: var(--ade-space-4);
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  [data-slot="hud-pill"] { animation: none; }
+  [data-slot="hud-pill"] {
+    animation: none;
+  }
   /*
    * The sheen stops and parks where it reads best: a specular frozen halfway
    * across is still a highlight, so the glass keeps its material and loses
@@ -550,5 +547,7 @@ button[data-slot="hud-target"]:hover {
     animation: none;
     transform: translateX(-14%);
   }
-  [data-slot="hud-wave"] i { transition: none; }
+  [data-slot="hud-wave"] i {
+    transition: none;
+  }
 }

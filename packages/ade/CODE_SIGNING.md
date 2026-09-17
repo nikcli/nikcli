@@ -10,11 +10,11 @@ Free code signing for the Windows installer is provided by
 
 ## What is signed
 
-| Artifact | Signature | By |
-|---|---|---|
-| Windows setup (`ADE_<version>_x64-setup.exe`) | Authenticode | SignPath Foundation certificate, through SignPath.io |
-| Every installer and bundle the in-app updater installs | minisign (Tauri updater) | ADE's updater key, held as a repository secret |
-| macOS `ADE.app` | ad-hoc | not notarized; see below |
+| Artifact                                               | Signature                | By                                                   |
+| ------------------------------------------------------ | ------------------------ | ---------------------------------------------------- |
+| Windows setup (`ADE_<version>_x64-setup.exe`)          | Authenticode             | SignPath Foundation certificate, through SignPath.io |
+| Every installer and bundle the in-app updater installs | minisign (Tauri updater) | ADE's updater key, held as a repository secret       |
+| macOS `ADE.app`                                        | ad-hoc                   | not notarized; see below                             |
 
 Every signed artifact is built by the `ade-release` GitHub Actions workflow
 from a tag of this repository. Nothing built on a developer machine is signed.

@@ -33,9 +33,9 @@ describe("validation errors follow the language", () => {
   test("an MCP configuration error is written in English under English", async () => {
     const { addMcpServer } = await import("./mcp-config")
     resetLocaleForTests("en")
-    expect(() => addMcpServer("{ not json", { name: "x", server: { type: "http", url: "https://example.test/mcp" } })).toThrow(
-      /doesn't contain valid JSON/,
-    )
+    expect(() =>
+      addMcpServer("{ not json", { name: "x", server: { type: "http", url: "https://example.test/mcp" } }),
+    ).toThrow(/doesn't contain valid JSON/)
   })
 
   test("a broken decision log line is described in English under English", async () => {

@@ -119,10 +119,7 @@ export function validateMcpServerConfig(config: McpServerConfig): void {
     throw new McpConfigError("invalid-server-config", t("mcp.error.urlAndCommand"))
   }
   if (hasUrl && config.type !== "http" && config.type !== "sse") {
-    throw new McpConfigError(
-      "invalid-server-config",
-      t("mcp.error.remoteType"),
-    )
+    throw new McpConfigError("invalid-server-config", t("mcp.error.remoteType"))
   }
   if (hasCommand && config.type !== undefined && config.type !== "stdio") {
     throw new McpConfigError("invalid-server-config", t("mcp.error.stdioType"))
@@ -137,10 +134,7 @@ export function validateMcpServerConfig(config: McpServerConfig): void {
       }
       for (const [name, value] of url.searchParams) {
         if (isSensitiveName(name) && !isSecretReference(value)) {
-          throw new McpConfigError(
-            "secret-value",
-            t("mcp.error.urlSecret", name),
-          )
+          throw new McpConfigError("secret-value", t("mcp.error.urlSecret", name))
         }
       }
     } catch (error) {
@@ -161,10 +155,7 @@ export function validateMcpServerConfig(config: McpServerConfig): void {
         ? hasSafeSecretTemplate(arg, SECRET_ARGUMENT_TEMPLATE)
         : value !== undefined && isSecretReference(value)
       if (!safe) {
-        throw new McpConfigError(
-          "secret-value",
-          t("mcp.error.argSecret", index),
-        )
+        throw new McpConfigError("secret-value", t("mcp.error.argSecret", index))
       }
     }
   }
@@ -176,10 +167,7 @@ export function validateMcpServerConfig(config: McpServerConfig): void {
     for (const [name, value] of Object.entries(config.env)) {
       assertString(value, `env.${name}`)
       if (isSensitiveName(name) && !isSecretReference(value)) {
-        throw new McpConfigError(
-          "secret-value",
-          t("mcp.error.secretRef", `env.${name}`),
-        )
+        throw new McpConfigError("secret-value", t("mcp.error.secretRef", `env.${name}`))
       }
     }
   }
@@ -191,10 +179,7 @@ export function validateMcpServerConfig(config: McpServerConfig): void {
     for (const [name, value] of Object.entries(config.headers)) {
       assertString(value, `headers.${name}`)
       if (isSensitiveName(name) && !hasSafeSecretTemplate(value)) {
-        throw new McpConfigError(
-          "secret-value",
-          t("mcp.error.secretRef", `headers.${name}`),
-        )
+        throw new McpConfigError("secret-value", t("mcp.error.secretRef", `headers.${name}`))
       }
     }
   }
@@ -206,10 +191,7 @@ export function validateMcpServerConfig(config: McpServerConfig): void {
     assertString(config.oauth.clientId, "oauth.clientId")
     assertString(config.oauth.clientSecret, "oauth.clientSecret")
     if (!isSecretReference(config.oauth.clientId) || !isSecretReference(config.oauth.clientSecret)) {
-      throw new McpConfigError(
-        "secret-value",
-        t("mcp.error.oauthSecret"),
-      )
+      throw new McpConfigError("secret-value", t("mcp.error.oauthSecret"))
     }
   }
 }
@@ -291,10 +273,7 @@ export async function readProjectMcpConfig(projectRoot: string, io: McpConfigIO)
   try {
     const read = await io.readTextFile(path)
     if (read.truncated) {
-      throw new McpConfigError(
-        "read-failed",
-        t("mcp.error.tooLarge", MCP_CONFIG_FILENAME),
-      )
+      throw new McpConfigError("read-failed", t("mcp.error.tooLarge", MCP_CONFIG_FILENAME))
     }
     return read.text
   } catch (error) {

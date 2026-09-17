@@ -54,9 +54,7 @@ describe("normalizeUrl", () => {
     test("normalizes domain names", () => {
       expect(normalizeUrl("example.com")).toBe("http://example.com/")
       expect(normalizeUrl("example.com/test")).toBe("http://example.com/test")
-      expect(normalizeUrl("sub.domain.org:8080/path?query=1")).toBe(
-        "http://sub.domain.org:8080/path?query=1",
-      )
+      expect(normalizeUrl("sub.domain.org:8080/path?query=1")).toBe("http://sub.domain.org:8080/path?query=1")
       expect(normalizeUrl("my-app.local:3000")).toBe("http://my-app.local:3000/")
     })
 
@@ -74,9 +72,7 @@ describe("normalizeUrl", () => {
       expect(normalizeUrl("https://x.dev/a?b=c")).toBe("https://x.dev/a?b=c")
       expect(normalizeUrl("http://127.0.0.1:8080/api")).toBe("http://127.0.0.1:8080/api")
       // The default port for the scheme is dropped, as every browser does.
-      expect(normalizeUrl("https://example.com:443/test#anchor")).toBe(
-        "https://example.com/test#anchor",
-      )
+      expect(normalizeUrl("https://example.com:443/test#anchor")).toBe("https://example.com/test#anchor")
       expect(normalizeUrl("http://[::1]:3000")).toBe("http://[::1]:3000/")
     })
 

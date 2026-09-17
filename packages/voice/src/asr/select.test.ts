@@ -1,9 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import {
-  createTranscriberFor,
-  describeBackends,
-  type SelectTranscriberOptions,
-} from "./select"
+import { createTranscriberFor, describeBackends, type SelectTranscriberOptions } from "./select"
 import { createVoiceEngine } from "../engine"
 import { createFakeSpeaker } from "../tts/speaker"
 import type { VoiceHost, PaneSummary } from "../bridge/host"
@@ -11,12 +7,16 @@ import type { VoiceHost, PaneSummary } from "../bridge/host"
 class SimpleHost implements VoiceHost {
   panes: PaneSummary[] = []
   async runCommand(): Promise<void> {}
-  listPanes(): PaneSummary[] { return this.panes }
+  listPanes(): PaneSummary[] {
+    return this.panes
+  }
   focusPane(): void {}
   async sendPrompt(): Promise<void> {}
   async insertText(): Promise<void> {}
   async openFile(): Promise<void> {}
-  async searchProject(): Promise<any[]> { return [] }
+  async searchProject(): Promise<any[]> {
+    return []
+  }
   setPaneView(): void {}
   browserNavigate(): void {}
   reloadBrowser(): void {}
@@ -104,9 +104,7 @@ describe("asr/select", () => {
     expect(typeof openrouter.start).toBe("function")
 
     // Unknown backend
-    expect(() => createTranscriberFor("invalid-engine" as any)).toThrow(
-      /Backend di trascrizione non riconosciuto/i
-    )
+    expect(() => createTranscriberFor("invalid-engine" as any)).toThrow(/Backend di trascrizione non riconosciuto/i)
   })
 
   test("createVoiceEngine automatically constructs transcriber when backend option is provided", () => {
@@ -126,7 +124,9 @@ describe("asr/select", () => {
             isTypeSupported: () => true,
           },
         },
-      }, settings: { activation: "toggle" } })
+      },
+      settings: { activation: "toggle" },
+    })
 
     expect(engine).toBeDefined()
     expect(engine.status()).toBe("idle")

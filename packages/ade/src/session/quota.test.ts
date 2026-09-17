@@ -49,9 +49,7 @@ describe("calculateReadiness", () => {
       id: "claude",
       name: "Claude Code",
       status: "rate_limited",
-      metrics: [
-        { label: "5h", used: 100, remaining: 0, resetAt: new Date(now + 30_000).toISOString() },
-      ],
+      metrics: [{ label: "5h", used: 100, remaining: 0, resetAt: new Date(now + 30_000).toISOString() }],
     }
     const r = calculateReadiness(quota, now)
     expect(r.score).toBe(0.0)
@@ -395,8 +393,22 @@ describe("parseQuotaAxiSnapshot", () => {
           label: "Claude",
           plan: "max",
           windows: [
-            { id: "five_hour", label: "session", kind: "session", percentUsed: 21, percentRemaining: 79, resetsAt: "2026-09-15T22:40:00Z" },
-            { id: "seven_day", label: "week", kind: "weekly", percentUsed: 41, percentRemaining: 59, resetsAt: "2026-09-21T13:00:00Z" },
+            {
+              id: "five_hour",
+              label: "session",
+              kind: "session",
+              percentUsed: 21,
+              percentRemaining: 79,
+              resetsAt: "2026-09-15T22:40:00Z",
+            },
+            {
+              id: "seven_day",
+              label: "week",
+              kind: "weekly",
+              percentUsed: 41,
+              percentRemaining: 59,
+              resetsAt: "2026-09-21T13:00:00Z",
+            },
           ],
         },
         {
@@ -404,7 +416,14 @@ describe("parseQuotaAxiSnapshot", () => {
           label: "Codex",
           plan: "free",
           windows: [
-            { id: "window:720h", label: "720h window", kind: "unknown", percentUsed: 100, percentRemaining: 0, resetsAt: "2026-10-13T13:12:12Z" },
+            {
+              id: "window:720h",
+              label: "720h window",
+              kind: "unknown",
+              percentUsed: 100,
+              percentRemaining: 0,
+              resetsAt: "2026-10-13T13:12:12Z",
+            },
           ],
         },
       ],
@@ -445,7 +464,11 @@ describe("quotaForAgent: a real reading or n/d, never a made-up figure", () => {
         ],
         state: { stale: false },
       },
-      { provider: "codex", plan: "free", windows: [{ id: "window:720h", percentRemaining: 0, resetsAt: "2026-10-13T13:12:12Z" }] },
+      {
+        provider: "codex",
+        plan: "free",
+        windows: [{ id: "window:720h", percentRemaining: 0, resetsAt: "2026-10-13T13:12:12Z" }],
+      },
       { provider: "cursor", windows: [{ id: "included_usage", percentRemaining: 97 }] },
     ],
   }
@@ -496,7 +519,10 @@ describe("quotaForAgent: a real reading or n/d, never a made-up figure", () => {
   })
 
   test("a provider with no windows is n/d, not 100%", () => {
-    const empty = readQuotaAxiSnapshot({ generatedAt: report.generatedAt, providers: [{ provider: "claude", windows: [] }] })
+    const empty = readQuotaAxiSnapshot({
+      generatedAt: report.generatedAt,
+      providers: [{ provider: "claude", windows: [] }],
+    })
     expect(isQuotaUnavailable(quotaForAgent("claude-code", empty, soon))).toBe(true)
   })
 
@@ -517,7 +543,11 @@ describe("agy's quota from its status line (S30)", () => {
         "3p-5h": { remaining_fraction: 1, reset_time: "2026-09-16T18:03:04Z", reset_in_seconds: 17858 },
         "3p-weekly": { remaining_fraction: 1, reset_time: "2026-09-23T13:03:04Z", reset_in_seconds: 604658 },
         "gemini-5h": { remaining_fraction: 1, reset_time: "2026-09-16T18:03:04Z", reset_in_seconds: 17858 },
-        "gemini-weekly": { remaining_fraction: 0.9404899, reset_time: "2026-09-23T06:46:39Z", reset_in_seconds: 582073 },
+        "gemini-weekly": {
+          remaining_fraction: 0.9404899,
+          reset_time: "2026-09-23T06:46:39Z",
+          reset_in_seconds: 582073,
+        },
       },
       planTier: "Google AI Pro",
     },
@@ -581,10 +611,14 @@ describe("agy's quota from its status line (S30)", () => {
       expect(agy.bindingKey).toBe("Gemini week")
       expect(agy.tooltip).toContain("Gemini week: 94% left")
       expect(agy.tooltip).toContain("Read from agy's status line")
-      const claude = quotaForAgent("claude-code", readQuotaAxiSnapshot({
-        generatedAt: "2026-09-16T13:05:00Z",
-        providers: [{ provider: "claude", windows: [{ id: "seven_day", kind: "weekly", percentRemaining: 57 }] }],
-      }), captured)
+      const claude = quotaForAgent(
+        "claude-code",
+        readQuotaAxiSnapshot({
+          generatedAt: "2026-09-16T13:05:00Z",
+          providers: [{ provider: "claude", windows: [{ id: "seven_day", kind: "weekly", percentRemaining: 57 }] }],
+        }),
+        captured,
+      )
       if (!claude || isQuotaUnavailable(claude)) throw new Error("expected a reading")
       expect(claude.bindingKey).toBe("week")
       expect(claude.tooltip).toContain("Read from quota-axi at")
@@ -599,7 +633,10 @@ describe("agy's quota from its status line (S30)", () => {
   })
 
   test("an exhausted window is a limit", () => {
-    const spent = readAgyQuota({ ...file, data: { quota: { "gemini-5h": { remaining_fraction: 0, reset_time: "2026-09-16T18:03:04Z" } } } })
+    const spent = readAgyQuota({
+      ...file,
+      data: { quota: { "gemini-5h": { remaining_fraction: 0, reset_time: "2026-09-16T18:03:04Z" } } },
+    })
     const agy = quotaForAgent("agy", { providers: {}, agy: spent }, captured)
     if (!agy || isQuotaUnavailable(agy)) throw new Error("expected a reading")
     expect(agy.isLimit).toBe(true)
@@ -613,7 +650,12 @@ describe("Claude's quota from its status line", () => {
     version: 1,
     provider: "claude",
     capturedAt: at,
-    data: { rateLimits: { five_hour: { used_percentage: used5h, resets_at: 1789593600 }, seven_day: { used_percentage: 72, resets_at: 1789995600 } } },
+    data: {
+      rateLimits: {
+        five_hour: { used_percentage: used5h, resets_at: 1789593600 },
+        seven_day: { used_percentage: 72, resets_at: 1789995600 },
+      },
+    },
   })
   const axiAt = Date.parse("2026-09-16T16:20:12.177Z")
   const axi = readQuotaAxiSnapshot({
@@ -661,7 +703,11 @@ describe("Claude's quota from its status line", () => {
   test("the reading time carries the day only when it is not the day of `now`", () => {
     const read = new Date(2026, 8, 16, 16, 20).getTime()
     const view = (now: number) => {
-      const shown = quotaForAgent("claude-code", { providers: {}, axiMissing: true, claude: readClaudeQuota(line(26, new Date(read).toISOString())) }, now)
+      const shown = quotaForAgent(
+        "claude-code",
+        { providers: {}, axiMissing: true, claude: readClaudeQuota(line(26, new Date(read).toISOString())) },
+        now,
+      )
       if (!shown || isQuotaUnavailable(shown)) throw new Error("expected a reading")
       return shown.readAt ?? ""
     }
@@ -671,7 +717,11 @@ describe("Claude's quota from its status line", () => {
 
   test("the status line alone is enough, without quota-axi's report", () => {
     const now = Date.parse("2026-09-16T19:00:00Z")
-    const shown = quotaForAgent("claude-code", { providers: {}, axiMissing: true, claude: readClaudeQuota(line(26, "2026-09-16T18:59:21Z")) }, now)
+    const shown = quotaForAgent(
+      "claude-code",
+      { providers: {}, axiMissing: true, claude: readClaudeQuota(line(26, "2026-09-16T18:59:21Z")) },
+      now,
+    )
     if (!shown || isQuotaUnavailable(shown)) throw new Error("expected a reading")
     expect(shown.providerName).toBe("Anthropic")
   })

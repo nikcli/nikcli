@@ -6,14 +6,7 @@
  */
 
 import type { PanelOutcome, PanelRequest } from "../panels/protocol"
-import {
-  DEVICES,
-  describeSimulator,
-  parseAppUrl,
-  parseSize,
-  SIMULATOR_VERBS,
-  type SimulatorState,
-} from "./simulator"
+import { DEVICES, describeSimulator, parseAppUrl, parseSize, SIMULATOR_VERBS, type SimulatorState } from "./simulator"
 
 export interface SimulatorController {
   state(): SimulatorState
@@ -25,7 +18,10 @@ export interface SimulatorController {
   reload(): Promise<boolean>
 }
 
-export async function runSimulatorCommand(controller: SimulatorController, request: PanelRequest): Promise<PanelOutcome> {
+export async function runSimulatorCommand(
+  controller: SimulatorController,
+  request: PanelRequest,
+): Promise<PanelOutcome> {
   const argument = request.args.join(" ")
 
   switch (request.verb) {
@@ -55,7 +51,8 @@ export async function runSimulatorCommand(controller: SimulatorController, reque
     }
 
     case "size": {
-      if (controller.state().device.kind !== "window") return fail("size vale per la finestra desktop; prima device window")
+      if (controller.state().device.kind !== "window")
+        return fail("size vale per la finestra desktop; prima device window")
       const size = parseSize(argument)
       if (!size) return fail("dimensione non valida; es. 1280x800")
       controller.setWindowSize(size)

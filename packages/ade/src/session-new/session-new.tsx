@@ -12,12 +12,7 @@ import { AgentMark } from "./agent-mark"
 import { defaultAgentId, detectAgents, type AgentStatus } from "./availability"
 import { getHost } from "../host/shell"
 import { willLaunch } from "./launch"
-import {
-  MAX_SESSIONS,
-  MIN_SESSIONS,
-  clampSessions,
-  type PresetId,
-} from "./preset"
+import { MAX_SESSIONS, MIN_SESSIONS, clampSessions, type PresetId } from "./preset"
 import { t } from "../i18n"
 
 export interface SessionNewProps {
@@ -28,7 +23,9 @@ export interface SessionNewProps {
 }
 
 const ROLE_SUFFIX: Readonly<Record<string, string>> = {
-  get reviewer() { return t("new.role.reviewer") },
+  get reviewer() {
+    return t("new.role.reviewer")
+  },
   shell: "shell",
 }
 
@@ -45,8 +42,7 @@ export function SessionNew(props: SessionNewProps): JSX.Element {
 
   const entries = createMemo(() => willLaunch({ agentId: agentId(), count: count() }))
 
-  const launch = () =>
-    props.onLaunch?.({ agentId: agentId(), count: count(), task: "" })
+  const launch = () => props.onLaunch?.({ agentId: agentId(), count: count(), task: "" })
 
   return (
     <section
@@ -96,95 +92,93 @@ export function SessionNew(props: SessionNewProps): JSX.Element {
         <div data-slot="new-body">
           <fieldset data-slot="new-section">
             <legend data-slot="new-legend">{t("new.agent")}</legend>
-          <div data-slot="new-agents">
-            <For each={agents() ?? []}>
-              {(status: AgentStatus) => {
-                const isSelected = () => agentId() === status.agent.id
-                const isAbsent = () => status.availability === "assente"
+            <div data-slot="new-agents">
+              <For each={agents() ?? []}>
+                {(status: AgentStatus) => {
+                  const isSelected = () => agentId() === status.agent.id
+                  const isAbsent = () => status.availability === "assente"
 
-                return (
+                  return (
+                    <button
+                      type="button"
+                      data-slot="new-agent"
+                      data-agent-id={status.agent.id}
+                      data-active={isSelected() ? "true" : undefined}
+                      data-availability={status.availability}
+                      disabled={isAbsent()}
+                      title={status.path ?? (isAbsent() ? t("new.notInstalled") : undefined)}
+                      onClick={() => setAgentId(status.agent.id)}
+                    >
+                      <span data-slot="new-agent-glyph" aria-hidden="true">
+                        <AgentMark id={status.agent.id} size={22} colored />
+                      </span>
+                      <div data-slot="new-agent-body">
+                        <span data-slot="new-agent-label">{status.agent.label}</span>
+                      </div>
+                      <div data-slot="new-agent-badge-slot">
+                        <Show
+                          when={isAbsent()}
+                          fallback={
+                            <span
+                              data-slot="new-agent-check"
+                              data-visible={isSelected() ? "true" : undefined}
+                              aria-hidden={!isSelected()}
+                            >
+                              ✓
+                            </span>
+                          }
+                        >
+                          <span data-slot="new-agent-missing">{t("new.missing")}</span>
+                        </Show>
+                      </div>
+                    </button>
+                  )
+                }}
+              </For>
+            </div>
+          </fieldset>
+
+          <fieldset data-slot="new-section">
+            <legend data-slot="new-legend">{t("new.count")}</legend>
+            <div data-slot="new-counts">
+              <For each={Array.from({ length: MAX_SESSIONS - MIN_SESSIONS + 1 }, (_, i) => MIN_SESSIONS + i)}>
+                {(value) => (
                   <button
                     type="button"
-                    data-slot="new-agent"
-                    data-agent-id={status.agent.id}
-                    data-active={isSelected() ? "true" : undefined}
-                    data-availability={status.availability}
-                    disabled={isAbsent()}
-                    title={status.path ?? (isAbsent() ? t("new.notInstalled") : undefined)}
-                    onClick={() => setAgentId(status.agent.id)}
+                    data-slot="new-count"
+                    data-active={count() === value ? "true" : undefined}
+                    onClick={() => setCount(clampSessions(value))}
                   >
-                    <span data-slot="new-agent-glyph" aria-hidden="true">
-                      <AgentMark id={status.agent.id} size={22} colored />
-                    </span>
-                    <div data-slot="new-agent-body">
-                      <span data-slot="new-agent-label">{status.agent.label}</span>
-                    </div>
-                    <div data-slot="new-agent-badge-slot">
-                      <Show
-                        when={isAbsent()}
-                        fallback={
-                          <span
-                            data-slot="new-agent-check"
-                            data-visible={isSelected() ? "true" : undefined}
-                            aria-hidden={!isSelected()}
-                          >
-                            ✓
-                          </span>
-                        }
-                      >
-                        <span data-slot="new-agent-missing">{t("new.missing")}</span>
-                      </Show>
-                    </div>
+                    {value}
                   </button>
-                )
-              }}
-            </For>
-          </div>
-        </fieldset>
+                )}
+              </For>
+              <span data-slot="new-counts-label">{t("new.count.label")}</span>
+            </div>
+          </fieldset>
 
-        <fieldset data-slot="new-section">
-          <legend data-slot="new-legend">{t("new.count")}</legend>
-          <div data-slot="new-counts">
-            <For each={Array.from({ length: MAX_SESSIONS - MIN_SESSIONS + 1 }, (_, i) => MIN_SESSIONS + i)}>
-              {(value) => (
-                <button
-                  type="button"
-                  data-slot="new-count"
-                  data-active={count() === value ? "true" : undefined}
-                  onClick={() => setCount(clampSessions(value))}
-                >
-                  {value}
-                </button>
-              )}
-            </For>
-            <span data-slot="new-counts-label">{t("new.count.label")}</span>
-          </div>
-        </fieldset>
-
-        <fieldset data-slot="new-section">
-          <legend data-slot="new-legend">{t("new.preview")}</legend>
-          <div data-slot="new-launch">
-            <For each={entries()}>
-              {(entry) => (
-                <div data-slot="new-launch-row" data-role={entry.role}>
-                  <span data-slot="new-launch-index">{entry.index}</span>
-                  <span data-slot="new-launch-glyph" data-agent-id={entry.agentId} aria-hidden="true">
-                    <AgentMark id={entry.agentId} size={15} colored />
-                  </span>
-                  <span data-slot="new-launch-agent">{agentLabel(entry.agentId)}</span>
-                  <Show when={ROLE_SUFFIX[entry.role]}>
-                    {(suffix) => <span data-slot="new-launch-role">{suffix()}</span>}
-                  </Show>
-                </div>
-              )}
-            </For>
-          </div>
-        </fieldset>
+          <fieldset data-slot="new-section">
+            <legend data-slot="new-legend">{t("new.preview")}</legend>
+            <div data-slot="new-launch">
+              <For each={entries()}>
+                {(entry) => (
+                  <div data-slot="new-launch-row" data-role={entry.role}>
+                    <span data-slot="new-launch-index">{entry.index}</span>
+                    <span data-slot="new-launch-glyph" data-agent-id={entry.agentId} aria-hidden="true">
+                      <AgentMark id={entry.agentId} size={15} colored />
+                    </span>
+                    <span data-slot="new-launch-agent">{agentLabel(entry.agentId)}</span>
+                    <Show when={ROLE_SUFFIX[entry.role]}>
+                      {(suffix) => <span data-slot="new-launch-role">{suffix()}</span>}
+                    </Show>
+                  </div>
+                )}
+              </For>
+            </div>
+          </fieldset>
 
           <footer data-slot="new-foot">
-            <span data-slot="new-summary">
-              {t("new.summary", count(), agentLabel(agentId()), props.workspace)}
-            </span>
+            <span data-slot="new-summary">{t("new.summary", count(), agentLabel(agentId()), props.workspace)}</span>
             <div data-slot="new-spacer" />
             <Show when={props.onClose}>
               <button type="button" data-slot="new-cancel" onClick={() => props.onClose?.()}>

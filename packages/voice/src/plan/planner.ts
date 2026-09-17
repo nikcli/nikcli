@@ -109,7 +109,9 @@ export function buildPlannerPrompt(
     "Comandi:",
     context.commands.length ? context.commands.map((id) => `- ${id}`).join("\n") : "- (nessuno)",
     ...historyLines,
-  ].filter(Boolean).join("\n")
+  ]
+    .filter(Boolean)
+    .join("\n")
 
   return { system, user: utterance }
 }

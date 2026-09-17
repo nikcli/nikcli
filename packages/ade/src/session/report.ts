@@ -14,7 +14,7 @@
  * già noto viene scartato invece di far regredire il resoconto.
  */
 
-import { stripAnsi } from "./stream";
+import { stripAnsi } from "./stream"
 
 // ---------------------------------------------------------------------------
 // Tipi
@@ -22,13 +22,13 @@ import { stripAnsi } from "./stream";
 
 export interface SessionReport {
   /** Token totali consumati finora, se l'agente li ha detti. */
-  tokens?: number;
+  tokens?: number
   /** Costo in dollari, se l'agente lo ha detto. */
-  costUsd?: number;
+  costUsd?: number
   /** Cosa sta facendo adesso, in una riga breve. */
-  activity?: string;
+  activity?: string
   /** Nome del modello in uso, se dichiarato. */
-  model?: string;
+  model?: string
 }
 
 // ---------------------------------------------------------------------------
@@ -43,28 +43,28 @@ export interface SessionReport {
  * numero con separatore è ambiguo (decimale all'italiana o migliaia
  * all'inglese) e viene scartato invece che indovinato.
  */
-const TOKEN_RE = /\b(\d+)(?:([.,])(\d+))?\s*([km])?\s*tokens?\b/i;
+const TOKEN_RE = /\b(\d+)(?:([.,])(\d+))?\s*([km])?\s*tokens?\b/i
 
-const MULTIPLIER: Record<string, number> = { k: 1_000, m: 1_000_000 };
+const MULTIPLIER: Record<string, number> = { k: 1_000, m: 1_000_000 }
 
 /** Primo conteggio di token nella riga, oppure `undefined` se non c'è. */
 function parseTokens(line: string): number | undefined {
-  const match = TOKEN_RE.exec(line);
-  if (!match) return undefined;
+  const match = TOKEN_RE.exec(line)
+  if (!match) return undefined
 
-  const [, integer, separator, fraction, multiplier] = match;
+  const [, integer, separator, fraction, multiplier] = match
 
   // Separatore senza moltiplicatore: non si può sapere se è decimale o di
   // migliaia. Meglio niente che un numero sbagliato.
-  if (separator && !multiplier) return undefined;
+  if (separator && !multiplier) return undefined
 
   if (!separator) {
-    const base = Number.parseInt(integer, 10);
-    return multiplier ? base * MULTIPLIER[multiplier.toLowerCase()] : base;
+    const base = Number.parseInt(integer, 10)
+    return multiplier ? base * MULTIPLIER[multiplier.toLowerCase()] : base
   }
 
-  const decimal = Number.parseFloat(`${integer}.${fraction}`);
-  return Math.round(decimal * MULTIPLIER[(multiplier ?? "").toLowerCase()]);
+  const decimal = Number.parseFloat(`${integer}.${fraction}`)
+  return Math.round(decimal * MULTIPLIER[(multiplier ?? "").toLowerCase()])
 }
 
 // ---------------------------------------------------------------------------
@@ -88,30 +88,30 @@ function parseTokens(line: string): number | undefined {
  * costo mancato si nota guardando il pannello, uno inventato resta lì
  * indistinguibile da una spesa vera per tutta la sessione.
  */
-const COST_DOLLAR_RE = /\$\s?(\d+[.,]\d+)/;
-const COST_USD_RE = /\b(\d+(?:[.,]\d+)?)\s*(?:usd|dollari)\b/i;
+const COST_DOLLAR_RE = /\$\s?(\d+[.,]\d+)/
+const COST_USD_RE = /\b(\d+(?:[.,]\d+)?)\s*(?:usd|dollari)\b/i
 
 /** Primo costo in dollari nella riga, oppure `undefined` se non c'è. */
 function parseCost(line: string): number | undefined {
-  const dollar = COST_DOLLAR_RE.exec(line);
-  if (dollar) return parseDecimal(dollar[1]);
+  const dollar = COST_DOLLAR_RE.exec(line)
+  if (dollar) return parseDecimal(dollar[1])
 
-  const usd = COST_USD_RE.exec(line);
-  if (usd) return parseDecimal(usd[1]);
+  const usd = COST_USD_RE.exec(line)
+  if (usd) return parseDecimal(usd[1])
 
-  return undefined;
+  return undefined
 }
 
 /** `"0,18"` / `"1.05"` → numero; il separatore singolo è sempre decimale. */
 function parseDecimal(raw: string): number {
-  return Number.parseFloat(raw.replace(",", "."));
+  return Number.parseFloat(raw.replace(",", "."))
 }
 
 // ---------------------------------------------------------------------------
 // Modello
 // ---------------------------------------------------------------------------
 
-const MODEL_RE = /\bmodel\s*[=:]\s*([A-Za-z][A-Za-z0-9._/-]*)/i;
+const MODEL_RE = /\bmodel\s*[=:]\s*([A-Za-z][A-Za-z0-9._/-]*)/i
 
 /**
  * Nome del modello dichiarato dalla riga, oppure `undefined`.
@@ -121,14 +121,14 @@ const MODEL_RE = /\bmodel\s*[=:]\s*([A-Za-z][A-Za-z0-9._/-]*)/i;
  * "model: the") no. Punteggiatura finale della frase viene tolta.
  */
 function parseModel(line: string): string | undefined {
-  const match = MODEL_RE.exec(line);
-  if (!match) return undefined;
+  const match = MODEL_RE.exec(line)
+  if (!match) return undefined
 
-  let name = match[1];
-  name = name.replace(/\.+$/, "");
-  if (!/[-./\d]/.test(name)) return undefined;
+  let name = match[1]
+  name = name.replace(/\.+$/, "")
+  if (!/[-./\d]/.test(name)) return undefined
 
-  return name;
+  return name
 }
 
 // ---------------------------------------------------------------------------
@@ -136,11 +136,11 @@ function parseModel(line: string): string | undefined {
 // ---------------------------------------------------------------------------
 
 /** Lunghezza massima della riga di attività. */
-const MAX_ACTIVITY_LENGTH = 40;
+const MAX_ACTIVITY_LENGTH = 40
 
 /** Ellipsis tipografica e ASCII: gli agenti le usano entrambe. */
-const ELLIPSIS_HEAVY = "…";
-const ELLIPSIS_ASCII = "...";
+const ELLIPSIS_HEAVY = "…"
+const ELLIPSIS_ASCII = "..."
 
 /**
  * Verbi di stato in prima persona che gli agenti stampano come attività.
@@ -191,16 +191,13 @@ const STATE_VERBS = new Set([
   "genero",
   "valido",
   "risolvo",
-]);
+])
 
 function isActivityVerb(word: string): boolean {
-  if (STATE_VERBS.has(word)) return true;
+  if (STATE_VERBS.has(word)) return true
   // Gerundio italiano (-ando/-endo) o inglese (-ing); la lunghezza minima
   // scarta falsi amici corti tipo "undo".
-  return (
-    word.length >= 5 &&
-    (word.endsWith("ando") || word.endsWith("endo") || word.endsWith("ing"))
-  );
+  return word.length >= 5 && (word.endsWith("ando") || word.endsWith("endo") || word.endsWith("ing"))
 }
 
 /**
@@ -208,10 +205,10 @@ function isActivityVerb(word: string): boolean {
  * si torna indietro fino all'ultimo spazio.
  */
 function truncateAtWord(text: string, max: number): string {
-  if (text.length <= max) return text;
-  const cut = text.slice(0, max);
-  const lastSpace = cut.lastIndexOf(" ");
-  return lastSpace > 0 ? cut.slice(0, lastSpace).trimEnd() : cut.trimEnd();
+  if (text.length <= max) return text
+  const cut = text.slice(0, max)
+  const lastSpace = cut.lastIndexOf(" ")
+  return lastSpace > 0 ? cut.slice(0, lastSpace).trimEnd() : cut.trimEnd()
 }
 
 /**
@@ -221,26 +218,26 @@ function truncateAtWord(text: string, max: number): string {
  * validare il verbo iniziale e poi rimessa, prima del troncamento.
  */
 function parseActivity(line: string): string | undefined {
-  const trimmed = line.trim();
+  const trimmed = line.trim()
 
-  let stem: string;
-  let ellipsis: string;
+  let stem: string
+  let ellipsis: string
   if (trimmed.endsWith(ELLIPSIS_HEAVY)) {
-    stem = trimmed.slice(0, -ELLIPSIS_HEAVY.length).trimEnd();
-    ellipsis = ELLIPSIS_HEAVY;
+    stem = trimmed.slice(0, -ELLIPSIS_HEAVY.length).trimEnd()
+    ellipsis = ELLIPSIS_HEAVY
   } else if (trimmed.endsWith(ELLIPSIS_ASCII)) {
-    stem = trimmed.slice(0, -ELLIPSIS_ASCII.length).trimEnd();
-    ellipsis = ELLIPSIS_ASCII;
+    stem = trimmed.slice(0, -ELLIPSIS_ASCII.length).trimEnd()
+    ellipsis = ELLIPSIS_ASCII
   } else {
-    return undefined;
+    return undefined
   }
 
-  if (!stem) return undefined;
+  if (!stem) return undefined
 
-  const firstWord = stem.split(/\s+/)[0].toLowerCase();
-  if (!isActivityVerb(firstWord)) return undefined;
+  const firstWord = stem.split(/\s+/)[0].toLowerCase()
+  if (!isActivityVerb(firstWord)) return undefined
 
-  return truncateAtWord(stem + ellipsis, MAX_ACTIVITY_LENGTH);
+  return truncateAtWord(stem + ellipsis, MAX_ACTIVITY_LENGTH)
 }
 
 // ---------------------------------------------------------------------------
@@ -248,7 +245,7 @@ function parseActivity(line: string): string | undefined {
 // ---------------------------------------------------------------------------
 
 /** Tolleranza per il confronto dei costi in virgola mobile. */
-const EPSILON = 1e-9;
+const EPSILON = 1e-9
 
 /**
  * Aggiorna il resoconto con una riga nuova di output.
@@ -258,39 +255,30 @@ const EPSILON = 1e-9;
  * normale. Token e costo possono solo crescere; modello e attività seguono
  * l'ultima dichiarazione. L'input non viene mai mutato.
  */
-export function readReportLine(
-  current: SessionReport,
-  line: string,
-): SessionReport {
-  const clean = stripAnsi(line);
+export function readReportLine(current: SessionReport, line: string): SessionReport {
+  const clean = stripAnsi(line)
 
-  let next = current;
+  let next = current
 
-  const tokens = parseTokens(clean);
-  if (
-    tokens !== undefined &&
-    (next.tokens === undefined || tokens > next.tokens)
-  ) {
-    next = { ...next, tokens };
+  const tokens = parseTokens(clean)
+  if (tokens !== undefined && (next.tokens === undefined || tokens > next.tokens)) {
+    next = { ...next, tokens }
   }
 
-  const costUsd = parseCost(clean);
-  if (
-    costUsd !== undefined &&
-    (next.costUsd === undefined || costUsd > next.costUsd + EPSILON)
-  ) {
-    next = { ...next, costUsd };
+  const costUsd = parseCost(clean)
+  if (costUsd !== undefined && (next.costUsd === undefined || costUsd > next.costUsd + EPSILON)) {
+    next = { ...next, costUsd }
   }
 
-  const model = parseModel(clean);
+  const model = parseModel(clean)
   if (model !== undefined && model !== next.model) {
-    next = { ...next, model };
+    next = { ...next, model }
   }
 
-  const activity = parseActivity(clean);
+  const activity = parseActivity(clean)
   if (activity !== undefined && activity !== next.activity) {
-    next = { ...next, activity };
+    next = { ...next, activity }
   }
 
-  return next;
+  return next
 }

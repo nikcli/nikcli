@@ -3,10 +3,28 @@ import { pickBestVoice, createWebSpeechSpeaker, createFakeSpeaker } from "./spea
 
 describe("pickBestVoice", () => {
   const mockVoices = [
-    { name: "Microsoft Cosimo - Italian (Italy)", lang: "it-IT", default: false, localService: true, voiceURI: "cosimo" },
+    {
+      name: "Microsoft Cosimo - Italian (Italy)",
+      lang: "it-IT",
+      default: false,
+      localService: true,
+      voiceURI: "cosimo",
+    },
     { name: "Microsoft Elsa - Italian (Italy)", lang: "it-IT", default: false, localService: true, voiceURI: "elsa" },
-    { name: "Microsoft Diego Online (Natural) - Italian (Italy)", lang: "it-IT", default: false, localService: false, voiceURI: "diego-online" },
-    { name: "Microsoft Isabella Online (Natural) - Italian (Italy)", lang: "it-IT", default: false, localService: false, voiceURI: "isabella-online" },
+    {
+      name: "Microsoft Diego Online (Natural) - Italian (Italy)",
+      lang: "it-IT",
+      default: false,
+      localService: false,
+      voiceURI: "diego-online",
+    },
+    {
+      name: "Microsoft Isabella Online (Natural) - Italian (Italy)",
+      lang: "it-IT",
+      default: false,
+      localService: false,
+      voiceURI: "isabella-online",
+    },
     { name: "Google US English", lang: "en-US", default: true, localService: false, voiceURI: "google-en" },
   ] as unknown as SpeechSynthesisVoice[]
 

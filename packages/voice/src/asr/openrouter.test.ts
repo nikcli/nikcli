@@ -56,7 +56,7 @@ describe("asr/openrouter", () => {
         {
           status: 200,
           headers: { "Content-Type": "application/json" },
-        }
+        },
       )
     }
 
@@ -80,7 +80,7 @@ describe("asr/openrouter", () => {
     ;(capture as any).stop() // triggers callbacks safely
 
     // Directly trigger onSegment through capture
-    const segmentHandlers = (capture as any)
+    const segmentHandlers = capture as any
     // Emit segment to transcriber
     const segment = {
       blob: segmentBlob,
@@ -90,7 +90,7 @@ describe("asr/openrouter", () => {
     }
 
     // Trigger the registered segment listener
-    const onSegmentMethod = (capture as any)
+    const onSegmentMethod = capture as any
     // Dispatch segment to transcriber by triggering segment callback
     // We can simulate this by triggering capture's internal listener or using a test capture
     const testCapture = createMicCapture({
@@ -231,7 +231,9 @@ describe("asr/openrouter", () => {
     const capture = {
       start: async () => {},
       stop: () => {},
-      onSegment: (cb: any) => { segmentCb = cb },
+      onSegment: (cb: any) => {
+        segmentCb = cb
+      },
       onError: () => {},
     } as any
 
@@ -290,7 +292,9 @@ describe("asr/openrouter", () => {
     const capture = {
       start: async () => {},
       stop: () => {},
-      onSegment: (cb: any) => { segmentCb = cb },
+      onSegment: (cb: any) => {
+        segmentCb = cb
+      },
       onError: () => {},
     } as any
 
@@ -329,7 +333,7 @@ describe("asr/openrouter", () => {
             message: `Invalid access with token ${SECRET_KEY} while processing audio`,
           },
         }),
-        { status: 500 }
+        { status: 500 },
       )
     }
 
@@ -337,7 +341,9 @@ describe("asr/openrouter", () => {
     const capture = {
       start: async () => {},
       stop: () => {},
-      onSegment: (cb: any) => { segmentCb = cb },
+      onSegment: (cb: any) => {
+        segmentCb = cb
+      },
       onError: () => {},
     } as any
 
@@ -396,7 +402,9 @@ describe("asr/openrouter", () => {
     const capture = {
       start: async () => {},
       stop: () => {},
-      onSegment: (cb: any) => { segmentCb = cb },
+      onSegment: (cb: any) => {
+        segmentCb = cb
+      },
       onError: () => {},
     } as any
 
@@ -433,8 +441,20 @@ describe("asr/openrouter", () => {
       return new Response(JSON.stringify({ text: "capitale dell'Australia" }), { status: 200 })
     }
     let segmentCb: any = null
-    const capture = { start: async () => {}, stop: () => {}, onSegment: (cb: any) => { segmentCb = cb }, onError: () => {} } as any
-    const transcriber = createOpenRouterTranscriber({ apiKey: "test-key", capture, fetch: mockFetch as any, onFinal: (evt) => finals.push(evt) })
+    const capture = {
+      start: async () => {},
+      stop: () => {},
+      onSegment: (cb: any) => {
+        segmentCb = cb
+      },
+      onError: () => {},
+    } as any
+    const transcriber = createOpenRouterTranscriber({
+      apiKey: "test-key",
+      capture,
+      fetch: mockFetch as any,
+      onFinal: (evt) => finals.push(evt),
+    })
     await transcriber.start()
     await segmentCb({ blob: new Blob(["audio-bytes"]), format: "wav", durationMs: 1500 })
     expect(attempts).toEqual([OPENROUTER_MODEL, OPENROUTER_FALLBACK_MODEL])
@@ -446,15 +466,12 @@ describe("asr/openrouter", () => {
     const mockFetch = async () => {
       return new Response(
         JSON.stringify({
-          segments: [
-            { text: "ciao" },
-            { text: "mondo" },
-          ],
+          segments: [{ text: "ciao" }, { text: "mondo" }],
         }),
         {
           status: 200,
           headers: { "Content-Type": "application/json" },
-        }
+        },
       )
     }
 
@@ -462,7 +479,9 @@ describe("asr/openrouter", () => {
     const capture = {
       start: async () => {},
       stop: () => {},
-      onSegment: (cb: any) => { segmentCb = cb },
+      onSegment: (cb: any) => {
+        segmentCb = cb
+      },
       onError: () => {},
     } as any
 
@@ -485,4 +504,3 @@ describe("asr/openrouter", () => {
     expect(finals[0].text).toBe("ciao mondo")
   })
 })
-

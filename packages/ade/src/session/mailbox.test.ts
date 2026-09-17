@@ -133,12 +133,19 @@ test("resolveAgent accepts the id, the id without -code, and the label", () => {
 })
 
 test("who-owns carries the file as its text", () => {
-  expect(parseMessage('{"kind":"whoowns","from":"a","text":" src/a.ts "}')).toMatchObject({ kind: "whoowns", text: "src/a.ts" })
+  expect(parseMessage('{"kind":"whoowns","from":"a","text":" src/a.ts "}')).toMatchObject({
+    kind: "whoowns",
+    text: "src/a.ts",
+  })
   expect(parseMessage('{"kind":"whoowns","from":"a","text":" "}')).toBeUndefined()
 })
 
 test("the activity carries the directory the agent works in", () => {
-  expect(parseActivity('{"state":"busy","sessionId":"s","cwd":"C:\\\\w\\\\tree","at":5}', "s")).toEqual({ state: "busy", at: 5, cwd: "C:\\w\\tree" })
+  expect(parseActivity('{"state":"busy","sessionId":"s","cwd":"C:\\\\w\\\\tree","at":5}', "s")).toEqual({
+    state: "busy",
+    at: 5,
+    cwd: "C:\\w\\tree",
+  })
   expect(parseActivity('{"state":"idle","sessionId":"s","cwd":"","at":5}', "s")).toEqual({ state: "idle", at: 5 })
   expect(sameDir("C:\\Users\\me\\repo\\", "c:/users/me/repo")).toBe(true)
   expect(sameDir("C:/a", "C:/b")).toBe(false)
@@ -166,7 +173,17 @@ describe("when a session can be written to", () => {
   const now = 10_000_000
   test("a hooked session is free unless its turn is running", () => {
     expect(isFree({ hooked: true, permissionPending: false, activity: { state: "idle", at: now - 5 } }, now)).toBe(true)
-    expect(isFree({ hooked: true, permissionPending: false, activity: { state: "busy", at: now - 5 }, lastOutputAt: now - 90_000 }, now)).toBe(false)
+    expect(
+      isFree(
+        {
+          hooked: true,
+          permissionPending: false,
+          activity: { state: "busy", at: now - 5 },
+          lastOutputAt: now - 90_000,
+        },
+        now,
+      ),
+    ).toBe(false)
   })
 
   test("a hooked session with no readable activity is held until it has been quiet a while", () => {
@@ -181,15 +198,21 @@ describe("when a session can be written to", () => {
     const idle = { state: "idle" as const, at: now - 60_000 }
     const kept = keptActivity(busy, undefined)
     expect(kept).toEqual(busy)
-    expect(isFree({ hooked: true, permissionPending: false, activity: kept, lastOutputAt: now - 10 * UNKNOWN_FREE_MS }, now)).toBe(false)
+    expect(
+      isFree({ hooked: true, permissionPending: false, activity: kept, lastOutputAt: now - 10 * UNKNOWN_FREE_MS }, now),
+    ).toBe(false)
     expect(keptActivity(idle, undefined)).toBeUndefined()
     expect(keptActivity(busy, idle)).toEqual(idle)
   })
 
   test("a busy that never ended, in a silent session, stops holding messages", () => {
     const busy = { state: "busy" as const, at: now - 31 * 60_000 }
-    expect(isFree({ hooked: true, permissionPending: false, activity: busy, lastOutputAt: now - 120_000 }, now)).toBe(true)
-    expect(isFree({ hooked: true, permissionPending: false, activity: busy, lastOutputAt: now - 1000 }, now)).toBe(false)
+    expect(isFree({ hooked: true, permissionPending: false, activity: busy, lastOutputAt: now - 120_000 }, now)).toBe(
+      true,
+    )
+    expect(isFree({ hooked: true, permissionPending: false, activity: busy, lastOutputAt: now - 1000 }, now)).toBe(
+      false,
+    )
   })
 
   test("without hooks, a few quiet seconds end the turn", () => {
@@ -211,7 +234,9 @@ describe("what lands in the terminal", () => {
 
   test("a request ends with the reply command the caller is blocked on", () => {
     const line = formatRequest("171-ab", "trova i test lenti", panes[0])
-    expect(line.startsWith('[Richiesta 171-ab da "Sessione 1 — claude-code" (claude-code)]: trova i test lenti')).toBe(true)
+    expect(line.startsWith('[Richiesta 171-ab da "Sessione 1 — claude-code" (claude-code)]: trova i test lenti')).toBe(
+      true,
+    )
     expect(line).toContain('ade-msg reply 171-ab "<sintesi>"')
     expect(line.length).toBeLessThan(300)
     expect(line).toContain("ade-msg update 171-ab")
@@ -283,11 +308,20 @@ describe("orchestration", () => {
     expect(parseMessage('{"kind":"close","from":"a","to":"3"}')).toMatchObject({ kind: "close", to: "3", text: "" })
     expect(parseMessage('{"kind":"cancel","from":"a","ref":"171-ab"}')).toMatchObject({ kind: "cancel", ref: "171-ab" })
     expect(parseMessage('{"kind":"cancel","from":"a","ref":"../x"}')).toBeUndefined()
-    expect(parseMessage('{"kind":"spawn","from":"a","agent":"codex","text":"x","close":true}')).toMatchObject({ autoClose: true })
+    expect(parseMessage('{"kind":"spawn","from":"a","agent":"codex","text":"x","close":true}')).toMatchObject({
+      autoClose: true,
+    })
     expect(parseMessage('{"kind":"spawn","from":"a","agent":"codex","text":"x"}')).toMatchObject({ autoClose: false })
   })
 
-  const request: OpenRequest = { id: "171-ab", kind: "spawn", from: "n1-0", to: "n2-1", at: 0, brief: "trova i test lenti" }
+  const request: OpenRequest = {
+    id: "171-ab",
+    kind: "spawn",
+    from: "n1-0",
+    to: "n2-1",
+    at: 0,
+    brief: "trova i test lenti",
+  }
 
   test("a request's state says what the caller is actually waiting on", () => {
     expect(requestState(request, { running: false, permissionPending: false }, 5_000)).toBe("in avvio")
@@ -311,7 +345,9 @@ describe("orchestration", () => {
 
   test("status lists who waits on whom, and how long", () => {
     const table = requestsTable([request], panes, () => "in corso", 125_000)
-    expect(table).toContain("171-ab  spawn  2m05s  in corso  Sessione 1 — claude-code → Sessione 2 — codex  trova i test lenti")
+    expect(table).toContain(
+      "171-ab  spawn  2m05s  in corso  Sessione 1 — claude-code → Sessione 2 — codex  trova i test lenti",
+    )
     expect(requestsTable([], panes, () => "in corso", 0)).toBe("nessuna richiesta in corso\n")
   })
 
@@ -324,14 +360,18 @@ describe("orchestration", () => {
 describe("spawn options, updates and the request contract", () => {
   test("spawn carries name, worktree and model; close carries force", () => {
     expect(
-      parseMessage('{"kind":"spawn","from":"a","agent":"codex","text":"x","name":"revisore","worktree":true,"model":"gpt-5"}'),
+      parseMessage(
+        '{"kind":"spawn","from":"a","agent":"codex","text":"x","name":"revisore","worktree":true,"model":"gpt-5"}',
+      ),
     ).toMatchObject({ name: "revisore", worktree: true, model: "gpt-5", autoClose: false })
     expect(parseMessage('{"kind":"close","from":"a","to":"3","force":true}')).toMatchObject({ force: true })
     expect(parseMessage('{"kind":"close","from":"a","to":"3"}')).toMatchObject({ force: false })
   })
 
   test("an update names a known state and has a reason", () => {
-    expect(parseMessage('{"kind":"update","from":"b","ref":"171-ab","state":"bloccata","text":"manca la chiave"}')).toMatchObject({
+    expect(
+      parseMessage('{"kind":"update","from":"b","ref":"171-ab","state":"bloccata","text":"manca la chiave"}'),
+    ).toMatchObject({
       kind: "update",
       state: "bloccata",
     })
@@ -375,7 +415,15 @@ describe("spawn options, updates and the request contract", () => {
   })
 })
 describe("turn activity from the CLI's hooks", () => {
-  const request: OpenRequest = { id: "171-ab", kind: "ask", from: "n1-0", to: "n2-1", at: 1_000, deliveredAt: 1_000, brief: "x" }
+  const request: OpenRequest = {
+    id: "171-ab",
+    kind: "ask",
+    from: "n1-0",
+    to: "n2-1",
+    at: 1_000,
+    deliveredAt: 1_000,
+    brief: "x",
+  }
   const live = { running: true, permissionPending: false, hooked: true }
 
   test("an activity file is believed only about the pane's own conversation", () => {
@@ -391,7 +439,9 @@ describe("turn activity from the CLI's hooks", () => {
     expect(shouldNudge(request, { ...live, activity: { state: "busy", at: 2_000 } }, 900_000)).toBe(false)
     expect(shouldNudge(request, { ...live, activity: { state: "idle", at: 2_000 } }, 10_000)).toBe(false)
     expect(shouldNudge(request, { ...live, activity: { state: "idle", at: 2_000 } }, 30_000)).toBe(true)
-    expect(requestState(request, { ...live, activity: { state: "idle", at: 2_000 } }, 30_000)).toBe("inattiva senza risposta")
+    expect(requestState(request, { ...live, activity: { state: "idle", at: 2_000 } }, 30_000)).toBe(
+      "inattiva senza risposta",
+    )
   })
 
   test("a line that started no turn gets one more Enter, once, and only with hooks", () => {
@@ -416,7 +466,17 @@ describe("turn activity from the CLI's hooks", () => {
 })
 describe("long messages travel through the inbox", () => {
   const sender = { id: "p1", title: "Master", agent: "claude-code" }
-  const entry: InboxEntry = { id: "r1", paneId: "p2", name: inboxName("r1", 5), from: "p1", kind: "ask", chars: 20_000, at: 0, ringAt: 0, rings: 0 }
+  const entry: InboxEntry = {
+    id: "r1",
+    paneId: "p2",
+    name: inboxName("r1", 5),
+    from: "p1",
+    kind: "ask",
+    chars: 20_000,
+    at: 0,
+    ringAt: 0,
+    rings: 0,
+  }
 
   test("only a line too long to type goes to a file, and the bell stays short", () => {
     expect(goesToInbox("x".repeat(INLINE_MAX))).toBe(false)
@@ -460,11 +520,17 @@ describe("stuck sessions, interrupts and relaunch notes", () => {
   const longTurn = { running: true, permissionPending: false, activity: { state: "busy" as const, at: now - WEDGE_MS } }
 
   test("a turn of an hour with no output and no writes may be stuck; one that writes is not", () => {
-    expect(requestState(request, { ...longTurn, lastOutputAt: now - WEDGE_MS, lastWriteAt: now - WEDGE_MS }, now)).toBe("forse bloccata")
+    expect(requestState(request, { ...longTurn, lastOutputAt: now - WEDGE_MS, lastWriteAt: now - WEDGE_MS }, now)).toBe(
+      "forse bloccata",
+    )
     expect(requestState(request, { ...longTurn, lastOutputAt: now - WEDGE_MS }, now)).toBe("forse bloccata")
-    expect(requestState(request, { ...longTurn, lastOutputAt: now - WEDGE_MS, lastWriteAt: now - 60_000 }, now)).toBe("in corso")
+    expect(requestState(request, { ...longTurn, lastOutputAt: now - WEDGE_MS, lastWriteAt: now - 60_000 }, now)).toBe(
+      "in corso",
+    )
     expect(requestState(request, { ...longTurn, lastOutputAt: now - 1000 }, now)).toBe("in corso")
-    expect(requestState(request, { ...longTurn, activity: { state: "busy", at: now - WEDGE_MS + 1 } }, now)).toBe("in corso")
+    expect(requestState(request, { ...longTurn, activity: { state: "busy", at: now - WEDGE_MS + 1 } }, now)).toBe(
+      "in corso",
+    )
     expect(formatWedged(request, { id: "b", title: "Fabio" }, now)).toContain("ade-msg interrupt b")
   })
 
@@ -478,13 +544,18 @@ describe("stuck sessions, interrupts and relaunch notes", () => {
     const target = { id: "p2", title: "Revisore" }
     expect(relaunchRefusal({ from: "p1", note: "" }, target, "p1")).toContain('relaunch richiede --note "')
     expect(relaunchRefusal({ from: "p1", note: "   " }, target, "p1")).toContain("richiede --note")
-    expect(relaunchRefusal({ from: "p1", note: "test verdi, manca il commit" }, target, "p9")).toContain('"Revisore" non lo è')
+    expect(relaunchRefusal({ from: "p1", note: "test verdi, manca il commit" }, target, "p9")).toContain(
+      '"Revisore" non lo è',
+    )
     expect(relaunchRefusal({ from: "", note: "x" }, target, undefined)).toContain("avviate da questa sessione")
     expect(relaunchRefusal({ from: "p1", note: "test verdi, manca il commit" }, target, "p1")).toBeUndefined()
   })
 
   test("relaunch carries its note and interrupt its target", () => {
-    expect(parseMessage(JSON.stringify({ kind: "relaunch", to: "2", note: " rifai i test " }))).toMatchObject({ kind: "relaunch", note: "rifai i test" })
+    expect(parseMessage(JSON.stringify({ kind: "relaunch", to: "2", note: " rifai i test " }))).toMatchObject({
+      kind: "relaunch",
+      note: "rifai i test",
+    })
     expect(parseMessage(JSON.stringify({ kind: "relaunch", to: "2" }))).toMatchObject({ kind: "relaunch", note: "" })
     expect(parseMessage(JSON.stringify({ kind: "interrupt", to: "2" }))).toMatchObject({ kind: "interrupt", to: "2" })
     expect(parseMessage(JSON.stringify({ kind: "interrupt" }))).toBeUndefined()
@@ -498,7 +569,9 @@ describe("stuck sessions, interrupts and relaunch notes", () => {
       "2026-09-15T16:55 Fabio in-corso S21",
     ].join("\n")
     const open = openDecisions([{ spec: "S25", text: log }])
-    expect(open).toEqual([{ spec: "S25", key: "quota", session: "Sessione 1 — agy", text: "soglia del 10%?", at: "2026-09-15T16:41" }])
+    expect(open).toEqual([
+      { spec: "S25", key: "quota", session: "Sessione 1 — agy", text: "soglia del 10%?", at: "2026-09-15T16:41" },
+    ])
     expect(requestsTable([], [], () => "in corso", now, open)).toContain("decisioni aperte:\n  S25 [k=quota]")
   })
 })

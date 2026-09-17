@@ -62,7 +62,7 @@ export const DEFAULT_BINDINGS: BindingEntry[] = [
  * chord strings more than once.
  */
 export function resolveDefaultBindings(platform: Platform): Binding[] {
-  return DEFAULT_BINDINGS.map(entry => ({
+  return DEFAULT_BINDINGS.map((entry) => ({
     chord: parseChord(entry.chord, platform),
     commandId: entry.commandId,
   }))

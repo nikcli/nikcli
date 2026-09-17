@@ -21,10 +21,7 @@ export type ResolvedTheme = "dark" | "light"
  * safest fallback because it honours whatever the user already chose at
  * OS level without us having to guess.
  */
-export function resolveTheme(
-  pref: Theme | undefined | null,
-  systemPrefersDark: boolean,
-): ResolvedTheme {
+export function resolveTheme(pref: Theme | undefined | null, systemPrefersDark: boolean): ResolvedTheme {
   if (pref === "dark") return "dark"
   if (pref === "light") return "light"
   // "system", undefined, null, or anything else

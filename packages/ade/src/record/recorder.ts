@@ -113,17 +113,27 @@ export function createRecorder(deps: RecorderDeps): Recorder {
   }
 
   /** Everything collected during the take, written beside `video`. */
-  const writeTracks = async (video: string, startedAt: number, events: string, clips: VoiceClip[], micTake?: MicTake) => {
+  const writeTracks = async (
+    video: string,
+    startedAt: number,
+    events: string,
+    clips: VoiceClip[],
+    micTake?: MicTake,
+  ) => {
     const problems: string[] = []
     if (events) await deps.writeText(eventsPathFor(video), events).catch((error) => problems.push(String(error)))
     const track = buildVoiceTrack(clips, deps.now() - startedAt)
     if (track && deps.writeBytes) {
-      await deps.writeBytes(voicePathFor(video), new Uint8Array(track.wav)).catch((error) => problems.push(String(error)))
+      await deps
+        .writeBytes(voicePathFor(video), new Uint8Array(track.wav))
+        .catch((error) => problems.push(String(error)))
     }
     if (micTake && deps.writeBytes) {
       const bytes = await micTake.stop().catch(() => undefined)
       if (bytes && bytes.length > 0) {
-        await deps.writeBytes(micPathFor(video, micTake.extension), bytes).catch((error) => problems.push(String(error)))
+        await deps
+          .writeBytes(micPathFor(video, micTake.extension), bytes)
+          .catch((error) => problems.push(String(error)))
       }
     }
     return problems

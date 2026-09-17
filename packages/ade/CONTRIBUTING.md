@@ -36,14 +36,14 @@ The scope is optional and lower-case; use `ade`, `voice`, or both
 
 The type decides whether the commit ships a release:
 
-| Type | Use it for | Release |
-|---|---|---|
-| `feat` | something new a user can do or see | minor (0.2.0 → 0.3.0) |
-| `fix` | something that was wrong for a user | patch (0.2.0 → 0.2.1) |
-| `perf` | faster, lighter, less CPU or memory | patch |
-| `revert` | undoing a released change | patch |
-| `feat!` / `fix!`, or a `BREAKING CHANGE:` footer | settings, data or behaviour that will not carry over | major (minor while ADE is 0.x) |
-| `refactor`, `docs`, `test`, `chore`, `build`, `ci`, `style` | everything else | none on its own |
+| Type                                                        | Use it for                                           | Release                        |
+| ----------------------------------------------------------- | ---------------------------------------------------- | ------------------------------ |
+| `feat`                                                      | something new a user can do or see                   | minor (0.2.0 → 0.3.0)          |
+| `fix`                                                       | something that was wrong for a user                  | patch (0.2.0 → 0.2.1)          |
+| `perf`                                                      | faster, lighter, less CPU or memory                  | patch                          |
+| `revert`                                                    | undoing a released change                            | patch                          |
+| `feat!` / `fix!`, or a `BREAKING CHANGE:` footer            | settings, data or behaviour that will not carry over | major (minor while ADE is 0.x) |
+| `refactor`, `docs`, `test`, `chore`, `build`, `ci`, `style` | everything else                                      | none on its own                |
 
 Work that is on `feat/ade` but not ready to be released carries
 `[skip release]` in its subject or body. A later releasable commit still
@@ -73,9 +73,9 @@ Pull requests target `feat/ade`. They are optional for whoever maintains the
 fork and the way in for everyone else. `area/ade` and `area/voice` are applied
 from the changed paths; two labels are set by hand and read at release time:
 
-| Label | Effect |
-|---|---|
-| `release:skip` | the pull request's commits never cause a release |
+| Label           | Effect                                                |
+| --------------- | ----------------------------------------------------- |
+| `release:skip`  | the pull request's commits never cause a release      |
 | `release:major` | the pull request's commits count as a breaking change |
 
 ## Releases

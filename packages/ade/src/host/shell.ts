@@ -499,7 +499,12 @@ export async function getHost(): Promise<Host | undefined> {
     async saveSecret(draft) {
       const { invoke } = await import("@tauri-apps/api/core")
       // Rejects with the keychain's or the validator's reason, in Italian.
-      await invoke("secret_save", { name: draft.name, env: draft.env, agents: [...draft.agents], value: draft.value ?? null })
+      await invoke("secret_save", {
+        name: draft.name,
+        env: draft.env,
+        agents: [...draft.agents],
+        value: draft.value ?? null,
+      })
     },
     async assignedSecrets(command) {
       const { invoke } = await import("@tauri-apps/api/core")

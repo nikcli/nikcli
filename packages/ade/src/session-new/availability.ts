@@ -87,12 +87,8 @@ export function startable(statuses: AgentStatus[]): AgentStatus[] {
  * one guarantees the first launch fails.
  */
 export function defaultAgentId(statuses: AgentStatus[]): string | undefined {
-  const present = statuses.find(
-    (status) => status.availability === "presente" && isProbeable(status.agent),
-  )
+  const present = statuses.find((status) => status.availability === "presente" && isProbeable(status.agent))
   if (present) return present.agent.id
-  const unknown = statuses.find(
-    (status) => status.availability === "sconosciuto" && isProbeable(status.agent),
-  )
+  const unknown = statuses.find((status) => status.availability === "sconosciuto" && isProbeable(status.agent))
   return unknown?.agent.id
 }

@@ -27,8 +27,7 @@ const ANSI = new RegExp(
 /** Box drawing and the bullets TUIs put around a tool's output. */
 const FRAME_CHARS = /[─-╿▀-▟│┃❯›»•●○◆▶➜]/g
 
-const LOCAL_URL =
-  /\bhttps?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1?\])(?::(\d{2,5}))?(\/[^\s'"`<>)\]]*)?/i
+const LOCAL_URL = /\bhttps?:\/\/(localhost|127\.0\.0\.1|0\.0\.0\.0|\[::1?\])(?::(\d{2,5}))?(\/[^\s'"`<>)\]]*)?/i
 
 /** Words that say the line announces a server, not merely mentions an address. */
 const ANNOUNCES = /\b(local|ready|listening|running|started|serving|server|available|dev|preview|app)\b/i

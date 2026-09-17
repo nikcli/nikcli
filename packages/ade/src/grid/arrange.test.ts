@@ -148,10 +148,17 @@ describe("packTiles", () => {
 
 describe("sizes", () => {
   test("every session starts as one cell, whatever it is called", () => {
-    const list: Array<{ title: string; span?: Span }> = [{ title: "Master" }, { title: "A" }, { title: "B" }, { title: "C" }]
+    const list: Array<{ title: string; span?: Span }> = [
+      { title: "Master" },
+      { title: "A" },
+      { title: "B" },
+      { title: "C" },
+    ]
     const columns = gridColumns({ count: cellsWanted(list), width: 1800, height: 900 })
     expect(cellsWanted(list)).toBe(4)
-    expect(list.every((tile) => effectiveSpan(tile, columns).columns === 1 && effectiveSpan(tile, columns).rows === 1)).toBe(true)
+    expect(
+      list.every((tile) => effectiveSpan(tile, columns).columns === 1 && effectiveSpan(tile, columns).rows === 1),
+    ).toBe(true)
     expect(DEFAULT_SPAN).toEqual(one)
   })
 
@@ -265,7 +272,10 @@ describe("a pane alone in the grid", () => {
     const tiles = [spanInGrid(tall, 1)]
     const columns = gridColumns({ count: cellsWanted(tiles), ...box })
     expect(columns).toBe(1)
-    const { placements, rows } = packTiles(tiles.map((tile) => effectiveSpan(tile, columns)), columns)
+    const { placements, rows } = packTiles(
+      tiles.map((tile) => effectiveSpan(tile, columns)),
+      columns,
+    )
     expect(placements[0]).toEqual({ row: 0, column: 0, columns: 1, rows: 1 })
     expect(rows).toBe(1)
   })

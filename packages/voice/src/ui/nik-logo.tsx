@@ -34,8 +34,7 @@ export interface NikLogoProps {
 }
 
 /** The counter — the filled inside of the N, held back from the stems. */
-const COUNTER =
-  "M8 16H16V24H8ZM16 16H24V24H16ZM8 24H16V32H8ZM16 24H24V32H16ZM8 32H16V40H8ZM16 32H24V40H16Z"
+const COUNTER = "M8 16H16V24H8ZM16 16H24V24H16ZM8 24H16V32H8ZM16 24H24V32H16ZM8 32H16V40H8ZM16 32H24V40H16Z"
 
 /** The stems and the shoulder. */
 const STEMS =

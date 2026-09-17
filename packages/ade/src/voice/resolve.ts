@@ -63,9 +63,7 @@ export function resolveAgentId(spoken: string, agents: readonly AgentOption[]): 
 
 function unknownAgent(spoken: string, agents: readonly AgentOption[]): Error {
   const options = agents.map((agent) => agent.label).join(", ")
-  return new Error(
-    `Non conosco l'agente «${spoken.trim()}». Posso avviare: ${options}.`,
-  )
+  return new Error(`Non conosco l'agente «${spoken.trim()}». Posso avviare: ${options}.`)
 }
 
 export interface VoiceProject {
@@ -103,10 +101,7 @@ export function listProjectsFrom(
 }
 
 /** The project the spoken words name, by name or by root. */
-export function resolveProject<T extends { name: string; root: string }>(
-  spoken: string,
-  projects: readonly T[],
-): T {
+export function resolveProject<T extends { name: string; root: string }>(spoken: string, projects: readonly T[]): T {
   const key = spokenKey(spoken)
   if (key.length === 0) throw unknownProject(spoken, projects)
 

@@ -4,7 +4,13 @@ import type { RecordState, RecordTarget } from "./recording"
 
 const T0 = new Date(2026, 8, 16, 9, 5, 3).getTime()
 
-function setup(overrides: { start?: () => Promise<{ path: string | null }>; stop?: () => Promise<{ path: string | null }>; dir?: () => string | undefined } = {}) {
+function setup(
+  overrides: {
+    start?: () => Promise<{ path: string | null }>
+    stop?: () => Promise<{ path: string | null }>
+    dir?: () => string | undefined
+  } = {},
+) {
   const started: { target: RecordTarget; dir: string; name: string }[] = []
   const written: { path: string; text: string }[] = []
   const states: RecordState[] = []
@@ -101,7 +107,8 @@ describe("record/recorder tracks", () => {
     const samples = Int16Array.from(values)
     const buffer = new ArrayBuffer(44 + samples.length * 2)
     const view = new DataView(buffer)
-    const text = (offset: number, value: string) => [...value].forEach((c, i) => view.setUint8(offset + i, c.charCodeAt(0)))
+    const text = (offset: number, value: string) =>
+      [...value].forEach((c, i) => view.setUint8(offset + i, c.charCodeAt(0)))
     text(0, "RIFF")
     view.setUint32(4, 36 + samples.length * 2, true)
     text(8, "WAVE")
@@ -133,7 +140,8 @@ describe("record/recorder tracks", () => {
         bytes.push({ path, size: data.length })
       },
       startMic: mic
-        ? async () => (mic.refuse ? Promise.reject(new Error("negato")) : { extension: mic.extension, stop: async () => mic.bytes })
+        ? async () =>
+            mic.refuse ? Promise.reject(new Error("negato")) : { extension: mic.extension, stop: async () => mic.bytes }
         : undefined,
       frame: () => ({ width: 1440, height: 900, dpr: 1.25 }),
       dir: () => "C:/video",
@@ -153,7 +161,10 @@ describe("record/recorder tracks", () => {
 
     expect(bytes.map((file) => file.path)).toEqual(["C:/video/ADE.voce.wav", "C:/video/ADE.microfono.webm"])
     expect(bytes[1]!.size).toBe(3)
-    const lines = texts[0]!.text.trimEnd().split("\n").map((line) => JSON.parse(line))
+    const lines = texts[0]!.text
+      .trimEnd()
+      .split("\n")
+      .map((line) => JSON.parse(line))
     // The frame comes first, so the export can map page pixels to the video.
     expect(lines[0]).toMatchObject({ kind: "frame", at: 0, width: 1440, dpr: 1.25 })
     expect(lines[1]).toEqual({ kind: "said", at: 200, text: "Ci sono due sessioni." })

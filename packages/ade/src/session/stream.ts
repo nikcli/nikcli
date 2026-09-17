@@ -65,16 +65,40 @@ export interface Span {
  * variables.
  */
 export type AnsiColor =
-  | "black" | "red" | "green" | "yellow"
-  | "blue" | "magenta" | "cyan" | "white"
-  | "brightBlack" | "brightRed" | "brightGreen" | "brightYellow"
-  | "brightBlue" | "brightMagenta" | "brightCyan" | "brightWhite"
+  | "black"
+  | "red"
+  | "green"
+  | "yellow"
+  | "blue"
+  | "magenta"
+  | "cyan"
+  | "white"
+  | "brightBlack"
+  | "brightRed"
+  | "brightGreen"
+  | "brightYellow"
+  | "brightBlue"
+  | "brightMagenta"
+  | "brightCyan"
+  | "brightWhite"
 
 const COLOR_TABLE: Record<number, AnsiColor> = {
-  30: "black", 31: "red", 32: "green", 33: "yellow",
-  34: "blue", 35: "magenta", 36: "cyan", 37: "white",
-  90: "brightBlack", 91: "brightRed", 92: "brightGreen", 93: "brightYellow",
-  94: "brightBlue", 95: "brightMagenta", 96: "brightCyan", 97: "brightWhite",
+  30: "black",
+  31: "red",
+  32: "green",
+  33: "yellow",
+  34: "blue",
+  35: "magenta",
+  36: "cyan",
+  37: "white",
+  90: "brightBlack",
+  91: "brightRed",
+  92: "brightGreen",
+  93: "brightYellow",
+  94: "brightBlue",
+  95: "brightMagenta",
+  96: "brightCyan",
+  97: "brightWhite",
 }
 
 interface ParseState {
@@ -150,9 +174,7 @@ export function parseAnsi(line: string): Span[] {
             // SGR sequence
             flush()
             const paramStr = line.slice(i + 2, j)
-            const params = paramStr.length === 0
-              ? []
-              : paramStr.split(";").map(s => parseInt(s, 10) || 0)
+            const params = paramStr.length === 0 ? [] : paramStr.split(";").map((s) => parseInt(s, 10) || 0)
             state = applySgr(state, params)
           }
           // Skip the entire sequence regardless of type

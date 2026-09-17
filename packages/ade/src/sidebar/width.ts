@@ -29,11 +29,7 @@ export const MAX_SIDEBAR_WIDTH = 480
  * Infinity) which can occur during unconstrained pointer drag events or
  * corrupted storage states.
  */
-export function clampSidebarWidth(
-  width: number,
-  min = MIN_SIDEBAR_WIDTH,
-  max = MAX_SIDEBAR_WIDTH,
-): number {
+export function clampSidebarWidth(width: number, min = MIN_SIDEBAR_WIDTH, max = MAX_SIDEBAR_WIDTH): number {
   const safeMin = Number.isFinite(min) ? min : MIN_SIDEBAR_WIDTH
   const safeMax = Number.isFinite(max) ? Math.max(safeMin, max) : Math.max(safeMin, MAX_SIDEBAR_WIDTH)
 

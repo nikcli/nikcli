@@ -8,7 +8,6 @@ describe("record/export", () => {
     expect(pickExportMime(() => false)).toEqual({ mimeType: "video/webm", extension: "webm" })
   })
 
-
   test("the bed under a take without audio outlasts the take and is never louder than a step", () => {
     const wav = new DataView(quietWav(2, () => 0.9))
     expect(wav.byteLength).toBe(44 + 3 * 8000 * 2)
@@ -17,7 +16,12 @@ describe("record/export", () => {
   })
 
   test("the events file is read line by line, and a broken line is skipped", () => {
-    const text = ['{"kind":"frame","at":0,"width":10,"height":10,"dpr":1}', "{rotto", "", '{"kind":"click","at":5,"x":1,"y":2,"button":"left"}'].join("\n")
+    const text = [
+      '{"kind":"frame","at":0,"width":10,"height":10,"dpr":1}',
+      "{rotto",
+      "",
+      '{"kind":"click","at":5,"x":1,"y":2,"button":"left"}',
+    ].join("\n")
     expect(readEvents(text).map((event) => event.kind)).toEqual(["frame", "click"])
   })
 })

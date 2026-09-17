@@ -212,7 +212,12 @@ describe("the wait for the end of a sentence adapts to the speaker", () => {
 })
 
 describe("a pause that ended a sentence the speaker went on with", () => {
-  const { createPauseLearner, createSpeechDetector, DEFAULT_SILENCE_TIMEOUT_MS, MIN_SILENCE_TIMEOUT_MS } = require("./level")
+  const {
+    createPauseLearner,
+    createSpeechDetector,
+    DEFAULT_SILENCE_TIMEOUT_MS,
+    MIN_SILENCE_TIMEOUT_MS,
+  } = require("./level")
 
   test("is not cut again, however many short pauses follow", () => {
     const learner = createPauseLearner()

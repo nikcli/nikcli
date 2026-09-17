@@ -14,7 +14,12 @@ import { wavEnvelope, type PlaybackMeter } from "@nikcli-ai/voice/core"
  * not decode, a `play()` the webview refuses — so the speaker can say the
  * sentence in the system voice instead of skipping it without a sound.
  */
-export function playWav(wav: ArrayBuffer, signal: AbortSignal, outputDeviceId?: string, meter?: PlaybackMeter): Promise<void> {
+export function playWav(
+  wav: ArrayBuffer,
+  signal: AbortSignal,
+  outputDeviceId?: string,
+  meter?: PlaybackMeter,
+): Promise<void> {
   if (signal.aborted) return Promise.resolve()
   const envelope = meter ? wavEnvelope(wav) : undefined
   const url = URL.createObjectURL(new Blob([wav], { type: "audio/wav" }))
@@ -30,7 +35,8 @@ export function playWav(wav: ArrayBuffer, signal: AbortSignal, outputDeviceId?: 
       audio.removeAttribute("src")
       URL.revokeObjectURL(url)
       signal.removeEventListener("abort", done)
-      if (error && !signal.aborted) reject(error instanceof Error ? error : new Error("Riproduzione della voce non riuscita."))
+      if (error && !signal.aborted)
+        reject(error instanceof Error ? error : new Error("Riproduzione della voce non riuscita."))
       else resolve()
     }
     const done = () => finish()
@@ -38,9 +44,12 @@ export function playWav(wav: ArrayBuffer, signal: AbortSignal, outputDeviceId?: 
     audio.addEventListener("ended", done, { once: true })
     audio.addEventListener("error", () => failed(), { once: true })
     signal.addEventListener("abort", done, { once: true })
-    const sink = outputDeviceId && "setSinkId" in audio
-      ? (audio as HTMLAudioElement & { setSinkId(id: string): Promise<void> }).setSinkId(outputDeviceId).catch(() => {})
-      : Promise.resolve()
+    const sink =
+      outputDeviceId && "setSinkId" in audio
+        ? (audio as HTMLAudioElement & { setSinkId(id: string): Promise<void> })
+            .setSinkId(outputDeviceId)
+            .catch(() => {})
+        : Promise.resolve()
     void sink.then(() => {
       if (signal.aborted) return
       if (meter && envelope) untrack = meter.track(envelope, () => audio.currentTime)

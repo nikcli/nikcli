@@ -91,10 +91,7 @@ function splitJoined(token: string): string[] {
  *   a radio or a conversation in the room sounds like.
  * - Returns what remains of the utterance after the name, enabling single-shot commands.
  */
-export function matchesWakeWord(
-  utterance: string,
-  wakeWord: string
-): WakeWordMatch {
+export function matchesWakeWord(utterance: string, wakeWord: string): WakeWordMatch {
   const normUtterance = normalizeUtterance(utterance)
   const normWake = normalizeUtterance(wakeWord)
 
@@ -128,7 +125,10 @@ export function matchesWakeWord(
     }
 
     if (allMatched) {
-      const remainder = uTokens.slice(i + wTokens.length).join(" ").trim()
+      const remainder = uTokens
+        .slice(i + wTokens.length)
+        .join(" ")
+        .trim()
       if (i > 0 && WEAK_OPENERS.has(uTokens[i - 1]!) && remainder && noPauseAfterName(utterance)) {
         return { matched: false, remainder: "" }
       }

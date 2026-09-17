@@ -1,8 +1,7 @@
 import { describe, expect, test } from "bun:test"
 import { ASCII_COLS, ASCII_ROWS, edgeChar, renderAsciiCube } from "./ascii-cube"
 
-const frame = (angle: number) =>
-  renderAsciiCube({ cols: ASCII_COLS, rows: ASCII_ROWS, angle })
+const frame = (angle: number) => renderAsciiCube({ cols: ASCII_COLS, rows: ASCII_ROWS, angle })
 
 const lines = (angle: number) => frame(angle).split("\n")
 

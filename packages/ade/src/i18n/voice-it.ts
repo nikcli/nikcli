@@ -7,7 +7,6 @@
  * it understands are not here; they follow the speech-recognition language.
  */
 export const voiceIt = {
-
   // Voice buttons, orbs, HUD
   "vui.button.off": "Attiva controllo vocale (microfono disattivato)",
   "vui.button.listening": "Controllo vocale attivo in ascolto (premi per disattivare)",
@@ -27,10 +26,12 @@ export const voiceIt = {
   "vui.agentOrb.speaking": "L'assistente sta parlando: premi per interrompere",
   "vui.agentOrb.working": "L'assistente sta lavorando: premi per annullare",
   "vui.listening.text": (wakeWord: string) => `In ascolto · «${wakeWord}»`,
-  "vui.listening.title": (wakeWord: string) => `Il microfono è aperto e aspetta «${wakeWord}». Premi per smettere di ascoltare.`,
+  "vui.listening.title": (wakeWord: string) =>
+    `Il microfono è aperto e aspetta «${wakeWord}». Premi per smettere di ascoltare.`,
   "vui.paused.text": "Ascolto in pausa: PC bloccato",
   "vui.followUp.text": "Ti ascolto…",
-  "vui.followUp.title": (wakeWord: string) => `Per qualche secondo puoi continuare senza dire «${wakeWord}». Premi per smettere di ascoltare.`,
+  "vui.followUp.title": (wakeWord: string) =>
+    `Per qualche secondo puoi continuare senza dire «${wakeWord}». Premi per smettere di ascoltare.`,
   "vui.paused.title": "Riprende da solo quando sblocchi il PC. Premi per riprendere adesso.",
   "vui.shortcut.invalid": "Scorciatoia non valida.",
   "vui.shortcut.conflict": (command: string) => `In conflitto con il comando '${command}'.`,
@@ -102,19 +103,22 @@ export const voiceIt = {
   "vui.speed.fast.desc": "Claude Sonnet 5 con poco ragionamento; Codex con poco ragionamento",
   "vui.speed.cli": "Come la CLI",
   "vui.speed.cli.desc": "Il modello e il ragionamento impostati nella CLI: più lenta, a volte più accurata",
-  "vui.engine.note": "L'agente usa il tuo account della CLI, per uso personale: ADE non legge le tue credenziali, tiene pochi turni insieme e non riprova quando raggiungi il limite. Non modifica file e non esegue comandi nel progetto: il lavoro lo affida alle sessioni. Per un uso intensivo accedi alla CLI con una chiave API.",
+  "vui.engine.note":
+    "L'agente usa il tuo account della CLI, per uso personale: ADE non legge le tue credenziali, tiene pochi turni insieme e non riprova quando raggiungi il limite. Non modifica file e non esegue comandi nel progetto: il lavoro lo affida alle sessioni. Per un uso intensivo accedi alla CLI con una chiave API.",
   "vui.download.starting": "Avvio download modello Parakeet (~640 MB)...",
   "vui.download.failed": "Errore durante il download del modello Parakeet",
   "vui.trial.noEngine": "Impossibile avviare il motore vocale: comando non inviato.",
   "vui.shortcut.conflicting": "Scorciatoia in conflitto.",
-  "vui.shortcut.shadowed": (message: string) => `${message} ADE ha la precedenza: questa scorciatoia non attiva la voce.`,
+  "vui.shortcut.shadowed": (message: string) =>
+    `${message} ADE ha la precedenza: questa scorciatoia non attiva la voce.`,
   "vui.shortcut.recording": "Premi tasti… (Esc annulla)",
   "vui.panel.title": "Pannello di controllo vocale",
   "vui.panel.subtitle": "Modalità, attivazione, scorciatoie e motori di riconoscimento",
   "vui.panel.close": "Chiudi impostazioni (Esc)",
   "vui.panel.sections": "Sezioni delle impostazioni",
   "vui.mode.title": "Modalità predefinita",
-  "vui.mode.desc": "L'assistente e la dettatura sono due cose distinte, entrambe attive: si scelgono premendo l'orb o il microfono nella barra, o la rispettiva scorciatoia. Qui si decide solo quale delle due parte quando il microfono viene aperto senza dirlo.",
+  "vui.mode.desc":
+    "L'assistente e la dettatura sono due cose distinte, entrambe attive: si scelgono premendo l'orb o il microfono nella barra, o la rispettiva scorciatoia. Qui si decide solo quale delle due parte quando il microfono viene aperto senza dirlo.",
   "vui.mode.agent": "Agente",
   "vui.mode.active": "Attiva",
   "vui.mode.agent.desc": "Parli e ADE esegue",
@@ -127,13 +131,15 @@ export const voiceIt = {
   "vui.replies.silent.desc": "La risposta la leggi tu nel pannello",
   "vui.replies.voice": "Voce delle risposte",
   "vui.replies.source": "Fonte",
-  "vui.replies.note": "Le voci naturali si scaricano la prima volta che servono (circa 85 MB, solo su Windows) e poi funzionano senza rete. Finché il download non finisce risponde la voce di sistema.",
+  "vui.replies.note":
+    "Le voci naturali si scaricano la prima volta che servono (circa 85 MB, solo su Windows) e poi funzionano senza rete. Finché il download non finisce risponde la voce di sistema.",
   "vui.reply.male": "Maschile",
   "vui.reply.ugo": "Ugo (Piper), naturale e offline",
   "vui.reply.ugo.licence": "Modello CC-BY-4.0, derivato dalla voce lessac, il cui dataset è concesso per sola ricerca.",
   "vui.reply.female": "Femminile",
   "vui.reply.paola": "Paola (Piper), naturale e offline",
-  "vui.reply.paola.licence": "Dataset CC0, modello derivato dalla voce lessac, il cui dataset è concesso per sola ricerca.",
+  "vui.reply.paola.licence":
+    "Dataset CC0, modello derivato dalla voce lessac, il cui dataset è concesso per sola ricerca.",
   "vui.reply.system": "Voce di sistema",
   "vui.reply.system.desc": "Quella di Windows, senza scaricare nulla",
   "vui.send.title": "Comportamento invio trascrizione",
@@ -144,19 +150,23 @@ export const voiceIt = {
   "vui.activation.title": "Come si attiva",
   "vui.activation.desc": "Scegli come abilitare l'ascolto del microfono durante il lavoro",
   "vui.activation.push": "Premi e parla (push to talk)",
-  "vui.activation.push.desc": "Tieni premuta la scorciatoia mentre parli, oppure toccala: si chiude a fine risposta o con un altro tocco",
+  "vui.activation.push.desc":
+    "Tieni premuta la scorciatoia mentre parli, oppure toccala: si chiude a fine risposta o con un altro tocco",
   "vui.activation.toggle": "Acceso e spento (click continuo)",
   "vui.activation.toggle.desc": "Un comando accende, uno spegne",
   "vui.activation.wake": "Risponde solo se lo chiami per nome",
-  "vui.activation.wake.desc": "Consigliato con il microfono aperto: quello che si dice in stanza, o alla televisione, resta fuori",
-  "vui.activation.wake.disabled": "Disattivata: la parola di richiamo non è supportata in modalità trascrizione; è valida solo per eseguire comandi dell'agente.",
+  "vui.activation.wake.desc":
+    "Consigliato con il microfono aperto: quello che si dice in stanza, o alla televisione, resta fuori",
+  "vui.activation.wake.disabled":
+    "Disattivata: la parola di richiamo non è supportata in modalità trascrizione; è valida solo per eseguire comandi dell'agente.",
   "vui.listen.title": "Ascolto",
   "vui.listen.always": "Sempre attivo",
   "vui.listen.always.desc": (wakeWord: string) => `Il microfono si apre con ADE e aspetta «${wakeWord}»`,
   "vui.listen.manual": "Solo quando lo apri",
   "vui.listen.manual.desc": "Con il pulsante in alto o la scorciatoia",
   "vui.shortcuts.title": "Scorciatoie da tastiera",
-  "vui.shortcuts.desc": "Due combinazioni libere: fai clic su una scorciatoia e premi i tasti che vuoi. Servono Ctrl, Alt o Cmd, perché un tasto da solo serve a scrivere",
+  "vui.shortcuts.desc":
+    "Due combinazioni libere: fai clic su una scorciatoia e premi i tasti che vuoi. Servono Ctrl, Alt o Cmd, perché un tasto da solo serve a scrivere",
   "vui.shortcuts.agent": "Scorciatoia modalità agente",
   "vui.shortcuts.agent.desc": "Attiva l'ascolto dei comandi dell'agente",
   "vui.shortcuts.agent.reset": "Ripristina la scorciatoia predefinita per la modalità agente",
@@ -170,16 +180,21 @@ export const voiceIt = {
   "vui.language.search": "Cerca una lingua",
   "vui.language.search.placeholder": "Scrivi per filtrare (es. ital, en, fr)…",
   "vui.language.select": "Lingua di riconoscimento vocale",
-  "vui.language.count": (shown: number, total: number, backend: string) => `${shown} di ${total} lingue disponibili per il motore ${backend}. Invio sul campo di ricerca seleziona la prima corrispondenza.`,
-  "vui.language.unsupported": (language: string, backend: string) => `La lingua attualmente impostata ("${language}") non è supportata dal motore selezionato (${backend}).`,
+  "vui.language.count": (shown: number, total: number, backend: string) =>
+    `${shown} di ${total} lingue disponibili per il motore ${backend}. Invio sul campo di ricerca seleziona la prima corrispondenza.`,
+  "vui.language.unsupported": (language: string, backend: string) =>
+    `La lingua attualmente impostata ("${language}") non è supportata dal motore selezionato (${backend}).`,
   "vui.language.switch": (language: string) => `Passa a ${language}`,
   "vui.audio.title": "Audio",
   "vui.audio.desc": "Quale microfono ascolta, e dove va la voce dell'assistente",
   "vui.audio.mic": "Microfono",
-  "vui.audio.unlabelled": "I nomi dei dispositivi compaiono dopo la prima autorizzazione al microfono. Avvia l'ascolto una volta, poi riapri questa sezione.",
-  "vui.audio.current": (choice: string) => `Scelta attuale: ${choice}. Se il dispositivo non è collegato si usa quello di sistema, e la scelta resta salvata.`,
+  "vui.audio.unlabelled":
+    "I nomi dei dispositivi compaiono dopo la prima autorizzazione al microfono. Avvia l'ascolto una volta, poi riapri questa sezione.",
+  "vui.audio.current": (choice: string) =>
+    `Scelta attuale: ${choice}. Se il dispositivo non è collegato si usa quello di sistema, e la scelta resta salvata.`,
   "vui.audio.output": "Uscita audio",
-  "vui.audio.output.note": "La voce dell'assistente usa il sintetizzatore del sistema, che esce sempre dal dispositivo predefinito: questa scelta vale per le riproduzioni audio di ADE e sarà applicata anche alla voce quando passerà a una sintesi riproducibile.",
+  "vui.audio.output.note":
+    "La voce dell'assistente usa il sintetizzatore del sistema, che esce sempre dal dispositivo predefinito: questa scelta vale per le riproduzioni audio di ADE e sarà applicata anche alla voce quando passerà a una sintesi riproducibile.",
   "vui.device.system": "Dispositivo di sistema",
   "vui.device.mic": (position: number) => `Microfono ${position}`,
   "vui.device.output": (position: number) => `Uscita audio ${position}`,
@@ -187,17 +202,21 @@ export const voiceIt = {
   "vui.model.title": "Modello locale",
   "vui.model.none": "Niente in cache: il modello quantizzato (~640 MB) non è presente in locale.",
   "vui.model.local": "modello locale",
-  "vui.model.found": (mb: string, format: string) => `Rilevato sul tuo computer: ${mb} MB (${format}). Resta salvato in locale sul tuo disco.`,
+  "vui.model.found": (mb: string, format: string) =>
+    `Rilevato sul tuo computer: ${mb} MB (${format}). Resta salvato in locale sul tuo disco.`,
   "vui.model.path": (path: string) => `Percorso: ${path}`,
-  "vui.model.cached": (files: number, mb: string) => `${files} file, ${mb} MB. Resta installato tra un avvio e l'altro; ADE chiede al browser di non cancellarlo.`,
-  "vui.model.partial": (files: number, mb: string) => `${files} file, ${mb} MB — scaricamento incompleto. Resta installato tra un avvio e l'altro; ADE chiede al browser di non cancellarlo.`,
+  "vui.model.cached": (files: number, mb: string) =>
+    `${files} file, ${mb} MB. Resta installato tra un avvio e l'altro; ADE chiede al browser di non cancellarlo.`,
+  "vui.model.partial": (files: number, mb: string) =>
+    `${files} file, ${mb} MB — scaricamento incompleto. Resta installato tra un avvio e l'altro; ADE chiede al browser di non cancellarlo.`,
   "vui.model.download": "Scarica modello Parakeet (~640 MB)",
   "vui.model.download.hint": "Pronto all'uso appena finisce il download",
   "vui.model.downloading": "Download in corso...",
   "vui.model.downloaded": "✓ Modello scaricato con successo! Parakeet è ora attivo e pronto all'uso.",
   "vui.model.deleting": "Eliminazione…",
   "vui.model.delete": "Elimina il modello scaricato",
-  "vui.model.delete.hint": "Da usare se la trascrizione locale non parte: rimuove i file e li riscarica al prossimo avvio.",
+  "vui.model.delete.hint":
+    "Da usare se la trascrizione locale non parte: rimuove i file e li riscarica al prossimo avvio.",
   "vui.backend.title": "Motore di riconoscimento",
   "vui.backend.desc": "I tre motori ASR supportati con stato di idoneità diagnostica",
   "vui.backend.parakeet": "Parakeet locale",
@@ -208,7 +227,8 @@ export const voiceIt = {
   "vui.backend.available": "Disponibile (~640 MB)",
   "vui.backend.unsupported": "Non supportato",
   "vui.backend.needsKey": "Serve la chiave",
-  "vui.backend.parakeet.note": "Modello neurale quantizzato (~640 MB, INT8). Trascrizione vocale neurale sul tuo computer, privata e senza inviare audio a server esterni.",
+  "vui.backend.parakeet.note":
+    "Modello neurale quantizzato (~640 MB, INT8). Trascrizione vocale neurale sul tuo computer, privata e senza inviare audio a server esterni.",
   "vui.backend.accel": "Accelerazione hardware",
   "vui.backend.accel.auto": "Sceglie WebGPU se disponibile, altrimenti WASM",
   "vui.backend.accel.gpu": "Inferenza sulla GPU",
@@ -226,7 +246,8 @@ export const voiceIt = {
   "vui.key.show": "Mostra",
   "vui.key.save": "Salva",
   "vui.key.looksWrong": "Le chiavi OpenRouter iniziano di norma con sk-or-: controlla di aver incollato quella giusta.",
-  "vui.key.hint": "La chiave non viene mai mostrata in chiaro né registrata nei file di log. Invio salva, Esc svuota il campo.",
+  "vui.key.hint":
+    "La chiave non viene mai mostrata in chiaro né registrata nei file di log. Invio salva, Esc svuota il campo.",
   "vui.key.cost": "Costo dell'ultima richiesta:",
   "vui.commands.title": "Comandi vocali",
   "vui.commands.desc": "Il vocabolario riconosciuto. Scrivine uno per provarlo senza parlare",
@@ -239,7 +260,8 @@ export const voiceIt = {
   "vui.commands.none": "Nessun comando corrisponde a questo filtro.",
   "vui.commands.confirms": "chiede conferma",
   "vui.commands.usePhrase": "Usa questa frase nel campo di prova",
-  "vui.commands.count": (shown: number, total: number) => `${shown} comandi su ${total}. Un clic su una frase la copia nel campo di prova qui sopra.`,
+  "vui.commands.count": (shown: number, total: number) =>
+    `${shown} comandi su ${total}. Un clic su una frase la copia nel campo di prova qui sopra.`,
   "vui.live.cancel.tip": "Interrompe la frase in corso senza spegnere il microfono",
   "vui.live.cancel": "Annulla",
   "vui.live.stop": "Ferma ascolto",
@@ -253,14 +275,17 @@ export const voiceIt = {
   "vui.asr.keyCheck": "Errore durante la verifica della chiave OpenRouter.",
 
   // Voice wake word hint
-  "vui.wake.hint": (wakeWord: string) => `Inizia la frase con "${wakeWord}" (va bene anche "ehi nik" o "hey nick"), per esempio "${wakeWord}, apri il browser". Il silenzio non costa niente. Mentre aspetta il nome, anche mentre sta lavorando, delle frasi più lunghe di due secondi manda al servizio di trascrizione solo il primo secondo e mezzo, e il resto solo se inizia con il nome; le frasi più corte, come «annulla», partono intere. Detto il nome da solo, o premuto il pulsante, ascolta senza nome per dieci secondi. Se in un'ora le richieste sono più di 120 te lo dice. Si mette in pausa solo con il PC bloccato o in sospensione e riprende da solo. Il pulsante in alto e la scorciatoia lo chiamano senza dire niente; mentre sta lavorando «annulla» lo ferma comunque.`,
+  "vui.wake.hint": (wakeWord: string) =>
+    `Inizia la frase con "${wakeWord}" (va bene anche "ehi nik" o "hey nick"), per esempio "${wakeWord}, apri il browser". Il silenzio non costa niente. Mentre aspetta il nome, anche mentre sta lavorando, delle frasi più lunghe di due secondi manda al servizio di trascrizione solo il primo secondo e mezzo, e il resto solo se inizia con il nome; le frasi più corte, come «annulla», partono intere. Detto il nome da solo, o premuto il pulsante, ascolta senza nome per dieci secondi. Se in un'ora le richieste sono più di 120 te lo dice. Si mette in pausa solo con il PC bloccato o in sospensione e riprende da solo. Il pulsante in alto e la scorciatoia lo chiamano senza dire niente; mentre sta lavorando «annulla» lo ferma comunque.`,
 
   // Voice microphone errors, settings repairs, shortcut warnings
   "vui.error.unknown": "errore sconosciuto",
-  "vui.mic.noFormat": "Nessun formato audio supportato per la registrazione: né 'audio/webm;codecs=opus' né 'audio/mp4' sono disponibili in questo ambiente.",
+  "vui.mic.noFormat":
+    "Nessun formato audio supportato per la registrazione: né 'audio/webm;codecs=opus' né 'audio/mp4' sono disponibili in questo ambiente.",
   "vui.mic.unsupported": "L'accesso al microfono non è supportato in questo browser o ambiente.",
   "vui.mic.chosenMissing": "Il microfono scelto non è disponibile. Scegline un altro nelle impostazioni vocali.",
-  "vui.mic.denied": "Accesso al microfono negato: consentilo nelle impostazioni di privacy del sistema (Windows: Impostazioni › Privacy e sicurezza › Microfono, per le app desktop).",
+  "vui.mic.denied":
+    "Accesso al microfono negato: consentilo nelle impostazioni di privacy del sistema (Windows: Impostazioni › Privacy e sicurezza › Microfono, per le app desktop).",
   "vui.mic.none": "Nessun microfono rilevato. Collega un microfono e riprova.",
   "vui.mic.noneDevice": "Nessun microfono rilevato. Collega un dispositivo audio e riprova.",
   "vui.mic.failed": (reason: string) => `Impossibile accedere al microfono: ${reason}`,
@@ -272,20 +297,28 @@ export const voiceIt = {
   "vui.fix.defaults": "Impostazioni non valide o assenti: ripristinati i valori predefiniti.",
   "vui.fix.noVersion": "Versione impostazioni mancante: impostata alla versione 1.",
   "vui.fix.migrated": (from: string, to: string) => `Migrata versione impostazioni da ${from} a ${to}.`,
-  "vui.fix.wakeDefault": "Ora l'assistente risponde solo quando lo chiami per nome: puoi cambiarlo nelle impostazioni vocali.",
-  "vui.fix.mode": (value: string, fallback: string) => `Modalità '${value}' non riconosciuta: ripristinata '${fallback}'.`,
-  "vui.fix.activation": (value: string, fallback: string) => `Attivazione '${value}' non riconosciuta: ripristinata '${fallback}'.`,
-  "vui.fix.send": (value: string, fallback: string) => `Invio trascrizione '${value}' non valido: ripristinato '${fallback}'.`,
+  "vui.fix.wakeDefault":
+    "Ora l'assistente risponde solo quando lo chiami per nome: puoi cambiarlo nelle impostazioni vocali.",
+  "vui.fix.mode": (value: string, fallback: string) =>
+    `Modalità '${value}' non riconosciuta: ripristinata '${fallback}'.`,
+  "vui.fix.activation": (value: string, fallback: string) =>
+    `Attivazione '${value}' non riconosciuta: ripristinata '${fallback}'.`,
+  "vui.fix.send": (value: string, fallback: string) =>
+    `Invio trascrizione '${value}' non valido: ripristinato '${fallback}'.`,
   "vui.fix.language": (fallback: string) => `Lingua non specificata: ripristinata '${fallback}'.`,
-  "vui.fix.agentChord": (value: string, problem: string, fallback: string) => `Scorciatoia modalità agente non utilizzabile ('${value}'). ${problem} Ripristinata '${fallback}'.`,
-  "vui.fix.transcriptionChord": (value: string, problem: string, fallback: string) => `Scorciatoia modalità trascrizione non utilizzabile ('${value}'). ${problem} Ripristinata '${fallback}'.`,
+  "vui.fix.agentChord": (value: string, problem: string, fallback: string) =>
+    `Scorciatoia modalità agente non utilizzabile ('${value}'). ${problem} Ripristinata '${fallback}'.`,
+  "vui.fix.transcriptionChord": (value: string, problem: string, fallback: string) =>
+    `Scorciatoia modalità trascrizione non utilizzabile ('${value}'). ${problem} Ripristinata '${fallback}'.`,
   "vui.fix.backend": (value: string, fallback: string) => `Backend '${value}' non valido: ripristinato '${fallback}'.`,
-  "vui.fix.parakeetBackend": (value: string, fallback: string) => `Backend Parakeet '${value}' non riconosciuto: ripristinato '${fallback}'.`,
+  "vui.fix.parakeetBackend": (value: string, fallback: string) =>
+    `Backend Parakeet '${value}' non riconosciuto: ripristinato '${fallback}'.`,
   "vui.fix.wordsDropped": (dropped: string) => `Parole personalizzate non testuali ignorate: ${dropped}.`,
   "vui.fix.wordsInvalid": "Elenco di parole personalizzate non valido: svuotato.",
   "vui.fix.speakReplies": "Lettura delle risposte non valida: ripristinata attiva.",
   "vui.fix.replyVoice": (value: string) => `Voce delle risposte '${value}' non riconosciuta: ripristinata Ugo.`,
-  "vui.fix.agentSpeed": (value: string) => `Velocità dell'agente '${value}' non riconosciuta: ripristinata quella rapida.`,
+  "vui.fix.agentSpeed": (value: string) =>
+    `Velocità dell'agente '${value}' non riconosciuta: ripristinata quella rapida.`,
   "vui.fix.agentEngine": (value: string) => `Motore dell'agente '${value}' non riconosciuto: ripristinato automatico.`,
   "vui.command.palette": "Tavolozza comandi",
   "vui.command.sessionNew": "Nuova sessione",
@@ -296,14 +329,19 @@ export const voiceIt = {
   "vui.command.themeToggle": "Cambia tema",
   "vui.command.agent": "Modalità agente",
   "vui.command.transcription": "Modalità trascrizione",
-  "vui.clash.taken": (label: string, chord: string, winner: string) => `${label}: «${chord}» è già di '${winner}' e ha la precedenza.`,
-  "vui.clash.both": (label: string, chord: string) => `${label}: usano entrambe «${chord}», quindi nessuna delle due si attiva.`,
+  "vui.clash.taken": (label: string, chord: string, winner: string) =>
+    `${label}: «${chord}» è già di '${winner}' e ha la precedenza.`,
+  "vui.clash.both": (label: string, chord: string) =>
+    `${label}: usano entrambe «${chord}», quindi nessuna delle due si attiva.`,
   "vui.clash.inactive": (details: string) => `Scorciatoie vocali non attive. ${details} Cambiale nel pannello vocale.`,
   "vui.risk.noMainKey": "Scorciatoia non valida: manca un tasto principale.",
   "vui.risk.typing": (key: string) => `«${key}» da solo serve a scrivere: aggiungi Ctrl, Alt o Cmd.`,
-  "vui.risk.typingMove": (key: string) => `«${key}» da solo serve a scrivere e a spostarsi nel testo: aggiungi Ctrl, Alt o Cmd.`,
-  "vui.risk.winKey": "Windows e molti ambienti Linux riservano le combinazioni con il tasto Win: potrebbe non arrivare mai ad ADE.",
-  "vui.risk.altLetter": "Alt più una lettera può essere intercettato dal menu della finestra o servire ad AltGr per scrivere caratteri accentati.",
+  "vui.risk.typingMove": (key: string) =>
+    `«${key}» da solo serve a scrivere e a spostarsi nel testo: aggiungi Ctrl, Alt o Cmd.`,
+  "vui.risk.winKey":
+    "Windows e molti ambienti Linux riservano le combinazioni con il tasto Win: potrebbe non arrivare mai ad ADE.",
+  "vui.risk.altLetter":
+    "Alt più una lettera può essere intercettato dal menu della finestra o servire ad AltGr per scrivere caratteri accentati.",
 
   // Voice recording error
   "vui.mic.recordFailed": (reason: string) => `Errore avvio registrazione audio: ${reason}`,

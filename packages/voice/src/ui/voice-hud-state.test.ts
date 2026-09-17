@@ -1,12 +1,5 @@
 import { describe, expect, it } from "bun:test"
-import {
-  agentHudState,
-  latestExchange,
-  HUD_WAVE,
-  orbRim,
-  preparingHudState,
-  waveBarHeight,
-} from "./voice-hud-state"
+import { agentHudState, latestExchange, HUD_WAVE, orbRim, preparingHudState, waveBarHeight } from "./voice-hud-state"
 
 const base = { partial: "", spoken: "", readback: undefined, wakeWord: "hei nik" }
 
@@ -144,16 +137,33 @@ describe("agentHudState", () => {
   })
 
   it("a matched command still reads back what it does while executing", () => {
-    const state = agentHudState({ ...base, status: "executing", readback: "apro la tavolozza", utterance: "apri la tavolozza" })
+    const state = agentHudState({
+      ...base,
+      status: "executing",
+      readback: "apro la tavolozza",
+      utterance: "apri la tavolozza",
+    })
     expect(state.line).toBe("apro la tavolozza")
     expect(state.quoted).toBe(false)
   })
 
   it("after the turn, shows the answer instead of 'parla pure'", () => {
-    const state = agentHudState({ ...base, status: "idle", utterance: "quante sessioni?", answer: "Ci sono tre sessioni aperte." })
-    expect(state).toMatchObject({ label: "risposta", line: "Ci sono tre sessioni aperte.", quoted: false, tone: "done" })
+    const state = agentHudState({
+      ...base,
+      status: "idle",
+      utterance: "quante sessioni?",
+      answer: "Ci sono tre sessioni aperte.",
+    })
+    expect(state).toMatchObject({
+      label: "risposta",
+      line: "Ci sono tre sessioni aperte.",
+      quoted: false,
+      tone: "done",
+    })
     // New speech still wins over the old answer.
-    expect(agentHudState({ ...base, status: "listening", partial: "e la", answer: "Ci sono tre sessioni aperte." }).line).toBe("e la")
+    expect(
+      agentHudState({ ...base, status: "listening", partial: "e la", answer: "Ci sono tre sessioni aperte." }).line,
+    ).toBe("e la")
   })
 
   it("latestExchange pairs the latest sentence with an answer only when it came after it", () => {

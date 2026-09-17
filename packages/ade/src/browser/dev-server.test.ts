@@ -56,6 +56,8 @@ describe("offers", () => {
     expect(
       shouldOffer({ sessionId: "n1", url: "http://localhost:3000/", seen, ownedUrl: "http://127.0.0.1:3000/settings" }),
     ).toBe(false)
-    expect(shouldOffer({ sessionId: "n1", url: "http://localhost:3000/", seen, ownedUrl: "http://localhost:4000/" })).toBe(true)
+    expect(
+      shouldOffer({ sessionId: "n1", url: "http://localhost:3000/", seen, ownedUrl: "http://localhost:4000/" }),
+    ).toBe(true)
   })
 })

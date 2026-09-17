@@ -46,7 +46,8 @@ export const CATALOG_EN: Readonly<Record<string, CatalogEnglish>> = {
   figma: {
     description: "Bring Figma design context into your code, and write to the canvas.",
     authentication: "Remote OAuth or desktop app session",
-    warning: "The remote server only accepts clients approved in Figma's catalog; the guide uses the local desktop server.",
+    warning:
+      "The remote server only accepts clients approved in Figma's catalog; the guide uses the local desktop server.",
   },
   supabase: {
     description: "Manage Supabase projects: tables, migrations, SQL, logs and Edge Functions.",
@@ -71,7 +72,8 @@ export const CATALOG_EN: Readonly<Record<string, CatalogEnglish>> = {
   slack: {
     description: "Search messages and channels, read threads and post messages in Slack.",
     authentication: "Confidential OAuth with a registered Slack app",
-    warning: "You need a Slack app published in the Marketplace or internal to the workspace; unlisted apps aren't allowed.",
+    warning:
+      "You need a Slack app published in the Marketplace or internal to the workspace; unlisted apps aren't allowed.",
   },
   gmail: {
     description: "Search email, read threads and create drafts in Gmail.",
@@ -89,14 +91,17 @@ export const CATALOG_EN: Readonly<Record<string, CatalogEnglish>> = {
     warning: "Google Workspace MCP is in Developer Preview and needs the Calendar and MCP APIs enabled.",
   },
   higgsfield: {
-    description: "Generate images and video with models such as Kling, Veo, Flux and Seedream, and browse your history.",
+    description:
+      "Generate images and video with models such as Kling, Veo, Flux and Seedream, and browse your history.",
     authentication: "OAuth with a Higgsfield account",
-    warning: "Community badge: the server isn't in the official MCP registry, and the official logo has to be requested from the vendor.",
+    warning:
+      "Community badge: the server isn't in the official MCP registry, and the official logo has to be requested from the vendor.",
   },
   "ryze-ai": {
     description: "Analyze and manage Google Ads and Meta Ads campaigns and GA4 data, with approval before any change.",
     authentication: "OAuth with Google and Meta sign-in",
-    warning: "Community badge: gives a third party write access to your Google and Meta ad accounts. Consider it carefully.",
+    warning:
+      "Community badge: gives a third party write access to your Google and Meta ad accounts. Consider it carefully.",
   },
   atlassian: {
     description: "Work across Jira, Jira Service Management, Confluence, Bitbucket, Goals and Loom.",

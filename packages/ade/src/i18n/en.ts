@@ -175,8 +175,10 @@ export const en: Messages = {
   "preview.binary": "Binary file or unsupported encoding.",
   "preview.loading": "Loading…",
   "empty.title": "No project open",
-  "empty.browser": "In the browser, ADE can't read the disk or start processes. Worktrees and real sessions are only available in the desktop app.",
-  "empty.desktop": "Choose a folder to get started. In a git repository, each session gets its own isolated working copy; otherwise agents write straight into the folder.",
+  "empty.browser":
+    "In the browser, ADE can't read the disk or start processes. Worktrees and real sessions are only available in the desktop app.",
+  "empty.desktop":
+    "Choose a folder to get started. In a git repository, each session gets its own isolated working copy; otherwise agents write straight into the folder.",
   "empty.open": "Open project",
   "projectBar.noGit": "Not a git repository: agents edit the project files directly.",
   "projectBar.noGit.short": "not isolated",
@@ -185,7 +187,7 @@ export const en: Messages = {
   "new.title": "New session",
   "new.cancel": "Cancel",
   "new.close": "Close",
-  "new.launch": (count) => count === 1 ? "Start 1 session" : `Start ${count} sessions`,
+  "new.launch": (count) => (count === 1 ? "Start 1 session" : `Start ${count} sessions`),
   "new.agent": "Agent",
   "new.notInstalled": "not installed",
   "new.missing": "missing",
@@ -193,23 +195,29 @@ export const en: Messages = {
   "new.count.label": "parallel sessions",
   "new.preview": "Will start",
   "new.role.reviewer": "reviews",
-  "new.summary": (count, agent, workspace) => `${count} ${count === 1 ? "session" : "sessions"} with ${agent} in ${workspace}`,
+  "new.summary": (count, agent, workspace) =>
+    `${count} ${count === 1 ? "session" : "sessions"} with ${agent} in ${workspace}`,
   "hooks.title": "Session resume",
-  "hooks.desc": "When ADE restarts, it reopens your sessions where they left off. To do that it needs to know which conversation each panel had. Some CLIs accept an ID chosen by ADE; others, like codex, don't, and only they can report it. Here ADE adds an entry to that CLI's configuration so it reports the ID whenever a session starts.",
-  "hooks.files": "These files don't belong to ADE. They're shown in full below, any entries already in them are left alone, and Remove puts the configuration back the way it was.",
+  "hooks.desc":
+    "When ADE restarts, it reopens your sessions where they left off. To do that it needs to know which conversation each panel had. Some CLIs accept an ID chosen by ADE; others, like codex, don't, and only they can report it. Here ADE adds an entry to that CLI's configuration so it reports the ID whenever a session starts.",
+  "hooks.files":
+    "These files don't belong to ADE. They're shown in full below, any entries already in them are left alone, and Remove puts the configuration back the way it was.",
   "hooks.state.unavailable": "unavailable",
   "hooks.state.on": "on",
   "hooks.state.broken": "needs reinstalling",
   "hooks.state.off": "off",
-  "hooks.broken": "The configuration has an ADE entry that doesn't match the script on disk, so the CLI is running a hook that does nothing. Reinstall to fix it.",
+  "hooks.broken":
+    "The configuration has an ADE entry that doesn't match the script on disk, so the CLI is running a hook that does nothing. Reinstall to fix it.",
   "hooks.install": "Install",
   "hooks.reinstall": "Reinstall",
   "hooks.remove": "Remove",
-  "hooks.outside": "The script does nothing outside ADE: it exits at the first environment variable it can't find, so the same CLI started from any other terminal behaves exactly as before.",
+  "hooks.outside":
+    "The script does nothing outside ADE: it exits at the first environment variable it can't find, so the same CLI started from any other terminal behaves exactly as before.",
   "agent.mic.start": "Turn on microphone",
   "agent.mic.stop": "Turn off microphone",
   "agent.settings": "Settings",
-  "agent.noPlanner": "Without an OpenRouter key in the voice settings, the assistant only understands fixed commands. It can't plan requests like “start four claude sessions”.",
+  "agent.noPlanner":
+    "Without an OpenRouter key in the voice settings, the assistant only understands fixed commands. It can't plan requests like “start four claude sessions”.",
   "agent.empty.title": "Nothing here yet.",
   "agent.empty.body": "Talk to the assistant or type below. What you ask and everything it does for you shows up here.",
   "agent.input": "Message the assistant…",
@@ -240,7 +248,8 @@ export const en: Messages = {
   "update.desktopOnly": "Updates are checked from the desktop app.",
   "update.alreadyShown": (version) => `Already in your notifications: ADE ${version} is available.`,
   "update.openFailed": (problem) => `Couldn't open the page: ${problem}`,
-  "update.restart": (running) => `ADE will restart to update. ${running === 1 ? "The running session will be stopped and resumed" : `The ${running} running sessions will be stopped and resumed`} when it reopens.`,
+  "update.restart": (running) =>
+    `ADE will restart to update. ${running === 1 ? "The running session will be stopped and resumed" : `The ${running} running sessions will be stopped and resumed`} when it reopens.`,
   "update.restart.title": "Update ADE",
   "update.restart.ok": "Update and restart",
   "update.restart.later": "Later",
@@ -256,12 +265,15 @@ export const en: Messages = {
   "boot.restore": "restoring sessions",
   "boot.project": "opening the project",
   "editor.closeDirty": (path) => `${path}\n\nYou have unsaved changes. Closing will discard them.\n\nClose anyway?`,
-  "editor.saveUnreadable": (path, problem) => `${path}\n\nCouldn't re-read the file to check whether it changed (${problem}).\n\nSave anyway and replace what's on disk?`,
+  "editor.saveUnreadable": (path, problem) =>
+    `${path}\n\nCouldn't re-read the file to check whether it changed (${problem}).\n\nSave anyway and replace what's on disk?`,
   "editor.saveCancelled.unreadable": (problem) => `Save cancelled: couldn't re-read the file (${problem}).`,
-  "editor.saveChanged": (path) => `${path}\n\nThe file changed on disk since you opened it. Saving will replace those changes with yours.\n\nContinue?`,
+  "editor.saveChanged": (path) =>
+    `${path}\n\nThe file changed on disk since you opened it. Saving will replace those changes with yours.\n\nContinue?`,
   "editor.saveCancelled.changed": "Save cancelled: the file changed on disk.",
   "keys.unread": (problem) => `Couldn't read the API keys, so the session starts without them: ${problem}`,
-  "task.notSent": "ADE didn't send the initial task because the session never settled. Type it yourself once it's ready.",
+  "task.notSent":
+    "ADE didn't send the initial task because the session never settled. Type it yourself once it's ready.",
   "task.notSent.short": "Initial task not sent: the session wasn't ready.",
   "task.stepNotSent": (text) => `ADE didn't type “${text}” because the connection never settled. Type it yourself.`,
   "task.none": "No initial task",
@@ -282,11 +294,13 @@ export const en: Messages = {
   "settings.noPlugins": "No plugins loaded.",
   "settings.notBuilt": "Nothing to configure here yet: the section exists, the feature doesn't.",
   "settings.grid.title": "Grid",
-  "settings.grid.desc": "How many columns the panels use in the Code view. On Auto, ADE picks based on the window width and how many panels are open, so none gets narrower than is readable.",
+  "settings.grid.desc":
+    "How many columns the panels use in the Code view. On Auto, ADE picks based on the window width and how many panels are open, so none gets narrower than is readable.",
   "settings.grid.columns": "Grid columns",
   "settings.grid.auto": "Auto",
   "settings.mcp.desc": "The servers ADE connects to over the Model Context Protocol, and the tools they provide.",
-  "settings.mcp.instead": "In the meantime, the agent CLIs ADE starts use their own MCP configuration, the same one they'd use from a terminal.",
+  "settings.mcp.instead":
+    "In the meantime, the agent CLIs ADE starts use their own MCP configuration, the same one they'd use from a terminal.",
 
   // Bar, window, bell, panel actions
   "pane.expand": "Maximize",
@@ -305,7 +319,8 @@ export const en: Messages = {
   "record.export.desktopOnly": "Exporting only works in the desktop app.",
   "record.export.done": (path) => `Video ready: ${path}`,
   "record.export.failed": (problem) => `Export failed: ${problem}`,
-  "pane.maybeStuck": (request) => `Possibly stuck: working for over an hour with no output or changes (request ${request})`,
+  "pane.maybeStuck": (request) =>
+    `Possibly stuck: working for over an hour with no output or changes (request ${request})`,
 
   // Pane activity (labels for the codes in grid/activity.ts)
   "activity.ready": "Ready",
@@ -347,18 +362,20 @@ export const en: Messages = {
   "browser.error.hint": "Make sure the server is running and reachable.",
   "browser.retry": "Try again",
   "browser.blocked.title": "This site can't be shown inside ADE",
-  "browser.blocked.msg": "The server forbids embedding the page in another app (X-Frame-Options or CSP frame-ancestors) and doesn't let ADE read a copy of it.",
+  "browser.blocked.msg":
+    "The server forbids embedding the page in another app (X-Frame-Options or CSP frame-ancestors) and doesn't let ADE read a copy of it.",
   "browser.openExternal": "Open in browser",
   "browser.openExternal.failed": (problem) => `Couldn't open it in the browser: ${problem}`,
   "browser.noCopy.title": "Inspect isn't available for this page",
-  "browser.noCopy.msg": "To select elements ADE needs a copy of the page, and this site doesn't allow reading one (CORS). In Browse the page stays visible.",
+  "browser.noCopy.msg":
+    "To select elements ADE needs a copy of the page, and this site doesn't allow reading one (CORS). In Browse the page stays visible.",
   "browser.noCopy.back": "Back to Browse",
   "browser.context": "Captured context:",
   "browser.clearSelection": "Clear selection",
   "browser.prompt.selected": "Describe what to change…",
   "browser.prompt.empty": "Point at an element on the page, or type an instruction…",
   "browser.selection.none": "No elements selected",
-  "browser.selection.count": (count) => count === 1 ? "1 element selected" : `${count} elements selected`,
+  "browser.selection.count": (count) => (count === 1 ? "1 element selected" : `${count} elements selected`),
   "browser.owner.none": "Not linked",
   "browser.owner.ready": (title) => `↳ ${title}`,
   "browser.owner.closed": (title) => `${title} (closed)`,
@@ -398,7 +415,7 @@ export const en: Messages = {
   "date.inDays": (days) => `in ${days} days`,
   "decisions.title": "Decisions",
   "decisions.openCount": (count) => `${count} open`,
-  "decisions.count": (count) => count === 1 ? "1 decision" : `${count} decisions`,
+  "decisions.count": (count) => (count === 1 ? "1 decision" : `${count} decisions`),
   "decisions.needAnswer": "choose an option or write your answer",
   "decisions.from": (who) => `from ${who}`,
   "decisions.unlocks": (what) => `unblocks: ${what}`,
@@ -438,7 +455,8 @@ export const en: Messages = {
   "decisions.recipient.nobody": "no session",
   "decisions.recipient.stopped": "(stopped)",
   "decisions.recipient.closed": "(closed)",
-  "decisions.recipient.confirm": (queued, title) => `Deliver ${queued === 1 ? "the queued answer" : `the ${queued} queued answers`} to “${title}”?`,
+  "decisions.recipient.confirm": (queued, title) =>
+    `Deliver ${queued === 1 ? "the queued answer" : `the ${queued} queued answers`} to “${title}”?`,
   "decisions.recipient.deliver": "Deliver",
   "decisions.recipient.none": "No session receives answers, so they stay queued until you choose one.",
   "decisions.recipient.idle": (title) => `“${title}” isn't running, so answers stay queued.`,
@@ -448,8 +466,10 @@ export const en: Messages = {
   "decisions.sheet.needChoice": "Nothing chosen: press 1–9 or click an option, then Enter",
   "decisions.sheet.needText": "Write your answer in the note, then press Ctrl+Enter",
   "decisions.sheet.keys": "1–9 choose · Enter records · ← → browse · Esc closes",
-  "decisions.sheet.queued.none": (count) => `${count === 1 ? "1 answer" : `${count} answers`} queued: no session receives them`,
-  "decisions.sheet.queued.idle": (count) => `${count === 1 ? "1 answer" : `${count} answers`} queued: the chosen session isn't running`,
+  "decisions.sheet.queued.none": (count) =>
+    `${count === 1 ? "1 answer" : `${count} answers`} queued: no session receives them`,
+  "decisions.sheet.queued.idle": (count) =>
+    `${count === 1 ? "1 answer" : `${count} answers`} queued: the chosen session isn't running`,
   "decisions.sheet.full": "Full view",
   "decisions.hint.ready": (title) => `→ ${title}, as a message`,
   "decisions.hint.idle": (title) => `→ queued: “${title}” isn't running`,
@@ -460,7 +480,8 @@ export const en: Messages = {
   "editor.nothingToSave": "Nothing to save.",
   "editor.noFile": "No file open.",
   "editor.loading": "Loading file…",
-  "editor.truncatedBanner": "This file is too large and was only partly loaded. Saving is turned off to protect the file on disk.",
+  "editor.truncatedBanner":
+    "This file is too large and was only partly loaded. Saving is turned off to protect the file on disk.",
   "editor.modified": "Modified",
   "editor.saved": "Saved",
   "editor.unsaved": "Unsaved changes",
@@ -476,7 +497,8 @@ export const en: Messages = {
   "plugins.renderFailed": "This plugin couldn't draw its panel.",
   "plugins.sectionFailed": "Section unavailable.",
   "plugins.summary": (active) => `${active} ${active === 1 ? "plugin" : "plugins"} active.`,
-  "plugins.summary.failed": (active, failed) => `${active} ${active === 1 ? "plugin" : "plugins"} active, ${failed} failed to load.`,
+  "plugins.summary.failed": (active, failed) =>
+    `${active} ${active === 1 ? "plugin" : "plugins"} active, ${failed} failed to load.`,
   "plugins.commands": (count) => `${count} ${count === 1 ? "command" : "commands"}`,
   "plugins.panes": (count) => `${count} ${count === 1 ? "panel" : "panels"}`,
   "plugins.sections": (count) => `${count} ${count === 1 ? "section" : "sections"}`,
@@ -500,7 +522,7 @@ export const en: Messages = {
   "shots.close": "close",
 
   // Extensions
-  "extensions.missingType": "no type \"http\": Claude Code won't load it, other clients will",
+  "extensions.missingType": 'no type "http": Claude Code won\'t load it, other clients will',
   "extensions.filter": "Filter",
   "extensions.filter.all": "All",
   "extensions.filter.oneClick": "One click",
@@ -510,14 +532,17 @@ export const en: Messages = {
   "extensions.transport.stdio": "local (stdio)",
   "extensions.after.oauth": "The agent asks you to sign in (OAuth) the first time it's used.",
   "extensions.after.none": "No credentials needed.",
-  "extensions.after.oauthOrEnv": (list) => `Sign in with OAuth on first use, or set ${list} in the agent's environment.`,
+  "extensions.after.oauthOrEnv": (list) =>
+    `Sign in with OAuth on first use, or set ${list} in the agent's environment.`,
   "extensions.after.env": (list) => `Set ${list} in the agent's environment. .mcp.json only keeps a reference to it.`,
-  "extensions.added": (name, file, hint) => `Added ${name} to ${file}. ${hint} It applies to sessions started from now on.`,
+  "extensions.added": (name, file, hint) =>
+    `Added ${name} to ${file}. ${hint} It applies to sessions started from now on.`,
   "extensions.removed": (name, file) => `Removed ${name} from ${file}.`,
   "extensions.tab.installed": (count) => `Installed · ${count}`,
   "extensions.tab.catalog": (count) => `MCP catalog · ${count}`,
   "extensions.tab.plugins": (count) => `Plugins · ${count}`,
-  "extensions.desc": (file) => `MCP servers and plugins. Add to project only writes the open project's ${file}, which agent CLIs read when a session starts. Credentials never go in that file.`,
+  "extensions.desc": (file) =>
+    `MCP servers and plugins. Add to project only writes the open project's ${file}, which agent CLIs read when a session starts. Credentials never go in that file.`,
   "extensions.noProject": (file) => `Open a project to add MCP servers. They're installed in its ${file}.`,
   "extensions.search": "Search servers: Stripe, calendar, database…",
   "extensions.search.label": "Search the catalog",
@@ -553,7 +578,8 @@ export const en: Messages = {
   "keys.added.today": "added today",
   "keys.added.yesterday": "added yesterday",
   "keys.added.days": (days) => `added ${days} days ago`,
-  "keys.desc": "Secret keys your sessions can use. The value stays in the system keychain (Windows Credential Manager, macOS Keychain). ADE never writes it to a file or shows it, and only passes it as an environment variable to the agents you choose for each key, when a session starts.",
+  "keys.desc":
+    "Secret keys your sessions can use. The value stays in the system keychain (Windows Credential Manager, macOS Keychain). ADE never writes it to a file or shows it, and only passes it as an environment variable to the agents you choose for each key, when a session starts.",
   "keys.noKeychain": "This version of ADE can't access the keychain.",
   "keys.none": "No saved keys.",
   "keys.hidden": "hidden value",
@@ -580,7 +606,8 @@ export const en: Messages = {
   "keys.saving": "Saving…",
   "keys.request": "Key requested",
   "keys.request.title": (env) => `A session is asking for the ${env} key`,
-  "keys.request.hint": "It stays in the system keychain, and the session gets it the next time it starts. You can also ignore the request.",
+  "keys.request.hint":
+    "It stays in the system keychain, and the session gets it the next time it starts. You can also ignore the request.",
 
   // Video, 3D model, simulator, recording, remote, quota
   "media.pick": "Choose a file",
@@ -613,7 +640,8 @@ export const en: Messages = {
   "record.consent.label": "Recording requested by an agent",
   "record.consent.title": "Record a video?",
   "record.consent.ask": (what) => `An agent wants to record ${what}.`,
-  "record.consent.note": "The video captures everything on screen until you stop it with the REC button. Fields with keys and passwords are blurred.",
+  "record.consent.note":
+    "The video captures everything on screen until you stop it with the REC button. Fields with keys and passwords are blurred.",
   "record.consent.mic": "Also record the microphone",
   "record.consent.no": "No",
   "record.consent.yes": "Record",
@@ -645,12 +673,14 @@ export const en: Messages = {
   "quota.na.noWindows": "quota-axi reports no windows for this provider.",
   "quota.na.noTime": "The quota-axi report doesn't say when it was written.",
   "quota.na.future": (time) => `The report is dated ${time}, later than now: it can't be trusted.`,
-  "quota.na.claude.noFile": "Claude's quota file wasn't found (~/.llm-quota/official/claude.json): Claude Code's status line writes it.",
+  "quota.na.claude.noFile":
+    "Claude's quota file wasn't found (~/.llm-quota/official/claude.json): Claude Code's status line writes it.",
   "quota.na.claude.noWindows": "Claude's file reports no quota windows.",
   "quota.na.claude.noTime": "Claude's file doesn't say when it was written.",
   "quota.readClaude": (time) => `Read from Claude Code's status line at ${time}`,
   "quota.staleNote": "Not a recent reading: the quota now may differ.",
-  "quota.na.agy.noFile": "agy's quota file wasn't found (~/.llm-quota/official/antigravity.json): agy's status line writes it.",
+  "quota.na.agy.noFile":
+    "agy's quota file wasn't found (~/.llm-quota/official/antigravity.json): agy's status line writes it.",
   "quota.na.agy.noBuckets": "agy's file reports no quota windows.",
   "quota.na.agy.noTime": "agy's file doesn't say when it was written.",
   "quota.readAgy": (time) => `Read from agy's status line at ${time}`,
@@ -690,7 +720,8 @@ export const en: Messages = {
     `Starting with this version the assistant starts by voice: begin the sentence with “ei nik” or “nik”. ADE is always listening and ignores sentences without the name; the ${shortcut} shortcut and the button at the top call it by hand. To keep it from listening on its own, choose “${manual}” below.`,
   "voice.shortcutOnly": (shortcut) =>
     `Starting with this version the assistant starts only with the ${shortcut} shortcut or the button at the top, and closes when the answer is done: the microphone no longer stays open, and “ei nik” is gone.`,
-  "voice.alwaysListening": (wakeWord, manual, toggle) => `Starting with this version, ADE is always listening and the assistant only answers when you say “${wakeWord}”. To stop it listening on its own, choose “${manual}” below; for an open microphone that answers everything, choose “${toggle}”.`,
+  "voice.alwaysListening": (wakeWord, manual, toggle) =>
+    `Starting with this version, ADE is always listening and the assistant only answers when you say “${wakeWord}”. To stop it listening on its own, choose “${manual}” below; for an open microphone that answers everything, choose “${toggle}”.`,
   "editor.saveFailed": (problem) => `Save failed: ${problem}`,
   "keys.passed": (names) => `API keys passed: ${names}`,
 
@@ -714,10 +745,12 @@ export const en: Messages = {
   "mcp.error.notObject": "The MCP server configuration isn't an object.",
   "mcp.error.urlOrCommand": "The MCP configuration needs either url or command.",
   "mcp.error.urlAndCommand": "The MCP configuration needs url or command, not both.",
-  "mcp.error.remoteType": "A remote MCP server must declare type \"http\" or \"sse\"; without it, Claude Code ignores the server.",
-  "mcp.error.stdioType": "An MCP server with a command has type \"stdio\" or no type.",
+  "mcp.error.remoteType":
+    'A remote MCP server must declare type "http" or "sse"; without it, Claude Code ignores the server.',
+  "mcp.error.stdioType": 'An MCP server with a command has type "stdio" or no type.',
   "mcp.error.urlCredentials": "url can't contain embedded credentials.",
-  "mcp.error.urlSecret": (name) => `url contains a secret value in parameter ${name}; use a reference like "\${VARIABLE_NAME}".`,
+  "mcp.error.urlSecret": (name) =>
+    `url contains a secret value in parameter ${name}; use a reference like "\${VARIABLE_NAME}".`,
   "mcp.error.url": "url must be a valid URL.",
   "mcp.error.args": "args must be an array of strings.",
   "mcp.error.argSecret": (index) => `args[${index}] may contain a secret; use a reference like "\${VARIABLE_NAME}".`,
@@ -769,7 +802,8 @@ export const en: Messages = {
   "chat.openSettings": "Open voice settings",
   "chat.sameAsAssistant": "— it's the same one the assistant uses.",
   "chat.empty.title": "Ask something.",
-  "chat.empty.body": "A standard conversation with a model, with no terminal behind it. To have ADE do something, use the Agent section instead.",
+  "chat.empty.body":
+    "A standard conversation with a model, with no terminal behind it. To have ADE do something, use the Agent section instead.",
   "chat.input.placeholder": "Type a message…",
   "chat.send": "Send",
   "chat.stop": "Stop",
@@ -793,7 +827,8 @@ export const en: Messages = {
   "bots.face.reset": "Reset to name default",
   "bots.subagent.isA": "This is a ",
   "bots.subagent.label": "subagent",
-  "bots.subagent.desc": ": it doesn't respond on its own; another agent calls it. You can still message it, but nikcli will use the default agent instead.",
+  "bots.subagent.desc":
+    ": it doesn't respond on its own; another agent calls it. You can still message it, but nikcli will use the default agent instead.",
   "bots.permission.request": "Permission request",
   "bots.permission.wantsToUse": "Wants to use",
   "bots.permission.on": "on",
@@ -842,7 +877,8 @@ export const en: Messages = {
   "bots.form.objectives": "Objectives",
   "bots.form.objectivesPlaceholder": "One per line. Kept active across conversations.",
   "bots.form.persona": "Persona",
-  "bots.form.personaPlaceholder": "Leave blank and nikcli will write it from the description. Or write your own: how it should behave, and what it should not do.",
+  "bots.form.personaPlaceholder":
+    "Leave blank and nikcli will write it from the description. Or write your own: how it should behave, and what it should not do.",
   "bots.form.cancel": "Cancel",
   "bots.form.creating": "Creating…",
   "bots.form.generateWithNikcli": "Generate with nikcli",
@@ -853,11 +889,13 @@ export const en: Messages = {
   "bots.runner.account.claude": "Anthropic subscription or Claude Code API key.",
   "bots.runner.account.codex": "ChatGPT subscription or Codex API key.",
   "bots.engine.accountHint": "Sign-ins are managed in Settings › Providers.",
-  "bots.terms.notice": "ADE launches the official CLI installed on your computer, using the account you signed in with, and never sees your credentials. The subscription is for personal use and consumes your plan limits: for intensive or unattended automation use an API key in the CLI.",
+  "bots.terms.notice":
+    "ADE launches the official CLI installed on your computer, using the account you signed in with, and never sees your credentials. The subscription is for personal use and consumes your plan limits: for intensive or unattended automation use an API key in the CLI.",
   "bots.engine.model": "Model",
   "bots.engine.modelDefaultOf": (label) => `${label} default`,
   "bots.engine.nikcliDefault": "nikcli default",
-  "bots.engine.modelsUnavailable": "Model list unavailable: nikcli must be in your PATH. The bot will use the default model.",
+  "bots.engine.modelsUnavailable":
+    "Model list unavailable: nikcli must be in your PATH. The bot will use the default model.",
   "bots.engine.effort": "Reasoning effort",
   "bots.engine.effortNotSupported": "not supported",
   "bots.engine.effortDefault": "default",

@@ -16,16 +16,7 @@
  */
 
 import { REPLY_VOICE_CHOICES } from "../settings/reply-voices"
-import {
-  createEffect,
-  createMemo,
-  createSignal,
-  For,
-  onCleanup,
-  onMount,
-  Show,
-  type JSX,
-} from "solid-js"
+import { createEffect, createMemo, createSignal, For, onCleanup, onMount, Show, type JSX } from "solid-js"
 import type { VoiceEngine } from "../engine"
 import type { DialogStatus } from "../dialog/session"
 import {
@@ -41,16 +32,8 @@ import {
   type VoiceMode,
   type VoiceSettings,
 } from "../settings/model"
-import {
-  availableLanguages,
-  isLanguageSupported,
-  type LanguageOption,
-} from "../settings/languages"
-import {
-  describeShortcut,
-  VOICE_COMMAND_AGENT,
-  VOICE_COMMAND_TRANSCRIPTION,
-} from "../settings/shortcuts"
+import { availableLanguages, isLanguageSupported, type LanguageOption } from "../settings/languages"
+import { describeShortcut, VOICE_COMMAND_AGENT, VOICE_COMMAND_TRANSCRIPTION } from "../settings/shortcuts"
 import { describeBackends, type TranscriberBackend } from "../asr/select"
 import {
   disposeParakeetModel,
@@ -67,13 +50,7 @@ import {
   type CachedModel,
   type DownloadParakeetProgress,
 } from "../asr/model-cache"
-import {
-  describeChoice,
-  listAudioDevices,
-  onDeviceChange,
-  SYSTEM_DEFAULT,
-  type AudioDevices,
-} from "../audio/devices"
+import { describeChoice, listAudioDevices, onDeviceChange, SYSTEM_DEFAULT, type AudioDevices } from "../audio/devices"
 import { VOCABULARY } from "../intent/vocabulary"
 import type { Binding } from "@nikcli-ai/ade/keyboard/keymap"
 import {
@@ -185,20 +162,30 @@ const SECTIONS: readonly {
 }[] = [
   {
     id: "voice-sec-mode",
-    get label() { return t("vui.rail.mode") },
+    get label() {
+      return t("vui.rail.mode")
+    },
     glyph: "◉",
     value: (s) => (s.mode === "agent" ? t("vui.rail.mode.agent") : t("vui.rail.mode.transcription")),
   },
   {
     id: "voice-sec-activation",
-    get label() { return t("vui.rail.activation") },
+    get label() {
+      return t("vui.rail.activation")
+    },
     glyph: "⌁",
     value: (s) =>
-      s.activation === "push-to-talk" ? t("vui.rail.activation.push") : s.activation === "toggle" ? t("vui.rail.activation.toggle") : t("vui.rail.activation.wake"),
+      s.activation === "push-to-talk"
+        ? t("vui.rail.activation.push")
+        : s.activation === "toggle"
+          ? t("vui.rail.activation.toggle")
+          : t("vui.rail.activation.wake"),
   },
   {
     id: "voice-sec-shortcuts",
-    get label() { return t("vui.rail.shortcuts") },
+    get label() {
+      return t("vui.rail.shortcuts")
+    },
     glyph: "⌨",
     // Two chords, always: the count is here to keep the column even, not to
     // report a number that varies.
@@ -206,7 +193,9 @@ const SECTIONS: readonly {
   },
   {
     id: "voice-sec-language",
-    get label() { return t("vui.rail.language") },
+    get label() {
+      return t("vui.rail.language")
+    },
     glyph: "✱",
     value: (s) => s.language,
   },
@@ -217,17 +206,22 @@ const SECTIONS: readonly {
     /* Which of the two has been moved off the default, rather than a device
        name: the rail is one short column and a device is called things like
        "Microfono (2- Realtek(R) Audio)". */
-    value: (s) => (s.inputDeviceId ? (s.outputDeviceId ? "2" : "1") : s.outputDeviceId ? "1" : t("vui.rail.devices.system")),
+    value: (s) =>
+      s.inputDeviceId ? (s.outputDeviceId ? "2" : "1") : s.outputDeviceId ? "1" : t("vui.rail.devices.system"),
   },
   {
     id: "voice-sec-backend",
-    get label() { return t("vui.rail.engine") },
+    get label() {
+      return t("vui.rail.engine")
+    },
     glyph: "◆",
     value: (s) => (s.backend === "openrouter" ? "mai2" : s.backend),
   },
   {
     id: "voice-sec-commands",
-    get label() { return t("vui.rail.commands") },
+    get label() {
+      return t("vui.rail.commands")
+    },
     glyph: "≡",
     value: () => String(VOCABULARY.length),
   },
@@ -241,8 +235,7 @@ const SECTIONS: readonly {
  * voice without pretending to be a spectrum it never measured.
  */
 const METER_WEIGHTS: readonly number[] = [
-  0.28, 0.48, 0.70, 0.92, 0.66, 0.86, 1.0, 0.78,
-  0.94, 0.60, 0.88, 0.72, 0.50, 0.82, 0.40, 0.24,
+  0.28, 0.48, 0.7, 0.92, 0.66, 0.86, 1.0, 0.78, 0.94, 0.6, 0.88, 0.72, 0.5, 0.82, 0.4, 0.24,
 ]
 
 interface StatusDescriptor {
@@ -296,16 +289,66 @@ function describeStatus(status: DialogStatus, running: boolean): StatusDescripto
  */
 /** The agent engines, as the panel offers them. */
 const AGENT_ENGINE_CHOICES: readonly { value: AgentEngine; readonly title: string; readonly desc: string }[] = [
-  { value: "auto", get title() { return t("vui.engine.auto") }, get desc() { return t("vui.engine.auto.desc") } },
-  { value: "claude", title: "Claude Code", get desc() { return t("vui.engine.claude.desc") } },
-  { value: "codex", title: "Codex", get desc() { return t("vui.engine.codex.desc") } },
-  { value: "nikcli", title: "nikcli", get desc() { return t("vui.engine.nikcli.desc") } },
-  { value: "off", get title() { return t("vui.engine.off") }, get desc() { return t("vui.engine.off.desc") } },
+  {
+    value: "auto",
+    get title() {
+      return t("vui.engine.auto")
+    },
+    get desc() {
+      return t("vui.engine.auto.desc")
+    },
+  },
+  {
+    value: "claude",
+    title: "Claude Code",
+    get desc() {
+      return t("vui.engine.claude.desc")
+    },
+  },
+  {
+    value: "codex",
+    title: "Codex",
+    get desc() {
+      return t("vui.engine.codex.desc")
+    },
+  },
+  {
+    value: "nikcli",
+    title: "nikcli",
+    get desc() {
+      return t("vui.engine.nikcli.desc")
+    },
+  },
+  {
+    value: "off",
+    get title() {
+      return t("vui.engine.off")
+    },
+    get desc() {
+      return t("vui.engine.off.desc")
+    },
+  },
 ]
 
 const AGENT_SPEED_CHOICES: readonly { value: AgentSpeed; readonly title: string; readonly desc: string }[] = [
-  { value: "fast", get title() { return t("vui.speed.fast") }, get desc() { return t("vui.speed.fast.desc") } },
-  { value: "cli", get title() { return t("vui.speed.cli") }, get desc() { return t("vui.speed.cli.desc") } },
+  {
+    value: "fast",
+    get title() {
+      return t("vui.speed.fast")
+    },
+    get desc() {
+      return t("vui.speed.fast.desc")
+    },
+  },
+  {
+    value: "cli",
+    get title() {
+      return t("vui.speed.cli")
+    },
+    get desc() {
+      return t("vui.speed.cli.desc")
+    },
+  },
 ]
 
 function radioGroupKeys(apply: (value: string) => void) {
@@ -332,12 +375,9 @@ function radioGroupKeys(apply: (value: string) => void) {
     const backward = event.key === "ArrowLeft" || event.key === "ArrowUp"
     if (!forward && !backward && event.key !== "Home" && event.key !== "End") return
 
-    const radios = Array.from(
-      group.querySelectorAll<HTMLElement>('[role="radio"]'),
-    ).filter(
+    const radios = Array.from(group.querySelectorAll<HTMLElement>('[role="radio"]')).filter(
       (candidate) =>
-        candidate.closest('[role="radiogroup"]') === group &&
-        candidate.getAttribute("aria-disabled") !== "true",
+        candidate.closest('[role="radiogroup"]') === group && candidate.getAttribute("aria-disabled") !== "true",
     )
     if (radios.length === 0) return
 
@@ -365,13 +405,9 @@ export function VoiceSettingsPanel(props: VoiceSettingsPanelProps) {
   let bodyRef: HTMLDivElement | undefined
 
   // Active shortcut recording state
-  const [recordingField, setRecordingField] = createSignal<
-    "agent" | "transcription" | null
-  >(null)
+  const [recordingField, setRecordingField] = createSignal<"agent" | "transcription" | null>(null)
   const [agentConflict, setAgentConflict] = createSignal<string | null>(null)
-  const [transcriptionConflict, setTranscriptionConflict] = createSignal<
-    string | null
-  >(null)
+  const [transcriptionConflict, setTranscriptionConflict] = createSignal<string | null>(null)
   /*
    * A chord that was accepted but comes with a caveat — a Win-key combination
    * the OS may swallow, an Alt+letter the window menu may claim. Kept apart
@@ -379,9 +415,7 @@ export function VoiceSettingsPanel(props: VoiceSettingsPanelProps) {
    * these outright would forbid chords that work fine on plenty of machines.
    */
   const [agentWarning, setAgentWarning] = createSignal<string | null>(null)
-  const [transcriptionWarning, setTranscriptionWarning] = createSignal<
-    string | null
-  >(null)
+  const [transcriptionWarning, setTranscriptionWarning] = createSignal<string | null>(null)
   /*
    * The modifiers held down so far, while the chord is still incomplete.
    *
@@ -545,10 +579,7 @@ export function VoiceSettingsPanel(props: VoiceSettingsPanelProps) {
     }
     if (typeof eng.lastCost === "number") return eng.lastCost
     if (typeof eng.lastUsage === "function") {
-      const usage = (eng.lastUsage as () => unknown)() as
-        | { cost?: number }
-        | null
-        | undefined
+      const usage = (eng.lastUsage as () => unknown)() as { cost?: number } | null | undefined
       if (typeof usage?.cost === "number") return usage.cost
     }
     return undefined
@@ -589,9 +620,7 @@ export function VoiceSettingsPanel(props: VoiceSettingsPanelProps) {
       setDownloadSuccess(true)
       setTimeout(() => setDownloadSuccess(false), 6000)
     } catch (err: any) {
-      setDownloadError(
-        err?.message || t("vui.download.failed")
-      )
+      setDownloadError(err?.message || t("vui.download.failed"))
     } finally {
       setDownloading(false)
     }
@@ -603,10 +632,7 @@ export function VoiceSettingsPanel(props: VoiceSettingsPanelProps) {
    * unchecked. Repair it once on open rather than rendering an impossible state.
    */
   onMount(() => {
-    if (
-      props.settings.mode === "transcription" &&
-      props.settings.activation === "wake-word"
-    ) {
+    if (props.settings.mode === "transcription" && props.settings.activation === "wake-word") {
       updateSettings({ activation: DEFAULT_VOICE_SETTINGS.activation })
     }
     if (!props.inline && panelRef) {
@@ -750,9 +776,7 @@ export function VoiceSettingsPanel(props: VoiceSettingsPanelProps) {
   const goToSection = (id: string) => {
     setActiveSection(id)
     queueMicrotask(() => {
-      const heading = document
-        .getElementById(id)
-        ?.querySelector<HTMLElement>('[data-slot="section-title"]')
+      const heading = document.getElementById(id)?.querySelector<HTMLElement>('[data-slot="section-title"]')
       heading?.focus()
     })
   }
@@ -768,10 +792,7 @@ export function VoiceSettingsPanel(props: VoiceSettingsPanelProps) {
   }
 
   // Key event handler for shortcut capture fields
-  const handleShortcutKeyDown = (
-    field: "agent" | "transcription",
-    e: KeyboardEvent
-  ) => {
+  const handleShortcutKeyDown = (field: "agent" | "transcription", e: KeyboardEvent) => {
     e.preventDefault()
     e.stopPropagation()
 
@@ -783,7 +804,7 @@ export function VoiceSettingsPanel(props: VoiceSettingsPanelProps) {
         shiftKey: e.shiftKey,
         altKey: e.altKey,
       },
-      platform
+      platform,
     )
 
     if (result.type === "cancel") {
@@ -803,15 +824,14 @@ export function VoiceSettingsPanel(props: VoiceSettingsPanelProps) {
       return
     }
 
-    const targetCommand =
-      field === "agent" ? VOICE_COMMAND_AGENT : VOICE_COMMAND_TRANSCRIPTION
+    const targetCommand = field === "agent" ? VOICE_COMMAND_AGENT : VOICE_COMMAND_TRANSCRIPTION
 
     const conflict = checkShortcutConflict(
       result.chord,
       targetCommand,
       props.settings,
       props.existingBindings,
-      platform
+      platform,
     )
 
     if (conflict.hasConflict) {
@@ -824,11 +844,7 @@ export function VoiceSettingsPanel(props: VoiceSettingsPanelProps) {
     // Successful capture without collision
     setFieldConflict(field, null)
     setFieldWarning(field, conflict.warning ?? null)
-    updateSettings(
-      field === "agent"
-        ? { agentChord: result.chord }
-        : { transcriptionChord: result.chord },
-    )
+    updateSettings(field === "agent" ? { agentChord: result.chord } : { transcriptionChord: result.chord })
     setRecordingField(null)
     setPendingModifiers([])
   }
@@ -867,17 +883,9 @@ export function VoiceSettingsPanel(props: VoiceSettingsPanelProps) {
    * itself the moment the chord is changed.
    */
   const storedIssue = (field: "agent" | "transcription") => {
-    const chord =
-      field === "agent" ? props.settings.agentChord : props.settings.transcriptionChord
-    const target =
-      field === "agent" ? VOICE_COMMAND_AGENT : VOICE_COMMAND_TRANSCRIPTION
-    const verdict = checkShortcutConflict(
-      chord,
-      target,
-      props.settings,
-      props.existingBindings,
-      platform,
-    )
+    const chord = field === "agent" ? props.settings.agentChord : props.settings.transcriptionChord
+    const target = field === "agent" ? VOICE_COMMAND_AGENT : VOICE_COMMAND_TRANSCRIPTION
+    const verdict = checkShortcutConflict(chord, target, props.settings, props.existingBindings, platform)
     if (!verdict.hasConflict) return undefined
     return t("vui.shortcut.shadowed", verdict.message ?? t("vui.shortcut.conflicting"))
   }
@@ -905,17 +913,13 @@ export function VoiceSettingsPanel(props: VoiceSettingsPanelProps) {
   }
 
   const modeKeys = radioGroupKeys((value) => selectMode(value as VoiceMode))
-  const sendKeys = radioGroupKeys((value) =>
-    updateSettings({ transcriptionSend: value as TranscriptionSendMode }),
-  )
+  const sendKeys = radioGroupKeys((value) => updateSettings({ transcriptionSend: value as TranscriptionSendMode }))
   const listenKeys = radioGroupKeys((value) => updateSettings({ alwaysListen: value === "always" }))
   const replyKeys = radioGroupKeys((value) => updateSettings({ speakReplies: value === "speak" }))
   const replyVoiceKeys = radioGroupKeys((value) => updateSettings({ replyVoice: value as ReplyVoice }))
   const engineKeys = radioGroupKeys((value) => updateSettings({ agentEngine: value as AgentEngine }))
   const speedKeys = radioGroupKeys((value) => updateSettings({ agentSpeed: value as AgentSpeed }))
-  const activationKeys = radioGroupKeys((value) =>
-    selectActivation(value as VoiceActivation),
-  )
+  const activationKeys = radioGroupKeys((value) => selectActivation(value as VoiceActivation))
   const backendKeys = radioGroupKeys((value) => {
     if (value === "parakeet" && !backendStatuses().parakeet.usable) return
     updateSettings({ backend: value as TranscriberBackend })
@@ -975,9 +979,7 @@ export function VoiceSettingsPanel(props: VoiceSettingsPanelProps) {
           {/* The same reasoning as the title, for the line under it: it used
               to list the voice sections, which with six of the host's own
               beside them described a third of the panel. */}
-          <p data-slot="subtitle">
-            {props.subtitle ?? t("vui.panel.subtitle")}
-          </p>
+          <p data-slot="subtitle">{props.subtitle ?? t("vui.panel.subtitle")}</p>
         </div>
 
         <div data-slot="status-pill" data-tone={engineStatus().tone} role="status">
@@ -986,12 +988,7 @@ export function VoiceSettingsPanel(props: VoiceSettingsPanelProps) {
         </div>
 
         <Show when={!props.inline && props.onClose}>
-          <button
-            type="button"
-            data-slot="close-btn"
-            aria-label={t("vui.panel.close")}
-            onClick={props.onClose}
-          >
+          <button type="button" data-slot="close-btn" aria-label={t("vui.panel.close")} onClick={props.onClose}>
             <svg
               width="16"
               height="16"
@@ -1027,9 +1024,7 @@ export function VoiceSettingsPanel(props: VoiceSettingsPanelProps) {
             column of thirteen rows gave no clue which of them were about the
             microphone. The headings are the only thing that says so.
           */}
-          <Show when={props.builtInGroup}>
-            {(label) => <span data-slot="rail-group">{label()}</span>}
-          </Show>
+          <Show when={props.builtInGroup}>{(label) => <span data-slot="rail-group">{label()}</span>}</Show>
           <For each={SECTIONS}>
             {(section) => (
               <button
@@ -1039,7 +1034,9 @@ export function VoiceSettingsPanel(props: VoiceSettingsPanelProps) {
                 aria-current={activeSection() === section.id ? "page" : undefined}
                 onClick={() => goToSection(section.id)}
               >
-                <span data-slot="rail-glyph" aria-hidden="true">{section.glyph}</span>
+                <span data-slot="rail-glyph" aria-hidden="true">
+                  {section.glyph}
+                </span>
                 <span data-slot="rail-label">{section.label}</span>
                 {/* The current value, so the rail is a summary and not just a
                     menu: most visits here are to check a setting, not change one. */}
@@ -1061,11 +1058,11 @@ export function VoiceSettingsPanel(props: VoiceSettingsPanelProps) {
                 aria-current={activeSection() === section.id ? "page" : undefined}
                 onClick={() => goToSection(section.id)}
               >
-                <span data-slot="rail-glyph" aria-hidden="true">{section.glyph}</span>
+                <span data-slot="rail-glyph" aria-hidden="true">
+                  {section.glyph}
+                </span>
                 <span data-slot="rail-label">{section.label}</span>
-                <Show when={section.value}>
-                  {(value) => <span data-slot="rail-value">{value()}</span>}
-                </Show>
+                <Show when={section.value}>{(value) => <span data-slot="rail-value">{value()}</span>}</Show>
               </button>
             )}
           </For>
@@ -1082,114 +1079,119 @@ export function VoiceSettingsPanel(props: VoiceSettingsPanelProps) {
             onClick={restoreDefaults}
             onBlur={() => setResetArmed(false)}
           >
-            <span data-slot="rail-glyph" aria-hidden="true">↺</span>
-            <span data-slot="rail-label">
-              {resetArmed() ? "Confermi?" : "Ripristina"}
+            <span data-slot="rail-glyph" aria-hidden="true">
+              ↺
             </span>
+            <span data-slot="rail-label">{resetArmed() ? "Confermi?" : "Ripristina"}</span>
           </button>
         </nav>
 
         {/* Body */}
         <div data-slot="body" ref={bodyRef}>
-        {/* The host's screens first in source order, hidden like the rest:
+          {/* The host's screens first in source order, hidden like the rest:
             `data-hidden` takes them out of the accessibility tree and the tab
             order too, so only the open one is reachable. */}
-        <For each={props.extraSections ?? []}>
-          {(section) => (
-            <section
-              id={section.id}
-              data-slot="section"
-              data-hidden={activeSection() === section.id ? undefined : "true"}
-              aria-label={section.label}
-            >
-              {section.render()}
-            </section>
-          )}
-        </For>
+          <For each={props.extraSections ?? []}>
+            {(section) => (
+              <section
+                id={section.id}
+                data-slot="section"
+                data-hidden={activeSection() === section.id ? undefined : "true"}
+                aria-label={section.label}
+              >
+                {section.render()}
+              </section>
+            )}
+          </For>
 
-        {/* ── 1. Mode ────────────────────────────────────────────────── */}
-        <section
-          id="voice-sec-mode"
-          data-slot="section"
-          data-hidden={activeSection() === "voice-sec-mode" ? undefined : "true"}
-          aria-labelledby="section-mode-title"
-        >
-          <div data-slot="section-head">
-            <h3 id="section-mode-title" data-slot="section-title" tabIndex={-1}>
-              {t("vui.mode.title")}
-            </h3>
-            {/*
+          {/* ── 1. Mode ────────────────────────────────────────────────── */}
+          <section
+            id="voice-sec-mode"
+            data-slot="section"
+            data-hidden={activeSection() === "voice-sec-mode" ? undefined : "true"}
+            aria-labelledby="section-mode-title"
+          >
+            <div data-slot="section-head">
+              <h3 id="section-mode-title" data-slot="section-title" tabIndex={-1}>
+                {t("vui.mode.title")}
+              </h3>
+              {/*
               Not a switch between two features — both sono sempre disponibili,
               ognuna col suo tasto. Questa scelta dice solo cosa succede quando
               il microfono viene aperto senza specificare quale delle due.
             */}
-            <p data-slot="section-desc">
-              {t("vui.mode.desc")}
-            </p>
-          </div>
+              <p data-slot="section-desc">{t("vui.mode.desc")}</p>
+            </div>
 
-          <div
-            role="radiogroup"
-            aria-labelledby="section-mode-title"
-            data-slot="mode-grid"
-            onKeyDown={modeKeys}
-          >
-            {/* Agent Mode */}
-            <div
-              role="radio"
-              data-value="agent"
-              aria-checked={props.settings.mode === "agent"}
-              tabIndex={props.settings.mode === "agent" ? 0 : -1}
-              data-slot="mode-card"
-              onClick={() => selectMode("agent")}
-            >
-              <div data-slot="mode-card-header">
-                <span data-slot="mode-card-icon" aria-hidden="true">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="m5 12 4 4 10-10" />
-                  </svg>
-                </span>
-                <span data-slot="mode-card-title">{t("vui.mode.agent")}</span>
-                <Show when={props.settings.mode === "agent"}>
-                  <span data-slot="mode-card-badge">{t("vui.mode.active")}</span>
-                </Show>
+            <div role="radiogroup" aria-labelledby="section-mode-title" data-slot="mode-grid" onKeyDown={modeKeys}>
+              {/* Agent Mode */}
+              <div
+                role="radio"
+                data-value="agent"
+                aria-checked={props.settings.mode === "agent"}
+                tabIndex={props.settings.mode === "agent" ? 0 : -1}
+                data-slot="mode-card"
+                onClick={() => selectMode("agent")}
+              >
+                <div data-slot="mode-card-header">
+                  <span data-slot="mode-card-icon" aria-hidden="true">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.7"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="m5 12 4 4 10-10" />
+                    </svg>
+                  </span>
+                  <span data-slot="mode-card-title">{t("vui.mode.agent")}</span>
+                  <Show when={props.settings.mode === "agent"}>
+                    <span data-slot="mode-card-badge">{t("vui.mode.active")}</span>
+                  </Show>
+                </div>
+                <div data-slot="mode-card-desc">{t("vui.mode.agent.desc")}</div>
+                <div data-slot="mode-card-chord">{describeShortcut(props.settings.agentChord, platform)}</div>
               </div>
-              <div data-slot="mode-card-desc">{t("vui.mode.agent.desc")}</div>
-              <div data-slot="mode-card-chord">
-                {describeShortcut(props.settings.agentChord, platform)}
+
+              {/* Transcription Mode */}
+              <div
+                role="radio"
+                data-value="transcription"
+                aria-checked={props.settings.mode === "transcription"}
+                tabIndex={props.settings.mode === "transcription" ? 0 : -1}
+                data-slot="mode-card"
+                onClick={() => selectMode("transcription")}
+              >
+                <div data-slot="mode-card-header">
+                  <span data-slot="mode-card-icon" aria-hidden="true">
+                    <svg
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      stroke-width="1.7"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    >
+                      <path d="M4 7h16M4 12h11M4 17h7" />
+                    </svg>
+                  </span>
+                  <span data-slot="mode-card-title">{t("vui.mode.transcription")}</span>
+                  <Show when={props.settings.mode === "transcription"}>
+                    <span data-slot="mode-card-badge">{t("vui.mode.active")}</span>
+                  </Show>
+                </div>
+                <div data-slot="mode-card-desc">{t("vui.mode.transcription.desc")}</div>
+                <div data-slot="mode-card-chord">{describeShortcut(props.settings.transcriptionChord, platform)}</div>
               </div>
             </div>
 
-            {/* Transcription Mode */}
-            <div
-              role="radio"
-              data-value="transcription"
-              aria-checked={props.settings.mode === "transcription"}
-              tabIndex={props.settings.mode === "transcription" ? 0 : -1}
-              data-slot="mode-card"
-              onClick={() => selectMode("transcription")}
-            >
-              <div data-slot="mode-card-header">
-                <span data-slot="mode-card-icon" aria-hidden="true">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
-                    <path d="M4 7h16M4 12h11M4 17h7" />
-                  </svg>
-                </span>
-                <span data-slot="mode-card-title">{t("vui.mode.transcription")}</span>
-                <Show when={props.settings.mode === "transcription"}>
-                  <span data-slot="mode-card-badge">{t("vui.mode.active")}</span>
-                </Show>
-              </div>
-              <div data-slot="mode-card-desc">
-                {t("vui.mode.transcription.desc")}
-              </div>
-              <div data-slot="mode-card-chord">
-                {describeShortcut(props.settings.transcriptionChord, platform)}
-              </div>
-            </div>
-          </div>
-
-          {/*
+            {/*
             Sub-choice under agent mode.
 
             It lives here rather than in a general "audio" section because it
@@ -1198,155 +1200,116 @@ export function VoiceSettingsPanel(props: VoiceSettingsPanelProps) {
             goes quiet, and the answer waits on a screen the user may have
             turned away from.
           */}
-          <Show when={props.settings.mode === "agent"}>
-            <div data-slot="sub-choice-box">
-              <span id="agent-reply-label" data-slot="sub-choice-label">
-                {t("vui.replies.title")}
-              </span>
-              <div
-                role="radiogroup"
-                aria-labelledby="agent-reply-label"
-                data-slot="sub-choice-row"
-                onKeyDown={replyKeys}
-              >
-                <div
-                  role="radio"
-                  data-value="speak"
-                  aria-checked={props.settings.speakReplies !== false}
-                  tabIndex={props.settings.speakReplies !== false ? 0 : -1}
-                  data-slot="sub-choice-item"
-                  onClick={() => updateSettings({ speakReplies: true })}
-                >
-                  <span data-slot="sub-item-title">{t("vui.replies.speak")}</span>
-                  <span data-slot="sub-item-desc">{t("vui.replies.speak.desc")}</span>
-                </div>
-
-                <div
-                  role="radio"
-                  data-value="silent"
-                  aria-checked={props.settings.speakReplies === false}
-                  tabIndex={props.settings.speakReplies === false ? 0 : -1}
-                  data-slot="sub-choice-item"
-                  onClick={() => updateSettings({ speakReplies: false })}
-                >
-                  <span data-slot="sub-item-title">{t("vui.replies.silent")}</span>
-                  <span data-slot="sub-item-desc">{t("vui.replies.silent.desc")}</span>
-                </div>
-              </div>
-            </div>
-
-            <Show when={props.settings.speakReplies !== false}>
+            <Show when={props.settings.mode === "agent"}>
               <div data-slot="sub-choice-box">
-                <span id="reply-voice-label" data-slot="sub-choice-label">
-                  {t("vui.replies.voice")}
+                <span id="agent-reply-label" data-slot="sub-choice-label">
+                  {t("vui.replies.title")}
                 </span>
                 <div
                   role="radiogroup"
-                  aria-labelledby="reply-voice-label"
+                  aria-labelledby="agent-reply-label"
                   data-slot="sub-choice-row"
-                  onKeyDown={replyVoiceKeys}
+                  onKeyDown={replyKeys}
                 >
-                  <For each={REPLY_VOICE_CHOICES}>
-                    {(choice) => (
-                      <div
-                        role="radio"
-                        data-value={choice.value}
-                        aria-checked={props.settings.replyVoice === choice.value}
-                        tabIndex={props.settings.replyVoice === choice.value ? 0 : -1}
-                        data-slot="sub-choice-item"
-                        onClick={() => updateSettings({ replyVoice: choice.value })}
-                      >
-                        <span data-slot="sub-item-title">{choice.title}</span>
-                        <span data-slot="sub-item-desc">{choice.desc}</span>
-                        <Show when={choice.licence}>
-                          <span data-slot="sub-item-licence">
-                            {choice.licence}{" "}
-                            <Show when={props.onOpenVoiceSource}>
-                              <button
-                                type="button"
-                                data-slot="link-button"
-                                onClick={(event) => {
-                                  // The link sits inside the radio: opening the source must not also pick the voice.
-                                  event.stopPropagation()
-                                  props.onOpenVoiceSource?.(choice.value)
-                                }}
-                              >
-                                {t("vui.replies.source")}
-                              </button>
-                            </Show>
-                          </span>
-                        </Show>
-                      </div>
-                    )}
-                  </For>
-                </div>
-                <p data-slot="sub-choice-note">
-                  {t("vui.replies.note")}
-                </p>
-              </div>
-            </Show>
+                  <div
+                    role="radio"
+                    data-value="speak"
+                    aria-checked={props.settings.speakReplies !== false}
+                    tabIndex={props.settings.speakReplies !== false ? 0 : -1}
+                    data-slot="sub-choice-item"
+                    onClick={() => updateSettings({ speakReplies: true })}
+                  >
+                    <span data-slot="sub-item-title">{t("vui.replies.speak")}</span>
+                    <span data-slot="sub-item-desc">{t("vui.replies.speak.desc")}</span>
+                  </div>
 
-            {/*
+                  <div
+                    role="radio"
+                    data-value="silent"
+                    aria-checked={props.settings.speakReplies === false}
+                    tabIndex={props.settings.speakReplies === false ? 0 : -1}
+                    data-slot="sub-choice-item"
+                    onClick={() => updateSettings({ speakReplies: false })}
+                  >
+                    <span data-slot="sub-item-title">{t("vui.replies.silent")}</span>
+                    <span data-slot="sub-item-desc">{t("vui.replies.silent.desc")}</span>
+                  </div>
+                </div>
+              </div>
+
+              <Show when={props.settings.speakReplies !== false}>
+                <div data-slot="sub-choice-box">
+                  <span id="reply-voice-label" data-slot="sub-choice-label">
+                    {t("vui.replies.voice")}
+                  </span>
+                  <div
+                    role="radiogroup"
+                    aria-labelledby="reply-voice-label"
+                    data-slot="sub-choice-row"
+                    onKeyDown={replyVoiceKeys}
+                  >
+                    <For each={REPLY_VOICE_CHOICES}>
+                      {(choice) => (
+                        <div
+                          role="radio"
+                          data-value={choice.value}
+                          aria-checked={props.settings.replyVoice === choice.value}
+                          tabIndex={props.settings.replyVoice === choice.value ? 0 : -1}
+                          data-slot="sub-choice-item"
+                          onClick={() => updateSettings({ replyVoice: choice.value })}
+                        >
+                          <span data-slot="sub-item-title">{choice.title}</span>
+                          <span data-slot="sub-item-desc">{choice.desc}</span>
+                          <Show when={choice.licence}>
+                            <span data-slot="sub-item-licence">
+                              {choice.licence}{" "}
+                              <Show when={props.onOpenVoiceSource}>
+                                <button
+                                  type="button"
+                                  data-slot="link-button"
+                                  onClick={(event) => {
+                                    // The link sits inside the radio: opening the source must not also pick the voice.
+                                    event.stopPropagation()
+                                    props.onOpenVoiceSource?.(choice.value)
+                                  }}
+                                >
+                                  {t("vui.replies.source")}
+                                </button>
+                              </Show>
+                            </span>
+                          </Show>
+                        </div>
+                      )}
+                    </For>
+                  </div>
+                  <p data-slot="sub-choice-note">{t("vui.replies.note")}</p>
+                </div>
+              </Show>
+
+              {/*
               What answers what the grammar does not know. A CLI the user is
               signed in to, so it runs on their subscription; see
               `VoiceSettings.agentEngine`.
             */}
-            <div data-slot="sub-choice-box">
-              <span id="agent-engine-label" data-slot="sub-choice-label">
-                {t("vui.engine.title")}
-              </span>
-              <div
-                role="radiogroup"
-                aria-labelledby="agent-engine-label"
-                data-slot="sub-choice-row"
-                onKeyDown={engineKeys}
-              >
-                <For each={AGENT_ENGINE_CHOICES}>
-                  {(choice) => (
-                    <div
-                      role="radio"
-                      data-value={choice.value}
-                      aria-checked={props.settings.agentEngine === choice.value}
-                      tabIndex={props.settings.agentEngine === choice.value ? 0 : -1}
-                      data-slot="sub-choice-item"
-                      onClick={() => updateSettings({ agentEngine: choice.value })}
-                    >
-                      <span data-slot="sub-item-title">{choice.title}</span>
-                      <span data-slot="sub-item-desc">{choice.desc}</span>
-                    </div>
-                  )}
-                </For>
-              </div>
-              {/*
-                S13: the agent runs on the user's own subscription, so the
-                terms that come with it are said where the engine is chosen.
-              */}
-              <p data-slot="sub-choice-note">
-                {t("vui.engine.note")}
-              </p>
-            </div>
-
-            {/* How the agent thinks: see `VoiceSettings.agentSpeed`. */}
-            <Show when={props.settings.agentEngine !== "off"}>
               <div data-slot="sub-choice-box">
-                <span id="agent-speed-label" data-slot="sub-choice-label">
-                  {t("vui.speed.title")}
+                <span id="agent-engine-label" data-slot="sub-choice-label">
+                  {t("vui.engine.title")}
                 </span>
                 <div
                   role="radiogroup"
-                  aria-labelledby="agent-speed-label"
+                  aria-labelledby="agent-engine-label"
                   data-slot="sub-choice-row"
-                  onKeyDown={speedKeys}
+                  onKeyDown={engineKeys}
                 >
-                  <For each={AGENT_SPEED_CHOICES}>
+                  <For each={AGENT_ENGINE_CHOICES}>
                     {(choice) => (
                       <div
                         role="radio"
                         data-value={choice.value}
-                        aria-checked={props.settings.agentSpeed === choice.value}
-                        tabIndex={props.settings.agentSpeed === choice.value ? 0 : -1}
+                        aria-checked={props.settings.agentEngine === choice.value}
+                        tabIndex={props.settings.agentEngine === choice.value ? 0 : -1}
                         data-slot="sub-choice-item"
-                        onClick={() => updateSettings({ agentSpeed: choice.value })}
+                        onClick={() => updateSettings({ agentEngine: choice.value })}
                       >
                         <span data-slot="sub-item-title">{choice.title}</span>
                         <span data-slot="sub-item-desc">{choice.desc}</span>
@@ -1354,522 +1317,504 @@ export function VoiceSettingsPanel(props: VoiceSettingsPanelProps) {
                     )}
                   </For>
                 </div>
-              </div>
-            </Show>
-          </Show>
-
-          {/* Sub-choice under transcription */}
-          <Show when={props.settings.mode === "transcription"}>
-            <div data-slot="sub-choice-box">
-              <span id="transcription-send-label" data-slot="sub-choice-label">
-                {t("vui.send.title")}
-              </span>
-              <div
-                role="radiogroup"
-                aria-labelledby="transcription-send-label"
-                data-slot="sub-choice-row"
-                onKeyDown={sendKeys}
-              >
-                <div
-                  role="radio"
-                  data-value="manual"
-                  aria-checked={props.settings.transcriptionSend === "manual"}
-                  tabIndex={props.settings.transcriptionSend === "manual" ? 0 : -1}
-                  data-slot="sub-choice-item"
-                  onClick={() => updateSettings({ transcriptionSend: "manual" })}
-                >
-                  <span data-slot="sub-item-title">{t("vui.send.manual")}</span>
-                  <span data-slot="sub-item-desc">{t("vui.send.manual.desc")}</span>
-                </div>
-
-                <div
-                  role="radio"
-                  data-value="auto"
-                  aria-checked={props.settings.transcriptionSend === "auto"}
-                  tabIndex={props.settings.transcriptionSend === "auto" ? 0 : -1}
-                  data-slot="sub-choice-item"
-                  onClick={() => updateSettings({ transcriptionSend: "auto" })}
-                >
-                  <span data-slot="sub-item-title">{t("vui.send.auto")}</span>
-                  <span data-slot="sub-item-desc">
-                    {t("vui.send.auto.desc")}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </Show>
-        </section>
-
-        {/* ── 2. Activation ──────────────────────────────────────────── */}
-        <section
-          id="voice-sec-activation"
-          data-slot="section"
-          data-hidden={activeSection() === "voice-sec-activation" ? undefined : "true"}
-          aria-labelledby="section-activation-title"
-        >
-          <div data-slot="section-head">
-            <h3 id="section-activation-title" data-slot="section-title" tabIndex={-1}>
-              {t("vui.activation.title")}
-            </h3>
-            <p data-slot="section-desc">
-              {t("vui.activation.desc")}
-            </p>
-          </div>
-
-          <div
-            role="radiogroup"
-            aria-labelledby="section-activation-title"
-            data-slot="activation-list"
-            onKeyDown={activationKeys}
-          >
-            {/* Push to talk: behind SHORTCUT_ACTIVATION_ENABLED, off: the name is the only way */}
-            <Show when={shortcutActivationEnabled()}>
-            <div
-              role="radio"
-              data-value="push-to-talk"
-              aria-checked={props.settings.activation === "push-to-talk"}
-              tabIndex={props.settings.activation === "push-to-talk" ? 0 : -1}
-              data-slot="activation-item"
-              onClick={() => selectActivation("push-to-talk")}
-            >
-              <div data-slot="item-text-group">
-                <span data-slot="item-title">{t("vui.activation.push")}</span>
-                <span data-slot="item-desc">{t("vui.activation.push.desc")}</span>
-              </div>
-              <kbd data-slot="chord-chip">
-                {describeShortcut(
-                  props.settings.mode === "transcription"
-                    ? props.settings.transcriptionChord
-                    : props.settings.agentChord,
-                  platform,
-                )}
-              </kbd>
-            </div>
-            </Show>
-
-            {/* Toggle continuous: behind both switches, off */}
-            <Show when={wakeWordEnabled() && shortcutActivationEnabled()}>
-            <div
-              role="radio"
-              data-value="toggle"
-              aria-checked={props.settings.activation === "toggle"}
-              tabIndex={props.settings.activation === "toggle" ? 0 : -1}
-              data-slot="activation-item"
-              onClick={() => selectActivation("toggle")}
-            >
-              <div data-slot="item-text-group">
-                <span data-slot="item-title">{t("vui.activation.toggle")}</span>
-                <span data-slot="item-desc">{t("vui.activation.toggle.desc")}</span>
-              </div>
-              <kbd data-slot="chord-chip">
-                {describeShortcut(
-                  props.settings.mode === "transcription"
-                    ? props.settings.transcriptionChord
-                    : props.settings.agentChord,
-                  platform,
-                )}
-              </kbd>
-            </div>
-            </Show>
-
-            <Show when={props.settingsNotice}>
-              {(text) => (
-                // Informational, not a failure: nothing went wrong, a default changed.
-                <div data-slot="reason-box" data-tone="muted" role="status">
-                  {text()}
-                </div>
-              )}
-            </Show>
-            {/* Wake Word: behind WAKE_WORD_ENABLED, off in 0.7.0 */}
-            <Show when={wakeWordEnabled()}>
-            <div data-slot="activation-group">
-              <div
-                role="radio"
-                data-value="wake-word"
-                aria-checked={
-                  props.settings.mode === "agent" &&
-                  props.settings.activation === "wake-word"
-                }
-                aria-disabled={
-                  props.settings.mode === "transcription" ? "true" : undefined
-                }
-                aria-describedby={
-                  props.settings.mode === "transcription"
-                    ? "wake-word-disabled-reason"
-                    : undefined
-                }
-                tabIndex={
-                  props.settings.mode === "agent" &&
-                  props.settings.activation === "wake-word"
-                    ? 0
-                    : -1
-                }
-                data-slot="activation-item"
-                onClick={() => selectActivation("wake-word")}
-              >
-                <div data-slot="item-text-group">
-                  <span data-slot="item-title">{t("vui.activation.wake")}</span>
-                  <span data-slot="item-desc">
-                    {t("vui.activation.wake.desc")}
-                  </span>
-                </div>
-                <Show when={props.settings.mode === "agent"}>
-                  <kbd data-slot="chord-chip">«{props.settings.wakeWord}»</kbd>
-                </Show>
+                {/*
+                S13: the agent runs on the user's own subscription, so the
+                terms that come with it are said where the engine is chosen.
+              */}
+                <p data-slot="sub-choice-note">{t("vui.engine.note")}</p>
               </div>
 
-              {/* Disabled reason in transcription mode */}
-              <Show when={props.settings.mode === "transcription"}>
-                <div id="wake-word-disabled-reason" data-slot="reason-box" data-tone="muted">
-                  {t("vui.activation.wake.disabled")}
-                </div>
-              </Show>
-
-              {/* The phrase is fixed; what can be chosen is whether ADE listens by itself. */}
-              <Show
-                when={
-                  props.settings.mode === "agent" &&
-                  props.settings.activation === "wake-word"
-                }
-              >
+              {/* How the agent thinks: see `VoiceSettings.agentSpeed`. */}
+              <Show when={props.settings.agentEngine !== "off"}>
                 <div data-slot="sub-choice-box">
-                  <span id="listen-label" data-slot="sub-choice-label">
-                    {t("vui.listen.title")}
+                  <span id="agent-speed-label" data-slot="sub-choice-label">
+                    {t("vui.speed.title")}
                   </span>
                   <div
                     role="radiogroup"
-                    aria-labelledby="listen-label"
-                    aria-describedby="wake-word-hint"
+                    aria-labelledby="agent-speed-label"
                     data-slot="sub-choice-row"
-                    onKeyDown={listenKeys}
+                    onKeyDown={speedKeys}
                   >
-                    <div
-                      role="radio"
-                      data-value="always"
-                      aria-checked={props.settings.alwaysListen !== false}
-                      tabIndex={props.settings.alwaysListen !== false ? 0 : -1}
-                      data-slot="sub-choice-item"
-                      onClick={() => updateSettings({ alwaysListen: true })}
-                    >
-                      <span data-slot="sub-item-title">{t("vui.listen.always")}</span>
-                      <span data-slot="sub-item-desc">
-                        {t("vui.listen.always.desc", props.settings.wakeWord)}
-                      </span>
-                    </div>
-                    <div
-                      role="radio"
-                      data-value="manual"
-                      aria-checked={props.settings.alwaysListen === false}
-                      tabIndex={props.settings.alwaysListen === false ? 0 : -1}
-                      data-slot="sub-choice-item"
-                      onClick={() => updateSettings({ alwaysListen: false })}
-                    >
-                      <span data-slot="sub-item-title">{t("vui.listen.manual")}</span>
-                      <span data-slot="sub-item-desc">{t("vui.listen.manual.desc")}</span>
-                    </div>
+                    <For each={AGENT_SPEED_CHOICES}>
+                      {(choice) => (
+                        <div
+                          role="radio"
+                          data-value={choice.value}
+                          aria-checked={props.settings.agentSpeed === choice.value}
+                          tabIndex={props.settings.agentSpeed === choice.value ? 0 : -1}
+                          data-slot="sub-choice-item"
+                          onClick={() => updateSettings({ agentSpeed: choice.value })}
+                        >
+                          <span data-slot="sub-item-title">{choice.title}</span>
+                          <span data-slot="sub-item-desc">{choice.desc}</span>
+                        </div>
+                      )}
+                    </For>
                   </div>
-                  <p id="wake-word-hint" data-slot="hint">
-                    {t("vui.wake.hint", props.settings.wakeWord)}
-                  </p>
                 </div>
               </Show>
-            </div>
             </Show>
-          </div>
-        </section>
 
-        {/* ── 3. Shortcuts ───────────────────────────────────────────── */}
-        <section
-          id="voice-sec-shortcuts"
-          data-slot="section"
-          data-hidden={activeSection() === "voice-sec-shortcuts" ? undefined : "true"}
-          aria-labelledby="section-shortcuts-title"
-        >
-          <div data-slot="section-head">
-            <h3 id="section-shortcuts-title" data-slot="section-title" tabIndex={-1}>
-              {t("vui.shortcuts.title")}
-            </h3>
-            <p data-slot="section-desc">
-              {t("vui.shortcuts.desc")}
-            </p>
-          </div>
-
-          <div data-slot="shortcuts-list">
-            {/* Agent Shortcut */}
-            <div>
-              <div data-slot="shortcut-row">
-                <div data-slot="item-text-group">
-                  <label for="agent-chord-btn" data-slot="item-title">
-                    {t("vui.shortcuts.agent")}
-                  </label>
-                  <span id="agent-chord-desc" data-slot="item-desc">
-                    {t("vui.shortcuts.agent.desc")}
-                  </span>
-                </div>
-                <div data-slot="shortcut-controls">
-                  <button
-                    id="agent-chord-btn"
-                    type="button"
-                    data-slot="shortcut-recorder-btn"
-                    data-recording={recordingField() === "agent" ? "true" : undefined}
-                    aria-describedby="agent-chord-desc"
-                    onClick={() => startRecording("agent")}
-                    onBlur={() => stopRecording("agent")}
-                    onKeyDown={(e) => {
-                      if (recordingField() === "agent") {
-                        handleShortcutKeyDown("agent", e)
-                      }
-                    }}
-                  >
-                    {recordingField() === "agent"
-                      ? recordingLabel()
-                      : describeShortcut(props.settings.agentChord, platform)}
-                  </button>
-                  <button
-                    type="button"
-                    data-slot="ghost-btn"
-                    aria-label={t("vui.shortcuts.agent.reset")}
-                    disabled={props.settings.agentChord === DEFAULT_VOICE_SETTINGS.agentChord}
-                    onClick={() => resetChord("agent")}
-                  >
-                    {t("vui.shortcuts.reset")}
-                  </button>
-                </div>
-              </div>
-              <Show when={shortcutIssue("agent")}>
-                {(issue) => (
-                  <div role="alert" data-slot="reason-box">
-                    {issue()}
-                  </div>
-                )}
-              </Show>
-              <Show when={agentWarning()}>
-                {(warning) => (
-                  <div role="status" data-slot="reason-box" data-tone="muted">
-                    {t("vui.shortcuts.saved", warning())}
-                  </div>
-                )}
-              </Show>
-            </div>
-
-            {/* Transcription Shortcut */}
-            <div>
-              <div data-slot="shortcut-row">
-                <div data-slot="item-text-group">
-                  <label for="transcription-chord-btn" data-slot="item-title">
-                    {t("vui.shortcuts.transcription")}
-                  </label>
-                  <span id="transcription-chord-desc" data-slot="item-desc">
-                    {t("vui.shortcuts.transcription.desc")}
-                  </span>
-                </div>
-                <div data-slot="shortcut-controls">
-                  <button
-                    id="transcription-chord-btn"
-                    type="button"
-                    data-slot="shortcut-recorder-btn"
-                    data-recording={
-                      recordingField() === "transcription" ? "true" : undefined
-                    }
-                    aria-describedby="transcription-chord-desc"
-                    onClick={() => startRecording("transcription")}
-                    onBlur={() => stopRecording("transcription")}
-                    onKeyDown={(e) => {
-                      if (recordingField() === "transcription") {
-                        handleShortcutKeyDown("transcription", e)
-                      }
-                    }}
-                  >
-                    {recordingField() === "transcription"
-                      ? recordingLabel()
-                      : describeShortcut(props.settings.transcriptionChord, platform)}
-                  </button>
-                  <button
-                    type="button"
-                    data-slot="ghost-btn"
-                    aria-label={t("vui.shortcuts.transcription.reset")}
-                    disabled={
-                      props.settings.transcriptionChord ===
-                      DEFAULT_VOICE_SETTINGS.transcriptionChord
-                    }
-                    onClick={() => resetChord("transcription")}
-                  >
-                    {t("vui.shortcuts.reset")}
-                  </button>
-                </div>
-              </div>
-              <Show when={shortcutIssue("transcription")}>
-                {(issue) => (
-                  <div role="alert" data-slot="reason-box">
-                    {issue()}
-                  </div>
-                )}
-              </Show>
-              <Show when={transcriptionWarning()}>
-                {(warning) => (
-                  <div role="status" data-slot="reason-box" data-tone="muted">
-                    {t("vui.shortcuts.saved", warning())}
-                  </div>
-                )}
-              </Show>
-            </div>
-          </div>
-        </section>
-
-        {/* ── 4. Language ───────────────────────────────────────────── */}
-        <section
-          id="voice-sec-language"
-          data-slot="section"
-          data-hidden={activeSection() === "voice-sec-language" ? undefined : "true"}
-          aria-labelledby="section-language-title"
-        >
-          <div data-slot="section-head">
-            <h3 id="section-language-title" data-slot="section-title" tabIndex={-1}>
-              {t("vui.language.title")}
-            </h3>
-            <p data-slot="section-desc">
-              {t("vui.language.desc")}
-            </p>
-          </div>
-
-          <div data-slot="stack">
-            <label for="voice-language-filter" data-slot="label">
-              {t("vui.language.search")}
-            </label>
-            <input
-              id="voice-language-filter"
-              data-slot="input"
-              type="search"
-              autocomplete="off"
-              placeholder={t("vui.language.search.placeholder")}
-              value={languageFilter()}
-              aria-describedby="voice-language-count"
-              onInput={(e) => setLanguageFilter(e.currentTarget.value)}
-              onKeyDown={(e) => {
-                if (e.key === "Escape") {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  setLanguageFilter("")
-                  return
-                }
-                if (e.key === "Enter") {
-                  e.preventDefault()
-                  const first = filteredLanguages().find(
-                    (lang) => lang.code !== props.settings.language,
-                  )
-                  if (first) updateSettings({ language: first.code })
-                }
-              }}
-            />
-
-            <label for="voice-language-select" data-slot="label">
-              {t("vui.language.select")}
-            </label>
-            <select
-              id="voice-language-select"
-              data-slot="select"
-              value={props.settings.language}
-              onChange={(e) => updateSettings({ language: e.currentTarget.value })}
-            >
-              <For each={filteredLanguages()}>
-                {(lang) => (
-                  <option value={lang.code}>
-                    {lang.label} ({lang.code.toUpperCase()})
-                  </option>
-                )}
-              </For>
-            </select>
-            <p id="voice-language-count" data-slot="hint">
-              {t("vui.language.count", filteredLanguages().length, currentLanguages().length, props.settings.backend)}
-            </p>
-          </div>
-
-          {/* Unsupported language alert and closest language recommendation */}
-          <Show when={!isLangSupported()}>
-            <div role="alert" data-slot="lang-warning">
-              <div data-slot="lang-warning-msg">
-                {t("vui.language.unsupported", props.settings.language, props.settings.backend)}
-              </div>
-              <Show when={langSuggestion()}>
-                <button
-                  type="button"
-                  data-slot="lang-suggest-btn"
-                  onClick={() =>
-                    updateSettings({ language: langSuggestion()!.code })
-                  }
+            {/* Sub-choice under transcription */}
+            <Show when={props.settings.mode === "transcription"}>
+              <div data-slot="sub-choice-box">
+                <span id="transcription-send-label" data-slot="sub-choice-label">
+                  {t("vui.send.title")}
+                </span>
+                <div
+                  role="radiogroup"
+                  aria-labelledby="transcription-send-label"
+                  data-slot="sub-choice-row"
+                  onKeyDown={sendKeys}
                 >
-                  {t("vui.language.switch", `${langSuggestion()?.label} (${langSuggestion()?.code.toUpperCase()})`)}
-                </button>
+                  <div
+                    role="radio"
+                    data-value="manual"
+                    aria-checked={props.settings.transcriptionSend === "manual"}
+                    tabIndex={props.settings.transcriptionSend === "manual" ? 0 : -1}
+                    data-slot="sub-choice-item"
+                    onClick={() => updateSettings({ transcriptionSend: "manual" })}
+                  >
+                    <span data-slot="sub-item-title">{t("vui.send.manual")}</span>
+                    <span data-slot="sub-item-desc">{t("vui.send.manual.desc")}</span>
+                  </div>
+
+                  <div
+                    role="radio"
+                    data-value="auto"
+                    aria-checked={props.settings.transcriptionSend === "auto"}
+                    tabIndex={props.settings.transcriptionSend === "auto" ? 0 : -1}
+                    data-slot="sub-choice-item"
+                    onClick={() => updateSettings({ transcriptionSend: "auto" })}
+                  >
+                    <span data-slot="sub-item-title">{t("vui.send.auto")}</span>
+                    <span data-slot="sub-item-desc">{t("vui.send.auto.desc")}</span>
+                  </div>
+                </div>
+              </div>
+            </Show>
+          </section>
+
+          {/* ── 2. Activation ──────────────────────────────────────────── */}
+          <section
+            id="voice-sec-activation"
+            data-slot="section"
+            data-hidden={activeSection() === "voice-sec-activation" ? undefined : "true"}
+            aria-labelledby="section-activation-title"
+          >
+            <div data-slot="section-head">
+              <h3 id="section-activation-title" data-slot="section-title" tabIndex={-1}>
+                {t("vui.activation.title")}
+              </h3>
+              <p data-slot="section-desc">{t("vui.activation.desc")}</p>
+            </div>
+
+            <div
+              role="radiogroup"
+              aria-labelledby="section-activation-title"
+              data-slot="activation-list"
+              onKeyDown={activationKeys}
+            >
+              {/* Push to talk: behind SHORTCUT_ACTIVATION_ENABLED, off: the name is the only way */}
+              <Show when={shortcutActivationEnabled()}>
+                <div
+                  role="radio"
+                  data-value="push-to-talk"
+                  aria-checked={props.settings.activation === "push-to-talk"}
+                  tabIndex={props.settings.activation === "push-to-talk" ? 0 : -1}
+                  data-slot="activation-item"
+                  onClick={() => selectActivation("push-to-talk")}
+                >
+                  <div data-slot="item-text-group">
+                    <span data-slot="item-title">{t("vui.activation.push")}</span>
+                    <span data-slot="item-desc">{t("vui.activation.push.desc")}</span>
+                  </div>
+                  <kbd data-slot="chord-chip">
+                    {describeShortcut(
+                      props.settings.mode === "transcription"
+                        ? props.settings.transcriptionChord
+                        : props.settings.agentChord,
+                      platform,
+                    )}
+                  </kbd>
+                </div>
+              </Show>
+
+              {/* Toggle continuous: behind both switches, off */}
+              <Show when={wakeWordEnabled() && shortcutActivationEnabled()}>
+                <div
+                  role="radio"
+                  data-value="toggle"
+                  aria-checked={props.settings.activation === "toggle"}
+                  tabIndex={props.settings.activation === "toggle" ? 0 : -1}
+                  data-slot="activation-item"
+                  onClick={() => selectActivation("toggle")}
+                >
+                  <div data-slot="item-text-group">
+                    <span data-slot="item-title">{t("vui.activation.toggle")}</span>
+                    <span data-slot="item-desc">{t("vui.activation.toggle.desc")}</span>
+                  </div>
+                  <kbd data-slot="chord-chip">
+                    {describeShortcut(
+                      props.settings.mode === "transcription"
+                        ? props.settings.transcriptionChord
+                        : props.settings.agentChord,
+                      platform,
+                    )}
+                  </kbd>
+                </div>
+              </Show>
+
+              <Show when={props.settingsNotice}>
+                {(text) => (
+                  // Informational, not a failure: nothing went wrong, a default changed.
+                  <div data-slot="reason-box" data-tone="muted" role="status">
+                    {text()}
+                  </div>
+                )}
+              </Show>
+              {/* Wake Word: behind WAKE_WORD_ENABLED, off in 0.7.0 */}
+              <Show when={wakeWordEnabled()}>
+                <div data-slot="activation-group">
+                  <div
+                    role="radio"
+                    data-value="wake-word"
+                    aria-checked={props.settings.mode === "agent" && props.settings.activation === "wake-word"}
+                    aria-disabled={props.settings.mode === "transcription" ? "true" : undefined}
+                    aria-describedby={props.settings.mode === "transcription" ? "wake-word-disabled-reason" : undefined}
+                    tabIndex={props.settings.mode === "agent" && props.settings.activation === "wake-word" ? 0 : -1}
+                    data-slot="activation-item"
+                    onClick={() => selectActivation("wake-word")}
+                  >
+                    <div data-slot="item-text-group">
+                      <span data-slot="item-title">{t("vui.activation.wake")}</span>
+                      <span data-slot="item-desc">{t("vui.activation.wake.desc")}</span>
+                    </div>
+                    <Show when={props.settings.mode === "agent"}>
+                      <kbd data-slot="chord-chip">«{props.settings.wakeWord}»</kbd>
+                    </Show>
+                  </div>
+
+                  {/* Disabled reason in transcription mode */}
+                  <Show when={props.settings.mode === "transcription"}>
+                    <div id="wake-word-disabled-reason" data-slot="reason-box" data-tone="muted">
+                      {t("vui.activation.wake.disabled")}
+                    </div>
+                  </Show>
+
+                  {/* The phrase is fixed; what can be chosen is whether ADE listens by itself. */}
+                  <Show when={props.settings.mode === "agent" && props.settings.activation === "wake-word"}>
+                    <div data-slot="sub-choice-box">
+                      <span id="listen-label" data-slot="sub-choice-label">
+                        {t("vui.listen.title")}
+                      </span>
+                      <div
+                        role="radiogroup"
+                        aria-labelledby="listen-label"
+                        aria-describedby="wake-word-hint"
+                        data-slot="sub-choice-row"
+                        onKeyDown={listenKeys}
+                      >
+                        <div
+                          role="radio"
+                          data-value="always"
+                          aria-checked={props.settings.alwaysListen !== false}
+                          tabIndex={props.settings.alwaysListen !== false ? 0 : -1}
+                          data-slot="sub-choice-item"
+                          onClick={() => updateSettings({ alwaysListen: true })}
+                        >
+                          <span data-slot="sub-item-title">{t("vui.listen.always")}</span>
+                          <span data-slot="sub-item-desc">{t("vui.listen.always.desc", props.settings.wakeWord)}</span>
+                        </div>
+                        <div
+                          role="radio"
+                          data-value="manual"
+                          aria-checked={props.settings.alwaysListen === false}
+                          tabIndex={props.settings.alwaysListen === false ? 0 : -1}
+                          data-slot="sub-choice-item"
+                          onClick={() => updateSettings({ alwaysListen: false })}
+                        >
+                          <span data-slot="sub-item-title">{t("vui.listen.manual")}</span>
+                          <span data-slot="sub-item-desc">{t("vui.listen.manual.desc")}</span>
+                        </div>
+                      </div>
+                      <p id="wake-word-hint" data-slot="hint">
+                        {t("vui.wake.hint", props.settings.wakeWord)}
+                      </p>
+                    </div>
+                  </Show>
+                </div>
               </Show>
             </div>
-          </Show>
-        </section>
+          </section>
 
-        {/* ── 5. Audio ───────────────────────────────────────────────── */}
-        <section
-          id="voice-sec-devices"
-          data-slot="section"
-          data-hidden={activeSection() === "voice-sec-devices" ? undefined : "true"}
-          aria-labelledby="section-devices-title"
-        >
-          <div data-slot="section-head">
-            <h3 id="section-devices-title" data-slot="section-title" tabIndex={-1}>
-              {t("vui.audio.title")}
-            </h3>
-            <p data-slot="section-desc">
-              {t("vui.audio.desc")}
-            </p>
-          </div>
+          {/* ── 3. Shortcuts ───────────────────────────────────────────── */}
+          <section
+            id="voice-sec-shortcuts"
+            data-slot="section"
+            data-hidden={activeSection() === "voice-sec-shortcuts" ? undefined : "true"}
+            aria-labelledby="section-shortcuts-title"
+          >
+            <div data-slot="section-head">
+              <h3 id="section-shortcuts-title" data-slot="section-title" tabIndex={-1}>
+                {t("vui.shortcuts.title")}
+              </h3>
+              <p data-slot="section-desc">{t("vui.shortcuts.desc")}</p>
+            </div>
 
-          <div data-slot="stack">
-            <label for="voice-input-device" data-slot="label">
-              {t("vui.audio.mic")}
-            </label>
-            <select
-              id="voice-input-device"
-              data-slot="select"
-              value={props.settings.inputDeviceId ?? ""}
-              onChange={(e) => updateSettings({ inputDeviceId: e.currentTarget.value || undefined })}
-            >
-              <For each={devices().inputs}>
-                {(device) => <option value={device.id}>{device.label}</option>}
-              </For>
-            </select>
-            <p data-slot="hint">
-              {/*
+            <div data-slot="shortcuts-list">
+              {/* Agent Shortcut */}
+              <div>
+                <div data-slot="shortcut-row">
+                  <div data-slot="item-text-group">
+                    <label for="agent-chord-btn" data-slot="item-title">
+                      {t("vui.shortcuts.agent")}
+                    </label>
+                    <span id="agent-chord-desc" data-slot="item-desc">
+                      {t("vui.shortcuts.agent.desc")}
+                    </span>
+                  </div>
+                  <div data-slot="shortcut-controls">
+                    <button
+                      id="agent-chord-btn"
+                      type="button"
+                      data-slot="shortcut-recorder-btn"
+                      data-recording={recordingField() === "agent" ? "true" : undefined}
+                      aria-describedby="agent-chord-desc"
+                      onClick={() => startRecording("agent")}
+                      onBlur={() => stopRecording("agent")}
+                      onKeyDown={(e) => {
+                        if (recordingField() === "agent") {
+                          handleShortcutKeyDown("agent", e)
+                        }
+                      }}
+                    >
+                      {recordingField() === "agent"
+                        ? recordingLabel()
+                        : describeShortcut(props.settings.agentChord, platform)}
+                    </button>
+                    <button
+                      type="button"
+                      data-slot="ghost-btn"
+                      aria-label={t("vui.shortcuts.agent.reset")}
+                      disabled={props.settings.agentChord === DEFAULT_VOICE_SETTINGS.agentChord}
+                      onClick={() => resetChord("agent")}
+                    >
+                      {t("vui.shortcuts.reset")}
+                    </button>
+                  </div>
+                </div>
+                <Show when={shortcutIssue("agent")}>
+                  {(issue) => (
+                    <div role="alert" data-slot="reason-box">
+                      {issue()}
+                    </div>
+                  )}
+                </Show>
+                <Show when={agentWarning()}>
+                  {(warning) => (
+                    <div role="status" data-slot="reason-box" data-tone="muted">
+                      {t("vui.shortcuts.saved", warning())}
+                    </div>
+                  )}
+                </Show>
+              </div>
+
+              {/* Transcription Shortcut */}
+              <div>
+                <div data-slot="shortcut-row">
+                  <div data-slot="item-text-group">
+                    <label for="transcription-chord-btn" data-slot="item-title">
+                      {t("vui.shortcuts.transcription")}
+                    </label>
+                    <span id="transcription-chord-desc" data-slot="item-desc">
+                      {t("vui.shortcuts.transcription.desc")}
+                    </span>
+                  </div>
+                  <div data-slot="shortcut-controls">
+                    <button
+                      id="transcription-chord-btn"
+                      type="button"
+                      data-slot="shortcut-recorder-btn"
+                      data-recording={recordingField() === "transcription" ? "true" : undefined}
+                      aria-describedby="transcription-chord-desc"
+                      onClick={() => startRecording("transcription")}
+                      onBlur={() => stopRecording("transcription")}
+                      onKeyDown={(e) => {
+                        if (recordingField() === "transcription") {
+                          handleShortcutKeyDown("transcription", e)
+                        }
+                      }}
+                    >
+                      {recordingField() === "transcription"
+                        ? recordingLabel()
+                        : describeShortcut(props.settings.transcriptionChord, platform)}
+                    </button>
+                    <button
+                      type="button"
+                      data-slot="ghost-btn"
+                      aria-label={t("vui.shortcuts.transcription.reset")}
+                      disabled={props.settings.transcriptionChord === DEFAULT_VOICE_SETTINGS.transcriptionChord}
+                      onClick={() => resetChord("transcription")}
+                    >
+                      {t("vui.shortcuts.reset")}
+                    </button>
+                  </div>
+                </div>
+                <Show when={shortcutIssue("transcription")}>
+                  {(issue) => (
+                    <div role="alert" data-slot="reason-box">
+                      {issue()}
+                    </div>
+                  )}
+                </Show>
+                <Show when={transcriptionWarning()}>
+                  {(warning) => (
+                    <div role="status" data-slot="reason-box" data-tone="muted">
+                      {t("vui.shortcuts.saved", warning())}
+                    </div>
+                  )}
+                </Show>
+              </div>
+            </div>
+          </section>
+
+          {/* ── 4. Language ───────────────────────────────────────────── */}
+          <section
+            id="voice-sec-language"
+            data-slot="section"
+            data-hidden={activeSection() === "voice-sec-language" ? undefined : "true"}
+            aria-labelledby="section-language-title"
+          >
+            <div data-slot="section-head">
+              <h3 id="section-language-title" data-slot="section-title" tabIndex={-1}>
+                {t("vui.language.title")}
+              </h3>
+              <p data-slot="section-desc">{t("vui.language.desc")}</p>
+            </div>
+
+            <div data-slot="stack">
+              <label for="voice-language-filter" data-slot="label">
+                {t("vui.language.search")}
+              </label>
+              <input
+                id="voice-language-filter"
+                data-slot="input"
+                type="search"
+                autocomplete="off"
+                placeholder={t("vui.language.search.placeholder")}
+                value={languageFilter()}
+                aria-describedby="voice-language-count"
+                onInput={(e) => setLanguageFilter(e.currentTarget.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Escape") {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    setLanguageFilter("")
+                    return
+                  }
+                  if (e.key === "Enter") {
+                    e.preventDefault()
+                    const first = filteredLanguages().find((lang) => lang.code !== props.settings.language)
+                    if (first) updateSettings({ language: first.code })
+                  }
+                }}
+              />
+
+              <label for="voice-language-select" data-slot="label">
+                {t("vui.language.select")}
+              </label>
+              <select
+                id="voice-language-select"
+                data-slot="select"
+                value={props.settings.language}
+                onChange={(e) => updateSettings({ language: e.currentTarget.value })}
+              >
+                <For each={filteredLanguages()}>
+                  {(lang) => (
+                    <option value={lang.code}>
+                      {lang.label} ({lang.code.toUpperCase()})
+                    </option>
+                  )}
+                </For>
+              </select>
+              <p id="voice-language-count" data-slot="hint">
+                {t("vui.language.count", filteredLanguages().length, currentLanguages().length, props.settings.backend)}
+              </p>
+            </div>
+
+            {/* Unsupported language alert and closest language recommendation */}
+            <Show when={!isLangSupported()}>
+              <div role="alert" data-slot="lang-warning">
+                <div data-slot="lang-warning-msg">
+                  {t("vui.language.unsupported", props.settings.language, props.settings.backend)}
+                </div>
+                <Show when={langSuggestion()}>
+                  <button
+                    type="button"
+                    data-slot="lang-suggest-btn"
+                    onClick={() => updateSettings({ language: langSuggestion()!.code })}
+                  >
+                    {t("vui.language.switch", `${langSuggestion()?.label} (${langSuggestion()?.code.toUpperCase()})`)}
+                  </button>
+                </Show>
+              </div>
+            </Show>
+          </section>
+
+          {/* ── 5. Audio ───────────────────────────────────────────────── */}
+          <section
+            id="voice-sec-devices"
+            data-slot="section"
+            data-hidden={activeSection() === "voice-sec-devices" ? undefined : "true"}
+            aria-labelledby="section-devices-title"
+          >
+            <div data-slot="section-head">
+              <h3 id="section-devices-title" data-slot="section-title" tabIndex={-1}>
+                {t("vui.audio.title")}
+              </h3>
+              <p data-slot="section-desc">{t("vui.audio.desc")}</p>
+            </div>
+
+            <div data-slot="stack">
+              <label for="voice-input-device" data-slot="label">
+                {t("vui.audio.mic")}
+              </label>
+              <select
+                id="voice-input-device"
+                data-slot="select"
+                value={props.settings.inputDeviceId ?? ""}
+                onChange={(e) => updateSettings({ inputDeviceId: e.currentTarget.value || undefined })}
+              >
+                <For each={devices().inputs}>{(device) => <option value={device.id}>{device.label}</option>}</For>
+              </select>
+              <p data-slot="hint">
+                {/*
                 Said, because the alternative is a picker full of "Microfono 1"
                 and "Microfono 2" with no way to tell which is which: the
                 browser withholds device names until the microphone has been
                 granted once, and that is a fact about permission rather than
                 about the hardware.
               */}
-              <Show
-                when={devices().labelled}
-                fallback={
-                  <>
-                    {t("vui.audio.unlabelled")}
-                  </>
-                }
-              >
-                {t("vui.audio.current", describeChoice(props.settings.inputDeviceId, devices().inputs))}
-              </Show>
-            </p>
+                <Show when={devices().labelled} fallback={<>{t("vui.audio.unlabelled")}</>}>
+                  {t("vui.audio.current", describeChoice(props.settings.inputDeviceId, devices().inputs))}
+                </Show>
+              </p>
 
-            <label for="voice-output-device" data-slot="label">
-              {t("vui.audio.output")}
-            </label>
-            <select
-              id="voice-output-device"
-              data-slot="select"
-              value={props.settings.outputDeviceId ?? ""}
-              onChange={(e) => updateSettings({ outputDeviceId: e.currentTarget.value || undefined })}
-            >
-              <For each={devices().outputs}>
-                {(device) => <option value={device.id}>{device.label}</option>}
-              </For>
-            </select>
-            <p data-slot="hint">
-              {/*
+              <label for="voice-output-device" data-slot="label">
+                {t("vui.audio.output")}
+              </label>
+              <select
+                id="voice-output-device"
+                data-slot="select"
+                value={props.settings.outputDeviceId ?? ""}
+                onChange={(e) => updateSettings({ outputDeviceId: e.currentTarget.value || undefined })}
+              >
+                <For each={devices().outputs}>{(device) => <option value={device.id}>{device.label}</option>}</For>
+              </select>
+              <p data-slot="hint">
+                {/*
                 Honest about a limit rather than quietly ignoring the setting.
                 The synthesiser the assistant speaks through has no way to
                 choose an output at all — it always goes to the system default
@@ -1877,191 +1822,53 @@ export function VoiceSettingsPanel(props: VoiceSettingsPanelProps) {
                 does nothing, which is worse than one that says what it is
                 waiting for.
               */}
-              {t("vui.audio.output.note")}
-            </p>
-          </div>
+                {t("vui.audio.output.note")}
+              </p>
+            </div>
 
-          <div data-slot="stack">
-            <span data-slot="label">{t("vui.model.title")}</span>
-            <p data-slot="hint">
-              <Show
-                when={cached().files > 0 || cached().present}
-                fallback={<>{t("vui.model.none")}</>}
-              >
-                {cached().source === "filesystem" ? (
-                  <>
-                    {t("vui.model.found", (cached().bytes / (1024 * 1024)).toFixed(0), cached().modelFormat?.toUpperCase() || t("vui.model.local"))}
-                    {cached().localPath ? (
-                      <span style={{ display: "block", "margin-top": "4px", "font-family": "monospace", "font-size": "11px", opacity: "0.8" }}>
-                        {t("vui.model.path", cached().localPath ?? "")}
-                      </span>
-                    ) : null}
-                  </>
-                ) : (
-                  <>{t(cached().present ? "vui.model.cached" : "vui.model.partial", cached().files, (cached().bytes / (1024 * 1024)).toFixed(0))}</>
-                )}
-              </Show>
-            </p>
-
-            <Show when={!cached().present}>
-              <Show
-                when={downloading()}
-                fallback={
-                  <div style={{ display: "flex", "align-items": "center", gap: "12px", "flex-wrap": "wrap" }}>
-                    <button
-                      type="button"
-                      data-slot="solid-btn"
-                      onClick={startDirectDownload}
-                    >
-                      {t("vui.model.download")}
-                    </button>
-                    <span data-slot="hint">{t("vui.model.download.hint")}</span>
-                  </div>
-                }
-              >
-                <div data-slot="progress-box">
-                  <div data-slot="progress-meta">
-                    <span>{downloadProgress()?.message || t("vui.model.downloading")}</span>
-                    <span>
-                      {((downloadProgress()?.loaded || 0) / (1024 * 1024)).toFixed(1)} MB /{" "}
-                      {((downloadProgress()?.total || 670488135) / (1024 * 1024)).toFixed(1)} MB (
-                      {downloadProgress()?.percent ?? 0}%)
-                    </span>
-                  </div>
-                  <div
-                    role="progressbar"
-                    aria-valuenow={downloadProgress()?.percent ?? 0}
-                    aria-valuemin="0"
-                    aria-valuemax="100"
-                    data-slot="progressbar-track"
-                  >
-                    <div
-                      data-slot="progressbar-fill"
-                      style={{ width: `${downloadProgress()?.percent ?? 0}%` }}
-                    />
-                  </div>
-                </div>
-              </Show>
-              <Show when={downloadError()}>
-                <div data-slot="reason-box">
-                  {downloadError()}
-                </div>
-              </Show>
-            </Show>
-
-            <Show when={downloadSuccess()}>
-              <div data-slot="ready-tag" data-ready="true" style={{ "align-self": "flex-start", padding: "6px 12px" }}>
-                {t("vui.model.downloaded")}
-              </div>
-            </Show>
-            <Show when={cached().source === "indexeddb" && cached().files > 0}>
-              <button
-                type="button"
-                data-slot="secondary-btn"
-                disabled={clearingCache()}
-                onClick={() => {
-                  setClearingCache(true)
-                  void clearModelCache()
-                    .then(() => disposeParakeetModel())
-                    .finally(() => {
-                      setClearingCache(false)
-                      refreshCache()
-                    })
-                }}
-              >
-                {clearingCache() ? t("vui.model.deleting") : t("vui.model.delete")}
-              </button>
+            <div data-slot="stack">
+              <span data-slot="label">{t("vui.model.title")}</span>
               <p data-slot="hint">
-                {/* The only cure for a file that arrived truncated: the download
-                    returns 200 either way, so a short file is cached and served
-                    forever, and nothing else in the application can throw it away. */}
-                {t("vui.model.delete.hint")}
-              </p>
-            </Show>
-          </div>
-        </section>
-
-        {/* ── 6. Speech engine ───────────────────────────────────────── */}
-        <section
-          id="voice-sec-backend"
-          data-slot="section"
-          data-hidden={activeSection() === "voice-sec-backend" ? undefined : "true"}
-          aria-labelledby="section-backend-title"
-        >
-          <div data-slot="section-head">
-            <h3 id="section-backend-title" data-slot="section-title" tabIndex={-1}>
-              {t("vui.backend.title")}
-            </h3>
-            <p data-slot="section-desc">
-              {t("vui.backend.desc")}
-            </p>
-          </div>
-
-          <div
-            role="radiogroup"
-            aria-labelledby="section-backend-title"
-            data-slot="backend-list"
-            onKeyDown={backendKeys}
-          >
-            {/* 1. Parakeet Locale */}
-            <div
-              data-slot="backend-card"
-              data-checked={props.settings.backend === "parakeet" ? "true" : undefined}
-              data-unusable={!(hasWebGpu() || hasWasm()) ? "true" : undefined}
-            >
-              <div
-                data-slot="backend-header"
-                role="radio"
-                data-value="parakeet"
-                tabIndex={props.settings.backend === "parakeet" ? 0 : -1}
-                aria-checked={props.settings.backend === "parakeet"}
-                aria-disabled={!(hasWebGpu() || hasWasm()) ? "true" : undefined}
-                aria-describedby={
-                  !backendStatuses().parakeet.usable && !cached().present
-                    ? "backend-parakeet-reason"
-                    : undefined
-                }
-                onClick={() => {
-                  if (hasWebGpu() || hasWasm() || backendStatuses().parakeet.usable) {
-                    updateSettings({ backend: "parakeet" })
-                  }
-                }}
-              >
-                <div data-slot="item-text-group">
-                  <span data-slot="item-title">{t("vui.backend.parakeet")}</span>
-                  <span data-slot="item-desc">
-                    {t("vui.backend.parakeet.desc")}
-                  </span>
-                </div>
-                <span
-                  data-slot="ready-tag"
-                  data-ready={backendStatuses().parakeet.usable || cached().present ? "true" : "false"}
-                >
-                  {downloading()
-                    ? t("vui.backend.downloading", downloadProgress()?.percent ?? 0)
-                    : cached().present
-                      ? t("vui.backend.readyLocal")
-                      : backendStatuses().parakeet.usable
-                        ? t("vui.backend.ready")
-                        : (hasWebGpu() || hasWasm() ? t("vui.backend.available") : t("vui.backend.unsupported"))}
-                </span>
-              </div>
-
-              <p data-slot="backend-warning">
-                {t("vui.backend.parakeet.note")}
+                <Show when={cached().files > 0 || cached().present} fallback={<>{t("vui.model.none")}</>}>
+                  {cached().source === "filesystem" ? (
+                    <>
+                      {t(
+                        "vui.model.found",
+                        (cached().bytes / (1024 * 1024)).toFixed(0),
+                        cached().modelFormat?.toUpperCase() || t("vui.model.local"),
+                      )}
+                      {cached().localPath ? (
+                        <span
+                          style={{
+                            display: "block",
+                            "margin-top": "4px",
+                            "font-family": "monospace",
+                            "font-size": "11px",
+                            opacity: "0.8",
+                          }}
+                        >
+                          {t("vui.model.path", cached().localPath ?? "")}
+                        </span>
+                      ) : null}
+                    </>
+                  ) : (
+                    <>
+                      {t(
+                        cached().present ? "vui.model.cached" : "vui.model.partial",
+                        cached().files,
+                        (cached().bytes / (1024 * 1024)).toFixed(0),
+                      )}
+                    </>
+                  )}
+                </Show>
               </p>
 
-              {/* Direct download when not available locally */}
               <Show when={!cached().present}>
                 <Show
                   when={downloading()}
                   fallback={
                     <div style={{ display: "flex", "align-items": "center", gap: "12px", "flex-wrap": "wrap" }}>
-                      <button
-                        type="button"
-                        data-slot="solid-btn"
-                        onClick={startDirectDownload}
-                      >
+                      <button type="button" data-slot="solid-btn" onClick={startDirectDownload}>
                         {t("vui.model.download")}
                       </button>
                       <span data-slot="hint">{t("vui.model.download.hint")}</span>
@@ -2084,364 +1891,464 @@ export function VoiceSettingsPanel(props: VoiceSettingsPanelProps) {
                       aria-valuemax="100"
                       data-slot="progressbar-track"
                     >
-                      <div
-                        data-slot="progressbar-fill"
-                        style={{ width: `${downloadProgress()?.percent ?? 0}%` }}
-                      />
+                      <div data-slot="progressbar-fill" style={{ width: `${downloadProgress()?.percent ?? 0}%` }} />
                     </div>
                   </div>
+                </Show>
+                <Show when={downloadError()}>
+                  <div data-slot="reason-box">{downloadError()}</div>
                 </Show>
               </Show>
 
               <Show when={downloadSuccess()}>
-                <div data-slot="ready-tag" data-ready="true" style={{ "align-self": "flex-start", padding: "6px 12px" }}>
+                <div
+                  data-slot="ready-tag"
+                  data-ready="true"
+                  style={{ "align-self": "flex-start", padding: "6px 12px" }}
+                >
                   {t("vui.model.downloaded")}
                 </div>
               </Show>
-
-              <Show when={downloadError()}>
-                <div data-slot="reason-box">
-                  {downloadError()}
-                </div>
-              </Show>
-
-              {/* Parakeet unusable reason */}
-              <Show when={!backendStatuses().parakeet.usable && !cached().present && !(hasWebGpu() || hasWasm())}>
-                <div id="backend-parakeet-reason" data-slot="reason-box">
-                  {backendStatuses().parakeet.reason}
-                </div>
-              </Show>
-
-              {/* Sub-fields under Parakeet */}
-              <Show when={props.settings.backend === "parakeet"}>
-                <div data-slot="backend-subfields">
-                  <div data-slot="stack">
-                    <span id="parakeet-backend-label" data-slot="label">
-                      {t("vui.backend.accel")}
-                    </span>
-                    <div
-                      role="radiogroup"
-                      aria-labelledby="parakeet-backend-label"
-                      data-slot="pills-row"
-                    >
-                      {parakeetPill(
-                        "auto",
-                        t("vui.engine.auto"),
-                        true,
-                        t("vui.backend.accel.auto"),
-                      )}
-                      {parakeetPill(
-                        "webgpu",
-                        "WebGPU",
-                        hasWebGpu(),
-                        hasWebGpu()
-                          ? t("vui.backend.accel.gpu")
-                          : t("vui.backend.accel.noGpu"),
-                      )}
-                      {parakeetPill(
-                        "wasm",
-                        "WASM",
-                        hasWasm(),
-                        hasWasm()
-                          ? t("vui.backend.accel.cpu")
-                          : t("vui.backend.accel.noWasm"),
-                      )}
-                    </div>
-                  </div>
-
-                  {/* Neural model download progress */}
-                  <Show when={!downloading() && resolvedProgress() && (resolvedProgress()!.total > 0 || resolvedProgress()!.percent !== undefined)}>
-                    {(() => {
-                      const p = resolvedProgress()!
-                      const percent =
-                        p.percent ??
-                        (p.total > 0 ? Math.round((p.loaded / p.total) * 100) : 0)
-                      const loadedMb = (p.loaded / (1024 * 1024)).toFixed(1)
-                      const totalMb = (p.total / (1024 * 1024)).toFixed(1)
-
-                      return (
-                        <div data-slot="progress-box">
-                          <div data-slot="progress-meta">
-                            <span>{t("vui.backend.weights", p.message || t("vui.backend.weights.default"))}</span>
-                            <span>
-                              {loadedMb} MB / {totalMb} MB ({percent}%)
-                            </span>
-                          </div>
-                          <div
-                            role="progressbar"
-                            aria-valuenow={percent}
-                            aria-valuemin="0"
-                            aria-valuemax="100"
-                            data-slot="progressbar-track"
-                          >
-                            <div
-                              data-slot="progressbar-fill"
-                              style={{ width: `${percent}%` }}
-                            />
-                          </div>
-                        </div>
-                      )
-                    })()}
-                  </Show>
-                </div>
+              <Show when={cached().source === "indexeddb" && cached().files > 0}>
+                <button
+                  type="button"
+                  data-slot="secondary-btn"
+                  disabled={clearingCache()}
+                  onClick={() => {
+                    setClearingCache(true)
+                    void clearModelCache()
+                      .then(() => disposeParakeetModel())
+                      .finally(() => {
+                        setClearingCache(false)
+                        refreshCache()
+                      })
+                  }}
+                >
+                  {clearingCache() ? t("vui.model.deleting") : t("vui.model.delete")}
+                </button>
+                <p data-slot="hint">
+                  {/* The only cure for a file that arrived truncated: the download
+                    returns 200 either way, so a short file is cached and served
+                    forever, and nothing else in the application can throw it away. */}
+                  {t("vui.model.delete.hint")}
+                </p>
               </Show>
             </div>
+          </section>
 
-            {/* 2. OpenRouter Cloud */}
+          {/* ── 6. Speech engine ───────────────────────────────────────── */}
+          <section
+            id="voice-sec-backend"
+            data-slot="section"
+            data-hidden={activeSection() === "voice-sec-backend" ? undefined : "true"}
+            aria-labelledby="section-backend-title"
+          >
+            <div data-slot="section-head">
+              <h3 id="section-backend-title" data-slot="section-title" tabIndex={-1}>
+                {t("vui.backend.title")}
+              </h3>
+              <p data-slot="section-desc">{t("vui.backend.desc")}</p>
+            </div>
+
             <div
-              data-slot="backend-card"
-              data-checked={props.settings.backend === "openrouter" ? "true" : undefined}
-              data-unusable={!backendStatuses().openrouter.usable ? "true" : undefined}
+              role="radiogroup"
+              aria-labelledby="section-backend-title"
+              data-slot="backend-list"
+              onKeyDown={backendKeys}
             >
+              {/* 1. Parakeet Locale */}
               <div
-                data-slot="backend-header"
-                role="radio"
-                data-value="openrouter"
-                tabIndex={props.settings.backend === "openrouter" ? 0 : -1}
-                aria-checked={props.settings.backend === "openrouter"}
-                aria-describedby={
-                  !backendStatuses().openrouter.usable
-                    ? "backend-openrouter-reason"
-                    : undefined
-                }
-                onClick={() => updateSettings({ backend: "openrouter" })}
+                data-slot="backend-card"
+                data-checked={props.settings.backend === "parakeet" ? "true" : undefined}
+                data-unusable={!(hasWebGpu() || hasWasm()) ? "true" : undefined}
               >
-                <div data-slot="item-text-group">
-                  <span data-slot="item-title">OpenRouter</span>
-                  <span data-slot="item-desc">
-                    {t("vui.backend.openrouter.desc")}
+                <div
+                  data-slot="backend-header"
+                  role="radio"
+                  data-value="parakeet"
+                  tabIndex={props.settings.backend === "parakeet" ? 0 : -1}
+                  aria-checked={props.settings.backend === "parakeet"}
+                  aria-disabled={!(hasWebGpu() || hasWasm()) ? "true" : undefined}
+                  aria-describedby={
+                    !backendStatuses().parakeet.usable && !cached().present ? "backend-parakeet-reason" : undefined
+                  }
+                  onClick={() => {
+                    if (hasWebGpu() || hasWasm() || backendStatuses().parakeet.usable) {
+                      updateSettings({ backend: "parakeet" })
+                    }
+                  }}
+                >
+                  <div data-slot="item-text-group">
+                    <span data-slot="item-title">{t("vui.backend.parakeet")}</span>
+                    <span data-slot="item-desc">{t("vui.backend.parakeet.desc")}</span>
+                  </div>
+                  <span
+                    data-slot="ready-tag"
+                    data-ready={backendStatuses().parakeet.usable || cached().present ? "true" : "false"}
+                  >
+                    {downloading()
+                      ? t("vui.backend.downloading", downloadProgress()?.percent ?? 0)
+                      : cached().present
+                        ? t("vui.backend.readyLocal")
+                        : backendStatuses().parakeet.usable
+                          ? t("vui.backend.ready")
+                          : hasWebGpu() || hasWasm()
+                            ? t("vui.backend.available")
+                            : t("vui.backend.unsupported")}
                   </span>
                 </div>
-                <span
-                  data-slot="ready-tag"
-                  data-ready={backendStatuses().openrouter.usable ? "true" : "false"}
-                >
-                  {backendStatuses().openrouter.usable ? t("vui.backend.ready") : t("vui.backend.needsKey")}
-                </span>
-              </div>
 
-              {/* OpenRouter status message if key missing */}
-              <Show when={!backendStatuses().openrouter.usable}>
-                <div id="backend-openrouter-reason" data-slot="reason-box" data-tone="muted">
-                  {backendStatuses().openrouter.reason}
-                </div>
-              </Show>
+                <p data-slot="backend-warning">{t("vui.backend.parakeet.note")}</p>
 
-              {/* Sub-fields under OpenRouter */}
-              <Show when={props.settings.backend === "openrouter"}>
-                <div data-slot="backend-subfields">
-                  <div data-slot="stack">
-                    <label for="openrouter-key-field" data-slot="label">
-                      {t("vui.key.title")}
-                    </label>
-
-                    {/* Masked display when key already saved */}
-                    <Show when={Boolean(props.settings.openRouterApiKey)}>
-                      <div data-slot="key-status-badge">
-                        <span>
-                          {t("vui.key.saved", formatMaskedApiKey(props.settings.openRouterApiKey))}
-                        </span>
-                        <button
-                          type="button"
-                          data-slot="key-clear-btn"
-                          onClick={() => updateSettings({ openRouterApiKey: undefined })}
-                        >
-                          {t("vui.key.remove")}
+                {/* Direct download when not available locally */}
+                <Show when={!cached().present}>
+                  <Show
+                    when={downloading()}
+                    fallback={
+                      <div style={{ display: "flex", "align-items": "center", gap: "12px", "flex-wrap": "wrap" }}>
+                        <button type="button" data-slot="solid-btn" onClick={startDirectDownload}>
+                          {t("vui.model.download")}
                         </button>
+                        <span data-slot="hint">{t("vui.model.download.hint")}</span>
                       </div>
-                    </Show>
-
-                    {/* Input for setting or updating key */}
-                    <div data-slot="field-row">
-                      <input
-                        id="openrouter-key-field"
-                        data-slot="input"
-                        type={apiKeyVisible() ? "text" : "password"}
-                        autocomplete="off"
-                        spellcheck={false}
-                        placeholder={
-                          props.settings.openRouterApiKey
-                            ? t("vui.key.replace")
-                            : "sk-or-v1-…"
-                        }
-                        value={apiKeyInput()}
-                        aria-describedby="openrouter-key-hint"
-                        onInput={(e) => setApiKeyInput(e.currentTarget.value)}
-                        onKeyDown={(e) => {
-                          if (e.key === "Enter") {
-                            e.preventDefault()
-                            commitApiKey()
-                          } else if (e.key === "Escape") {
-                            e.preventDefault()
-                            e.stopPropagation()
-                            setApiKeyInput("")
-                          }
-                        }}
-                        onBlur={commitApiKey}
-                      />
-                      <button
-                        type="button"
-                        data-slot="ghost-btn"
-                        aria-pressed={apiKeyVisible()}
-                        disabled={apiKeyInput().length === 0}
-                        onClick={() => setApiKeyVisible((v) => !v)}
-                      >
-                        {apiKeyVisible() ? t("vui.key.hide") : t("vui.key.show")}
-                      </button>
-                      <button
-                        type="button"
-                        data-slot="solid-btn"
-                        disabled={apiKeyInput().trim().length === 0}
-                        onClick={commitApiKey}
-                      >
-                        {t("vui.key.save")}
-                      </button>
-                    </div>
-
-                    <Show when={apiKeyLooksWrong()}>
-                      <div data-slot="reason-box" data-tone="muted">
-                        {t("vui.key.looksWrong")}
+                    }
+                  >
+                    <div data-slot="progress-box">
+                      <div data-slot="progress-meta">
+                        <span>{downloadProgress()?.message || t("vui.model.downloading")}</span>
+                        <span>
+                          {((downloadProgress()?.loaded || 0) / (1024 * 1024)).toFixed(1)} MB /{" "}
+                          {((downloadProgress()?.total || 670488135) / (1024 * 1024)).toFixed(1)} MB (
+                          {downloadProgress()?.percent ?? 0}%)
+                        </span>
                       </div>
-                    </Show>
-
-                    <p id="openrouter-key-hint" data-slot="hint">
-                      {t("vui.key.hint")}
-                    </p>
-                  </div>
-
-                  {/* Cost of the last request if exposed */}
-                  <Show when={resolvedCost() !== undefined}>
-                    <div data-slot="cost-tag">
-                      {t("vui.key.cost")}{" "}
-                      <strong>
-                        ${resolvedCost()! < 0.01
-                          ? resolvedCost()!.toFixed(5)
-                          : resolvedCost()!.toFixed(3)}
-                      </strong>
+                      <div
+                        role="progressbar"
+                        aria-valuenow={downloadProgress()?.percent ?? 0}
+                        aria-valuemin="0"
+                        aria-valuemax="100"
+                        data-slot="progressbar-track"
+                      >
+                        <div data-slot="progressbar-fill" style={{ width: `${downloadProgress()?.percent ?? 0}%` }} />
+                      </div>
                     </div>
                   </Show>
+                </Show>
+
+                <Show when={downloadSuccess()}>
+                  <div
+                    data-slot="ready-tag"
+                    data-ready="true"
+                    style={{ "align-self": "flex-start", padding: "6px 12px" }}
+                  >
+                    {t("vui.model.downloaded")}
+                  </div>
+                </Show>
+
+                <Show when={downloadError()}>
+                  <div data-slot="reason-box">{downloadError()}</div>
+                </Show>
+
+                {/* Parakeet unusable reason */}
+                <Show when={!backendStatuses().parakeet.usable && !cached().present && !(hasWebGpu() || hasWasm())}>
+                  <div id="backend-parakeet-reason" data-slot="reason-box">
+                    {backendStatuses().parakeet.reason}
+                  </div>
+                </Show>
+
+                {/* Sub-fields under Parakeet */}
+                <Show when={props.settings.backend === "parakeet"}>
+                  <div data-slot="backend-subfields">
+                    <div data-slot="stack">
+                      <span id="parakeet-backend-label" data-slot="label">
+                        {t("vui.backend.accel")}
+                      </span>
+                      <div role="radiogroup" aria-labelledby="parakeet-backend-label" data-slot="pills-row">
+                        {parakeetPill("auto", t("vui.engine.auto"), true, t("vui.backend.accel.auto"))}
+                        {parakeetPill(
+                          "webgpu",
+                          "WebGPU",
+                          hasWebGpu(),
+                          hasWebGpu() ? t("vui.backend.accel.gpu") : t("vui.backend.accel.noGpu"),
+                        )}
+                        {parakeetPill(
+                          "wasm",
+                          "WASM",
+                          hasWasm(),
+                          hasWasm() ? t("vui.backend.accel.cpu") : t("vui.backend.accel.noWasm"),
+                        )}
+                      </div>
+                    </div>
+
+                    {/* Neural model download progress */}
+                    <Show
+                      when={
+                        !downloading() &&
+                        resolvedProgress() &&
+                        (resolvedProgress()!.total > 0 || resolvedProgress()!.percent !== undefined)
+                      }
+                    >
+                      {(() => {
+                        const p = resolvedProgress()!
+                        const percent = p.percent ?? (p.total > 0 ? Math.round((p.loaded / p.total) * 100) : 0)
+                        const loadedMb = (p.loaded / (1024 * 1024)).toFixed(1)
+                        const totalMb = (p.total / (1024 * 1024)).toFixed(1)
+
+                        return (
+                          <div data-slot="progress-box">
+                            <div data-slot="progress-meta">
+                              <span>{t("vui.backend.weights", p.message || t("vui.backend.weights.default"))}</span>
+                              <span>
+                                {loadedMb} MB / {totalMb} MB ({percent}%)
+                              </span>
+                            </div>
+                            <div
+                              role="progressbar"
+                              aria-valuenow={percent}
+                              aria-valuemin="0"
+                              aria-valuemax="100"
+                              data-slot="progressbar-track"
+                            >
+                              <div data-slot="progressbar-fill" style={{ width: `${percent}%` }} />
+                            </div>
+                          </div>
+                        )
+                      })()}
+                    </Show>
+                  </div>
+                </Show>
+              </div>
+
+              {/* 2. OpenRouter Cloud */}
+              <div
+                data-slot="backend-card"
+                data-checked={props.settings.backend === "openrouter" ? "true" : undefined}
+                data-unusable={!backendStatuses().openrouter.usable ? "true" : undefined}
+              >
+                <div
+                  data-slot="backend-header"
+                  role="radio"
+                  data-value="openrouter"
+                  tabIndex={props.settings.backend === "openrouter" ? 0 : -1}
+                  aria-checked={props.settings.backend === "openrouter"}
+                  aria-describedby={!backendStatuses().openrouter.usable ? "backend-openrouter-reason" : undefined}
+                  onClick={() => updateSettings({ backend: "openrouter" })}
+                >
+                  <div data-slot="item-text-group">
+                    <span data-slot="item-title">OpenRouter</span>
+                    <span data-slot="item-desc">{t("vui.backend.openrouter.desc")}</span>
+                  </div>
+                  <span data-slot="ready-tag" data-ready={backendStatuses().openrouter.usable ? "true" : "false"}>
+                    {backendStatuses().openrouter.usable ? t("vui.backend.ready") : t("vui.backend.needsKey")}
+                  </span>
                 </div>
-              </Show>
+
+                {/* OpenRouter status message if key missing */}
+                <Show when={!backendStatuses().openrouter.usable}>
+                  <div id="backend-openrouter-reason" data-slot="reason-box" data-tone="muted">
+                    {backendStatuses().openrouter.reason}
+                  </div>
+                </Show>
+
+                {/* Sub-fields under OpenRouter */}
+                <Show when={props.settings.backend === "openrouter"}>
+                  <div data-slot="backend-subfields">
+                    <div data-slot="stack">
+                      <label for="openrouter-key-field" data-slot="label">
+                        {t("vui.key.title")}
+                      </label>
+
+                      {/* Masked display when key already saved */}
+                      <Show when={Boolean(props.settings.openRouterApiKey)}>
+                        <div data-slot="key-status-badge">
+                          <span>{t("vui.key.saved", formatMaskedApiKey(props.settings.openRouterApiKey))}</span>
+                          <button
+                            type="button"
+                            data-slot="key-clear-btn"
+                            onClick={() => updateSettings({ openRouterApiKey: undefined })}
+                          >
+                            {t("vui.key.remove")}
+                          </button>
+                        </div>
+                      </Show>
+
+                      {/* Input for setting or updating key */}
+                      <div data-slot="field-row">
+                        <input
+                          id="openrouter-key-field"
+                          data-slot="input"
+                          type={apiKeyVisible() ? "text" : "password"}
+                          autocomplete="off"
+                          spellcheck={false}
+                          placeholder={props.settings.openRouterApiKey ? t("vui.key.replace") : "sk-or-v1-…"}
+                          value={apiKeyInput()}
+                          aria-describedby="openrouter-key-hint"
+                          onInput={(e) => setApiKeyInput(e.currentTarget.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") {
+                              e.preventDefault()
+                              commitApiKey()
+                            } else if (e.key === "Escape") {
+                              e.preventDefault()
+                              e.stopPropagation()
+                              setApiKeyInput("")
+                            }
+                          }}
+                          onBlur={commitApiKey}
+                        />
+                        <button
+                          type="button"
+                          data-slot="ghost-btn"
+                          aria-pressed={apiKeyVisible()}
+                          disabled={apiKeyInput().length === 0}
+                          onClick={() => setApiKeyVisible((v) => !v)}
+                        >
+                          {apiKeyVisible() ? t("vui.key.hide") : t("vui.key.show")}
+                        </button>
+                        <button
+                          type="button"
+                          data-slot="solid-btn"
+                          disabled={apiKeyInput().trim().length === 0}
+                          onClick={commitApiKey}
+                        >
+                          {t("vui.key.save")}
+                        </button>
+                      </div>
+
+                      <Show when={apiKeyLooksWrong()}>
+                        <div data-slot="reason-box" data-tone="muted">
+                          {t("vui.key.looksWrong")}
+                        </div>
+                      </Show>
+
+                      <p id="openrouter-key-hint" data-slot="hint">
+                        {t("vui.key.hint")}
+                      </p>
+                    </div>
+
+                    {/* Cost of the last request if exposed */}
+                    <Show when={resolvedCost() !== undefined}>
+                      <div data-slot="cost-tag">
+                        {t("vui.key.cost")}{" "}
+                        <strong>
+                          ${resolvedCost()! < 0.01 ? resolvedCost()!.toFixed(5) : resolvedCost()!.toFixed(3)}
+                        </strong>
+                      </div>
+                    </Show>
+                  </div>
+                </Show>
+              </div>
+            </div>
+          </section>
+
+          {/* ── 7. Voice commands ──────────────────────────────────────── */}
+          <section
+            id="voice-sec-commands"
+            data-slot="section"
+            data-hidden={activeSection() === "voice-sec-commands" ? undefined : "true"}
+            aria-labelledby="section-commands-title"
+          >
+            <div data-slot="section-head">
+              <h3 id="section-commands-title" data-slot="section-title" tabIndex={-1}>
+                {t("vui.commands.title")}
+              </h3>
+              <p data-slot="section-desc">{t("vui.commands.desc")}</p>
             </div>
 
-          </div>
-        </section>
+            <div data-slot="trial-row">
+              <input
+                id="voice-trial-input"
+                data-slot="input"
+                type="text"
+                autocomplete="off"
+                placeholder={t("vui.commands.trial.placeholder")}
+                aria-label={t("vui.commands.trial")}
+                value={trialText()}
+                disabled={trialBusy()}
+                onInput={(e) => setTrialText(e.currentTarget.value)}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault()
+                    void runTrial()
+                  } else if (e.key === "Escape") {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    setTrialText("")
+                  }
+                }}
+              />
+              <button
+                type="button"
+                data-slot="solid-btn"
+                disabled={trialText().trim().length === 0 || trialBusy()}
+                onClick={() => void runTrial()}
+              >
+                {trialBusy() ? t("vui.commands.sending") : t("vui.commands.run")}
+              </button>
+            </div>
+            <Show when={trialNote()}>
+              <div role="alert" data-slot="reason-box">
+                {trialNote()}
+              </div>
+            </Show>
 
-        {/* ── 7. Voice commands ──────────────────────────────────────── */}
-        <section
-          id="voice-sec-commands"
-          data-slot="section"
-          data-hidden={activeSection() === "voice-sec-commands" ? undefined : "true"}
-          aria-labelledby="section-commands-title"
-        >
-          <div data-slot="section-head">
-            <h3 id="section-commands-title" data-slot="section-title" tabIndex={-1}>
-              {t("vui.commands.title")}
-            </h3>
-            <p data-slot="section-desc">
-              {t("vui.commands.desc")}
-            </p>
-          </div>
-
-          <div data-slot="trial-row">
             <input
-              id="voice-trial-input"
+              id="voice-command-filter"
               data-slot="input"
-              type="text"
+              type="search"
               autocomplete="off"
-              placeholder={t("vui.commands.trial.placeholder")}
-              aria-label={t("vui.commands.trial")}
-              value={trialText()}
-              disabled={trialBusy()}
-              onInput={(e) => setTrialText(e.currentTarget.value)}
+              placeholder={t("vui.commands.filter")}
+              aria-label={t("vui.commands.filter.label")}
+              aria-describedby="voice-command-count"
+              value={commandFilter()}
+              onInput={(e) => setCommandFilter(e.currentTarget.value)}
               onKeyDown={(e) => {
-                if (e.key === "Enter") {
-                  e.preventDefault()
-                  void runTrial()
-                } else if (e.key === "Escape") {
+                if (e.key === "Escape") {
                   e.preventDefault()
                   e.stopPropagation()
-                  setTrialText("")
+                  setCommandFilter("")
                 }
               }}
             />
-            <button
-              type="button"
-              data-slot="solid-btn"
-              disabled={trialText().trim().length === 0 || trialBusy()}
-              onClick={() => void runTrial()}
-            >
-              {trialBusy() ? t("vui.commands.sending") : t("vui.commands.run")}
-            </button>
-          </div>
-          <Show when={trialNote()}>
-            <div role="alert" data-slot="reason-box">
-              {trialNote()}
+
+            <div data-slot="command-list">
+              <For each={filteredCommands()} fallback={<p data-slot="hint">{t("vui.commands.none")}</p>}>
+                {(spec) => (
+                  <div data-slot="command-row">
+                    <div data-slot="command-info">
+                      <span data-slot="command-name">
+                        {spec.intent}
+                        <Show when={spec.destructive}>
+                          <span data-slot="command-flag">{t("vui.commands.confirms")}</span>
+                        </Show>
+                      </span>
+                      <span data-slot="command-readback">{spec.readback}</span>
+                    </div>
+                    <div data-slot="command-phrases">
+                      <For each={spec.phrases.slice(0, 3)}>
+                        {(phrase) => (
+                          <button
+                            type="button"
+                            data-slot="phrase-chip"
+                            title={t("vui.commands.usePhrase")}
+                            onClick={() => {
+                              setTrialText(phrase)
+                              document.getElementById("voice-trial-input")?.focus()
+                            }}
+                          >
+                            {phrase}
+                          </button>
+                        )}
+                      </For>
+                    </div>
+                  </div>
+                )}
+              </For>
             </div>
-          </Show>
-
-          <input
-            id="voice-command-filter"
-            data-slot="input"
-            type="search"
-            autocomplete="off"
-            placeholder={t("vui.commands.filter")}
-            aria-label={t("vui.commands.filter.label")}
-            aria-describedby="voice-command-count"
-            value={commandFilter()}
-            onInput={(e) => setCommandFilter(e.currentTarget.value)}
-            onKeyDown={(e) => {
-              if (e.key === "Escape") {
-                e.preventDefault()
-                e.stopPropagation()
-                setCommandFilter("")
-              }
-            }}
-          />
-
-          <div data-slot="command-list">
-            <For
-              each={filteredCommands()}
-              fallback={
-                <p data-slot="hint">{t("vui.commands.none")}</p>
-              }
-            >
-              {(spec) => (
-                <div data-slot="command-row">
-                  <div data-slot="command-info">
-                    <span data-slot="command-name">
-                      {spec.intent}
-                      <Show when={spec.destructive}>
-                        <span data-slot="command-flag">{t("vui.commands.confirms")}</span>
-                      </Show>
-                    </span>
-                    <span data-slot="command-readback">{spec.readback}</span>
-                  </div>
-                  <div data-slot="command-phrases">
-                    <For each={spec.phrases.slice(0, 3)}>
-                      {(phrase) => (
-                        <button
-                          type="button"
-                          data-slot="phrase-chip"
-                          title={t("vui.commands.usePhrase")}
-                          onClick={() => {
-                            setTrialText(phrase)
-                            document.getElementById("voice-trial-input")?.focus()
-                          }}
-                        >
-                          {phrase}
-                        </button>
-                      )}
-                    </For>
-                  </div>
-                </div>
-              )}
-            </For>
-          </div>
-          <p id="voice-command-count" data-slot="hint">
-            {t("vui.commands.count", filteredCommands().length, VOCABULARY.length)}
-          </p>
-        </section>
+            <p id="voice-command-count" data-slot="hint">
+              {t("vui.commands.count", filteredCommands().length, VOCABULARY.length)}
+            </p>
+          </section>
         </div>
       </div>
 
@@ -2504,9 +2411,7 @@ export function VoiceSettingsPanel(props: VoiceSettingsPanelProps) {
 
       {/* Footer */}
       <div data-slot="footer">
-        <span data-slot="footer-hint">
-          {t("vui.footer.keys")}
-        </span>
+        <span data-slot="footer-hint">{t("vui.footer.keys")}</span>
         <Show when={!props.inline && props.onClose}>
           <button type="button" data-slot="solid-btn" onClick={props.onClose}>
             {t("vui.footer.done")}
@@ -2517,14 +2422,8 @@ export function VoiceSettingsPanel(props: VoiceSettingsPanelProps) {
   )
 
   return (
-    <Show
-      when={!props.inline}
-      fallback={renderPanel()}
-    >
-      <div
-        data-component="voice-settings-overlay"
-        onClick={handleBackdropClick}
-      >
+    <Show when={!props.inline} fallback={renderPanel()}>
+      <div data-component="voice-settings-overlay" onClick={handleBackdropClick}>
         {renderPanel()}
       </div>
     </Show>

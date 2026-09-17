@@ -116,10 +116,7 @@ function findTagged(error: unknown, depth = 0): { _tag: string } | undefined {
   }
 
   for (const symbol of Object.getOwnPropertySymbols(candidate)) {
-    const found = findTagged(
-      (candidate as unknown as Record<symbol, unknown>)[symbol],
-      depth + 1
-    )
+    const found = findTagged((candidate as unknown as Record<symbol, unknown>)[symbol], depth + 1)
     if (found) return found
   }
 

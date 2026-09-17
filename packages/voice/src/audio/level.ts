@@ -89,7 +89,7 @@ export function stepSpeechDetector(
   state: SpeechDetectorState,
   level: number,
   now: number,
-  config: SpeechDetectorConfig = {}
+  config: SpeechDetectorConfig = {},
 ): SpeechDetectorState {
   const threshold = config.speechThreshold ?? DEFAULT_SPEECH_THRESHOLD
   const silenceTimeout = config.silenceDurationMs ?? DEFAULT_SILENCE_TIMEOUT_MS
@@ -250,7 +250,12 @@ export function createSpeechDetector(config: SpeechDetectorConfig = {}, pauses =
       const silenceDurationMs = adaptive ? pauses.timeoutMs() : config.silenceDurationMs
       state = stepSpeechDetector(state, level, now, { ...config, silenceDurationMs })
       // A pause the speaker carried on from.
-      if (adaptive && before.status === "speaking" && before.silenceStartTime !== undefined && state.silenceStartTime === undefined) {
+      if (
+        adaptive &&
+        before.status === "speaking" &&
+        before.silenceStartTime !== undefined &&
+        state.silenceStartTime === undefined
+      ) {
         pauses.heard(now - before.silenceStartTime)
       }
       if (state.status === "speech_ended" && before.status !== "speech_ended") {

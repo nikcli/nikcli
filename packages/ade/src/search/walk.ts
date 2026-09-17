@@ -55,11 +55,7 @@ export interface WalkResult {
  * Traverses a project directory tree in breadth-first order (BFS).
  * Files close to the root are discovered first as they are most frequently targeted.
  */
-export async function walkProject(input: {
-  host: Host
-  root: string
-  options?: WalkOptions
-}): Promise<WalkResult> {
+export async function walkProject(input: { host: Host; root: string; options?: WalkOptions }): Promise<WalkResult> {
   const host = input.host
   const root = normalizePath(input.root)
   const limit = input.options?.limit ?? DEFAULT_WALK_LIMIT
@@ -150,7 +146,10 @@ export async function walkProject(input: {
 
     for (const entry of sorted) {
       if (entry.is_dir) {
-        if (!skipDirs.has(entry.name) && !(entry.name.startsWith(".") && entry.name !== ".github" && entry.name !== ".nikcli")) {
+        if (
+          !skipDirs.has(entry.name) &&
+          !(entry.name.startsWith(".") && entry.name !== ".github" && entry.name !== ".nikcli")
+        ) {
           const dirPath = entry.path ? normalizePath(entry.path) : joinPath(current.dir, entry.name)
           subdirs.push(dirPath)
           dirs.push(dirPath)

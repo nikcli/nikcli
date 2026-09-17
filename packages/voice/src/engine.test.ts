@@ -112,7 +112,9 @@ describe("engine/createVoiceEngine", () => {
       host,
       transcriber,
       speaker,
-      now: () => currentTime, settings: { activation: "toggle" } })
+      now: () => currentTime,
+      settings: { activation: "toggle" },
+    })
 
     return {
       engine,
@@ -269,7 +271,9 @@ describe("engine/createVoiceEngine", () => {
         host: new MockVoiceHost(),
         transcriber: slow.transcriber,
         speaker: createFakeSpeaker(),
-        now: () => 10_000, settings: { activation: "toggle" } })
+        now: () => 10_000,
+        settings: { activation: "toggle" },
+      })
 
       const first = engine.start()
       const second = engine.start()
@@ -286,7 +290,9 @@ describe("engine/createVoiceEngine", () => {
         host: new MockVoiceHost(),
         transcriber: slow.transcriber,
         speaker: createFakeSpeaker(),
-        now: () => 10_000, settings: { activation: "toggle" } })
+        now: () => 10_000,
+        settings: { activation: "toggle" },
+      })
 
       const starting = engine.start()
       await engine.stop()
@@ -523,7 +529,9 @@ describe("engine/stop delivers what was already heard", () => {
       speaker: createFakeSpeaker(),
       now: () => 10_000,
       getContext: () => ({ focusedPaneId: "pane-1" }),
-      ...(drainTimeoutMs === undefined ? {} : { drainTimeoutMs }), settings: { activation: "toggle" } })
+      ...(drainTimeoutMs === undefined ? {} : { drainTimeoutMs }),
+      settings: { activation: "toggle" },
+    })
     return { host, transcriber, engine }
   }
 
@@ -700,7 +708,9 @@ describe("engine/agent answers what the grammar does not know", () => {
     await engine.submitText("chiedi alla sessione dei test se ha finito e dimmi cosa ha trovato")
     await new Promise((r) => setTimeout(r, 20))
 
-    expect(asked).toEqual([{ text: "chiedi alla sessione dei test se ha finito e dimmi cosa ha trovato", engine: "auto" }])
+    expect(asked).toEqual([
+      { text: "chiedi alla sessione dei test se ha finito e dimmi cosa ha trovato", engine: "auto" },
+    ])
     expect(speaker.lastSpoken).toBe("Ho chiesto alla sessione due: ha finito.")
     expect(engine.status()).toBe("idle")
     await engine.stop()
@@ -720,7 +730,13 @@ describe("engine/agent answers what the grammar does not know", () => {
           })
         })
       const speaker = createFakeSpeaker()
-      const engine = createVoiceEngine({ host, transcriber: createFakeTranscriber(), speaker, now: () => 10_000, settings: { activation: "toggle", agentEngine: "auto" } })
+      const engine = createVoiceEngine({
+        host,
+        transcriber: createFakeTranscriber(),
+        speaker,
+        now: () => 10_000,
+        settings: { activation: "toggle", agentEngine: "auto" },
+      })
       return { host, asked, speaker, engine, aborted: () => aborted }
     }
 
@@ -737,7 +753,11 @@ describe("engine/agent answers what the grammar does not know", () => {
       expect(aborted()).toBe(1)
       expect(host.calls).toContainEqual({ method: "runCommand", args: ["palette.open"] })
       expect(engine.status()).toBe("idle")
-      expect(engine.history().some((entry) => entry.kind === "action" && entry.label.startsWith("Richiesta precedente interrotta"))).toBe(true)
+      expect(
+        engine
+          .history()
+          .some((entry) => entry.kind === "action" && entry.label.startsWith("Richiesta precedente interrotta")),
+      ).toBe(true)
     })
 
     test("«annulla» stops the turn and says so", async () => {
@@ -771,7 +791,13 @@ describe("engine/agent answers what the grammar does not know", () => {
           })
         })
       const transcriber = createFakeTranscriber()
-      const engine = createVoiceEngine({ host, transcriber, speaker: createFakeSpeaker(), now: () => 10_000, settings: { activation: "toggle", agentEngine: "auto" } })
+      const engine = createVoiceEngine({
+        host,
+        transcriber,
+        speaker: createFakeSpeaker(),
+        now: () => 10_000,
+        settings: { activation: "toggle", agentEngine: "auto" },
+      })
       await engine.start()
       transcriber.emit("raccontami la storia di Roma in tre frasi", true)
       await new Promise((r) => setTimeout(r, 20))
@@ -799,7 +825,11 @@ describe("engine/agent answers what the grammar does not know", () => {
       expect(engine.held()).toBe(TV)
       // The console names the sentence by its first words, it does not quote the room.
       expect(
-        engine.history().some((entry) => entry.kind === "action" && entry.label.startsWith(`Sentito mentre pensavo: «${firstWords(TV)}»`)),
+        engine
+          .history()
+          .some(
+            (entry) => entry.kind === "action" && entry.label.startsWith(`Sentito mentre pensavo: «${firstWords(TV)}»`),
+          ),
       ).toBe(true)
 
       // Not confirmed: the turn answers and the held sentence is never asked.
@@ -841,10 +871,18 @@ describe("engine/agent answers what the grammar does not know", () => {
         new Promise((resolve) => {
           asked.push(request.text)
           // A real CLI takes a while to die: the stopped turn reports well after the stop.
-          request.signal?.addEventListener("abort", () => setTimeout(() => resolve({ ok: false, text: "", ran: true }), 80))
+          request.signal?.addEventListener("abort", () =>
+            setTimeout(() => resolve({ ok: false, text: "", ran: true }), 80),
+          )
         })
       const transcriber = createFakeTranscriber()
-      const engine = createVoiceEngine({ host, transcriber, speaker: createFakeSpeaker(), now: () => 10_000, settings: { activation: "toggle", agentEngine: "auto" } })
+      const engine = createVoiceEngine({
+        host,
+        transcriber,
+        speaker: createFakeSpeaker(),
+        now: () => 10_000,
+        settings: { activation: "toggle", agentEngine: "auto" },
+      })
       await engine.start()
       void engine.submitText("raccontami la storia di Roma")
       await new Promise((r) => setTimeout(r, 20))
@@ -952,7 +990,13 @@ describe("engine/agent answers what the grammar does not know", () => {
       }
       const transcriber = createFakeTranscriber()
       // No `activation` here: this is the default a new installation gets.
-      const engine = createVoiceEngine({ host, transcriber, speaker: createFakeSpeaker(), now: () => 10_000, settings: { agentEngine: "auto", activation: "wake-word" } })
+      const engine = createVoiceEngine({
+        host,
+        transcriber,
+        speaker: createFakeSpeaker(),
+        now: () => 10_000,
+        settings: { agentEngine: "auto", activation: "wake-word" },
+      })
       const hear = async (text: string) => {
         transcriber.emit(text, true)
         await new Promise((r) => setTimeout(r, 20))
@@ -970,7 +1014,9 @@ describe("engine/agent answers what the grammar does not know", () => {
 
       expect(asked).toHaveLength(0)
       expect(host.calls.some((call) => call.method === "runCommand")).toBe(false)
-      const ignored = engine.history().filter((entry) => entry.kind === "action" && entry.label.startsWith("Ignorata, non inizia con «nik»"))
+      const ignored = engine
+        .history()
+        .filter((entry) => entry.kind === "action" && entry.label.startsWith("Ignorata, non inizia con «nik»"))
       expect(ignored).toHaveLength(3)
       await engine.stop()
     })
@@ -1006,7 +1052,13 @@ describe("engine/agent answers what the grammar does not know", () => {
           request.signal?.addEventListener("abort", () => resolve({ ok: false, text: "", ran: true }))
         })
       const transcriber = createFakeTranscriber()
-      const engine = createVoiceEngine({ host, transcriber, speaker: createFakeSpeaker(), now: () => 10_000, settings: { agentEngine: "auto", activation: "wake-word" } })
+      const engine = createVoiceEngine({
+        host,
+        transcriber,
+        speaker: createFakeSpeaker(),
+        now: () => 10_000,
+        settings: { agentEngine: "auto", activation: "wake-word" },
+      })
       await engine.start("agent", { waitForName: true })
       transcriber.emit("ei nik raccontami la storia di Roma in tre frasi", true)
       await new Promise((r) => setTimeout(r, 20))
@@ -1036,7 +1088,13 @@ describe("engine/agent answers what the grammar does not know", () => {
           })
         })
       const transcriber = createFakeTranscriber()
-      const engine = createVoiceEngine({ host, transcriber, speaker: createFakeSpeaker(), now: () => 10_000, settings: { agentEngine: "auto", activation: "wake-word" } })
+      const engine = createVoiceEngine({
+        host,
+        transcriber,
+        speaker: createFakeSpeaker(),
+        now: () => 10_000,
+        settings: { agentEngine: "auto", activation: "wake-word" },
+      })
       await engine.start()
       transcriber.emit("ei nik raccontami la storia di Roma in tre frasi", true)
       await new Promise((r) => setTimeout(r, 20))
@@ -1048,7 +1106,13 @@ describe("engine/agent answers what the grammar does not know", () => {
       expect(engine.held()).toBe("il governo ha approvato la legge di bilancio nella notte")
       // Named by its first words in the console, not quoted whole.
       expect(
-        engine.history().some((entry) => entry.kind === "action" && entry.label.startsWith("Sentito mentre pensavo: «il governo ha approvato la legge di bilancio…»")),
+        engine
+          .history()
+          .some(
+            (entry) =>
+              entry.kind === "action" &&
+              entry.label.startsWith("Sentito mentre pensavo: «il governo ha approvato la legge di bilancio…»"),
+          ),
       ).toBe(true)
 
       transcriber.emit("annulla", true)
@@ -1218,7 +1282,13 @@ describe("always-on listening", () => {
       host,
       speaker: createFakeSpeaker(),
       now: () => clock,
-      settings: { agentEngine: "off", activation: "wake-word", alwaysListen: true, backend: "openrouter", openRouterApiKey: "k" },
+      settings: {
+        agentEngine: "off",
+        activation: "wake-word",
+        alwaysListen: true,
+        backend: "openrouter",
+        openRouterApiKey: "k",
+      },
       createTranscriber: (_backend, options) => {
         gate = options?.openRouterOptions?.nameGate
         return transcriber
@@ -1250,13 +1320,21 @@ describe("always-on listening", () => {
     let gate: any
     const host = new MockVoiceHost()
     ;(host as VoiceHost).askAgent = (request) =>
-      new Promise((resolve) => request.signal?.addEventListener("abort", () => resolve({ ok: false, text: "", ran: true })))
+      new Promise((resolve) =>
+        request.signal?.addEventListener("abort", () => resolve({ ok: false, text: "", ran: true })),
+      )
     const transcriber = createFakeTranscriber()
     const engine = createVoiceEngine({
       host,
       speaker: createFakeSpeaker(),
       now: () => 10_000,
-      settings: { agentEngine: "auto", activation: "wake-word", alwaysListen: true, backend: "openrouter", openRouterApiKey: "k" },
+      settings: {
+        agentEngine: "auto",
+        activation: "wake-word",
+        alwaysListen: true,
+        backend: "openrouter",
+        openRouterApiKey: "k",
+      },
       createTranscriber: (_backend, options) => {
         gate = options?.openRouterOptions?.nameGate
         return transcriber
@@ -1331,7 +1409,13 @@ describe("always-on listening", () => {
       host: new MockVoiceHost(),
       speaker: createFakeSpeaker(),
       now: () => clock,
-      settings: { agentEngine: "off", activation: "wake-word", alwaysListen: true, backend: "openrouter", openRouterApiKey: "k" },
+      settings: {
+        agentEngine: "off",
+        activation: "wake-word",
+        alwaysListen: true,
+        backend: "openrouter",
+        openRouterApiKey: "k",
+      },
       listenRequestsPerHour: 3,
       createTranscriber: (_backend, options) => {
         gate = options?.openRouterOptions?.nameGate
@@ -1364,7 +1448,13 @@ describe("always-on listening", () => {
       host: new MockVoiceHost(),
       speaker: createFakeSpeaker(),
       now: () => 10_000,
-      settings: { agentEngine: "off", activation: "wake-word", alwaysListen: true, backend: "openrouter", openRouterApiKey: "k" },
+      settings: {
+        agentEngine: "off",
+        activation: "wake-word",
+        alwaysListen: true,
+        backend: "openrouter",
+        openRouterApiKey: "k",
+      },
       createTranscriber: (_backend, options) => {
         gate = options?.openRouterOptions?.nameGate
         return transcriber
@@ -1381,7 +1471,10 @@ describe("always-on listening", () => {
     expect(gate.accepts("Nike apri")).toBe(false)
 
     gate.onRejected("il governo ha approvato la legge di bilancio nella notte fonda")
-    expect(engine.history().at(-1)).toMatchObject({ kind: "action", label: expect.stringContaining("Ignorata, non inizia con «nik»: «il governo") })
+    expect(engine.history().at(-1)).toMatchObject({
+      kind: "action",
+      label: expect.stringContaining("Ignorata, non inizia con «nik»: «il governo"),
+    })
 
     // Called by the button: the next sentence is meant, and has to go whole.
     await engine.toggle()
@@ -1486,7 +1579,13 @@ describe("0.7.0: only the shortcut starts the assistant", () => {
       return { ok: true, text: "Ecco la storia di Roma in breve.", ran: true }
     }
     const transcriber = createFakeTranscriber()
-    const engine = createVoiceEngine({ host, transcriber, speaker: voice, now: () => clock, settings: { agentEngine: "auto", activation: "push-to-talk", alwaysListen: false } })
+    const engine = createVoiceEngine({
+      host,
+      transcriber,
+      speaker: voice,
+      now: () => clock,
+      settings: { agentEngine: "auto", activation: "push-to-talk", alwaysListen: false },
+    })
     const tap = async () => {
       await engine.pressToTalk("agent")
       clock += 10
@@ -1582,7 +1681,13 @@ describe("after 0.7.0: only the name starts the assistant", () => {
     }
     const transcriber = createFakeTranscriber()
     let clock = 10_000
-    const engine = createVoiceEngine({ host, transcriber, speaker: createFakeSpeaker(), now: () => clock, settings: { agentEngine: "auto" } })
+    const engine = createVoiceEngine({
+      host,
+      transcriber,
+      speaker: createFakeSpeaker(),
+      now: () => clock,
+      settings: { agentEngine: "auto" },
+    })
     expect(engine.settings().activation).toBe("wake-word")
     expect(engine.settings().alwaysListen).toBe(true)
     await engine.start("agent", { waitForName: true })
@@ -1637,7 +1742,13 @@ describe("after 0.7.0: opened by hand, with listening by itself turned off", () 
     const host = new MockVoiceHost()
     ;(host as VoiceHost).askAgent = async () => ({ ok: true, text: "Fatto.", ran: true })
     const transcriber = createFakeTranscriber()
-    const engine = createVoiceEngine({ host, transcriber, speaker: createFakeSpeaker(), now: () => 10_000, settings: { agentEngine: "auto" } })
+    const engine = createVoiceEngine({
+      host,
+      transcriber,
+      speaker: createFakeSpeaker(),
+      now: () => 10_000,
+      settings: { agentEngine: "auto" },
+    })
     await engine.start("agent", { waitForName: true })
     transcriber.emit("nik raccontami la storia di Roma", true)
     await new Promise((r) => setTimeout(r, 60))
@@ -1656,7 +1767,13 @@ describe("after 0.7.0: dictation is held on its key", () => {
       return { ok: true, text: "Fatto.", ran: true }
     }
     const transcriber = createFakeTranscriber()
-    const engine = createVoiceEngine({ host, transcriber, speaker: createFakeSpeaker(), now: () => clock, settings: { agentEngine: "auto" } })
+    const engine = createVoiceEngine({
+      host,
+      transcriber,
+      speaker: createFakeSpeaker(),
+      now: () => clock,
+      settings: { agentEngine: "auto" },
+    })
     const settle = () => new Promise((r) => setTimeout(r, 40))
     return { host, asked, transcriber, engine, settle, advance: (ms: number) => (clock += ms) }
   }
@@ -1752,9 +1869,12 @@ describe("the agent's answer is read as it is written", () => {
     // The last sentence had no space after it yet: it goes with the rest.
     expect(speaker.spoken).toEqual(["La capitale è Canberra.", "Non Sydney, come si pensa. Fine"])
     // The console gets the answer once, whole.
-    expect(engine.history().filter((e) => e.kind === "assistant").map((e) => (e as { text: string }).text)).toEqual([
-      "La capitale è Canberra. Non Sydney, come si pensa. Fine",
-    ])
+    expect(
+      engine
+        .history()
+        .filter((e) => e.kind === "assistant")
+        .map((e) => (e as { text: string }).text),
+    ).toEqual(["La capitale è Canberra. Non Sydney, come si pensa. Fine"])
     expect(cues).toEqual([])
   })
 
@@ -1977,7 +2097,13 @@ describe("a television talking on does not keep the window open", () => {
     }
     await engine.start("agent", { waitForName: true })
     await hear("nik qual è la capitale della Francia")
-    const room = ["il governo ha approvato", "e domani pioggia al nord", "la partita finisce due a uno", "in borsa oggi", "e adesso la pubblicità"]
+    const room = [
+      "il governo ha approvato",
+      "e domani pioggia al nord",
+      "la partita finisce due a uno",
+      "in borsa oggi",
+      "e adesso la pubblicità",
+    ]
     const wholeToCloud: boolean[] = []
     for (const sentence of room) {
       wholeToCloud.push(!gate.active(clock + 1_000))
@@ -1998,7 +2124,13 @@ describe("a television talking on does not keep the window open", () => {
       return { ok: true, text: "Fatto.", ran: true }
     }
     const transcriber = createFakeTranscriber()
-    const engine = createVoiceEngine({ host, transcriber, speaker: createFakeSpeaker(), now: () => 10_000, settings: { agentEngine: "auto" } })
+    const engine = createVoiceEngine({
+      host,
+      transcriber,
+      speaker: createFakeSpeaker(),
+      now: () => 10_000,
+      settings: { agentEngine: "auto" },
+    })
     const hear = async (text: string) => {
       transcriber.emit(text, true)
       await new Promise((r) => setTimeout(r, 30))

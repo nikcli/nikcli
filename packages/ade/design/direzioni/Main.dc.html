@@ -1,102 +1,152 @@
 <!doctype html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <script src="./support.js"></script>
-</head>
-<body>
-<x-dc>
-<helmet>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Architects+Daughter&display=swap">
-  <style>
-    body { margin: 0; background: #ffffff; color: #1a1a1a; font-family: "Helvetica Neue", Arial, sans-serif; }
-    a { color: #1d4ed8; } a:hover { color: #1e3a8a; }
-    .wf-hand { font-family: "Architects Daughter", "Comic Sans MS", cursive; }
-  </style>
-</helmet>
+  <head>
+    <meta charset="utf-8" />
+    <script src="./support.js"></script>
+  </head>
+  <body>
+    <x-dc>
+      <helmet>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Architects+Daughter&display=swap" />
+        <style>
+          body {
+            margin: 0;
+            background: #ffffff;
+            color: #1a1a1a;
+            font-family: "Helvetica Neue", Arial, sans-serif;
+          }
+          a {
+            color: #1d4ed8;
+          }
+          a:hover {
+            color: #1e3a8a;
+          }
+          .wf-hand {
+            font-family: "Architects Daughter", "Comic Sans MS", cursive;
+          }
+        </style>
+      </helmet>
 
-<div style="display: flex; flex-direction: column; width: 900px; height: 640px; padding: 24px; background: #ffffff; box-sizing: border-box">
-
-  <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px">
-    <span class="wf-hand" style="font-size: 24px">A · Il diff è il documento</span>
-    <span style="font-size: 12px; color: #6b6b6b">asse: qual è l'oggetto primario</span>
-  </div>
-  <div style="margin-bottom: 16px; font-size: 13px; line-height: 150%; color: #444444; max-width: 720px">
-    Al centro non c'è la conversazione ma la modifica. La trascrizione diventa una colonna stretta di eventi;
-    il diff prende lo spazio che oggi prende la chat.
-  </div>
-
-  <div style="display: flex; gap: 10px; flex-grow: 1; min-height: 0">
-
-    <div style="display: flex; flex-direction: column; gap: 6px; width: 190px; border: 1.5px solid #1a1a1a; border-radius: 4px; padding: 8px">
-      <span class="wf-hand" style="font-size: 13px; color: #6b6b6b">eventi</span>
-      <div style="height: 26px; background: #ececec; border-radius: 3px"></div>
-      <div style="height: 26px; background: #ececec; border-radius: 3px"></div>
-      <div style="height: 40px; border: 1.5px solid #1d4ed8; border-radius: 3px"></div>
-      <div style="height: 26px; background: #ececec; border-radius: 3px"></div>
-      <div style="height: 26px; background: #ececec; border-radius: 3px"></div>
-      <div style="flex-grow: 1"></div>
-      <div style="height: 34px; border: 1.5px dashed #9a9a9a; border-radius: 3px"></div>
-    </div>
-
-    <div style="display: flex; flex-direction: column; gap: 8px; flex-grow: 1; min-width: 0; border: 2px solid #1d4ed8; border-radius: 4px; padding: 10px">
-      <div style="display: flex; align-items: center; gap: 8px">
-        <span class="wf-hand" style="font-size: 15px; color: #1d4ed8">la modifica</span>
-        <div style="flex-grow: 1"></div>
-        <div style="width: 64px; height: 20px; background: #ececec; border-radius: 3px"></div>
-        <div style="width: 44px; height: 20px; background: #ececec; border-radius: 3px"></div>
-      </div>
-      <div style="display: flex; gap: 8px; flex-grow: 1; min-height: 0">
-        <div style="display: flex; flex-direction: column; gap: 4px; width: 150px">
-          <div style="height: 16px; background: #f2f2f2; border-radius: 2px"></div>
-          <div style="height: 16px; background: #dbe6ff; border-radius: 2px"></div>
-          <div style="height: 16px; background: #f2f2f2; border-radius: 2px"></div>
-          <div style="height: 16px; background: #f2f2f2; border-radius: 2px"></div>
-          <div style="height: 16px; background: #f2f2f2; border-radius: 2px"></div>
+      <div
+        style="
+          display: flex;
+          flex-direction: column;
+          width: 900px;
+          height: 640px;
+          padding: 24px;
+          background: #ffffff;
+          box-sizing: border-box;
+        "
+      >
+        <div style="display: flex; align-items: baseline; gap: 10px; margin-bottom: 4px">
+          <span class="wf-hand" style="font-size: 24px">A · Il diff è il documento</span>
+          <span style="font-size: 12px; color: #6b6b6b">asse: qual è l'oggetto primario</span>
         </div>
-        <div style="display: flex; flex-direction: column; gap: 3px; flex-grow: 1; min-width: 0">
-          <div style="height: 12px; background: #e7f3e7; border-radius: 2px"></div>
-          <div style="height: 12px; background: #e7f3e7; border-radius: 2px"></div>
-          <div style="height: 12px; background: #fbe9e9; border-radius: 2px"></div>
-          <div style="height: 12px; background: #f2f2f2; border-radius: 2px"></div>
-          <div style="height: 12px; background: #e7f3e7; border-radius: 2px"></div>
-          <div style="height: 12px; background: #f2f2f2; border-radius: 2px"></div>
-          <div style="height: 12px; background: #f2f2f2; border-radius: 2px"></div>
-          <div style="height: 12px; background: #fbe9e9; border-radius: 2px"></div>
-          <div style="height: 12px; background: #f2f2f2; border-radius: 2px"></div>
-          <div style="flex-grow: 1"></div>
+        <div style="margin-bottom: 16px; font-size: 13px; line-height: 150%; color: #444444; max-width: 720px">
+          Al centro non c'è la conversazione ma la modifica. La trascrizione diventa una colonna stretta di eventi; il
+          diff prende lo spazio che oggi prende la chat.
+        </div>
+
+        <div style="display: flex; gap: 10px; flex-grow: 1; min-height: 0">
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              gap: 6px;
+              width: 190px;
+              border: 1.5px solid #1a1a1a;
+              border-radius: 4px;
+              padding: 8px;
+            "
+          >
+            <span class="wf-hand" style="font-size: 13px; color: #6b6b6b">eventi</span>
+            <div style="height: 26px; background: #ececec; border-radius: 3px"></div>
+            <div style="height: 26px; background: #ececec; border-radius: 3px"></div>
+            <div style="height: 40px; border: 1.5px solid #1d4ed8; border-radius: 3px"></div>
+            <div style="height: 26px; background: #ececec; border-radius: 3px"></div>
+            <div style="height: 26px; background: #ececec; border-radius: 3px"></div>
+            <div style="flex-grow: 1"></div>
+            <div style="height: 34px; border: 1.5px dashed #9a9a9a; border-radius: 3px"></div>
+          </div>
+
+          <div
+            style="
+              display: flex;
+              flex-direction: column;
+              gap: 8px;
+              flex-grow: 1;
+              min-width: 0;
+              border: 2px solid #1d4ed8;
+              border-radius: 4px;
+              padding: 10px;
+            "
+          >
+            <div style="display: flex; align-items: center; gap: 8px">
+              <span class="wf-hand" style="font-size: 15px; color: #1d4ed8">la modifica</span>
+              <div style="flex-grow: 1"></div>
+              <div style="width: 64px; height: 20px; background: #ececec; border-radius: 3px"></div>
+              <div style="width: 44px; height: 20px; background: #ececec; border-radius: 3px"></div>
+            </div>
+            <div style="display: flex; gap: 8px; flex-grow: 1; min-height: 0">
+              <div style="display: flex; flex-direction: column; gap: 4px; width: 150px">
+                <div style="height: 16px; background: #f2f2f2; border-radius: 2px"></div>
+                <div style="height: 16px; background: #dbe6ff; border-radius: 2px"></div>
+                <div style="height: 16px; background: #f2f2f2; border-radius: 2px"></div>
+                <div style="height: 16px; background: #f2f2f2; border-radius: 2px"></div>
+                <div style="height: 16px; background: #f2f2f2; border-radius: 2px"></div>
+              </div>
+              <div style="display: flex; flex-direction: column; gap: 3px; flex-grow: 1; min-width: 0">
+                <div style="height: 12px; background: #e7f3e7; border-radius: 2px"></div>
+                <div style="height: 12px; background: #e7f3e7; border-radius: 2px"></div>
+                <div style="height: 12px; background: #fbe9e9; border-radius: 2px"></div>
+                <div style="height: 12px; background: #f2f2f2; border-radius: 2px"></div>
+                <div style="height: 12px; background: #e7f3e7; border-radius: 2px"></div>
+                <div style="height: 12px; background: #f2f2f2; border-radius: 2px"></div>
+                <div style="height: 12px; background: #f2f2f2; border-radius: 2px"></div>
+                <div style="height: 12px; background: #fbe9e9; border-radius: 2px"></div>
+                <div style="height: 12px; background: #f2f2f2; border-radius: 2px"></div>
+                <div style="flex-grow: 1"></div>
+              </div>
+            </div>
+            <div
+              style="
+                display: flex;
+                align-items: center;
+                gap: 8px;
+                height: 30px;
+                border-top: 1.5px solid #d8d8d8;
+                padding-top: 6px;
+              "
+            >
+              <div style="flex-grow: 1; height: 22px; border: 1.5px solid #1a1a1a; border-radius: 3px"></div>
+              <div style="width: 70px; height: 22px; background: #1a1a1a; border-radius: 3px"></div>
+            </div>
+          </div>
+        </div>
+
+        <div style="display: flex; gap: 12px; margin-top: 14px">
+          <div style="flex-grow: 1; border-left: 3px solid #1d4ed8; padding-left: 8px">
+            <div class="wf-hand" style="font-size: 13px">perché</div>
+            <div style="font-size: 12px; line-height: 150%; color: #444444">
+              Il lavoro di un agente è il codice che cambia. Oggi lo si deduce leggendo un racconto; qui lo si guarda.
+            </div>
+          </div>
+          <div style="flex-grow: 1; border-left: 3px solid #b0b0b0; padding-left: 8px">
+            <div class="wf-hand" style="font-size: 13px">costo</div>
+            <div style="font-size: 12px; line-height: 150%; color: #444444">
+              Quando l'agente ragiona e non tocca file, il centro è vuoto e la colonna stretta porta tutto il peso.
+            </div>
+          </div>
         </div>
       </div>
-      <div style="display: flex; align-items: center; gap: 8px; height: 30px; border-top: 1.5px solid #d8d8d8; padding-top: 6px">
-        <div style="flex-grow: 1; height: 22px; border: 1.5px solid #1a1a1a; border-radius: 3px"></div>
-        <div style="width: 70px; height: 22px; background: #1a1a1a; border-radius: 3px"></div>
-      </div>
-    </div>
-  </div>
+    </x-dc>
 
-  <div style="display: flex; gap: 12px; margin-top: 14px">
-    <div style="flex-grow: 1; border-left: 3px solid #1d4ed8; padding-left: 8px">
-      <div class="wf-hand" style="font-size: 13px">perché</div>
-      <div style="font-size: 12px; line-height: 150%; color: #444444">
-        Il lavoro di un agente è il codice che cambia. Oggi lo si deduce leggendo un racconto; qui lo si guarda.
-      </div>
-    </div>
-    <div style="flex-grow: 1; border-left: 3px solid #b0b0b0; padding-left: 8px">
-      <div class="wf-hand" style="font-size: 13px">costo</div>
-      <div style="font-size: 12px; line-height: 150%; color: #444444">
-        Quando l'agente ragiona e non tocca file, il centro è vuoto e la colonna stretta porta tutto il peso.
-      </div>
-    </div>
-  </div>
-</div>
-</x-dc>
-
-<script data-dc-script data-props='{"$preview":{"width":900,"height":640}}'>
-class Component extends DCLogic {
-  renderVals() {
-    return {}
-  }
-}
-</script>
-</body>
+    <script data-dc-script data-props='{"$preview":{"width":900,"height":640}}'>
+      class Component extends DCLogic {
+        renderVals() {
+          return {}
+        }
+      }
+    </script>
+  </body>
 </html>

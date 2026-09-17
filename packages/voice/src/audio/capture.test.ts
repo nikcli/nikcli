@@ -79,7 +79,7 @@ describe("audio/capture", () => {
 
     // 3. Neither available -> throws Italian error
     expect(() => chooseSupportedAudioMimeType(() => false)).toThrow(
-      /Nessun formato audio supportato per la registrazione/i
+      /Nessun formato audio supportato per la registrazione/i,
     )
   })
 

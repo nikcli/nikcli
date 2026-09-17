@@ -1,10 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import {
-  normalizeAccents,
-  normalizeUtterance,
-  stripFillers,
-  wordsToNumbers,
-} from "./normalize"
+import { normalizeAccents, normalizeUtterance, stripFillers, wordsToNumbers } from "./normalize"
 
 describe("normalizeUtterance", () => {
   describe("accents and diacritics", () => {

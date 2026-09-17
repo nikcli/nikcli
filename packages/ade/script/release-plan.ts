@@ -16,7 +16,14 @@
  */
 
 import { appendFileSync, existsSync, readFileSync, writeFileSync } from "node:fs"
-import { COMMIT_TYPES, SKIP_MARKER, invalidSubjects, planRelease, releaseNotes, type Commit } from "../src/update/release-plan"
+import {
+  COMMIT_TYPES,
+  SKIP_MARKER,
+  invalidSubjects,
+  planRelease,
+  releaseNotes,
+  type Commit,
+} from "../src/update/release-plan"
 
 /** What an ADE release is built from; the same list `ade-release.yml` uses for its notes. */
 const RELEASE_PATHS = ["packages/ade", "packages/voice", "packages/plugin/src/v2/ade"]
@@ -54,7 +61,12 @@ function shas(flag: string, argv: string[]): Set<string> {
 function output(values: Record<string, string>) {
   for (const [key, value] of Object.entries(values)) console.log(`${key}=${value}`)
   if (process.env.GITHUB_OUTPUT) {
-    appendFileSync(process.env.GITHUB_OUTPUT, Object.entries(values).map(([k, v]) => `${k}=${v}\n`).join(""))
+    appendFileSync(
+      process.env.GITHUB_OUTPUT,
+      Object.entries(values)
+        .map(([k, v]) => `${k}=${v}\n`)
+        .join(""),
+    )
   }
 }
 
@@ -64,7 +76,11 @@ function plan(argv: string[]) {
   const major = shas("--major-shas", argv)
   const list = commits(last ? `${last}..HEAD` : "HEAD").map((c) => ({
     ...c,
-    body: [c.body, skip.has(c.sha) ? SKIP_MARKER : "", major.has(c.sha) ? "BREAKING CHANGE: labelled release:major" : ""]
+    body: [
+      c.body,
+      skip.has(c.sha) ? SKIP_MARKER : "",
+      major.has(c.sha) ? "BREAKING CHANGE: labelled release:major" : "",
+    ]
       .filter(Boolean)
       .join("\n\n"),
   }))
@@ -88,7 +104,12 @@ function plan(argv: string[]) {
 
   if (process.env.GITHUB_OUTPUT) writeFileSync("release-notes.md", `${result.notes}\n`)
   else console.log(`\n${result.notes}\n`)
-  output({ release: "true", version: result.version, tag: `ade-v${result.version}`, reason: `${result.bump} since ${last ?? "the beginning"}` })
+  output({
+    release: "true",
+    version: result.version,
+    tag: `ade-v${result.version}`,
+    reason: `${result.bump} since ${last ?? "the beginning"}`,
+  })
 }
 
 function check(range: string | undefined) {
@@ -98,7 +119,9 @@ function check(range: string | undefined) {
     console.log("commit subjects ok")
     return
   }
-  console.error(`These commits touch ADE and do not follow \`type(scope): description\` (types: ${COMMIT_TYPES.join(", ")}):`)
+  console.error(
+    `These commits touch ADE and do not follow \`type(scope): description\` (types: ${COMMIT_TYPES.join(", ")}):`,
+  )
   for (const c of bad) console.error(`  ${c.sha.slice(0, 10)} ${c.subject}`)
   console.error("See packages/ade/CONTRIBUTING.md.")
   process.exit(1)
@@ -109,6 +132,8 @@ if (command === "plan") plan(rest)
 else if (command === "check") check(rest[0])
 else if (command === "notes" && rest[0] && rest[1]) console.log(releaseNotes(commits(`${rest[0]}..${rest[1]}`)))
 else {
-  console.error("usage: release-plan.ts plan [--min-age-hours N] [--skip-shas FILE] [--major-shas FILE] | check <range> | notes <from> <to>")
+  console.error(
+    "usage: release-plan.ts plan [--min-age-hours N] [--skip-shas FILE] [--major-shas FILE] | check <range> | notes <from> <to>",
+  )
   process.exit(2)
 }

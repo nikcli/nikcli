@@ -34,8 +34,7 @@ describe("Synaptic Agent Swarm NiK", () => {
     const iNodes = SWARM_NODES.filter((n) => n.letter === "i")
     const kNodes = SWARM_NODES.filter((n) => n.letter === "K")
 
-    const avgX = (nodes: typeof SWARM_NODES) =>
-      nodes.reduce((acc, n) => acc + n.x, 0) / nodes.length
+    const avgX = (nodes: typeof SWARM_NODES) => nodes.reduce((acc, n) => acc + n.x, 0) / nodes.length
 
     expect(avgX(nNodes)).toBeLessThan(avgX(iNodes))
     expect(avgX(iNodes)).toBeLessThan(avgX(kNodes))

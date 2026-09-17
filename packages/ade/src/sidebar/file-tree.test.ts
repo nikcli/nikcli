@@ -268,18 +268,13 @@ describe("Defect 5: sortFileNodes pinned locale", () => {
 
   test("Defect 5: the pinned locale is not decorative - collations really do disagree", () => {
     // If this ever stops holding, the pin is pointless and the guard below is dead weight.
-    expect(Math.sign("ä".localeCompare("z", "sv"))).not.toBe(
-      Math.sign("ä".localeCompare("z", "en")),
-    )
+    expect(Math.sign("ä".localeCompare("z", "sv"))).not.toBe(Math.sign("ä".localeCompare("z", "en")))
   })
 
   test("Defect 5: compareFileNodes follows 'en' collation, not the host locale", () => {
     const expected = Math.sign("ä".localeCompare("z", "en"))
     expect(Math.sign(compareFileNodes(file("ä.txt"), file("z.txt")))).toBe(expected)
-    expect(sortFileNodes([file("z.txt"), file("ä.txt")]).map((n) => n.name)).toEqual([
-      "ä.txt",
-      "z.txt",
-    ])
+    expect(sortFileNodes([file("z.txt"), file("ä.txt")]).map((n) => n.name)).toEqual(["ä.txt", "z.txt"])
   })
 })
 

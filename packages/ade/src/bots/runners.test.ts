@@ -1,6 +1,14 @@
 import { describe, expect, test } from "bun:test"
 import type { AgentFile } from "./nikcli"
-import { answerSoFar, applyRunnerLine, enforcesDisabledTools, finalText, readLoginStatus, runnerById, turnCommand } from "./runners"
+import {
+  answerSoFar,
+  applyRunnerLine,
+  enforcesDisabledTools,
+  finalText,
+  readLoginStatus,
+  runnerById,
+  turnCommand,
+} from "./runners"
 import { emptyTalk, sendMessage, type Talk } from "./talk"
 
 const bot: AgentFile = {
@@ -28,7 +36,10 @@ describe("il motore di un bot", () => {
 
 describe("gli argomenti di un turno", () => {
   test("nikcli resta `run --agent`", () => {
-    const { command, args } = turnCommand(runnerById("nikcli"), { bot: { ...bot, model: "openai/gpt-5.5" }, message: "ciao" })
+    const { command, args } = turnCommand(runnerById("nikcli"), {
+      bot: { ...bot, model: "openai/gpt-5.5" },
+      message: "ciao",
+    })
     expect(command).toBe("nikcli")
     expect(args.slice(0, 3)).toEqual(["run", "--agent", "tester"])
     expect(args).toContain("openai/gpt-5.5")
@@ -230,7 +241,10 @@ describe("lo stato di accesso", () => {
       "\u001b[34m●\u001b[39m  Z.AI Coding Plan \u001b[90mapi",
       "\u001b[90m└\u001b[39m  2 credentials",
     ].join("\r\n")
-    expect(readLoginStatus(runnerById("nikcli"), output, 0)).toEqual({ state: "in", detail: "OpenAI, Z.AI Coding Plan" })
+    expect(readLoginStatus(runnerById("nikcli"), output, 0)).toEqual({
+      state: "in",
+      detail: "OpenAI, Z.AI Coding Plan",
+    })
   })
 })
 
@@ -272,7 +286,9 @@ describe("la risposta mentre Claude Code la scrive", () => {
   })
 
   test("un secondo messaggio si aggiunge al primo", () => {
-    let talk = fold("claude", ['{"type":"assistant","message":{"content":[{"type":"text","text":"Controllo."}]},"session_id":"s"}'])
+    let talk = fold("claude", [
+      '{"type":"assistant","message":{"content":[{"type":"text","text":"Controllo."}]},"session_id":"s"}',
+    ])
     talk = applyRunnerLine(runnerById("claude"), talk, ev({ type: "content_block_start", index: 0 }), 0)
     talk = applyRunnerLine(runnerById("claude"), talk, delta("Ci sono due"), 0)
     expect(answerSoFar(talk)).toBe("Controllo.\n\nCi sono due")
@@ -282,7 +298,14 @@ describe("la risposta mentre Claude Code la scrive", () => {
 describe("Claude Code reading its messages from stdin", () => {
   test("asks for stream-json input and passes no message", () => {
     const { args } = turnCommand(runnerById("claude"), { bot, message: "ignorato", stdin: true })
-    expect(args.slice(0, 6)).toEqual(["-p", "--output-format", "stream-json", "--verbose", "--input-format", "stream-json"])
+    expect(args.slice(0, 6)).toEqual([
+      "-p",
+      "--output-format",
+      "stream-json",
+      "--verbose",
+      "--input-format",
+      "stream-json",
+    ])
     expect(args).not.toContain("--")
     expect(args).not.toContain("ignorato")
   })

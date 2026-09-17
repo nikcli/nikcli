@@ -266,9 +266,7 @@ describe("surface commands", () => {
     expect(voiceCmd?.shortcut).toBe("Ctrl+Shift+K")
     expect(voiceCmd?.disabledReason).toBeUndefined()
 
-    const activeCmds = buildCommands(
-      context({ workbench: createWorkbench(), voiceAvailable: true, voiceActive: true }),
-    )
+    const activeCmds = buildCommands(context({ workbench: createWorkbench(), voiceAvailable: true, voiceActive: true }))
     const activeVoiceCmd = activeCmds.find((c) => c.id === "voice.toggle")
     expect(activeVoiceCmd?.title).toBe("Disattiva il controllo vocale")
 
@@ -278,7 +276,7 @@ describe("surface commands", () => {
     expect(disabledVoiceCmd?.disabledReason).toBe("Riconoscimento vocale non supportato da questo browser")
 
     const configuredCmds = buildCommands(
-      context({ workbench: createWorkbench(), voiceAvailable: true, voiceChord: "mod+shift+z" })
+      context({ workbench: createWorkbench(), voiceAvailable: true, voiceChord: "mod+shift+z" }),
     )
     const configuredVoiceCmd = configuredCmds.find((c) => c.id === "voice.toggle")
     expect(configuredVoiceCmd?.shortcut).toBe("Ctrl+Shift+Z")

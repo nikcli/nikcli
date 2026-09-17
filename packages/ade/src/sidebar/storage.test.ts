@@ -1,11 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import {
-  deserializeSet,
-  parseSidebarTab,
-  safeGetStorage,
-  safeSetStorage,
-  serializeSet,
-} from "./storage"
+import { deserializeSet, parseSidebarTab, safeGetStorage, safeSetStorage, serializeSet } from "./storage"
 
 describe("serializeSet and deserializeSet", () => {
   test("round-trips a set of string identifiers", () => {

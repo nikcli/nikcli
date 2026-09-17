@@ -23,10 +23,7 @@ export const VOICE_COMMAND_TRANSCRIPTION = "voice.mode.transcription"
 /**
  * Builds ADE keymap bindings for configured voice mode shortcut chords.
  */
-export function buildVoiceBindings(
-  settings: VoiceSettings,
-  platform: Platform = "other"
-): Binding[] {
+export function buildVoiceBindings(settings: VoiceSettings, platform: Platform = "other"): Binding[] {
   return [
     {
       chord: parseChord(settings.agentChord, platform),
@@ -45,7 +42,7 @@ export function buildVoiceBindings(
 export function findVoiceShortcutConflicts(
   settings: VoiceSettings,
   existingBindings: readonly Binding[] = [],
-  platform: Platform = "other"
+  platform: Platform = "other",
 ): Conflict[] {
   const voiceBindings = buildVoiceBindings(settings, platform)
   return findConflicts([...existingBindings, ...voiceBindings])
@@ -90,7 +87,7 @@ export function describeCommandId(commandId: string): string {
 export function summarizeVoiceShortcutConflicts(
   settings: VoiceSettings,
   existingBindings: readonly Binding[] = [],
-  platform: Platform = "other"
+  platform: Platform = "other",
 ): string | undefined {
   const voiceCommands = [VOICE_COMMAND_AGENT, VOICE_COMMAND_TRANSCRIPTION]
   const shadowed = findVoiceShortcutConflicts(settings, existingBindings, platform)
@@ -114,12 +111,8 @@ export function summarizeVoiceShortcutConflicts(
 /**
  * Formats a shortcut chord string or Chord object for clean display in UI menus.
  */
-export function describeShortcut(
-  chord: string | Chord,
-  platform: Platform = "other"
-): string {
-  const chordObj =
-    typeof chord === "string" ? parseChord(chord, platform) : chord
+export function describeShortcut(chord: string | Chord, platform: Platform = "other"): string {
+  const chordObj = typeof chord === "string" ? parseChord(chord, platform) : chord
   return formatChord(chordObj, platform)
 }
 
@@ -165,14 +158,7 @@ const TYPING_KEYS: ReadonlySet<string> = new Set([
  * "Process" for every keystroke it is composing — neither is a thing a user
  * can press again on purpose, so neither can be a shortcut.
  */
-const NON_KEYS: ReadonlySet<string> = new Set([
-  "",
-  "dead",
-  "unidentified",
-  "process",
-  "compose",
-  "alphanumeric",
-])
+const NON_KEYS: ReadonlySet<string> = new Set(["", "dead", "unidentified", "process", "compose", "alphanumeric"])
 
 /**
  * Judges whether a chord can be handed to the runtime key matcher at all.
@@ -183,10 +169,7 @@ const NON_KEYS: ReadonlySet<string> = new Set([
  * letter away from every field in the workbench, and the user who set it would
  * have no keyboard left to unset it with.
  */
-export function describeChordRisk(
-  chord: string | Chord,
-  platform: Platform = "other"
-): ChordRisk {
+export function describeChordRisk(chord: string | Chord, platform: Platform = "other"): ChordRisk {
   let parsed: Chord
   try {
     parsed = typeof chord === "string" ? parseChord(chord, platform) : chord
@@ -227,15 +210,13 @@ export function describeChordRisk(
   if (platform !== "mac" && parsed.meta) {
     return {
       level: "warn",
-      message:
-        t("vui.risk.winKey"),
+      message: t("vui.risk.winKey"),
     }
   }
   if (platform !== "mac" && parsed.alt && !parsed.ctrl && !parsed.meta && parsed.key.length === 1) {
     return {
       level: "warn",
-      message:
-        t("vui.risk.altLetter"),
+      message: t("vui.risk.altLetter"),
     }
   }
 
@@ -245,9 +226,6 @@ export function describeChordRisk(
 /**
  * True when the chord is safe enough to store and to match against.
  */
-export function isChordUsable(
-  chord: string | Chord,
-  platform: Platform = "other"
-): boolean {
+export function isChordUsable(chord: string | Chord, platform: Platform = "other"): boolean {
   return describeChordRisk(chord, platform).level !== "refuse"
 }

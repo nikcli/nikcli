@@ -234,7 +234,15 @@ export function VideoPane(props: VideoPaneProps) {
     >
       <header class="pill hA" data-slot="pane-header">
         <span class="logo" data-slot="pane-identity" aria-hidden="true">
-          <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linejoin="round">
+          <svg
+            viewBox="0 0 16 16"
+            width="12"
+            height="12"
+            fill="none"
+            stroke="currentColor"
+            stroke-width="1.2"
+            stroke-linejoin="round"
+          >
             <rect x="1.5" y="3.5" width="13" height="9" rx="1.5" />
             <path d="M6.5 6.5l4 2.5-4 2.5z" />
           </svg>
@@ -246,7 +254,14 @@ export function VideoPane(props: VideoPaneProps) {
         <PaneActions onExpand={() => props.onExpand?.()} onClose={() => props.onClose?.()}>
           {/* Only once a video is open: an empty pane already offers the choice in the middle. */}
           <Show when={props.onPick && props.path}>
-            <button type="button" class="act" data-slot="pane-action" onClick={() => void pick()} aria-label={t("media.pick")} title={t("media.pick")}>
+            <button
+              type="button"
+              class="act"
+              data-slot="pane-action"
+              onClick={() => void pick()}
+              aria-label={t("media.pick")}
+              title={t("media.pick")}
+            >
               <FolderGlyph />
             </button>
           </Show>
@@ -356,7 +371,12 @@ export function VideoPane(props: VideoPaneProps) {
           </label>
 
           <Show when={props.onCapture}>
-            <button type="button" data-slot="video-button" onClick={() => void captureNow()} aria-label={t("video.capture")}>
+            <button
+              type="button"
+              data-slot="video-button"
+              onClick={() => void captureNow()}
+              aria-label={t("video.capture")}
+            >
               <svg viewBox="0 0 12 12" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.2">
                 <rect x="1" y="3" width="10" height="7" rx="1" />
                 <circle cx="6" cy="6.5" r="2" />

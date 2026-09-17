@@ -140,9 +140,7 @@ describe("createAdeVoiceHost", () => {
     })
     const host = createAdeVoiceHost(deps)
 
-    expect(host.sendPrompt("p-dead", "ciao agente")).rejects.toThrow(
-      "Il pannello 'p-dead' non ha un processo vivo",
-    )
+    expect(host.sendPrompt("p-dead", "ciao agente")).rejects.toThrow("Il pannello 'p-dead' non ha un processo vivo")
   })
 
   test("sendPrompt writes one submitted line and shows what it sent", async () => {
@@ -219,9 +217,7 @@ describe("createAdeVoiceHost", () => {
     })
     const host = createAdeVoiceHost(deps)
 
-    expect(host.insertText("p1", "ciao")).rejects.toThrow(
-      "Il pannello selezionato non ha dove ricevere il testo.",
-    )
+    expect(host.insertText("p1", "ciao")).rejects.toThrow("Il pannello selezionato non ha dove ricevere il testo.")
   })
 
   test("insertText never lets a dictated newline submit the line", async () => {
@@ -549,9 +545,9 @@ describe("createAdeVoiceHost, spoken planning", () => {
   test("startSession refuses an agent that does not exist, and opens nothing", async () => {
     const { deps, started } = planningDeps({ project: () => nikcli })
 
-    await expect(
-      createAdeVoiceHost(deps).startSession!({ agent: "copilot", task: "qualsiasi cosa" }),
-    ).rejects.toThrow(/Non conosco l'agente «copilot»/)
+    await expect(createAdeVoiceHost(deps).startSession!({ agent: "copilot", task: "qualsiasi cosa" })).rejects.toThrow(
+      /Non conosco l'agente «copilot»/,
+    )
     expect(started).toHaveLength(0)
   })
 
@@ -588,9 +584,9 @@ describe("createAdeVoiceHost, spoken planning", () => {
       recents: () => [{ root: "C:/Users/x/altro", name: "altro", openedAt: 1 }],
     })
 
-    await expect(
-      createAdeVoiceHost(deps).startSession!({ agent: "claude", project: "contabilità" }),
-    ).rejects.toThrow(/Non conosco il progetto/)
+    await expect(createAdeVoiceHost(deps).startSession!({ agent: "claude", project: "contabilità" })).rejects.toThrow(
+      /Non conosco il progetto/,
+    )
     expect(switched).toEqual([])
     expect(started).toHaveLength(0)
   })
@@ -602,17 +598,17 @@ describe("createAdeVoiceHost, spoken planning", () => {
   test("startSession asks which project instead of opening a pane that cannot start", async () => {
     const { deps, started } = planningDeps({ project: () => undefined })
 
-    await expect(
-      createAdeVoiceHost(deps).startSession!({ agent: "claude", task: "i test" }),
-    ).rejects.toThrow(/nessun progetto aperto/)
+    await expect(createAdeVoiceHost(deps).startSession!({ agent: "claude", task: "i test" })).rejects.toThrow(
+      /nessun progetto aperto/,
+    )
     expect(started).toHaveLength(0)
   })
 
   test("startSession says so instead of pretending when the host cannot open sessions", async () => {
     const { deps } = createMockDeps({ project: () => nikcli })
 
-    await expect(
-      createAdeVoiceHost(deps).startSession!({ agent: "claude" }),
-    ).rejects.toThrow("Non posso avviare sessioni da qui.")
+    await expect(createAdeVoiceHost(deps).startSession!({ agent: "claude" })).rejects.toThrow(
+      "Non posso avviare sessioni da qui.",
+    )
   })
 })

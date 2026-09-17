@@ -86,7 +86,9 @@ function setup(answer: string | ((prompt: { signal?: AbortSignal }) => Promise<s
     plan: async (prompt) => {
       prompts.push({ system: prompt.system, user: prompt.user })
       return typeof answer === "string" ? answer : answer(prompt)
-    }, settings: { activation: "toggle" } })
+    },
+    settings: { activation: "toggle" },
+  })
 
   return { engine, host, transcriber, speaker, prompts }
 }
@@ -102,7 +104,11 @@ describe("il pianificatore dentro il motore", () => {
     const { engine, host, transcriber, speaker, prompts } = setup(
       JSON.stringify([{ action: "start_session", agent: "claude", task: "il parser", project: "nikcli" }]),
     )
-    ;(host as VoiceHost).askAgent = async () => ({ ok: false, text: "Per rispondere mi serve Claude Code o Codex.", ran: false })
+    ;(host as VoiceHost).askAgent = async () => ({
+      ok: false,
+      text: "Per rispondere mi serve Claude Code o Codex.",
+      ran: false,
+    })
 
     await engine.start()
     transcriber.emit("avvia una sessione claude sul parser nel progetto nikcli", true)
@@ -111,7 +117,9 @@ describe("il pianificatore dentro il motore", () => {
     expect(prompts).toHaveLength(1)
     expect(host.started).toHaveLength(1)
     expect(speaker.lastSpoken).toBe("Ho avviato una sessione Claude Code.")
-    expect(engine.history().some((entry) => entry.kind === "error" && entry.text.includes("mi serve Claude Code"))).toBe(true)
+    expect(
+      engine.history().some((entry) => entry.kind === "error" && entry.text.includes("mi serve Claude Code")),
+    ).toBe(true)
     await engine.stop()
   })
 
@@ -131,7 +139,9 @@ describe("il pianificatore dentro il motore", () => {
 
     expect(prompts).toHaveLength(0)
     expect(host.started).toHaveLength(1)
-    expect(engine.history().some((entry) => entry.kind === "error" && entry.text.includes("non ha risposto in tempo"))).toBe(true)
+    expect(
+      engine.history().some((entry) => entry.kind === "error" && entry.text.includes("non ha risposto in tempo")),
+    ).toBe(true)
     await engine.stop()
   })
 
@@ -141,7 +151,10 @@ describe("il pianificatore dentro il motore", () => {
       (prompt) =>
         new Promise((resolve) => {
           prompt.signal?.addEventListener("abort", () => (aborted = true))
-          setTimeout(() => resolve(JSON.stringify([{ action: "start_session", agent: "claude", task: "x", project: "nikcli" }])), 60)
+          setTimeout(
+            () => resolve(JSON.stringify([{ action: "start_session", agent: "claude", task: "x", project: "nikcli" }])),
+            60,
+          )
         }),
     )
 
@@ -192,7 +205,15 @@ describe("il pianificatore dentro il motore", () => {
 
   test("«elenca pannelli» risponde a voce: è un'informazione, non un'azione da vedere", async () => {
     const { engine, host, transcriber, speaker } = setup("[]")
-    host.panes.push({ id: "p1", title: "Parser", status: "working", index: 1, hasLiveProcess: true, isBrowser: false, isFile: false })
+    host.panes.push({
+      id: "p1",
+      title: "Parser",
+      status: "working",
+      index: 1,
+      hasLiveProcess: true,
+      isBrowser: false,
+      isFile: false,
+    })
 
     await engine.start()
     transcriber.emit("elenca pannelli", true)

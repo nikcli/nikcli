@@ -104,7 +104,7 @@ export function deferPresets(now: Date): { label: string; until: string }[] {
     const date = new Date(now.getFullYear(), now.getMonth(), now.getDate() + offset)
     return date.toISOString()
   }
-  const toMonday = ((8 - now.getDay()) % 7) || 7
+  const toMonday = (8 - now.getDay()) % 7 || 7
   return [
     { label: t("date.tomorrow"), until: day(1) },
     { label: t("date.inDays", 3), until: day(3) },

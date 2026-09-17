@@ -6,17 +6,7 @@
  * inspection, and prompt context dispatching to the agent.
  */
 
-import {
-  For,
-  Show,
-  createEffect,
-  createMemo,
-  createSignal,
-  on,
-  onCleanup,
-  onMount,
-  type JSX,
-} from "solid-js"
+import { For, Show, createEffect, createMemo, createSignal, on, onCleanup, onMount, type JSX } from "solid-js"
 import {
   captureArea,
   editsFor,
@@ -44,14 +34,7 @@ import { planSend, type BrowserController, type OwnerStatus, type SessionChoice 
 // The same file the host runs in every frame; the mirror carries it inline.
 import FRAME_SCRIPT from "../../src-tauri/scripts/browser-frame.js?raw"
 import { escapeAttribute, withLoadToken } from "./frame-url"
-import {
-  canStep,
-  currentEntry,
-  restoreHistory,
-  step,
-  visit,
-  type BrowserHistory,
-} from "./history"
+import { canStep, currentEntry, restoreHistory, step, visit, type BrowserHistory } from "./history"
 import { canOpenExternally, openExternally, probeFraming, readHeaders } from "./host-bridge"
 import { normalizeUrl } from "./url"
 import { fitViewport, type DevicePreset } from "./viewport"
@@ -113,7 +96,17 @@ const DEVICE_LABELS: Record<DevicePreset, string> = {
  */
 function DevicePresetIcon(props: { preset: DevicePreset }): JSX.Element {
   return (
-    <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+    <svg
+      viewBox="0 0 16 16"
+      width="14"
+      height="14"
+      aria-hidden="true"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="1.5"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+    >
       <Show when={props.preset === "responsive"}>
         <path d="M2 8h12M4.5 5.5L2 8l2.5 2.5M11.5 5.5L14 8l-2.5 2.5" />
       </Show>
@@ -148,14 +141,19 @@ const EDIT_FIELDS: { property: string; styleKey?: keyof InspectedElement["styles
  * and a few styles. Applied on Enter or when the field is left; the page
  * reports what each change replaced, and that goes with the request.
  */
-function EditFields(props: { element: InspectedElement; onApply: (property: string, value: string) => void }): JSX.Element {
+function EditFields(props: {
+  element: InspectedElement
+  onApply: (property: string, value: string) => void
+}): JSX.Element {
   const fields = () => EDIT_FIELDS.filter((entry) => entry.property !== "text" || props.element.textOnly)
   return (
     <div data-slot="browser-edit-fields">
       <For each={fields()}>
         {(entry) => {
           const initial = () =>
-            entry.property === "text" ? props.element.innerText ?? "" : (entry.styleKey ? props.element.styles?.[entry.styleKey] : "") ?? ""
+            entry.property === "text"
+              ? (props.element.innerText ?? "")
+              : ((entry.styleKey ? props.element.styles?.[entry.styleKey] : "") ?? "")
           let last = initial()
           const commit = (value: string) => {
             if (value === last) return
@@ -559,9 +557,7 @@ export function BrowserPane(props: BrowserPaneProps): JSX.Element {
 
       const element = data.element
       if (element && typeof element.selector === "string") {
-        setSelection((prev) =>
-          prev.some((item) => item.selector === element.selector) ? prev : [...prev, element],
-        )
+        setSelection((prev) => (prev.some((item) => item.selector === element.selector) ? prev : [...prev, element]))
       }
       return
     }
@@ -633,7 +629,13 @@ export function BrowserPane(props: BrowserPaneProps): JSX.Element {
     const box = iframeRef?.getBoundingClientRect()
     const frame: Rect = box ? { x: box.left, y: box.top, w: box.width, h: box.height } : { x: 0, y: 0, w: 0, h: 0 }
     const scale = viewportFit().isResponsive ? 1 : viewportFit().scale
-    const crop = captureArea(frame, scale, selection().map((element) => element.rect).filter(Boolean))
+    const crop = captureArea(
+      frame,
+      scale,
+      selection()
+        .map((element) => element.rect)
+        .filter(Boolean),
+    )
     const redact = Array.from(document.querySelectorAll(SENSITIVE_SELECTOR), (element) => {
       const r = element.getBoundingClientRect()
       return { x: r.left, y: r.top, w: r.width, h: r.height }
@@ -780,7 +782,13 @@ export function BrowserPane(props: BrowserPaneProps): JSX.Element {
             title={t("browser.back")}
           >
             <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
-              <path d="M7.5 2.5L4 6l3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+              <path
+                d="M7.5 2.5L4 6l3.5 3.5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.2"
+                stroke-linecap="round"
+              />
             </svg>
           </button>
           <button
@@ -792,7 +800,13 @@ export function BrowserPane(props: BrowserPaneProps): JSX.Element {
             title={t("browser.forward")}
           >
             <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
-              <path d="M4.5 2.5L8 6l-3.5 3.5" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+              <path
+                d="M4.5 2.5L8 6l-3.5 3.5"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.2"
+                stroke-linecap="round"
+              />
             </svg>
           </button>
           <button
@@ -803,17 +817,19 @@ export function BrowserPane(props: BrowserPaneProps): JSX.Element {
             title={t("browser.reload")}
           >
             <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
-              <path d="M2 6a4 4 0 1 1 1.2 2.8M2 9V6h3" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+              <path
+                d="M2 6a4 4 0 1 1 1.2 2.8M2 9V6h3"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.2"
+                stroke-linecap="round"
+              />
             </svg>
           </button>
         </div>
 
         <div data-slot="browser-url-bar">
-          <span
-            data-slot="browser-status-dot"
-            data-status={loadState()}
-            aria-hidden="true"
-          />
+          <span data-slot="browser-status-dot" data-status={loadState()} aria-hidden="true" />
           <input
             type="text"
             data-slot="browser-url-input"
@@ -874,7 +890,17 @@ export function BrowserPane(props: BrowserPaneProps): JSX.Element {
               title={t("browser.rotate")}
               aria-label={t("browser.rotate")}
             >
-              <svg viewBox="0 0 16 16" width="13" height="13" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round">
+              <svg
+                viewBox="0 0 16 16"
+                width="13"
+                height="13"
+                aria-hidden="true"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              >
                 <path d="M14 8a6 6 0 1 1-6-6c1.68 0 3.29.67 4.5 1.83L14 5.33" />
                 <path d="M14 2v3.33h-3.33" />
               </svg>
@@ -902,7 +928,11 @@ export function BrowserPane(props: BrowserPaneProps): JSX.Element {
               {ownerLabel()}
             </button>
             <Show when={ownerMenu()}>
-              <div data-slot="browser-owner-menu" role="menu" onKeyDown={(e) => e.key === "Escape" && setOwnerMenu(false)}>
+              <div
+                data-slot="browser-owner-menu"
+                role="menu"
+                onKeyDown={(e) => e.key === "Escape" && setOwnerMenu(false)}
+              >
                 <Show when={props.owner?.state === "ready"}>
                   <button
                     type="button"
@@ -916,7 +946,10 @@ export function BrowserPane(props: BrowserPaneProps): JSX.Element {
                   </button>
                 </Show>
                 <span data-slot="browser-owner-heading">{t("browser.owner.bind")}</span>
-                <For each={props.sessions ?? []} fallback={<span data-slot="browser-owner-empty">{t("browser.send.none")}</span>}>
+                <For
+                  each={props.sessions ?? []}
+                  fallback={<span data-slot="browser-owner-empty">{t("browser.send.none")}</span>}
+                >
                   {(session) => (
                     <button
                       type="button"
@@ -975,7 +1008,13 @@ export function BrowserPane(props: BrowserPaneProps): JSX.Element {
               aria-label={t("palette.pane.close")}
             >
               <svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true">
-                <path d="M2.5 2.5l7 7M9.5 2.5l-7 7" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+                <path
+                  d="M2.5 2.5l7 7M9.5 2.5l-7 7"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.2"
+                  stroke-linecap="round"
+                />
               </svg>
             </button>
           </Show>
@@ -985,20 +1024,20 @@ export function BrowserPane(props: BrowserPaneProps): JSX.Element {
       <div data-slot="browser-body">
         <div ref={viewportContainerRef} data-slot="browser-viewport-container">
           {/*
-            * One iframe, always mounted.
-            *
-            * There used to be two, in mutually exclusive `<Show>`s sharing a
-            * single `ref`: switching device preset unmounted one and mounted
-            * the other, so the guest page reloaded from scratch — losing its
-            * scroll, its form state and anything it had fetched — merely to
-            * change the frame's width. For an instant between the two,
-            * `iframeRef` also pointed at a detached node, and any
-            * `postMessage` in that window went nowhere.
-            *
-            * The wrapper's geometry is computed reactively instead. In
-            * responsive mode it carries no sizing at all, so the frame fills
-            * the pane as it did before.
-            */}
+           * One iframe, always mounted.
+           *
+           * There used to be two, in mutually exclusive `<Show>`s sharing a
+           * single `ref`: switching device preset unmounted one and mounted
+           * the other, so the guest page reloaded from scratch — losing its
+           * scroll, its form state and anything it had fetched — merely to
+           * change the frame's width. For an instant between the two,
+           * `iframeRef` also pointed at a detached node, and any
+           * `postMessage` in that window went nowhere.
+           *
+           * The wrapper's geometry is computed reactively instead. In
+           * responsive mode it carries no sizing at all, so the frame fills
+           * the pane as it did before.
+           */}
           <div
             data-slot="browser-viewport-fit"
             data-responsive={viewportFit().isResponsive ? "true" : undefined}
@@ -1019,79 +1058,82 @@ export function BrowserPane(props: BrowserPaneProps): JSX.Element {
                   }
             }
           >
-          <div
-            data-slot="browser-viewport-scaler"
-            data-responsive={viewportFit().isResponsive ? "true" : undefined}
-            style={
-              viewportFit().isResponsive
-                ? undefined
-                : {
-                    width: `${viewportFit().viewportWidth}px`,
-                    height: `${viewportFit().viewportHeight}px`,
-                    transform: `scale(${viewportFit().scale})`,
-                    /*
-                     * Top left, and the box shrinks with the scale.
-                     *
-                     * With `top center` and a full-size box, a Desktop
-                     * preview in a narrow pane scaled below 1 and the
-                     * untransformed layout box stayed full height — so the
-                     * scaled frame was laid out for a box far taller than
-                     * what it drew, and the preview sat entirely above the
-                     * visible area. `renderedWidth`/`renderedHeight` are
-                     * what `fitViewport` computes for exactly this, and
-                     * nothing used them.
-                     */
-                    "transform-origin": "top left",
-                  }
-            }
-          >
-            <iframe
-              ref={iframeRef}
-              data-slot="browser-frame"
-              /*
-               * Keyed on the load token so Reload actually reloads.
-               *
-               * `setLoadToken` was incremented and never read. In `native`
-               * fidelity the Reload button rewrote `src` with the same
-               * string, Solid saw no change and wrote nothing, so the frame
-               * did not renavigate — and the handshake timer then fired at
-               * 1500 ms and replaced a perfectly live page with a static
-               * mirror of it.
-               */
-              data-load={loadToken()}
-              src={srcdoc() ? undefined : withLoadToken(url(), loadToken())}
-              srcdoc={srcdoc() ?? undefined}
-              onLoad={onFrameLoad}
-              sandbox="allow-scripts allow-forms allow-popups allow-modals"
-              name={FRAME_NAME}
-              title={props.title || t("browser.preview")}
-            />
-          </div>
+            <div
+              data-slot="browser-viewport-scaler"
+              data-responsive={viewportFit().isResponsive ? "true" : undefined}
+              style={
+                viewportFit().isResponsive
+                  ? undefined
+                  : {
+                      width: `${viewportFit().viewportWidth}px`,
+                      height: `${viewportFit().viewportHeight}px`,
+                      transform: `scale(${viewportFit().scale})`,
+                      /*
+                       * Top left, and the box shrinks with the scale.
+                       *
+                       * With `top center` and a full-size box, a Desktop
+                       * preview in a narrow pane scaled below 1 and the
+                       * untransformed layout box stayed full height — so the
+                       * scaled frame was laid out for a box far taller than
+                       * what it drew, and the preview sat entirely above the
+                       * visible area. `renderedWidth`/`renderedHeight` are
+                       * what `fitViewport` computes for exactly this, and
+                       * nothing used them.
+                       */
+                      "transform-origin": "top left",
+                    }
+              }
+            >
+              <iframe
+                ref={iframeRef}
+                data-slot="browser-frame"
+                /*
+                 * Keyed on the load token so Reload actually reloads.
+                 *
+                 * `setLoadToken` was incremented and never read. In `native`
+                 * fidelity the Reload button rewrote `src` with the same
+                 * string, Solid saw no change and wrote nothing, so the frame
+                 * did not renavigate — and the handshake timer then fired at
+                 * 1500 ms and replaced a perfectly live page with a static
+                 * mirror of it.
+                 */
+                data-load={loadToken()}
+                src={srcdoc() ? undefined : withLoadToken(url(), loadToken())}
+                srcdoc={srcdoc() ?? undefined}
+                onLoad={onFrameLoad}
+                sandbox="allow-scripts allow-forms allow-popups allow-modals"
+                name={FRAME_NAME}
+                title={props.title || t("browser.preview")}
+              />
+            </div>
           </div>
 
           <Show when={loadState() === "unreachable"}>
             <div data-slot="browser-error-overlay">
               <span data-slot="browser-error-icon" aria-hidden="true">
-                <svg viewBox="0 0 16 16" width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" stroke-linejoin="round">
+                <svg
+                  viewBox="0 0 16 16"
+                  width="30"
+                  height="30"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="1.2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                >
                   <circle cx="8" cy="8" r="5.5" />
                   <path d="M2.5 8h11M8 2.5C4.8 5.3 4.8 10.7 8 13.5M8 2.5c3.2 2.8 3.2 8.2 0 11" />
                   <path d="M3.5 3.5l9 9" />
                 </svg>
               </span>
               <span data-slot="browser-error-title">{t("browser.error.title")}</span>
-              <span data-slot="browser-error-msg">
-                {loadError() || t("browser.error.hint")}
-              </span>
-              <button
-                type="button"
-                data-slot="browser-retry-btn"
-                onClick={() => load(url())}
-              >
+              <span data-slot="browser-error-msg">{loadError() || t("browser.error.hint")}</span>
+              <button type="button" data-slot="browser-retry-btn" onClick={() => load(url())}>
                 {t("browser.retry")}
               </button>
             </div>
           </Show>
-          
+
           <Show when={notice()}>
             {(kind) => (
               <div data-slot="browser-error-overlay" data-notice={kind()}>
@@ -1102,7 +1144,9 @@ export function BrowserPane(props: BrowserPaneProps): JSX.Element {
                   {kind() === "blocked" ? t("browser.blocked.msg") : t("browser.noCopy.msg")}
                 </span>
                 <Show when={openError()}>
-                  {(problem) => <span data-slot="browser-error-msg">{t("browser.openExternal.failed", problem())}</span>}
+                  {(problem) => (
+                    <span data-slot="browser-error-msg">{t("browser.openExternal.failed", problem())}</span>
+                  )}
                 </Show>
                 <div data-slot="browser-notice-actions">
                   <Show when={canOpenExternally()}>
@@ -1169,13 +1213,25 @@ export function BrowserPane(props: BrowserPaneProps): JSX.Element {
                               onClick={() => removeElement(el.selector)}
                               aria-label={`Rimuovi ${el.selector}`}
                             >
-                              <svg viewBox="0 0 16 16" width="10" height="10" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round">
+                              <svg
+                                viewBox="0 0 16 16"
+                                width="10"
+                                height="10"
+                                aria-hidden="true"
+                                fill="none"
+                                stroke="currentColor"
+                                stroke-width="1.8"
+                                stroke-linecap="round"
+                              >
                                 <path d="M4 4l8 8M12 4l-8 8" />
                               </svg>
                             </button>
                           </div>
                           <Show when={editing() === el.selector}>
-                            <EditFields element={el} onApply={(property, value) => applyEdit(el.selector, property, value)} />
+                            <EditFields
+                              element={el}
+                              onApply={(property, value) => applyEdit(el.selector, property, value)}
+                            />
                           </Show>
                           <For each={edits().filter((edit) => edit.selector === el.selector)}>
                             {(edit) => (
@@ -1185,17 +1241,15 @@ export function BrowserPane(props: BrowserPaneProps): JSX.Element {
                             )}
                           </For>
                           <Show when={el.outerHTML}>
-                            <pre data-slot="browser-context-code"><code>{el.outerHTML}</code></pre>
+                            <pre data-slot="browser-context-code">
+                              <code>{el.outerHTML}</code>
+                            </pre>
                           </Show>
                         </div>
                       )}
                     </For>
                   </div>
-                  <button
-                    type="button"
-                    data-slot="browser-clear-selection"
-                    onClick={clearSelection}
-                  >
+                  <button type="button" data-slot="browser-clear-selection" onClick={clearSelection}>
                     {t("browser.clearSelection")}
                   </button>
                 </div>
@@ -1209,7 +1263,10 @@ export function BrowserPane(props: BrowserPaneProps): JSX.Element {
                       : t("browser.send.ask")}
                   </span>
                   <div data-slot="browser-send-choices">
-                    <For each={props.sessions ?? []} fallback={<span data-slot="browser-owner-empty">{t("browser.send.none")}</span>}>
+                    <For
+                      each={props.sessions ?? []}
+                      fallback={<span data-slot="browser-owner-empty">{t("browser.send.none")}</span>}
+                    >
                       {(session) => (
                         <button type="button" data-slot="browser-send-choice" onClick={() => sendTo(session.id)}>
                           {session.title}
@@ -1225,7 +1282,16 @@ export function BrowserPane(props: BrowserPaneProps): JSX.Element {
 
               <div data-slot="browser-prompt-input-row">
                 <span data-slot="browser-prompt-caret" aria-hidden="true">
-                  <svg viewBox="0 0 16 16" width="12" height="12" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
+                  <svg
+                    viewBox="0 0 16 16"
+                    width="12"
+                    height="12"
+                    fill="none"
+                    stroke="currentColor"
+                    stroke-width="1.8"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  >
                     <path d="M6 3l5 5-5 5" />
                   </svg>
                 </span>
@@ -1243,11 +1309,7 @@ export function BrowserPane(props: BrowserPaneProps): JSX.Element {
                       setMode("browse")
                     }
                   }}
-                  placeholder={
-                    selection().length > 0
-                      ? t("browser.prompt.selected")
-                      : t("browser.prompt.empty")
-                  }
+                  placeholder={selection().length > 0 ? t("browser.prompt.selected") : t("browser.prompt.empty")}
                   spellcheck={false}
                 />
                 <button
@@ -1273,9 +1335,7 @@ export function BrowserPane(props: BrowserPaneProps): JSX.Element {
           </span>
         </Show>
         <span data-slot="browser-selection-count">
-          {selection().length === 0
-            ? t("browser.selection.none")
-            : t("browser.selection.count", selection().length)}
+          {selection().length === 0 ? t("browser.selection.none") : t("browser.selection.count", selection().length)}
         </span>
       </footer>
     </article>

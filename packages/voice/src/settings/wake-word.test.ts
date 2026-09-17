@@ -88,10 +88,16 @@ describe("the name has to open the sentence", () => {
     expect(matchesWakeWord("nik apri il browser", "nik")).toEqual({ matched: true, remainder: "apri il browser" })
     expect(matchesWakeWord("ehi nik apri il browser", "nik")).toEqual({ matched: true, remainder: "apri il browser" })
     for (const heard of ["ei nik", "hei nik", "hey nick", "ehi, Nick", "Nick,"]) {
-      expect(matchesWakeWord(`${heard} apri il browser`, "nik")).toEqual({ matched: true, remainder: "apri il browser" })
+      expect(matchesWakeWord(`${heard} apri il browser`, "nik")).toEqual({
+        matched: true,
+        remainder: "apri il browser",
+      })
     }
     for (const heard of ["e nik,", "eh nik.", "E Nick,"]) {
-      expect(matchesWakeWord(`${heard} apri il browser`, "nik")).toEqual({ matched: true, remainder: "apri il browser" })
+      expect(matchesWakeWord(`${heard} apri il browser`, "nik")).toEqual({
+        matched: true,
+        remainder: "apri il browser",
+      })
     }
     for (const heard of ["ok nik", "ciao nik", "senti nik", "scusa nik"]) {
       expect(matchesWakeWord(`${heard} apri il browser`, "nik").matched).toBe(false)
@@ -105,7 +111,10 @@ describe("the fixed phrase, «ei nik», as the recogniser writes it", () => {
 
   test("the common transcriptions all call it", () => {
     for (const heard of ["ei nik", "ehi nik", "hey nik", "hei nik", "ei nick", "ehi nick", "Hey, Nick!", "Ehi Nik,"]) {
-      expect(matchesWakeWord(`${heard} apri il browser`, phrase)).toEqual({ matched: true, remainder: "apri il browser" })
+      expect(matchesWakeWord(`${heard} apri il browser`, phrase)).toEqual({
+        matched: true,
+        remainder: "apri il browser",
+      })
     }
   })
 
@@ -124,7 +133,17 @@ describe("the fixed phrase, «ei nik», as the recogniser writes it", () => {
 
 describe("only the name itself", () => {
   test("words one letter away from it are not the name", () => {
-    for (const heard of ["nì", "ni", "Nike", "niko", "nico", "mik", "nike apri il browser", "niko apri il browser", "ni apri il browser"]) {
+    for (const heard of [
+      "nì",
+      "ni",
+      "Nike",
+      "niko",
+      "nico",
+      "mik",
+      "nike apri il browser",
+      "niko apri il browser",
+      "ni apri il browser",
+    ]) {
       expect(matchesWakeWord(heard, "nik").matched).toBe(false)
     }
   })

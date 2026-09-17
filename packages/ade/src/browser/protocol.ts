@@ -11,4 +11,3 @@ export {
   type BridgeMessage,
   INSPECTOR_BRIDGE_SCRIPT,
 } from "@nikcli-ai/util/visual-editor-bridge"
-

@@ -30,7 +30,10 @@ export function resolveInclude(pattern: string, home: string): string {
 
 /** A glob segment (`*`, `?`) as a whole-name test. */
 export function globMatcher(segment: string): (name: string) => boolean {
-  const source = segment.replace(/[.+^${}()|[\]\\]/g, "\\$&").replace(/\*/g, ".*").replace(/\?/g, ".")
+  const source = segment
+    .replace(/[.+^${}()|[\]\\]/g, "\\$&")
+    .replace(/\*/g, ".*")
+    .replace(/\?/g, ".")
   const re = new RegExp(`^${source}$`, "i")
   return (name) => re.test(name)
 }

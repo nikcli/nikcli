@@ -30,7 +30,15 @@ import type { AgentFile } from "./nikcli"
 import { applyRunnerLine, finalText, runnerById, turnCommand } from "./runners"
 import { applyExit, applyProblem, emptyTalk, sendMessage, type Talk } from "./talk"
 import { acquireTurn } from "./terms"
-import { markTurn, TURN_TIMEOUT_MS, timeoutProblem, type Turn, type TurnDeps, type TurnRequest, type TurnResult } from "./turn"
+import {
+  markTurn,
+  TURN_TIMEOUT_MS,
+  timeoutProblem,
+  type Turn,
+  type TurnDeps,
+  type TurnRequest,
+  type TurnResult,
+} from "./turn"
 
 /** How long a process may wait for a sentence before it is closed. */
 export const WARM_IDLE_MS = 10 * 60_000

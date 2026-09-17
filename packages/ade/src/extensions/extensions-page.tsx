@@ -11,7 +11,13 @@ import {
   type InstalledServer,
 } from "./extensions"
 import { MCP_CATALOG, type McpCatalogEntry } from "./mcp-catalog"
-import { addMcpServerToProject, MCP_CONFIG_FILENAME, readProjectMcpConfig, removeMcpServerFromProject, type McpConfigIO } from "./mcp-config"
+import {
+  addMcpServerToProject,
+  MCP_CONFIG_FILENAME,
+  readProjectMcpConfig,
+  removeMcpServerFromProject,
+  type McpConfigIO,
+} from "./mcp-config"
 import "./extensions.css"
 import { t } from "../i18n"
 import { catalogText } from "./catalog-en"
@@ -22,7 +28,10 @@ import { catalogText } from "./catalog-en"
  * verified. Nothing is fetched at runtime, so opening the page tells no
  * logo host which servers the user looks at, and it works offline.
  */
-const LOGO_URLS = import.meta.glob("./logos/*.svg", { query: "?url", import: "default", eager: true }) as Record<string, string>
+const LOGO_URLS = import.meta.glob("./logos/*.svg", { query: "?url", import: "default", eager: true }) as Record<
+  string,
+  string
+>
 
 function logoUrl(entry: McpCatalogEntry): { url: string; mono: boolean } | undefined {
   const file = entry.logo.kind === "simple-icons" ? `${entry.logo.id}.svg` : entry.logo.file
@@ -149,9 +158,7 @@ export function ExtensionsPage(props: {
         <h3 data-slot="section-title" tabIndex={-1}>
           {t("settings.extensions")}
         </h3>
-        <p data-slot="section-desc">
-          {t("extensions.desc", MCP_CONFIG_FILENAME)}
-        </p>
+        <p data-slot="section-desc">{t("extensions.desc", MCP_CONFIG_FILENAME)}</p>
       </div>
 
       <div data-slot="ext-tabs" role="tablist" aria-label={t("settings.extensions")}>
@@ -179,7 +186,9 @@ export function ExtensionsPage(props: {
         )}
       </Show>
       <Show when={!props.projectRoot}>
-        <p data-slot="ext-notice" data-tone="error">{t("extensions.noProject", MCP_CONFIG_FILENAME)}</p>
+        <p data-slot="ext-notice" data-tone="error">
+          {t("extensions.noProject", MCP_CONFIG_FILENAME)}
+        </p>
       </Show>
 
       <Show when={tab() === "catalogo"}>
@@ -284,7 +293,9 @@ export function ExtensionsPage(props: {
       <Show when={tab() === "installati"}>
         <h4 data-slot="ext-group">{t("extensions.group.servers")}</h4>
         <Show when={installed().error}>
-          <p data-slot="ext-notice" data-tone="error">{installed().error}</p>
+          <p data-slot="ext-notice" data-tone="error">
+            {installed().error}
+          </p>
         </Show>
         <Show
           when={installed().servers.length > 0}

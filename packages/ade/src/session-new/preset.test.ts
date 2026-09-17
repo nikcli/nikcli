@@ -1,12 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import {
-  MAX_SESSIONS,
-  MIN_SESSIONS,
-  PRESETS,
-  clampSessions,
-  configurationLabel,
-  presetForCount,
-} from "./preset"
+import { MAX_SESSIONS, MIN_SESSIONS, PRESETS, clampSessions, configurationLabel, presetForCount } from "./preset"
 
 describe("PRESETS", () => {
   test("defines all four presets in the required order", () => {

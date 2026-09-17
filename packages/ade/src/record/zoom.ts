@@ -143,7 +143,11 @@ export function ringsAt(events: readonly RecordEvent[], mapping: Mapping, t: num
 }
 
 /** Where the pointer was at `t`, for drawing it: the last position before. */
-export function pointerAt(events: readonly RecordEvent[], mapping: Mapping, t: number): { x: number; y: number } | undefined {
+export function pointerAt(
+  events: readonly RecordEvent[],
+  mapping: Mapping,
+  t: number,
+): { x: number; y: number } | undefined {
   let found: { x: number; y: number } | undefined
   for (const event of events) {
     if (event.at > t) break

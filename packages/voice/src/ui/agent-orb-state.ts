@@ -110,11 +110,19 @@ export const MAX_PUSH = 0.22
  * because in this proposal listening happens in the bar. With reduced motion
  * nothing turns or travels: the whole sphere only swells with the level.
  */
-export function projectPoint(point: SpherePoint, seconds: number, phase: OrbPhase, level: number, reduced: boolean): Projected {
+export function projectPoint(
+  point: SpherePoint,
+  seconds: number,
+  phase: OrbPhase,
+  level: number,
+  reduced: boolean,
+): Projected {
   const amp = Math.max(0, Math.min(1, level))
   let push = 1
   if (phase === "speak") {
-    push += reduced ? amp * 0.15 : amp * MAX_PUSH * Math.sin(point.lat * 6 - seconds * 9) * Math.sin(point.lon * 3 + seconds * 2)
+    push += reduced
+      ? amp * 0.15
+      : amp * MAX_PUSH * Math.sin(point.lat * 6 - seconds * 9) * Math.sin(point.lon * 3 + seconds * 2)
   }
 
   let { x, z } = point

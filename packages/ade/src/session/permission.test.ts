@@ -1,18 +1,9 @@
 import { describe, expect, test } from "bun:test"
-import {
-  detectPermission,
-  isResolved,
-  type PermissionRequest,
-} from "./permission"
+import { detectPermission, isResolved, type PermissionRequest } from "./permission"
 
 describe("detectPermission - Numbered Choices", () => {
   test("detects standard 3-choice permission prompt", () => {
-    const lines = [
-      "Do you want to run this command?",
-      "  1. Yes",
-      "  2. Yes, and don't ask again",
-      "  3. No",
-    ]
+    const lines = ["Do you want to run this command?", "  1. Yes", "  2. Yes, and don't ask again", "  3. No"]
     const req = detectPermission(lines, "test-agent")
     expect(req).toBeDefined()
     expect(req!.what).toBe("Do you want to run this command?")
@@ -76,9 +67,7 @@ describe("detectPermission - Numbered Choices", () => {
 
 describe("detectPermission - [y/N] and (y/n) prompts", () => {
   test("detects [y/N] with default No (primary tone on No)", () => {
-    const lines = [
-      "Allow execution of `git reset --hard HEAD~1`? [y/N]",
-    ]
+    const lines = ["Allow execution of `git reset --hard HEAD~1`? [y/N]"]
     const req = detectPermission(lines, "test-agent")
     expect(req).toBeDefined()
     expect(req!.what).toBe("Allow execution of `git reset --hard HEAD~1`? [y/N]")
@@ -91,9 +80,7 @@ describe("detectPermission - [y/N] and (y/n) prompts", () => {
   })
 
   test("detects [Y/n] with default Yes (primary tone on Yes)", () => {
-    const lines = [
-      "Apply changes to packages/ade/src/session/permission.ts? [Y/n]",
-    ]
+    const lines = ["Apply changes to packages/ade/src/session/permission.ts? [Y/n]"]
     const req = detectPermission(lines, "test-agent")
     expect(req).toBeDefined()
     expect(req!.kind).toBe("write")
@@ -105,9 +92,7 @@ describe("detectPermission - [y/N] and (y/n) prompts", () => {
   })
 
   test("detects network request URL in (y/n) prompt", () => {
-    const lines = [
-      "Allow network connection to https://api.github.com/repos? (y/n)",
-    ]
+    const lines = ["Allow network connection to https://api.github.com/repos? (y/n)"]
     const req = detectPermission(lines, "test-agent")
     expect(req).toBeDefined()
     expect(req!.kind).toBe("network")
@@ -119,9 +104,7 @@ describe("detectPermission - [y/N] and (y/n) prompts", () => {
   })
 
   test("detects 3-way prompt with always option [y/N/a]", () => {
-    const lines = [
-      "Run shell command: npm install? [y/N/a]",
-    ]
+    const lines = ["Run shell command: npm install? [y/N/a]"]
     const req = detectPermission(lines, "test-agent")
     expect(req).toBeDefined()
     expect(req!.kind).toBe("shell")
@@ -134,10 +117,7 @@ describe("detectPermission - [y/N] and (y/n) prompts", () => {
   })
 
   test("handles prompt with trailing cursor on separate line", () => {
-    const lines = [
-      "Do you want to proceed? [y/N]",
-      ">",
-    ]
+    const lines = ["Do you want to proceed? [y/N]", ">"]
     const req = detectPermission(lines, "test-agent")
     expect(req).toBeDefined()
     expect(req!.what).toBe("Do you want to proceed? [y/N]")
@@ -148,11 +128,7 @@ describe("detectPermission - [y/N] and (y/n) prompts", () => {
 
 describe("detectPermission - Simple Question with Prompt", () => {
   test("detects question preceded by $ shell command", () => {
-    const lines = [
-      "$ git push origin main",
-      "Run this shell command?",
-      ">",
-    ]
+    const lines = ["$ git push origin main", "Run this shell command?", ">"]
     const req = detectPermission(lines, "test-agent")
     expect(req).toBeDefined()
     expect(req!.what).toBe("Run this shell command?")
@@ -165,10 +141,7 @@ describe("detectPermission - Simple Question with Prompt", () => {
   })
 
   test("detects file write question", () => {
-    const lines = [
-      "Modifying file packages/ade/package.json",
-      "Allow file modification?",
-    ]
+    const lines = ["Modifying file packages/ade/package.json", "Allow file modification?"]
     const req = detectPermission(lines, "test-agent")
     expect(req).toBeDefined()
     expect(req!.kind).toBe("write")
@@ -192,9 +165,7 @@ describe("detectPermission - False Positives (must return undefined)", () => {
   })
 
   test("diff line with optional chaining containing ?", () => {
-    const lines = [
-      "- return session?.agent?.status;",
-    ]
+    const lines = ["- return session?.agent?.status;"]
     expect(detectPermission(lines, "test-agent")).toBeUndefined()
   })
 
@@ -209,16 +180,12 @@ describe("detectPermission - False Positives (must return undefined)", () => {
   })
 
   test("rhetorical question inside agent reasoning/thinking", () => {
-    const lines = [
-      "Thinking: Why did this compilation step fail? Let me inspect the error log.",
-    ]
+    const lines = ["Thinking: Why did this compilation step fail? Let me inspect the error log."]
     expect(detectPermission(lines, "test-agent")).toBeUndefined()
   })
 
   test("progress bar with percentage and download rate", () => {
-    const lines = [
-      "[===================>       ] 75% 4.5MB/s ETA: 2s",
-    ]
+    const lines = ["[===================>       ] 75% 4.5MB/s ETA: 2s"]
     expect(detectPermission(lines, "test-agent")).toBeUndefined()
   })
 
@@ -233,10 +200,7 @@ describe("detectPermission - False Positives (must return undefined)", () => {
   })
 
   test("stack trace line with error location", () => {
-    const lines = [
-      "Error: file not found",
-      "    at Object.readFile (fs.ts:120:15)",
-    ]
+    const lines = ["Error: file not found", "    at Object.readFile (fs.ts:120:15)"]
     expect(detectPermission(lines, "test-agent")).toBeUndefined()
   })
 
@@ -290,11 +254,7 @@ describe("isResolved", () => {
   })
 
   test("returns true when newLines contains actual process output", () => {
-    const newLines = [
-      "Running command...",
-      "$ git status",
-      "On branch main",
-    ]
+    const newLines = ["Running command...", "$ git status", "On branch main"]
     expect(resolved(newLines)).toBe(true)
   })
 
@@ -313,11 +273,7 @@ describe("isResolved", () => {
    */
   describe("a redrawn frame is not an answer", () => {
     test("the question repainted among other lines is still the question", () => {
-      const frame = [
-        "  Esecuzione comando",
-        "  $ git status",
-        "Do you want to run this command? [y/N]",
-      ]
+      const frame = ["  Esecuzione comando", "  $ git status", "Do you want to run this command? [y/N]"]
       expect(resolved(frame)).toBe(false)
     })
 

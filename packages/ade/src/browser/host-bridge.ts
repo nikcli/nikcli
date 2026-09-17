@@ -20,8 +20,7 @@ export function readHeaders(headers: FramingHeaders | undefined): (name: string)
   }
 }
 
-const isDesktop = () =>
-  typeof window !== "undefined" && ("__TAURI_INTERNALS__" in window || "__TAURI__" in window)
+const isDesktop = () => typeof window !== "undefined" && ("__TAURI_INTERNALS__" in window || "__TAURI__" in window)
 
 /** The page's framing headers as the host reads them, outside CORS; undefined when unknown. */
 export async function probeFraming(url: string): Promise<FramingHeaders | undefined> {

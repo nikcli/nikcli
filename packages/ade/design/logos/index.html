@@ -1,1370 +1,1516 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="it">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>NiK / ADE — 3D Logo Exploration Studio</title>
-  <style>
-    :root {
-      --bg: #07090e;
-      --panel-bg: rgba(13, 17, 23, 0.85);
-      --panel-border: rgba(56, 139, 253, 0.25);
-      --accent-cyan: #58a6ff;
-      --accent-amber: #f0883e;
-      --accent-green: #3fb950;
-      --accent-pink: #f778ba;
-      --text: #e6edf3;
-      --text-muted: #8b949e;
-      --font-mono: "Fira Code", "JetBrains Mono", Consolas, monospace;
-      --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    }
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>NiK / ADE — 3D Logo Exploration Studio</title>
+    <style>
+      :root {
+        --bg: #07090e;
+        --panel-bg: rgba(13, 17, 23, 0.85);
+        --panel-border: rgba(56, 139, 253, 0.25);
+        --accent-cyan: #58a6ff;
+        --accent-amber: #f0883e;
+        --accent-green: #3fb950;
+        --accent-pink: #f778ba;
+        --text: #e6edf3;
+        --text-muted: #8b949e;
+        --font-mono: "Fira Code", "JetBrains Mono", Consolas, monospace;
+        --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      user-select: none;
-    }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+        user-select: none;
+      }
 
-    body, html {
-      width: 100%;
-      height: 100%;
-      overflow: hidden;
-      background-color: var(--bg);
-      color: var(--text);
-      font-family: var(--font-sans);
-    }
+      body,
+      html {
+        width: 100%;
+        height: 100%;
+        overflow: hidden;
+        background-color: var(--bg);
+        color: var(--text);
+        font-family: var(--font-sans);
+      }
 
-    #canvas-container {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 1;
-    }
+      #canvas-container {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 1;
+      }
 
-    #ascii-layer {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 2;
-      pointer-events: none;
-      font-family: var(--font-mono);
-      font-size: 10px;
-      line-height: 10px;
-      letter-spacing: 1px;
-      white-space: pre;
-      overflow: hidden;
-      display: none;
-      background: rgba(7, 9, 14, 0.95);
-      color: #39ff14;
-      text-shadow: 0 0 4px #39ff14;
-    }
+      #ascii-layer {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 2;
+        pointer-events: none;
+        font-family: var(--font-mono);
+        font-size: 10px;
+        line-height: 10px;
+        letter-spacing: 1px;
+        white-space: pre;
+        overflow: hidden;
+        display: none;
+        background: rgba(7, 9, 14, 0.95);
+        color: #39ff14;
+        text-shadow: 0 0 4px #39ff14;
+      }
 
-    /* Scanline & CRT vignette */
-    .crt-overlay {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 3;
-      pointer-events: none;
-      background: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
-                  radial-gradient(circle at center, transparent 60%, rgba(0, 0, 0, 0.6) 100%);
-      background-size: 100% 4px, 100% 100%;
-      opacity: 0.6;
-      transition: opacity 0.3s;
-    }
+      /* Scanline & CRT vignette */
+      .crt-overlay {
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        z-index: 3;
+        pointer-events: none;
+        background:
+          linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%),
+          radial-gradient(circle at center, transparent 60%, rgba(0, 0, 0, 0.6) 100%);
+        background-size:
+          100% 4px,
+          100% 100%;
+        opacity: 0.6;
+        transition: opacity 0.3s;
+      }
 
-    /* Top Navigation / Brand Header */
-    header {
-      position: absolute;
-      top: 20px;
-      left: 24px;
-      z-index: 10;
-      display: flex;
-      align-items: center;
-      gap: 16px;
-      pointer-events: auto;
-    }
+      /* Top Navigation / Brand Header */
+      header {
+        position: absolute;
+        top: 20px;
+        left: 24px;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        gap: 16px;
+        pointer-events: auto;
+      }
 
-    .brand-badge {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      background: var(--panel-bg);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      padding: 10px 18px;
-      border-radius: 12px;
-      border: 1px solid var(--panel-border);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
-    }
+      .brand-badge {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        background: var(--panel-bg);
+        backdrop-filter: blur(16px);
+        -webkit-backdrop-filter: blur(16px);
+        padding: 10px 18px;
+        border-radius: 12px;
+        border: 1px solid var(--panel-border);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+      }
 
-    .brand-mark {
-      width: 28px;
-      height: 28px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      background: linear-gradient(135deg, #238636, #2ea043);
-      color: #fff;
-      font-weight: 900;
-      font-family: var(--font-mono);
-      font-size: 16px;
-      border-radius: 6px;
-      box-shadow: 0 0 12px rgba(46, 160, 67, 0.5);
-    }
+      .brand-mark {
+        width: 28px;
+        height: 28px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        background: linear-gradient(135deg, #238636, #2ea043);
+        color: #fff;
+        font-weight: 900;
+        font-family: var(--font-mono);
+        font-size: 16px;
+        border-radius: 6px;
+        box-shadow: 0 0 12px rgba(46, 160, 67, 0.5);
+      }
 
-    .brand-info h1 {
-      font-size: 15px;
-      font-weight: 700;
-      letter-spacing: 0.5px;
-      color: #fff;
-    }
+      .brand-info h1 {
+        font-size: 15px;
+        font-weight: 700;
+        letter-spacing: 0.5px;
+        color: #fff;
+      }
 
-    .brand-info p {
-      font-size: 11px;
-      color: var(--text-muted);
-      font-family: var(--font-mono);
-    }
+      .brand-info p {
+        font-size: 11px;
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+      }
 
-    /* Concept Selector Bottom Bar */
-    .preset-bar {
-      position: absolute;
-      bottom: 24px;
-      left: 50%;
-      transform: translateX(-50%);
-      z-index: 10;
-      display: flex;
-      gap: 10px;
-      background: var(--panel-bg);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      padding: 8px 12px;
-      border-radius: 16px;
-      border: 1px solid var(--panel-border);
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
-      max-width: 95vw;
-      overflow-x: auto;
-    }
+      /* Concept Selector Bottom Bar */
+      .preset-bar {
+        position: absolute;
+        bottom: 24px;
+        left: 50%;
+        transform: translateX(-50%);
+        z-index: 10;
+        display: flex;
+        gap: 10px;
+        background: var(--panel-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        padding: 8px 12px;
+        border-radius: 16px;
+        border: 1px solid var(--panel-border);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5);
+        max-width: 95vw;
+        overflow-x: auto;
+      }
 
-    .preset-btn {
-      display: flex;
-      flex-direction: column;
-      align-items: flex-start;
-      gap: 2px;
-      padding: 10px 16px;
-      background: rgba(255, 255, 255, 0.03);
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      border-radius: 10px;
-      color: var(--text);
-      cursor: pointer;
-      transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
-      white-space: nowrap;
-    }
+      .preset-btn {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2px;
+        padding: 10px 16px;
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+        border-radius: 10px;
+        color: var(--text);
+        cursor: pointer;
+        transition: all 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+        white-space: nowrap;
+      }
 
-    .preset-btn:hover {
-      background: rgba(88, 166, 255, 0.12);
-      border-color: rgba(88, 166, 255, 0.4);
-      transform: translateY(-2px);
-    }
+      .preset-btn:hover {
+        background: rgba(88, 166, 255, 0.12);
+        border-color: rgba(88, 166, 255, 0.4);
+        transform: translateY(-2px);
+      }
 
-    .preset-btn.active {
-      background: linear-gradient(135deg, rgba(88, 166, 255, 0.25), rgba(88, 166, 255, 0.08));
-      border-color: var(--accent-cyan);
-      box-shadow: 0 0 16px rgba(88, 166, 255, 0.35);
-    }
+      .preset-btn.active {
+        background: linear-gradient(135deg, rgba(88, 166, 255, 0.25), rgba(88, 166, 255, 0.08));
+        border-color: var(--accent-cyan);
+        box-shadow: 0 0 16px rgba(88, 166, 255, 0.35);
+      }
 
-    .preset-num {
-      font-family: var(--font-mono);
-      font-size: 10px;
-      color: var(--accent-cyan);
-      font-weight: 700;
-      text-transform: uppercase;
-    }
+      .preset-num {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--accent-cyan);
+        font-weight: 700;
+        text-transform: uppercase;
+      }
 
-    .preset-name {
-      font-size: 13px;
-      font-weight: 600;
-    }
+      .preset-name {
+        font-size: 13px;
+        font-weight: 600;
+      }
 
-    /* Right Control Panel */
-    .controls-panel {
-      position: absolute;
-      top: 20px;
-      right: 24px;
-      width: 310px;
-      z-index: 10;
-      background: var(--panel-bg);
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-      border-radius: 14px;
-      border: 1px solid var(--panel-border);
-      padding: 18px;
-      box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
-      display: flex;
-      flex-direction: column;
-      gap: 16px;
-    }
+      /* Right Control Panel */
+      .controls-panel {
+        position: absolute;
+        top: 20px;
+        right: 24px;
+        width: 310px;
+        z-index: 10;
+        background: var(--panel-bg);
+        backdrop-filter: blur(20px);
+        -webkit-backdrop-filter: blur(20px);
+        border-radius: 14px;
+        border: 1px solid var(--panel-border);
+        padding: 18px;
+        box-shadow: 0 12px 36px rgba(0, 0, 0, 0.45);
+        display: flex;
+        flex-direction: column;
+        gap: 16px;
+      }
 
-    .panel-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-      padding-bottom: 10px;
-    }
+      .panel-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+        padding-bottom: 10px;
+      }
 
-    .panel-title {
-      font-size: 13px;
-      font-weight: 700;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--accent-cyan);
-      font-family: var(--font-mono);
-    }
+      .panel-title {
+        font-size: 13px;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: var(--accent-cyan);
+        font-family: var(--font-mono);
+      }
 
-    .telemetry {
-      font-family: var(--font-mono);
-      font-size: 11px;
-      color: var(--accent-green);
-    }
+      .telemetry {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--accent-green);
+      }
 
-    .control-group {
-      display: flex;
-      flex-direction: column;
-      gap: 8px;
-    }
+      .control-group {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
 
-    .control-label {
-      display: flex;
-      justify-content: space-between;
-      font-size: 12px;
-      color: var(--text-muted);
-      font-family: var(--font-mono);
-    }
+      .control-label {
+        display: flex;
+        justify-content: space-between;
+        font-size: 12px;
+        color: var(--text-muted);
+        font-family: var(--font-mono);
+      }
 
-    .control-slider {
-      -webkit-appearance: none;
-      width: 100%;
-      height: 4px;
-      border-radius: 2px;
-      background: rgba(255, 255, 255, 0.15);
-      outline: none;
-    }
+      .control-slider {
+        -webkit-appearance: none;
+        width: 100%;
+        height: 4px;
+        border-radius: 2px;
+        background: rgba(255, 255, 255, 0.15);
+        outline: none;
+      }
 
-    .control-slider::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      width: 14px;
-      height: 14px;
-      border-radius: 50%;
-      background: var(--accent-cyan);
-      cursor: pointer;
-      box-shadow: 0 0 8px var(--accent-cyan);
-    }
+      .control-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--accent-cyan);
+        cursor: pointer;
+        box-shadow: 0 0 8px var(--accent-cyan);
+      }
 
-    .toggle-grid {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 8px;
-    }
+      .toggle-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 8px;
+      }
 
-    .toggle-btn {
-      padding: 8px 10px;
-      background: rgba(255, 255, 255, 0.04);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-      border-radius: 8px;
-      color: var(--text);
-      font-size: 11px;
-      font-family: var(--font-mono);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      transition: all 0.2s;
-    }
+      .toggle-btn {
+        padding: 8px 10px;
+        background: rgba(255, 255, 255, 0.04);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        color: var(--text);
+        font-size: 11px;
+        font-family: var(--font-mono);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: all 0.2s;
+      }
 
-    .toggle-btn:hover {
-      background: rgba(255, 255, 255, 0.08);
-    }
+      .toggle-btn:hover {
+        background: rgba(255, 255, 255, 0.08);
+      }
 
-    .toggle-btn.active {
-      background: rgba(88, 166, 255, 0.2);
-      border-color: var(--accent-cyan);
-      color: var(--accent-cyan);
-    }
+      .toggle-btn.active {
+        background: rgba(88, 166, 255, 0.2);
+        border-color: var(--accent-cyan);
+        color: var(--accent-cyan);
+      }
 
-    .palette-selector {
-      display: flex;
-      gap: 8px;
-      margin-top: 4px;
-    }
+      .palette-selector {
+        display: flex;
+        gap: 8px;
+        margin-top: 4px;
+      }
 
-    .palette-dot {
-      width: 22px;
-      height: 22px;
-      border-radius: 50%;
-      cursor: pointer;
-      border: 2px solid transparent;
-      transition: transform 0.2s, border-color 0.2s;
-    }
+      .palette-dot {
+        width: 22px;
+        height: 22px;
+        border-radius: 50%;
+        cursor: pointer;
+        border: 2px solid transparent;
+        transition:
+          transform 0.2s,
+          border-color 0.2s;
+      }
 
-    .palette-dot:hover {
-      transform: scale(1.15);
-    }
+      .palette-dot:hover {
+        transform: scale(1.15);
+      }
 
-    .palette-dot.active {
-      border-color: #fff;
-      transform: scale(1.15);
-    }
+      .palette-dot.active {
+        border-color: #fff;
+        transform: scale(1.15);
+      }
 
-    /* Info Overlay Box */
-    .concept-description {
-      font-size: 12px;
-      line-height: 1.5;
-      color: var(--text-muted);
-      background: rgba(0, 0, 0, 0.3);
-      padding: 10px 12px;
-      border-radius: 8px;
-      border-left: 3px solid var(--accent-cyan);
-    }
+      /* Info Overlay Box */
+      .concept-description {
+        font-size: 12px;
+        line-height: 1.5;
+        color: var(--text-muted);
+        background: rgba(0, 0, 0, 0.3);
+        padding: 10px 12px;
+        border-radius: 8px;
+        border-left: 3px solid var(--accent-cyan);
+      }
 
-    .quick-actions {
-      display: flex;
-      gap: 8px;
-    }
+      .quick-actions {
+        display: flex;
+        gap: 8px;
+      }
 
-    .action-btn {
-      flex: 1;
-      padding: 8px 12px;
-      border-radius: 8px;
-      font-size: 11px;
-      font-family: var(--font-mono);
-      font-weight: 600;
-      cursor: pointer;
-      border: none;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 6px;
-      transition: all 0.2s;
-    }
+      .action-btn {
+        flex: 1;
+        padding: 8px 12px;
+        border-radius: 8px;
+        font-size: 11px;
+        font-family: var(--font-mono);
+        font-weight: 600;
+        cursor: pointer;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 6px;
+        transition: all 0.2s;
+      }
 
-    .action-btn.primary {
-      background: var(--accent-cyan);
-      color: #0d1117;
-    }
+      .action-btn.primary {
+        background: var(--accent-cyan);
+        color: #0d1117;
+      }
 
-    .action-btn.primary:hover {
-      background: #79b8ff;
-      box-shadow: 0 0 12px rgba(88, 166, 255, 0.5);
-    }
+      .action-btn.primary:hover {
+        background: #79b8ff;
+        box-shadow: 0 0 12px rgba(88, 166, 255, 0.5);
+      }
 
-    .action-btn.secondary {
-      background: rgba(255, 255, 255, 0.06);
-      color: var(--text);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-    }
+      .action-btn.secondary {
+        background: rgba(255, 255, 255, 0.06);
+        color: var(--text);
+        border: 1px solid rgba(255, 255, 255, 0.12);
+      }
 
-    .action-btn.secondary:hover {
-      background: rgba(255, 255, 255, 0.1);
-    }
+      .action-btn.secondary:hover {
+        background: rgba(255, 255, 255, 0.1);
+      }
 
-    /* Glitch flash animation */
-    @keyframes glitch-anim {
-      0% { transform: translate(0); }
-      20% { transform: translate(-3px, 3px); filter: hue-rotate(90deg); }
-      40% { transform: translate(3px, -3px); filter: hue-rotate(180deg); }
-      60% { transform: translate(-2px, 1px); }
-      80% { transform: translate(2px, -1px); filter: invert(0.2); }
-      100% { transform: translate(0); filter: none; }
-    }
+      /* Glitch flash animation */
+      @keyframes glitch-anim {
+        0% {
+          transform: translate(0);
+        }
+        20% {
+          transform: translate(-3px, 3px);
+          filter: hue-rotate(90deg);
+        }
+        40% {
+          transform: translate(3px, -3px);
+          filter: hue-rotate(180deg);
+        }
+        60% {
+          transform: translate(-2px, 1px);
+        }
+        80% {
+          transform: translate(2px, -1px);
+          filter: invert(0.2);
+        }
+        100% {
+          transform: translate(0);
+          filter: none;
+        }
+      }
 
-    .glitching {
-      animation: glitch-anim 0.25s infinite;
-    }
+      .glitching {
+        animation: glitch-anim 0.25s infinite;
+      }
 
-    /* Instructions toast */
-    .interaction-hint {
-      position: absolute;
-      top: 80px;
-      left: 24px;
-      z-index: 10;
-      font-family: var(--font-mono);
-      font-size: 11px;
-      color: var(--text-muted);
-      background: rgba(13, 17, 23, 0.6);
-      padding: 6px 12px;
-      border-radius: 20px;
-      border: 1px solid rgba(255, 255, 255, 0.06);
-      pointer-events: none;
-    }
-  </style>
-  <!-- Three.js & Controls from CDN -->
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
-</head>
-<body>
-  <div id="canvas-container"></div>
-  <div id="ascii-layer"></div>
-  <div class="crt-overlay" id="crtOverlay"></div>
+      /* Instructions toast */
+      .interaction-hint {
+        position: absolute;
+        top: 80px;
+        left: 24px;
+        z-index: 10;
+        font-family: var(--font-mono);
+        font-size: 11px;
+        color: var(--text-muted);
+        background: rgba(13, 17, 23, 0.6);
+        padding: 6px 12px;
+        border-radius: 20px;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        pointer-events: none;
+      }
+    </style>
+    <!-- Three.js & Controls from CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  </head>
+  <body>
+    <div id="canvas-container"></div>
+    <div id="ascii-layer"></div>
+    <div class="crt-overlay" id="crtOverlay"></div>
 
-  <header>
-    <div class="brand-badge">
-      <div class="brand-mark">N</div>
-      <div class="brand-info">
-        <h1>ADE 3D MARK LAB</h1>
-        <p>packages/ade &bull; 5 Creative Vectors</p>
+    <header>
+      <div class="brand-badge">
+        <div class="brand-mark">N</div>
+        <div class="brand-info">
+          <h1>ADE 3D MARK LAB</h1>
+          <p>packages/ade &bull; 5 Creative Vectors</p>
+        </div>
       </div>
-    </div>
-  </header>
+    </header>
 
-  <div class="interaction-hint">
-    &bull; Click & Drag per ruotare &bull; Scroll per zoom &bull; Tasto Destro per pan
-  </div>
-
-  <!-- Right Controls Panel -->
-  <aside class="controls-panel">
-    <div class="panel-header">
-      <span class="panel-title">TELEMETRIA & FX</span>
-      <span class="telemetry" id="fpsCounter">60 FPS</span>
-    </div>
-
-    <div class="concept-description" id="conceptDesc">
-      Caricamento concept...
-    </div>
-
-    <div class="control-group">
-      <div class="control-label">
-        <span>VELOCIT&Agrave; ROTAZIONE</span>
-        <span id="speedVal">1.0x</span>
-      </div>
-      <input type="range" class="control-slider" id="speedSlider" min="0" max="3" step="0.1" value="1.0" />
-    </div>
-
-    <div class="control-group">
-      <div class="control-label">
-        <span>ESPLOSIONE / DEFORMAZIONE</span>
-        <span id="displaceVal">0.0</span>
-      </div>
-      <input type="range" class="control-slider" id="displaceSlider" min="0" max="2" step="0.05" value="0.0" />
+    <div class="interaction-hint">
+      &bull; Click & Drag per ruotare &bull; Scroll per zoom &bull; Tasto Destro per pan
     </div>
 
-    <div class="control-group">
-      <div class="control-label">
-        <span>TAVOLOZZA COLORI</span>
+    <!-- Right Controls Panel -->
+    <aside class="controls-panel">
+      <div class="panel-header">
+        <span class="panel-title">TELEMETRIA & FX</span>
+        <span class="telemetry" id="fpsCounter">60 FPS</span>
       </div>
-      <div class="palette-selector">
-        <div class="palette-dot active" style="background: #58a6ff;" data-theme="cyan" title="Cyber Cyan"></div>
-        <div class="palette-dot" style="background: #39ff14;" data-theme="green" title="Phosphor Terminal"></div>
-        <div class="palette-dot" style="background: #f0883e;" data-theme="amber" title="Amber Core"></div>
-        <div class="palette-dot" style="background: #f778ba;" data-theme="magenta" title="Neon Synth"></div>
-        <div class="palette-dot" style="background: #e6edf3;" data-theme="titanium" title="Monochrome Titanium"></div>
-      </div>
-    </div>
 
-    <div class="control-group">
-      <div class="control-label">
-        <span>POST-PROCESSING & EFFETTI</span>
-      </div>
-      <div class="toggle-grid">
-        <button class="toggle-btn" id="btnAscii">
-          <span style="font-size: 13px;">#_</span> ASCII Mode
-        </button>
-        <button class="toggle-btn" id="btnWireframe">
-          <span style="font-size: 13px;">&#x2610;</span> Wireframe
-        </button>
-        <button class="toggle-btn active" id="btnCrt">
-          <span style="font-size: 13px;">&equiv;</span> CRT Lines
-        </button>
-        <button class="toggle-btn" id="btnGlitch">
-          <span style="font-size: 13px;">&part;</span> Glitch FX
-        </button>
-      </div>
-    </div>
+      <div class="concept-description" id="conceptDesc">Caricamento concept...</div>
 
-    <div class="quick-actions">
-      <button class="action-btn primary" id="btnSnapshot">
-        &#x1F4F7; Salva Foto PNG
+      <div class="control-group">
+        <div class="control-label">
+          <span>VELOCIT&Agrave; ROTAZIONE</span>
+          <span id="speedVal">1.0x</span>
+        </div>
+        <input type="range" class="control-slider" id="speedSlider" min="0" max="3" step="0.1" value="1.0" />
+      </div>
+
+      <div class="control-group">
+        <div class="control-label">
+          <span>ESPLOSIONE / DEFORMAZIONE</span>
+          <span id="displaceVal">0.0</span>
+        </div>
+        <input type="range" class="control-slider" id="displaceSlider" min="0" max="2" step="0.05" value="0.0" />
+      </div>
+
+      <div class="control-group">
+        <div class="control-label">
+          <span>TAVOLOZZA COLORI</span>
+        </div>
+        <div class="palette-selector">
+          <div class="palette-dot active" style="background: #58a6ff" data-theme="cyan" title="Cyber Cyan"></div>
+          <div class="palette-dot" style="background: #39ff14" data-theme="green" title="Phosphor Terminal"></div>
+          <div class="palette-dot" style="background: #f0883e" data-theme="amber" title="Amber Core"></div>
+          <div class="palette-dot" style="background: #f778ba" data-theme="magenta" title="Neon Synth"></div>
+          <div class="palette-dot" style="background: #e6edf3" data-theme="titanium" title="Monochrome Titanium"></div>
+        </div>
+      </div>
+
+      <div class="control-group">
+        <div class="control-label">
+          <span>POST-PROCESSING & EFFETTI</span>
+        </div>
+        <div class="toggle-grid">
+          <button class="toggle-btn" id="btnAscii"><span style="font-size: 13px">#_</span> ASCII Mode</button>
+          <button class="toggle-btn" id="btnWireframe"><span style="font-size: 13px">&#x2610;</span> Wireframe</button>
+          <button class="toggle-btn active" id="btnCrt"><span style="font-size: 13px">&equiv;</span> CRT Lines</button>
+          <button class="toggle-btn" id="btnGlitch"><span style="font-size: 13px">&part;</span> Glitch FX</button>
+        </div>
+      </div>
+
+      <div class="quick-actions">
+        <button class="action-btn primary" id="btnSnapshot">&#x1F4F7; Salva Foto PNG</button>
+        <button class="action-btn secondary" id="btnResetCam">Reset Camera</button>
+      </div>
+    </aside>
+
+    <!-- Bottom Concept Selector Bar -->
+    <nav class="preset-bar">
+      <button class="preset-btn active" data-preset="0">
+        <span class="preset-num">01 / VOXEL</span>
+        <span class="preset-name">Quantum Matrix N</span>
       </button>
-      <button class="action-btn secondary" id="btnResetCam">
-        Reset Camera
+      <button class="preset-btn" data-preset="1">
+        <span class="preset-num">02 / ASCII</span>
+        <span class="preset-name">Holo Terminal NiK</span>
       </button>
-    </div>
-  </aside>
+      <button class="preset-btn" data-preset="2">
+        <span class="preset-num">03 / LIQUID</span>
+        <span class="preset-name">Molten Chrome N</span>
+      </button>
+      <button class="preset-btn" data-preset="3">
+        <span class="preset-num">04 / NEURAL</span>
+        <span class="preset-name">Agent Swarm NiK</span>
+      </button>
+      <button class="preset-btn" data-preset="4">
+        <span class="preset-num">05 / MECHA</span>
+        <span class="preset-name">Origami Kinetic N</span>
+      </button>
+    </nav>
 
-  <!-- Bottom Concept Selector Bar -->
-  <nav class="preset-bar">
-    <button class="preset-btn active" data-preset="0">
-      <span class="preset-num">01 / VOXEL</span>
-      <span class="preset-name">Quantum Matrix N</span>
-    </button>
-    <button class="preset-btn" data-preset="1">
-      <span class="preset-num">02 / ASCII</span>
-      <span class="preset-name">Holo Terminal NiK</span>
-    </button>
-    <button class="preset-btn" data-preset="2">
-      <span class="preset-num">03 / LIQUID</span>
-      <span class="preset-name">Molten Chrome N</span>
-    </button>
-    <button class="preset-btn" data-preset="3">
-      <span class="preset-num">04 / NEURAL</span>
-      <span class="preset-name">Agent Swarm NiK</span>
-    </button>
-    <button class="preset-btn" data-preset="4">
-      <span class="preset-num">05 / MECHA</span>
-      <span class="preset-name">Origami Kinetic N</span>
-    </button>
-  </nav>
+    <script>
+      // --- APP STATE & DATA ---
+      const CONCEPTS = [
+        {
+          id: "voxel",
+          title: "01. QUANTUM VOXEL MATRIX",
+          desc: "Ispirato al blocco N 4×5 nativo di nikcli. Monoliti modulari estrusi con sollevamento sinusoidale ad onde, bordi al neon cyber-cyan ed anime energetiche reattive al cursore.",
+          cameraPos: [0, 2, 12],
+        },
+        {
+          id: "ascii",
+          title: "02. HYPER-ASCII HOLOGRAM",
+          desc: "L'anima pura del terminale CLI. Geometria prismatica NiK renderizzata tramite raymarching vettoriale con matrice di caratteri dinamica, fosfori verdi e scanlines CRT.",
+          cameraPos: [0, 0, 14],
+        },
+        {
+          id: "liquid",
+          title: "03. MOLTEN CHROME MERCURY",
+          desc: "Nastro topologico fluido continuo a forma di 'N'. Metallo liquido specchiato ad alta riflettanza con dispersione prismatica iridescente e respirazione fluida.",
+          cameraPos: [0, 0, 11],
+        },
+        {
+          id: "neural",
+          title: "04. SYNAPTIC AGENT SWARM",
+          desc: "Rappresenta ADE come orchestra di agenti autonomi. Oltre 2.500 nodi sinaptici interconnessi da impulsi elettrici che disegnano la tipografia 'NIK' e reagiscono alla gravit&agrave; del mouse.",
+          cameraPos: [0, 0, 15],
+        },
+        {
+          id: "origami",
+          title: "05. KINETIC ORIGAMI MECHA",
+          desc: "Brutalismo industriale sci-fi. Piastre sfaccettate in titanio e fibra di carbonio con bisellature incandescenti a hazard-orange che si disassemblano e ricompongono meccanicamente.",
+          cameraPos: [0, 1, 13],
+        },
+      ]
 
-  <script>
-    // --- APP STATE & DATA ---
-    const CONCEPTS = [
-      {
-        id: "voxel",
-        title: "01. QUANTUM VOXEL MATRIX",
-        desc: "Ispirato al blocco N 4×5 nativo di nikcli. Monoliti modulari estrusi con sollevamento sinusoidale ad onde, bordi al neon cyber-cyan ed anime energetiche reattive al cursore.",
-        cameraPos: [0, 2, 12]
-      },
-      {
-        id: "ascii",
-        title: "02. HYPER-ASCII HOLOGRAM",
-        desc: "L'anima pura del terminale CLI. Geometria prismatica NiK renderizzata tramite raymarching vettoriale con matrice di caratteri dinamica, fosfori verdi e scanlines CRT.",
-        cameraPos: [0, 0, 14]
-      },
-      {
-        id: "liquid",
-        title: "03. MOLTEN CHROME MERCURY",
-        desc: "Nastro topologico fluido continuo a forma di 'N'. Metallo liquido specchiato ad alta riflettanza con dispersione prismatica iridescente e respirazione fluida.",
-        cameraPos: [0, 0, 11]
-      },
-      {
-        id: "neural",
-        title: "04. SYNAPTIC AGENT SWARM",
-        desc: "Rappresenta ADE come orchestra di agenti autonomi. Oltre 2.500 nodi sinaptici interconnessi da impulsi elettrici che disegnano la tipografia 'NIK' e reagiscono alla gravit&agrave; del mouse.",
-        cameraPos: [0, 0, 15]
-      },
-      {
-        id: "origami",
-        title: "05. KINETIC ORIGAMI MECHA",
-        desc: "Brutalismo industriale sci-fi. Piastre sfaccettate in titanio e fibra di carbonio con bisellature incandescenti a hazard-orange che si disassemblano e ricompongono meccanicamente.",
-        cameraPos: [0, 1, 13]
-      }
-    ];
+      let currentConceptIndex = 0
+      let rotationSpeed = 1.0
+      let displacement = 0.0
+      let wireframeMode = false
+      let asciiMode = false
+      let crtEnabled = true
+      let glitchActive = false
+      let activePalette = "cyan"
 
-    let currentConceptIndex = 0;
-    let rotationSpeed = 1.0;
-    let displacement = 0.0;
-    let wireframeMode = false;
-    let asciiMode = false;
-    let crtEnabled = true;
-    let glitchActive = false;
-    let activePalette = "cyan";
-
-    const PALETTES = {
-      cyan: { primary: 0x58a6ff, secondary: 0x00f0ff, accent: 0xf0883e, bg: 0x07090e, ascii: "#58a6ff" },
-      green: { primary: 0x39ff14, secondary: 0x00ffaa, accent: 0x3fb950, bg: 0x040d06, ascii: "#39ff14" },
-      amber: { primary: 0xf0883e, secondary: 0xffaa33, accent: 0xff4400, bg: 0x0e0905, ascii: "#f0883e" },
-      magenta: { primary: 0xf778ba, secondary: 0xbf5af2, accent: 0x58a6ff, bg: 0x0c060f, ascii: "#f778ba" },
-      titanium: { primary: 0xe6edf3, secondary: 0x8b949e, accent: 0x58a6ff, bg: 0x0a0c10, ascii: "#e6edf3" }
-    };
-
-    // --- THREE.JS INITIALIZATION ---
-    const container = document.getElementById("canvas-container");
-    const scene = new THREE.Scene();
-    scene.background = new THREE.Color(PALETTES[activePalette].bg);
-    scene.fog = new THREE.FogExp2(PALETTES[activePalette].bg, 0.035);
-
-    const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100);
-    camera.position.set(0, 2, 12);
-
-    const renderer = new THREE.WebGLRenderer({ antialias: true, preserveDrawingBuffer: true, powerPreference: "high-performance" });
-    renderer.setSize(window.innerWidth, window.innerHeight);
-    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
-    renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
-    renderer.toneMapping = THREE.ACESFilmicToneMapping;
-    renderer.toneMappingExposure = 1.2;
-    container.appendChild(renderer.domElement);
-
-    const controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true;
-    controls.dampingFactor = 0.05;
-    controls.maxDistance = 25;
-    controls.minDistance = 4;
-
-    // --- LIGHTING ---
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.5);
-    scene.add(ambientLight);
-
-    const keyLight = new THREE.DirectionalLight(0xffffff, 1.8);
-    keyLight.position.set(10, 15, 10);
-    keyLight.castShadow = true;
-    keyLight.shadow.mapSize.width = 1024;
-    keyLight.shadow.mapSize.height = 1024;
-    scene.add(keyLight);
-
-    const rimLight = new THREE.DirectionalLight(0x58a6ff, 2.5);
-    rimLight.position.set(-10, -5, -8);
-    scene.add(rimLight);
-
-    const centerPointLight = new THREE.PointLight(0x58a6ff, 3, 20);
-    centerPointLight.position.set(0, 0, 2);
-    scene.add(centerPointLight);
-
-    // Grid Floor
-    const gridHelper = new THREE.GridHelper(40, 40, 0x1f2937, 0x111827);
-    gridHelper.position.y = -4;
-    scene.add(gridHelper);
-
-    // Root Group for Current Concept
-    const activeGroup = new THREE.Group();
-    scene.add(activeGroup);
-
-    // --- PROCEDURAL BUILDERS FOR THE 5 CONCEPTS ---
-
-    // 1. CONCEPT: VOXEL MATRIX N
-    let voxelBlocks = [];
-    let voxelParticles = null;
-    function buildVoxelMatrix() {
-      activeGroup.clear();
-      voxelBlocks = [];
-
-      // nikcli 4x5 block grid
-      // Columns 0..3, Rows 0..4 (inverted Y)
-      const stemCoords = [
-        [0, 0], [1, 0], [2, 0],
-        [0, 1], [3, 1],
-        [0, 2], [3, 2],
-        [0, 3], [3, 3],
-        [0, 4], [3, 4]
-      ];
-
-      const counterCoords = [
-        [1, 2], [2, 2],
-        [1, 3], [2, 3],
-        [1, 4], [2, 4]
-      ];
-
-      const blockGeo = new THREE.BoxGeometry(1.15, 1.15, 1.15);
-      const edgeGeo = new THREE.EdgesGeometry(blockGeo);
-
-      const pal = PALETTES[activePalette];
-
-      function createVoxel(x, y, isCounter) {
-        const voxelGroup = new THREE.Group();
-        const posX = (x - 1.5) * 1.35;
-        const posY = (2 - y) * 1.35;
-
-        // Face Material
-        const mat = new THREE.MeshStandardMaterial({
-          color: isCounter ? 0x161b22 : 0x0d1117,
-          metalness: 0.9,
-          roughness: 0.2,
-          wireframe: wireframeMode
-        });
-        const mesh = new THREE.Mesh(blockGeo, mat);
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
-        voxelGroup.add(mesh);
-
-        // Neon Edge Wireframe
-        const edgeColor = isCounter ? pal.accent : pal.primary;
-        const lineMat = new THREE.LineBasicMaterial({
-          color: edgeColor,
-          linewidth: 2,
-          transparent: true,
-          opacity: isCounter ? 0.6 : 0.95
-        });
-        const edgeLines = new THREE.LineSegments(edgeGeo, lineMat);
-        voxelGroup.add(edgeLines);
-
-        voxelGroup.position.set(posX, posY, 0);
-
-        const data = {
-          group: voxelGroup,
-          mesh: mesh,
-          lineMat: lineMat,
-          baseX: posX,
-          baseY: posY,
-          baseZ: isCounter ? -0.4 : 0,
-          gridX: x,
-          gridY: y,
-          isCounter: isCounter,
-          phase: (x * 0.7 + y * 0.9)
-        };
-        voxelBlocks.push(data);
-        activeGroup.add(voxelGroup);
+      const PALETTES = {
+        cyan: { primary: 0x58a6ff, secondary: 0x00f0ff, accent: 0xf0883e, bg: 0x07090e, ascii: "#58a6ff" },
+        green: { primary: 0x39ff14, secondary: 0x00ffaa, accent: 0x3fb950, bg: 0x040d06, ascii: "#39ff14" },
+        amber: { primary: 0xf0883e, secondary: 0xffaa33, accent: 0xff4400, bg: 0x0e0905, ascii: "#f0883e" },
+        magenta: { primary: 0xf778ba, secondary: 0xbf5af2, accent: 0x58a6ff, bg: 0x0c060f, ascii: "#f778ba" },
+        titanium: { primary: 0xe6edf3, secondary: 0x8b949e, accent: 0x58a6ff, bg: 0x0a0c10, ascii: "#e6edf3" },
       }
 
-      stemCoords.forEach(([x, y]) => createVoxel(x, y, false));
-      counterCoords.forEach(([x, y]) => createVoxel(x, y, true));
+      // --- THREE.JS INITIALIZATION ---
+      const container = document.getElementById("canvas-container")
+      const scene = new THREE.Scene()
+      scene.background = new THREE.Color(PALETTES[activePalette].bg)
+      scene.fog = new THREE.FogExp2(PALETTES[activePalette].bg, 0.035)
 
-      // Floating data dust around the matrix
-      const partGeo = new THREE.BufferGeometry();
-      const pCount = 350;
-      const pPos = new Float32Array(pCount * 3);
-      for (let i = 0; i < pCount * 3; i += 3) {
-        pPos[i] = (Math.random() - 0.5) * 14;
-        pPos[i + 1] = (Math.random() - 0.5) * 14;
-        pPos[i + 2] = (Math.random() - 0.5) * 10;
-      }
-      partGeo.setAttribute("position", new THREE.BufferAttribute(pPos, 3));
-      const partMat = new THREE.PointsMaterial({
-        size: 0.12,
-        color: pal.primary,
-        transparent: true,
-        opacity: 0.7,
-        blending: THREE.AdditiveBlending
-      });
-      voxelParticles = new THREE.Points(partGeo, partMat);
-      activeGroup.add(voxelParticles);
-    }
+      const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 100)
+      camera.position.set(0, 2, 12)
 
-    // 2. CONCEPT: HYPER-ASCII HOLOGRAM (NiK Typography Hologram)
-    let asciiWirePrism = null;
-    let holoRings = [];
-    function buildAsciiHologram() {
-      activeGroup.clear();
-      holoRings = [];
+      const renderer = new THREE.WebGLRenderer({
+        antialias: true,
+        preserveDrawingBuffer: true,
+        powerPreference: "high-performance",
+      })
+      renderer.setSize(window.innerWidth, window.innerHeight)
+      renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2))
+      renderer.shadowMap.enabled = true
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap
+      renderer.toneMapping = THREE.ACESFilmicToneMapping
+      renderer.toneMappingExposure = 1.2
+      container.appendChild(renderer.domElement)
 
-      const pal = PALETTES[activePalette];
+      const controls = new THREE.OrbitControls(camera, renderer.domElement)
+      controls.enableDamping = true
+      controls.dampingFactor = 0.05
+      controls.maxDistance = 25
+      controls.minDistance = 4
 
-      // Outer holographic rotating gyroscopes
-      for (let i = 0; i < 3; i++) {
-        const ringGeo = new THREE.TorusGeometry(5.2 + i * 0.9, 0.04, 16, 64);
-        const ringMat = new THREE.MeshBasicMaterial({
+      // --- LIGHTING ---
+      const ambientLight = new THREE.AmbientLight(0xffffff, 0.5)
+      scene.add(ambientLight)
+
+      const keyLight = new THREE.DirectionalLight(0xffffff, 1.8)
+      keyLight.position.set(10, 15, 10)
+      keyLight.castShadow = true
+      keyLight.shadow.mapSize.width = 1024
+      keyLight.shadow.mapSize.height = 1024
+      scene.add(keyLight)
+
+      const rimLight = new THREE.DirectionalLight(0x58a6ff, 2.5)
+      rimLight.position.set(-10, -5, -8)
+      scene.add(rimLight)
+
+      const centerPointLight = new THREE.PointLight(0x58a6ff, 3, 20)
+      centerPointLight.position.set(0, 0, 2)
+      scene.add(centerPointLight)
+
+      // Grid Floor
+      const gridHelper = new THREE.GridHelper(40, 40, 0x1f2937, 0x111827)
+      gridHelper.position.y = -4
+      scene.add(gridHelper)
+
+      // Root Group for Current Concept
+      const activeGroup = new THREE.Group()
+      scene.add(activeGroup)
+
+      // --- PROCEDURAL BUILDERS FOR THE 5 CONCEPTS ---
+
+      // 1. CONCEPT: VOXEL MATRIX N
+      let voxelBlocks = []
+      let voxelParticles = null
+      function buildVoxelMatrix() {
+        activeGroup.clear()
+        voxelBlocks = []
+
+        // nikcli 4x5 block grid
+        // Columns 0..3, Rows 0..4 (inverted Y)
+        const stemCoords = [
+          [0, 0],
+          [1, 0],
+          [2, 0],
+          [0, 1],
+          [3, 1],
+          [0, 2],
+          [3, 2],
+          [0, 3],
+          [3, 3],
+          [0, 4],
+          [3, 4],
+        ]
+
+        const counterCoords = [
+          [1, 2],
+          [2, 2],
+          [1, 3],
+          [2, 3],
+          [1, 4],
+          [2, 4],
+        ]
+
+        const blockGeo = new THREE.BoxGeometry(1.15, 1.15, 1.15)
+        const edgeGeo = new THREE.EdgesGeometry(blockGeo)
+
+        const pal = PALETTES[activePalette]
+
+        function createVoxel(x, y, isCounter) {
+          const voxelGroup = new THREE.Group()
+          const posX = (x - 1.5) * 1.35
+          const posY = (2 - y) * 1.35
+
+          // Face Material
+          const mat = new THREE.MeshStandardMaterial({
+            color: isCounter ? 0x161b22 : 0x0d1117,
+            metalness: 0.9,
+            roughness: 0.2,
+            wireframe: wireframeMode,
+          })
+          const mesh = new THREE.Mesh(blockGeo, mat)
+          mesh.castShadow = true
+          mesh.receiveShadow = true
+          voxelGroup.add(mesh)
+
+          // Neon Edge Wireframe
+          const edgeColor = isCounter ? pal.accent : pal.primary
+          const lineMat = new THREE.LineBasicMaterial({
+            color: edgeColor,
+            linewidth: 2,
+            transparent: true,
+            opacity: isCounter ? 0.6 : 0.95,
+          })
+          const edgeLines = new THREE.LineSegments(edgeGeo, lineMat)
+          voxelGroup.add(edgeLines)
+
+          voxelGroup.position.set(posX, posY, 0)
+
+          const data = {
+            group: voxelGroup,
+            mesh: mesh,
+            lineMat: lineMat,
+            baseX: posX,
+            baseY: posY,
+            baseZ: isCounter ? -0.4 : 0,
+            gridX: x,
+            gridY: y,
+            isCounter: isCounter,
+            phase: x * 0.7 + y * 0.9,
+          }
+          voxelBlocks.push(data)
+          activeGroup.add(voxelGroup)
+        }
+
+        stemCoords.forEach(([x, y]) => createVoxel(x, y, false))
+        counterCoords.forEach(([x, y]) => createVoxel(x, y, true))
+
+        // Floating data dust around the matrix
+        const partGeo = new THREE.BufferGeometry()
+        const pCount = 350
+        const pPos = new Float32Array(pCount * 3)
+        for (let i = 0; i < pCount * 3; i += 3) {
+          pPos[i] = (Math.random() - 0.5) * 14
+          pPos[i + 1] = (Math.random() - 0.5) * 14
+          pPos[i + 2] = (Math.random() - 0.5) * 10
+        }
+        partGeo.setAttribute("position", new THREE.BufferAttribute(pPos, 3))
+        const partMat = new THREE.PointsMaterial({
+          size: 0.12,
           color: pal.primary,
-          wireframe: true,
           transparent: true,
-          opacity: 0.4 - i * 0.1
-        });
-        const ring = new THREE.Mesh(ringGeo, ringMat);
-        ring.rotation.x = Math.PI / 2 + i * 0.4;
-        ring.rotation.y = i * 0.6;
-        activeGroup.add(ring);
-        holoRings.push(ring);
+          opacity: 0.7,
+          blending: THREE.AdditiveBlending,
+        })
+        voxelParticles = new THREE.Points(partGeo, partMat)
+        activeGroup.add(voxelParticles)
       }
 
-      // 3D Extruded NiK Glyph Geometry
-      const nGroup = new THREE.Group();
+      // 2. CONCEPT: HYPER-ASCII HOLOGRAM (NiK Typography Hologram)
+      let asciiWirePrism = null
+      let holoRings = []
+      function buildAsciiHologram() {
+        activeGroup.clear()
+        holoRings = []
 
-      // Left Pillar of N
-      const p1 = new THREE.Mesh(new THREE.BoxGeometry(1.2, 6, 1.5), new THREE.MeshStandardMaterial({
-        color: 0x0b1320,
-        emissive: pal.primary,
-        emissiveIntensity: 0.4,
-        roughness: 0.2,
-        metalness: 0.8,
-        wireframe: wireframeMode
-      }));
-      p1.position.set(-3.5, 0, 0);
-      nGroup.add(p1);
+        const pal = PALETTES[activePalette]
 
-      // Diagonal of N
-      const pDiag = new THREE.Mesh(new THREE.BoxGeometry(1.2, 6.8, 1.5), new THREE.MeshStandardMaterial({
-        color: 0x0b1320,
-        emissive: pal.secondary,
-        emissiveIntensity: 0.4,
-        roughness: 0.2,
-        metalness: 0.8,
-        wireframe: wireframeMode
-      }));
-      pDiag.position.set(-1.75, 0, 0);
-      pDiag.rotation.z = -0.55;
-      nGroup.add(pDiag);
+        // Outer holographic rotating gyroscopes
+        for (let i = 0; i < 3; i++) {
+          const ringGeo = new THREE.TorusGeometry(5.2 + i * 0.9, 0.04, 16, 64)
+          const ringMat = new THREE.MeshBasicMaterial({
+            color: pal.primary,
+            wireframe: true,
+            transparent: true,
+            opacity: 0.4 - i * 0.1,
+          })
+          const ring = new THREE.Mesh(ringGeo, ringMat)
+          ring.rotation.x = Math.PI / 2 + i * 0.4
+          ring.rotation.y = i * 0.6
+          activeGroup.add(ring)
+          holoRings.push(ring)
+        }
 
-      // Right Pillar of N
-      const p2 = new THREE.Mesh(new THREE.BoxGeometry(1.2, 6, 1.5), new THREE.MeshStandardMaterial({
-        color: 0x0b1320,
-        emissive: pal.primary,
-        emissiveIntensity: 0.4,
-        roughness: 0.2,
-        metalness: 0.8,
-        wireframe: wireframeMode
-      }));
-      p2.position.set(0, 0, 0);
-      nGroup.add(p2);
+        // 3D Extruded NiK Glyph Geometry
+        const nGroup = new THREE.Group()
 
-      // Letter "i"
-      const dotI = new THREE.Mesh(new THREE.CylinderGeometry(0.5, 0.5, 0.9, 16), new THREE.MeshStandardMaterial({
-        color: pal.accent,
-        emissive: pal.accent,
-        emissiveIntensity: 0.8,
-        wireframe: wireframeMode
-      }));
-      dotI.position.set(1.6, 2.4, 0);
-      nGroup.add(dotI);
+        // Left Pillar of N
+        const p1 = new THREE.Mesh(
+          new THREE.BoxGeometry(1.2, 6, 1.5),
+          new THREE.MeshStandardMaterial({
+            color: 0x0b1320,
+            emissive: pal.primary,
+            emissiveIntensity: 0.4,
+            roughness: 0.2,
+            metalness: 0.8,
+            wireframe: wireframeMode,
+          }),
+        )
+        p1.position.set(-3.5, 0, 0)
+        nGroup.add(p1)
 
-      const stemI = new THREE.Mesh(new THREE.BoxGeometry(0.9, 3.8, 1.2), new THREE.MeshStandardMaterial({
-        color: 0x0b1320,
-        emissive: pal.primary,
-        emissiveIntensity: 0.4,
-        roughness: 0.2,
-        metalness: 0.8,
-        wireframe: wireframeMode
-      }));
-      stemI.position.set(1.6, -0.6, 0);
-      nGroup.add(stemI);
+        // Diagonal of N
+        const pDiag = new THREE.Mesh(
+          new THREE.BoxGeometry(1.2, 6.8, 1.5),
+          new THREE.MeshStandardMaterial({
+            color: 0x0b1320,
+            emissive: pal.secondary,
+            emissiveIntensity: 0.4,
+            roughness: 0.2,
+            metalness: 0.8,
+            wireframe: wireframeMode,
+          }),
+        )
+        pDiag.position.set(-1.75, 0, 0)
+        pDiag.rotation.z = -0.55
+        nGroup.add(pDiag)
 
-      // Letter "K"
-      const stemK = new THREE.Mesh(new THREE.BoxGeometry(0.9, 6, 1.2), new THREE.MeshStandardMaterial({
-        color: 0x0b1320,
-        emissive: pal.primary,
-        emissiveIntensity: 0.4,
-        roughness: 0.2,
-        metalness: 0.8,
-        wireframe: wireframeMode
-      }));
-      stemK.position.set(3.2, 0, 0);
-      nGroup.add(stemK);
+        // Right Pillar of N
+        const p2 = new THREE.Mesh(
+          new THREE.BoxGeometry(1.2, 6, 1.5),
+          new THREE.MeshStandardMaterial({
+            color: 0x0b1320,
+            emissive: pal.primary,
+            emissiveIntensity: 0.4,
+            roughness: 0.2,
+            metalness: 0.8,
+            wireframe: wireframeMode,
+          }),
+        )
+        p2.position.set(0, 0, 0)
+        nGroup.add(p2)
 
-      const armK1 = new THREE.Mesh(new THREE.BoxGeometry(0.8, 3.6, 1.2), new THREE.MeshStandardMaterial({
-        color: 0x0b1320,
-        emissive: pal.secondary,
-        emissiveIntensity: 0.4,
-        roughness: 0.2,
-        metalness: 0.8,
-        wireframe: wireframeMode
-      }));
-      armK1.position.set(4.4, 1.3, 0);
-      armK1.rotation.z = -0.7;
-      nGroup.add(armK1);
+        // Letter "i"
+        const dotI = new THREE.Mesh(
+          new THREE.CylinderGeometry(0.5, 0.5, 0.9, 16),
+          new THREE.MeshStandardMaterial({
+            color: pal.accent,
+            emissive: pal.accent,
+            emissiveIntensity: 0.8,
+            wireframe: wireframeMode,
+          }),
+        )
+        dotI.position.set(1.6, 2.4, 0)
+        nGroup.add(dotI)
 
-      const armK2 = new THREE.Mesh(new THREE.BoxGeometry(0.8, 3.8, 1.2), new THREE.MeshStandardMaterial({
-        color: 0x0b1320,
-        emissive: pal.secondary,
-        emissiveIntensity: 0.4,
-        roughness: 0.2,
-        metalness: 0.8,
-        wireframe: wireframeMode
-      }));
-      armK2.position.set(4.5, -1.3, 0);
-      armK2.rotation.z = 0.7;
-      nGroup.add(armK2);
+        const stemI = new THREE.Mesh(
+          new THREE.BoxGeometry(0.9, 3.8, 1.2),
+          new THREE.MeshStandardMaterial({
+            color: 0x0b1320,
+            emissive: pal.primary,
+            emissiveIntensity: 0.4,
+            roughness: 0.2,
+            metalness: 0.8,
+            wireframe: wireframeMode,
+          }),
+        )
+        stemI.position.set(1.6, -0.6, 0)
+        nGroup.add(stemI)
 
-      // Wireframe cage around typography
-      const cageGeo = new THREE.BoxGeometry(11, 7.5, 3.5);
-      const cageLines = new THREE.LineSegments(
-        new THREE.EdgesGeometry(cageGeo),
-        new THREE.LineBasicMaterial({ color: pal.primary, transparent: true, opacity: 0.35 })
-      );
-      nGroup.add(cageLines);
+        // Letter "K"
+        const stemK = new THREE.Mesh(
+          new THREE.BoxGeometry(0.9, 6, 1.2),
+          new THREE.MeshStandardMaterial({
+            color: 0x0b1320,
+            emissive: pal.primary,
+            emissiveIntensity: 0.4,
+            roughness: 0.2,
+            metalness: 0.8,
+            wireframe: wireframeMode,
+          }),
+        )
+        stemK.position.set(3.2, 0, 0)
+        nGroup.add(stemK)
 
-      activeGroup.add(nGroup);
-      asciiWirePrism = nGroup;
-    }
+        const armK1 = new THREE.Mesh(
+          new THREE.BoxGeometry(0.8, 3.6, 1.2),
+          new THREE.MeshStandardMaterial({
+            color: 0x0b1320,
+            emissive: pal.secondary,
+            emissiveIntensity: 0.4,
+            roughness: 0.2,
+            metalness: 0.8,
+            wireframe: wireframeMode,
+          }),
+        )
+        armK1.position.set(4.4, 1.3, 0)
+        armK1.rotation.z = -0.7
+        nGroup.add(armK1)
 
-    // 3. CONCEPT: MOLTEN LIQUID CHROME N
-    let liquidMesh = null;
-    let liquidDroplets = [];
-    function buildLiquidChrome() {
-      activeGroup.clear();
-      liquidDroplets = [];
+        const armK2 = new THREE.Mesh(
+          new THREE.BoxGeometry(0.8, 3.8, 1.2),
+          new THREE.MeshStandardMaterial({
+            color: 0x0b1320,
+            emissive: pal.secondary,
+            emissiveIntensity: 0.4,
+            roughness: 0.2,
+            metalness: 0.8,
+            wireframe: wireframeMode,
+          }),
+        )
+        armK2.position.set(4.5, -1.3, 0)
+        armK2.rotation.z = 0.7
+        nGroup.add(armK2)
 
-      const pal = PALETTES[activePalette];
+        // Wireframe cage around typography
+        const cageGeo = new THREE.BoxGeometry(11, 7.5, 3.5)
+        const cageLines = new THREE.LineSegments(
+          new THREE.EdgesGeometry(cageGeo),
+          new THREE.LineBasicMaterial({ color: pal.primary, transparent: true, opacity: 0.35 }),
+        )
+        nGroup.add(cageLines)
 
-      // Continuous 3D ribbon curve shaped as a fluid, dynamic "N"
-      const curve = new THREE.CatmullRomCurve3([
-        new THREE.Vector3(-3.2, -3.8, 0.4),
-        new THREE.Vector3(-3.0, -1.0, -0.2),
-        new THREE.Vector3(-2.8, 2.5, 0.5),
-        new THREE.Vector3(-2.0, 3.8, 0.2),
-        new THREE.Vector3(-1.0, 2.5, -0.6),
-        new THREE.Vector3(0.0, 0.0, 0.0),
-        new THREE.Vector3(1.0, -2.5, 0.6),
-        new THREE.Vector3(2.0, -3.8, -0.2),
-        new THREE.Vector3(2.8, -2.5, -0.4),
-        new THREE.Vector3(3.0, 1.0, 0.3),
-        new THREE.Vector3(3.2, 3.8, -0.3)
-      ]);
-
-      const tubeGeo = new THREE.TubeGeometry(curve, 160, 0.95, 24, false);
-
-      // High Refractive / Liquid Metal Material
-      const liquidMat = new THREE.MeshPhysicalMaterial({
-        color: 0xffffff,
-        emissive: pal.primary,
-        emissiveIntensity: 0.15,
-        metalness: 0.98,
-        roughness: 0.04,
-        clearcoat: 1.0,
-        clearcoatRoughness: 0.05,
-        reflectivity: 1.0,
-        wireframe: wireframeMode
-      });
-
-      liquidMesh = new THREE.Mesh(tubeGeo, liquidMat);
-      liquidMesh.castShadow = true;
-      liquidMesh.receiveShadow = true;
-      activeGroup.add(liquidMesh);
-
-      // Floating liquid mercury droplets
-      for (let i = 0; i < 18; i++) {
-        const dropRadius = 0.2 + Math.random() * 0.45;
-        const dropGeo = new THREE.SphereGeometry(dropRadius, 24, 24);
-        const drop = new THREE.Mesh(dropGeo, liquidMat);
-        const angle = (i / 18) * Math.PI * 2;
-        const dist = 3.5 + Math.random() * 2.5;
-        drop.position.set(Math.cos(angle) * dist, (Math.random() - 0.5) * 6, Math.sin(angle) * dist);
-        activeGroup.add(drop);
-        liquidDroplets.push({ mesh: drop, angle: angle, dist: dist, speed: 0.01 + Math.random() * 0.02, yBase: drop.position.y });
+        activeGroup.add(nGroup)
+        asciiWirePrism = nGroup
       }
-    }
 
-    // 4. CONCEPT: SYNAPTIC AGENT SWARM (Plexus NIK)
-    let particleSystem = null;
-    let synapticLinesMesh = null;
-    let swarmPositions = [];
-    let swarmTargets = [];
-    const NUM_PARTICLES = 1600;
-    function buildNeuralSwarm() {
-      activeGroup.clear();
-      swarmPositions = [];
-      swarmTargets = [];
+      // 3. CONCEPT: MOLTEN LIQUID CHROME N
+      let liquidMesh = null
+      let liquidDroplets = []
+      function buildLiquidChrome() {
+        activeGroup.clear()
+        liquidDroplets = []
 
-      const pal = PALETTES[activePalette];
+        const pal = PALETTES[activePalette]
 
-      function sampleLine(x1, y1, z1, x2, y2, z2, count) {
-        for (let i = 0; i < count; i++) {
-          const t = i / count;
-          swarmTargets.push(new THREE.Vector3(
-            x1 + (x2 - x1) * t + (Math.random() - 0.5) * 0.3,
-            y1 + (y2 - y1) * t + (Math.random() - 0.5) * 0.3,
-            z1 + (z2 - z1) * t + (Math.random() - 0.5) * 0.5
-          ));
+        // Continuous 3D ribbon curve shaped as a fluid, dynamic "N"
+        const curve = new THREE.CatmullRomCurve3([
+          new THREE.Vector3(-3.2, -3.8, 0.4),
+          new THREE.Vector3(-3.0, -1.0, -0.2),
+          new THREE.Vector3(-2.8, 2.5, 0.5),
+          new THREE.Vector3(-2.0, 3.8, 0.2),
+          new THREE.Vector3(-1.0, 2.5, -0.6),
+          new THREE.Vector3(0.0, 0.0, 0.0),
+          new THREE.Vector3(1.0, -2.5, 0.6),
+          new THREE.Vector3(2.0, -3.8, -0.2),
+          new THREE.Vector3(2.8, -2.5, -0.4),
+          new THREE.Vector3(3.0, 1.0, 0.3),
+          new THREE.Vector3(3.2, 3.8, -0.3),
+        ])
+
+        const tubeGeo = new THREE.TubeGeometry(curve, 160, 0.95, 24, false)
+
+        // High Refractive / Liquid Metal Material
+        const liquidMat = new THREE.MeshPhysicalMaterial({
+          color: 0xffffff,
+          emissive: pal.primary,
+          emissiveIntensity: 0.15,
+          metalness: 0.98,
+          roughness: 0.04,
+          clearcoat: 1.0,
+          clearcoatRoughness: 0.05,
+          reflectivity: 1.0,
+          wireframe: wireframeMode,
+        })
+
+        liquidMesh = new THREE.Mesh(tubeGeo, liquidMat)
+        liquidMesh.castShadow = true
+        liquidMesh.receiveShadow = true
+        activeGroup.add(liquidMesh)
+
+        // Floating liquid mercury droplets
+        for (let i = 0; i < 18; i++) {
+          const dropRadius = 0.2 + Math.random() * 0.45
+          const dropGeo = new THREE.SphereGeometry(dropRadius, 24, 24)
+          const drop = new THREE.Mesh(dropGeo, liquidMat)
+          const angle = (i / 18) * Math.PI * 2
+          const dist = 3.5 + Math.random() * 2.5
+          drop.position.set(Math.cos(angle) * dist, (Math.random() - 0.5) * 6, Math.sin(angle) * dist)
+          activeGroup.add(drop)
+          liquidDroplets.push({
+            mesh: drop,
+            angle: angle,
+            dist: dist,
+            speed: 0.01 + Math.random() * 0.02,
+            yBase: drop.position.y,
+          })
         }
       }
 
-      // Letter N strokes
-      sampleLine(-4.5, -3.5, 0, -4.5, 3.5, 0, 200);
-      sampleLine(-4.5, 3.5, 0, -1.8, -3.5, 0, 260);
-      sampleLine(-1.8, -3.5, 0, -1.8, 3.5, 0, 200);
+      // 4. CONCEPT: SYNAPTIC AGENT SWARM (Plexus NIK)
+      let particleSystem = null
+      let synapticLinesMesh = null
+      let swarmPositions = []
+      let swarmTargets = []
+      const NUM_PARTICLES = 1600
+      function buildNeuralSwarm() {
+        activeGroup.clear()
+        swarmPositions = []
+        swarmTargets = []
 
-      // Letter I strokes
-      sampleLine(0.2, -2.5, 0, 0.2, 2.0, 0, 160);
-      sampleLine(0.2, 3.0, 0, 0.2, 3.5, 0, 60);
+        const pal = PALETTES[activePalette]
 
-      // Letter K strokes
-      sampleLine(2.2, -3.5, 0, 2.2, 3.5, 0, 200);
-      sampleLine(2.2, 0.2, 0, 4.8, 3.5, 0, 180);
-      sampleLine(2.2, 0.2, 0, 5.0, -3.5, 0, 180);
-
-      // Fill remainder with orbital synapse dust
-      while (swarmTargets.length < NUM_PARTICLES) {
-        const u = Math.random();
-        const v = Math.random();
-        const theta = u * 2.0 * Math.PI;
-        const phi = Math.acos(2.0 * v - 1.0);
-        const r = 5.0 + Math.random() * 4.0;
-        swarmTargets.push(new THREE.Vector3(
-          r * Math.sin(phi) * Math.cos(theta),
-          r * Math.sin(phi) * Math.sin(theta) * 0.6,
-          r * Math.cos(phi) * 0.5
-        ));
-      }
-
-      const pGeo = new THREE.BufferGeometry();
-      const posArray = new Float32Array(NUM_PARTICLES * 3);
-      for (let i = 0; i < NUM_PARTICLES; i++) {
-        posArray[i * 3] = (Math.random() - 0.5) * 20;
-        posArray[i * 3 + 1] = (Math.random() - 0.5) * 20;
-        posArray[i * 3 + 2] = (Math.random() - 0.5) * 20;
-        swarmPositions.push(new THREE.Vector3(posArray[i * 3], posArray[i * 3 + 1], posArray[i * 3 + 2]));
-      }
-      pGeo.setAttribute("position", new THREE.BufferAttribute(posArray, 3));
-
-      const pMat = new THREE.PointsMaterial({
-        size: 0.18,
-        color: pal.primary,
-        transparent: true,
-        opacity: 0.9,
-        blending: THREE.AdditiveBlending
-      });
-      particleSystem = new THREE.Points(pGeo, pMat);
-      activeGroup.add(particleSystem);
-
-      // Synaptic Connection Line Segments
-      const maxLines = 1200;
-      const linePositions = new Float32Array(maxLines * 6);
-      const lineGeo = new THREE.BufferGeometry();
-      lineGeo.setAttribute("position", new THREE.BufferAttribute(linePositions, 3));
-      const lineMat = new THREE.LineBasicMaterial({
-        color: pal.secondary,
-        transparent: true,
-        opacity: 0.35,
-        blending: THREE.AdditiveBlending
-      });
-      synapticLinesMesh = new THREE.LineSegments(lineGeo, lineMat);
-      activeGroup.add(synapticLinesMesh);
-    }
-
-    // 5. CONCEPT: KINETIC ORIGAMI MECHA N
-    let mechaPlates = [];
-    function buildOrigamiMecha() {
-      activeGroup.clear();
-      mechaPlates = [];
-
-      const pal = PALETTES[activePalette];
-
-      const plateConfigs = [
-        // Left Column Plates
-        { shape: [[-3.5, -4], [-2.0, -4], [-2.0, -1.2], [-3.5, -1.2]], z: 0.4, norm: [-1, 0, 0.5] },
-        { shape: [[-3.5, -1.0], [-2.0, -1.0], [-2.0, 1.8], [-3.5, 1.8]], z: 0.6, norm: [-1, 0.2, 0.8] },
-        { shape: [[-3.5, 2.0], [-2.0, 2.0], [-2.0, 4.2], [-3.5, 4.2]], z: 0.5, norm: [-0.8, 0.8, 0.6] },
-
-        // Diagonal Chevron Plates
-        { shape: [[-2.0, 2.2], [-1.0, 3.8], [0.0, 1.5], [-1.0, 0.2]], z: 0.8, norm: [0, 0.5, 1.2] },
-        { shape: [[-1.0, 0.0], [0.0, 1.2], [1.0, -1.0], [0.0, -2.2]], z: 0.9, norm: [0, 0, 1.4] },
-        { shape: [[0.0, -2.4], [1.0, -1.2], [2.0, -3.2], [1.0, -4.2]], z: 0.7, norm: [0, -0.6, 1.1] },
-
-        // Right Column Plates
-        { shape: [[2.0, -4.2], [3.5, -4.2], [3.5, -2.0], [2.0, -2.0]], z: 0.5, norm: [0.8, -0.8, 0.6] },
-        { shape: [[2.0, -1.8], [3.5, -1.8], [3.5, 1.0], [2.0, 1.0]], z: 0.6, norm: [1, -0.2, 0.8] },
-        { shape: [[2.0, 1.2], [3.5, 1.2], [3.5, 4.2], [2.0, 4.2]], z: 0.4, norm: [1, 0, 0.5] }
-      ];
-
-      const plateMat = new THREE.MeshStandardMaterial({
-        color: 0x1f242d,
-        metalness: 0.92,
-        roughness: 0.25,
-        wireframe: wireframeMode
-      });
-
-      const coreEmissiveMat = new THREE.MeshBasicMaterial({
-        color: pal.accent,
-        wireframe: true
-      });
-
-      plateConfigs.forEach((cfg, idx) => {
-        const shape = new THREE.Shape();
-        shape.moveTo(cfg.shape[0][0], cfg.shape[0][1]);
-        for (let i = 1; i < cfg.shape.length; i++) {
-          shape.lineTo(cfg.shape[i][0], cfg.shape[i][1]);
+        function sampleLine(x1, y1, z1, x2, y2, z2, count) {
+          for (let i = 0; i < count; i++) {
+            const t = i / count
+            swarmTargets.push(
+              new THREE.Vector3(
+                x1 + (x2 - x1) * t + (Math.random() - 0.5) * 0.3,
+                y1 + (y2 - y1) * t + (Math.random() - 0.5) * 0.3,
+                z1 + (z2 - z1) * t + (Math.random() - 0.5) * 0.5,
+              ),
+            )
+          }
         }
-        shape.closePath();
 
-        const extrudeSettings = {
-          steps: 1,
-          depth: 0.5,
-          bevelEnabled: true,
-          bevelThickness: 0.15,
-          bevelSize: 0.1,
-          bevelSegments: 2
-        };
+        // Letter N strokes
+        sampleLine(-4.5, -3.5, 0, -4.5, 3.5, 0, 200)
+        sampleLine(-4.5, 3.5, 0, -1.8, -3.5, 0, 260)
+        sampleLine(-1.8, -3.5, 0, -1.8, 3.5, 0, 200)
 
-        const geom = new THREE.ExtrudeGeometry(shape, extrudeSettings);
-        const mesh = new THREE.Mesh(geom, plateMat);
-        mesh.castShadow = true;
-        mesh.receiveShadow = true;
+        // Letter I strokes
+        sampleLine(0.2, -2.5, 0, 0.2, 2.0, 0, 160)
+        sampleLine(0.2, 3.0, 0, 0.2, 3.5, 0, 60)
 
-        const edgeLines = new THREE.LineSegments(
-          new THREE.EdgesGeometry(geom),
-          new THREE.LineBasicMaterial({ color: pal.accent, linewidth: 2 })
-        );
-        mesh.add(edgeLines);
+        // Letter K strokes
+        sampleLine(2.2, -3.5, 0, 2.2, 3.5, 0, 200)
+        sampleLine(2.2, 0.2, 0, 4.8, 3.5, 0, 180)
+        sampleLine(2.2, 0.2, 0, 5.0, -3.5, 0, 180)
 
-        mesh.position.z = cfg.z;
+        // Fill remainder with orbital synapse dust
+        while (swarmTargets.length < NUM_PARTICLES) {
+          const u = Math.random()
+          const v = Math.random()
+          const theta = u * 2.0 * Math.PI
+          const phi = Math.acos(2.0 * v - 1.0)
+          const r = 5.0 + Math.random() * 4.0
+          swarmTargets.push(
+            new THREE.Vector3(
+              r * Math.sin(phi) * Math.cos(theta),
+              r * Math.sin(phi) * Math.sin(theta) * 0.6,
+              r * Math.cos(phi) * 0.5,
+            ),
+          )
+        }
 
-        const plateObj = {
-          mesh: mesh,
-          basePos: new THREE.Vector3(0, 0, cfg.z),
-          norm: new THREE.Vector3(...cfg.norm).normalize(),
-          origRot: new THREE.Euler(0, 0, 0),
-          index: idx
-        };
-        mechaPlates.push(plateObj);
-        activeGroup.add(mesh);
-      });
+        const pGeo = new THREE.BufferGeometry()
+        const posArray = new Float32Array(NUM_PARTICLES * 3)
+        for (let i = 0; i < NUM_PARTICLES; i++) {
+          posArray[i * 3] = (Math.random() - 0.5) * 20
+          posArray[i * 3 + 1] = (Math.random() - 0.5) * 20
+          posArray[i * 3 + 2] = (Math.random() - 0.5) * 20
+          swarmPositions.push(new THREE.Vector3(posArray[i * 3], posArray[i * 3 + 1], posArray[i * 3 + 2]))
+        }
+        pGeo.setAttribute("position", new THREE.BufferAttribute(posArray, 3))
 
-      const coreGeo = new THREE.OctahedronGeometry(1.6, 2);
-      const coreMesh = new THREE.Mesh(coreGeo, coreEmissiveMat);
-      activeGroup.add(coreMesh);
-      mechaPlates.core = coreMesh;
-    }
+        const pMat = new THREE.PointsMaterial({
+          size: 0.18,
+          color: pal.primary,
+          transparent: true,
+          opacity: 0.9,
+          blending: THREE.AdditiveBlending,
+        })
+        particleSystem = new THREE.Points(pGeo, pMat)
+        activeGroup.add(particleSystem)
 
-    // --- SWITCH CONCEPT ---
-    function loadConcept(index) {
-      currentConceptIndex = index;
-      const c = CONCEPTS[index];
+        // Synaptic Connection Line Segments
+        const maxLines = 1200
+        const linePositions = new Float32Array(maxLines * 6)
+        const lineGeo = new THREE.BufferGeometry()
+        lineGeo.setAttribute("position", new THREE.BufferAttribute(linePositions, 3))
+        const lineMat = new THREE.LineBasicMaterial({
+          color: pal.secondary,
+          transparent: true,
+          opacity: 0.35,
+          blending: THREE.AdditiveBlending,
+        })
+        synapticLinesMesh = new THREE.LineSegments(lineGeo, lineMat)
+        activeGroup.add(synapticLinesMesh)
+      }
 
-      document.querySelectorAll(".preset-btn").forEach((btn, i) => {
-        btn.classList.toggle("active", i === index);
-      });
-      document.getElementById("conceptDesc").innerHTML = `
+      // 5. CONCEPT: KINETIC ORIGAMI MECHA N
+      let mechaPlates = []
+      function buildOrigamiMecha() {
+        activeGroup.clear()
+        mechaPlates = []
+
+        const pal = PALETTES[activePalette]
+
+        const plateConfigs = [
+          // Left Column Plates
+          {
+            shape: [
+              [-3.5, -4],
+              [-2.0, -4],
+              [-2.0, -1.2],
+              [-3.5, -1.2],
+            ],
+            z: 0.4,
+            norm: [-1, 0, 0.5],
+          },
+          {
+            shape: [
+              [-3.5, -1.0],
+              [-2.0, -1.0],
+              [-2.0, 1.8],
+              [-3.5, 1.8],
+            ],
+            z: 0.6,
+            norm: [-1, 0.2, 0.8],
+          },
+          {
+            shape: [
+              [-3.5, 2.0],
+              [-2.0, 2.0],
+              [-2.0, 4.2],
+              [-3.5, 4.2],
+            ],
+            z: 0.5,
+            norm: [-0.8, 0.8, 0.6],
+          },
+
+          // Diagonal Chevron Plates
+          {
+            shape: [
+              [-2.0, 2.2],
+              [-1.0, 3.8],
+              [0.0, 1.5],
+              [-1.0, 0.2],
+            ],
+            z: 0.8,
+            norm: [0, 0.5, 1.2],
+          },
+          {
+            shape: [
+              [-1.0, 0.0],
+              [0.0, 1.2],
+              [1.0, -1.0],
+              [0.0, -2.2],
+            ],
+            z: 0.9,
+            norm: [0, 0, 1.4],
+          },
+          {
+            shape: [
+              [0.0, -2.4],
+              [1.0, -1.2],
+              [2.0, -3.2],
+              [1.0, -4.2],
+            ],
+            z: 0.7,
+            norm: [0, -0.6, 1.1],
+          },
+
+          // Right Column Plates
+          {
+            shape: [
+              [2.0, -4.2],
+              [3.5, -4.2],
+              [3.5, -2.0],
+              [2.0, -2.0],
+            ],
+            z: 0.5,
+            norm: [0.8, -0.8, 0.6],
+          },
+          {
+            shape: [
+              [2.0, -1.8],
+              [3.5, -1.8],
+              [3.5, 1.0],
+              [2.0, 1.0],
+            ],
+            z: 0.6,
+            norm: [1, -0.2, 0.8],
+          },
+          {
+            shape: [
+              [2.0, 1.2],
+              [3.5, 1.2],
+              [3.5, 4.2],
+              [2.0, 4.2],
+            ],
+            z: 0.4,
+            norm: [1, 0, 0.5],
+          },
+        ]
+
+        const plateMat = new THREE.MeshStandardMaterial({
+          color: 0x1f242d,
+          metalness: 0.92,
+          roughness: 0.25,
+          wireframe: wireframeMode,
+        })
+
+        const coreEmissiveMat = new THREE.MeshBasicMaterial({
+          color: pal.accent,
+          wireframe: true,
+        })
+
+        plateConfigs.forEach((cfg, idx) => {
+          const shape = new THREE.Shape()
+          shape.moveTo(cfg.shape[0][0], cfg.shape[0][1])
+          for (let i = 1; i < cfg.shape.length; i++) {
+            shape.lineTo(cfg.shape[i][0], cfg.shape[i][1])
+          }
+          shape.closePath()
+
+          const extrudeSettings = {
+            steps: 1,
+            depth: 0.5,
+            bevelEnabled: true,
+            bevelThickness: 0.15,
+            bevelSize: 0.1,
+            bevelSegments: 2,
+          }
+
+          const geom = new THREE.ExtrudeGeometry(shape, extrudeSettings)
+          const mesh = new THREE.Mesh(geom, plateMat)
+          mesh.castShadow = true
+          mesh.receiveShadow = true
+
+          const edgeLines = new THREE.LineSegments(
+            new THREE.EdgesGeometry(geom),
+            new THREE.LineBasicMaterial({ color: pal.accent, linewidth: 2 }),
+          )
+          mesh.add(edgeLines)
+
+          mesh.position.z = cfg.z
+
+          const plateObj = {
+            mesh: mesh,
+            basePos: new THREE.Vector3(0, 0, cfg.z),
+            norm: new THREE.Vector3(...cfg.norm).normalize(),
+            origRot: new THREE.Euler(0, 0, 0),
+            index: idx,
+          }
+          mechaPlates.push(plateObj)
+          activeGroup.add(mesh)
+        })
+
+        const coreGeo = new THREE.OctahedronGeometry(1.6, 2)
+        const coreMesh = new THREE.Mesh(coreGeo, coreEmissiveMat)
+        activeGroup.add(coreMesh)
+        mechaPlates.core = coreMesh
+      }
+
+      // --- SWITCH CONCEPT ---
+      function loadConcept(index) {
+        currentConceptIndex = index
+        const c = CONCEPTS[index]
+
+        document.querySelectorAll(".preset-btn").forEach((btn, i) => {
+          btn.classList.toggle("active", i === index)
+        })
+        document.getElementById("conceptDesc").innerHTML = `
         <strong style="color:#fff;">${c.title}</strong><br/>
         ${c.desc}
-      `;
+      `
 
-      gsapCamera(c.cameraPos[0], c.cameraPos[1], c.cameraPos[2]);
+        gsapCamera(c.cameraPos[0], c.cameraPos[1], c.cameraPos[2])
 
-      switch (c.id) {
-        case "voxel": buildVoxelMatrix(); break;
-        case "ascii": buildAsciiHologram(); break;
-        case "liquid": buildLiquidChrome(); break;
-        case "neural": buildNeuralSwarm(); break;
-        case "origami": buildOrigamiMecha(); break;
-      }
-    }
-
-    function gsapCamera(x, y, z) {
-      const startPos = camera.position.clone();
-      const endPos = new THREE.Vector3(x, y, z);
-      let t = 0;
-      const interval = setInterval(() => {
-        t += 0.05;
-        if (t >= 1) {
-          camera.position.copy(endPos);
-          clearInterval(interval);
-        } else {
-          camera.position.lerpVectors(startPos, endPos, 0.1);
+        switch (c.id) {
+          case "voxel":
+            buildVoxelMatrix()
+            break
+          case "ascii":
+            buildAsciiHologram()
+            break
+          case "liquid":
+            buildLiquidChrome()
+            break
+          case "neural":
+            buildNeuralSwarm()
+            break
+          case "origami":
+            buildOrigamiMecha()
+            break
         }
-      }, 16);
-    }
-
-    // --- REALTIME ASCII POST-PROCESSING FILTER ---
-    const asciiLayer = document.getElementById("ascii-layer");
-    const offscreenCanvas = document.createElement("canvas");
-    const offscreenCtx = offscreenCanvas.getContext("2d", { willReadFrequently: true });
-    const asciiChars = [" ", ".", ":", "-", "=", "+", "*", "%", "#", "@", "N", "i", "K"];
-
-    function updateAsciiRender() {
-      if (!asciiMode) return;
-
-      const cols = Math.floor(window.innerWidth / 9);
-      const rows = Math.floor(window.innerHeight / 12);
-      offscreenCanvas.width = cols;
-      offscreenCanvas.height = rows;
-
-      offscreenCtx.drawImage(renderer.domElement, 0, 0, cols, rows);
-      const imgData = offscreenCtx.getImageData(0, 0, cols, rows).data;
-
-      let str = "";
-      for (let y = 0; y < rows; y++) {
-        for (let x = 0; x < cols; x++) {
-          const idx = (y * cols + x) * 4;
-          const r = imgData[idx];
-          const g = imgData[idx + 1];
-          const b = imgData[idx + 2];
-          const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
-          const charIndex = Math.floor(brightness * (asciiChars.length - 1));
-          str += asciiChars[charIndex];
-        }
-        str += "\n";
-      }
-      asciiLayer.textContent = str;
-    }
-
-    // --- ANIMATION LOOP ---
-    let clock = new THREE.Clock();
-    let frameCount = 0;
-    let lastFpsTime = performance.now();
-
-    function animate() {
-      requestAnimationFrame(animate);
-
-      const delta = clock.getDelta();
-      const time = clock.getElapsedTime() * rotationSpeed;
-
-      frameCount++;
-      const now = performance.now();
-      if (now - lastFpsTime >= 500) {
-        const fps = Math.round((frameCount * 1000) / (now - lastFpsTime));
-        document.getElementById("fpsCounter").textContent = `${fps} FPS`;
-        frameCount = 0;
-        lastFpsTime = now;
       }
 
-      controls.update();
+      function gsapCamera(x, y, z) {
+        const startPos = camera.position.clone()
+        const endPos = new THREE.Vector3(x, y, z)
+        let t = 0
+        const interval = setInterval(() => {
+          t += 0.05
+          if (t >= 1) {
+            camera.position.copy(endPos)
+            clearInterval(interval)
+          } else {
+            camera.position.lerpVectors(startPos, endPos, 0.1)
+          }
+        }, 16)
+      }
 
-      if (currentConceptIndex === 0) {
-        activeGroup.rotation.y = time * 0.35;
-        voxelBlocks.forEach(vb => {
-          const waveZ = Math.sin(time * 3.2 + vb.phase) * (0.45 + displacement);
-          vb.group.position.z = vb.baseZ + waveZ;
-          vb.group.position.x = vb.baseX + (vb.baseX * displacement * 0.5);
-          vb.group.position.y = vb.baseY + (vb.baseY * displacement * 0.5);
-        });
-        if (voxelParticles) voxelParticles.rotation.y = -time * 0.15;
-      } else if (currentConceptIndex === 1) {
-        activeGroup.rotation.y = Math.sin(time * 0.5) * 0.4;
-        holoRings.forEach((ring, idx) => {
-          ring.rotation.z += (0.01 + idx * 0.005) * rotationSpeed;
-          ring.rotation.x += (0.008 - idx * 0.003) * rotationSpeed;
-        });
-        if (asciiWirePrism) {
-          asciiWirePrism.rotation.y = Math.cos(time * 0.7) * 0.25;
+      // --- REALTIME ASCII POST-PROCESSING FILTER ---
+      const asciiLayer = document.getElementById("ascii-layer")
+      const offscreenCanvas = document.createElement("canvas")
+      const offscreenCtx = offscreenCanvas.getContext("2d", { willReadFrequently: true })
+      const asciiChars = [" ", ".", ":", "-", "=", "+", "*", "%", "#", "@", "N", "i", "K"]
+
+      function updateAsciiRender() {
+        if (!asciiMode) return
+
+        const cols = Math.floor(window.innerWidth / 9)
+        const rows = Math.floor(window.innerHeight / 12)
+        offscreenCanvas.width = cols
+        offscreenCanvas.height = rows
+
+        offscreenCtx.drawImage(renderer.domElement, 0, 0, cols, rows)
+        const imgData = offscreenCtx.getImageData(0, 0, cols, rows).data
+
+        let str = ""
+        for (let y = 0; y < rows; y++) {
+          for (let x = 0; x < cols; x++) {
+            const idx = (y * cols + x) * 4
+            const r = imgData[idx]
+            const g = imgData[idx + 1]
+            const b = imgData[idx + 2]
+            const brightness = (0.299 * r + 0.587 * g + 0.114 * b) / 255
+            const charIndex = Math.floor(brightness * (asciiChars.length - 1))
+            str += asciiChars[charIndex]
+          }
+          str += "\n"
         }
-      } else if (currentConceptIndex === 2) {
-        activeGroup.rotation.y = time * 0.4;
-        if (liquidMesh) {
-          liquidMesh.scale.set(
-            1 + Math.sin(time * 2.5) * 0.05 + displacement * 0.3,
-            1 + Math.cos(time * 2.8) * 0.05 + displacement * 0.3,
-            1 + Math.sin(time * 3.1) * 0.05
-          );
+        asciiLayer.textContent = str
+      }
+
+      // --- ANIMATION LOOP ---
+      let clock = new THREE.Clock()
+      let frameCount = 0
+      let lastFpsTime = performance.now()
+
+      function animate() {
+        requestAnimationFrame(animate)
+
+        const delta = clock.getDelta()
+        const time = clock.getElapsedTime() * rotationSpeed
+
+        frameCount++
+        const now = performance.now()
+        if (now - lastFpsTime >= 500) {
+          const fps = Math.round((frameCount * 1000) / (now - lastFpsTime))
+          document.getElementById("fpsCounter").textContent = `${fps} FPS`
+          frameCount = 0
+          lastFpsTime = now
         }
-        liquidDroplets.forEach(d => {
-          d.angle += d.speed * rotationSpeed;
-          d.mesh.position.x = Math.cos(d.angle) * (d.dist + displacement * 2);
-          d.mesh.position.z = Math.sin(d.angle) * (d.dist + displacement * 2);
-          d.mesh.position.y = d.yBase + Math.sin(time * 3 + d.angle) * 0.8;
-        });
-      } else if (currentConceptIndex === 3) {
-        activeGroup.rotation.y = time * 0.2;
-        if (particleSystem) {
-          const positions = particleSystem.geometry.attributes.position.array;
-          let lineIdx = 0;
-          const linePositions = synapticLinesMesh.geometry.attributes.position.array;
 
-          for (let i = 0; i < NUM_PARTICLES; i++) {
-            const cur = swarmPositions[i];
-            const target = swarmTargets[i];
+        controls.update()
 
-            const breathe = 1 + Math.sin(time * 2.0 + i * 0.02) * (0.05 + displacement * 0.4);
-            const tx = target.x * breathe + (Math.sin(time * 3 + i) * 0.1);
-            const ty = target.y * breathe + (Math.cos(time * 2.5 + i) * 0.1);
-            const tz = target.z * breathe;
+        if (currentConceptIndex === 0) {
+          activeGroup.rotation.y = time * 0.35
+          voxelBlocks.forEach((vb) => {
+            const waveZ = Math.sin(time * 3.2 + vb.phase) * (0.45 + displacement)
+            vb.group.position.z = vb.baseZ + waveZ
+            vb.group.position.x = vb.baseX + vb.baseX * displacement * 0.5
+            vb.group.position.y = vb.baseY + vb.baseY * displacement * 0.5
+          })
+          if (voxelParticles) voxelParticles.rotation.y = -time * 0.15
+        } else if (currentConceptIndex === 1) {
+          activeGroup.rotation.y = Math.sin(time * 0.5) * 0.4
+          holoRings.forEach((ring, idx) => {
+            ring.rotation.z += (0.01 + idx * 0.005) * rotationSpeed
+            ring.rotation.x += (0.008 - idx * 0.003) * rotationSpeed
+          })
+          if (asciiWirePrism) {
+            asciiWirePrism.rotation.y = Math.cos(time * 0.7) * 0.25
+          }
+        } else if (currentConceptIndex === 2) {
+          activeGroup.rotation.y = time * 0.4
+          if (liquidMesh) {
+            liquidMesh.scale.set(
+              1 + Math.sin(time * 2.5) * 0.05 + displacement * 0.3,
+              1 + Math.cos(time * 2.8) * 0.05 + displacement * 0.3,
+              1 + Math.sin(time * 3.1) * 0.05,
+            )
+          }
+          liquidDroplets.forEach((d) => {
+            d.angle += d.speed * rotationSpeed
+            d.mesh.position.x = Math.cos(d.angle) * (d.dist + displacement * 2)
+            d.mesh.position.z = Math.sin(d.angle) * (d.dist + displacement * 2)
+            d.mesh.position.y = d.yBase + Math.sin(time * 3 + d.angle) * 0.8
+          })
+        } else if (currentConceptIndex === 3) {
+          activeGroup.rotation.y = time * 0.2
+          if (particleSystem) {
+            const positions = particleSystem.geometry.attributes.position.array
+            let lineIdx = 0
+            const linePositions = synapticLinesMesh.geometry.attributes.position.array
 
-            cur.x += (tx - cur.x) * 0.08;
-            cur.y += (ty - cur.y) * 0.08;
-            cur.z += (tz - cur.z) * 0.08;
+            for (let i = 0; i < NUM_PARTICLES; i++) {
+              const cur = swarmPositions[i]
+              const target = swarmTargets[i]
 
-            positions[i * 3] = cur.x;
-            positions[i * 3 + 1] = cur.y;
-            positions[i * 3 + 2] = cur.z;
+              const breathe = 1 + Math.sin(time * 2.0 + i * 0.02) * (0.05 + displacement * 0.4)
+              const tx = target.x * breathe + Math.sin(time * 3 + i) * 0.1
+              const ty = target.y * breathe + Math.cos(time * 2.5 + i) * 0.1
+              const tz = target.z * breathe
 
-            if (i % 8 === 0 && lineIdx < 1200 * 6) {
-              for (let j = i + 1; j < Math.min(i + 12, NUM_PARTICLES); j++) {
-                const p2 = swarmPositions[j];
-                const distSq = cur.distanceToSquared(p2);
-                if (distSq < 2.2) {
-                  linePositions[lineIdx++] = cur.x;
-                  linePositions[lineIdx++] = cur.y;
-                  linePositions[lineIdx++] = cur.z;
-                  linePositions[lineIdx++] = p2.x;
-                  linePositions[lineIdx++] = p2.y;
-                  linePositions[lineIdx++] = p2.z;
-                  if (lineIdx >= 1200 * 6) break;
+              cur.x += (tx - cur.x) * 0.08
+              cur.y += (ty - cur.y) * 0.08
+              cur.z += (tz - cur.z) * 0.08
+
+              positions[i * 3] = cur.x
+              positions[i * 3 + 1] = cur.y
+              positions[i * 3 + 2] = cur.z
+
+              if (i % 8 === 0 && lineIdx < 1200 * 6) {
+                for (let j = i + 1; j < Math.min(i + 12, NUM_PARTICLES); j++) {
+                  const p2 = swarmPositions[j]
+                  const distSq = cur.distanceToSquared(p2)
+                  if (distSq < 2.2) {
+                    linePositions[lineIdx++] = cur.x
+                    linePositions[lineIdx++] = cur.y
+                    linePositions[lineIdx++] = cur.z
+                    linePositions[lineIdx++] = p2.x
+                    linePositions[lineIdx++] = p2.y
+                    linePositions[lineIdx++] = p2.z
+                    if (lineIdx >= 1200 * 6) break
+                  }
                 }
               }
             }
+            particleSystem.geometry.attributes.position.needsUpdate = true
+            synapticLinesMesh.geometry.attributes.position.needsUpdate = true
           }
-          particleSystem.geometry.attributes.position.needsUpdate = true;
-          synapticLinesMesh.geometry.attributes.position.needsUpdate = true;
+        } else if (currentConceptIndex === 4) {
+          activeGroup.rotation.y = time * 0.3
+          const deployFactor = (Math.sin(time * 1.5) * 0.5 + 0.5) * (0.8 + displacement)
+          mechaPlates.forEach((p) => {
+            p.mesh.position.x = p.norm.x * deployFactor * 2.2
+            p.mesh.position.y = p.norm.y * deployFactor * 2.2
+            p.mesh.position.z = p.basePos.z + p.norm.z * deployFactor * 1.8
+            p.mesh.rotation.x = p.norm.y * deployFactor * 0.4
+            p.mesh.rotation.y = -p.norm.x * deployFactor * 0.4
+          })
+          if (mechaPlates.core) {
+            mechaPlates.core.rotation.x += 0.02 * rotationSpeed
+            mechaPlates.core.rotation.y += 0.03 * rotationSpeed
+            mechaPlates.core.scale.setScalar(1 + deployFactor * 0.4)
+          }
         }
-      } else if (currentConceptIndex === 4) {
-        activeGroup.rotation.y = time * 0.3;
-        const deployFactor = (Math.sin(time * 1.5) * 0.5 + 0.5) * (0.8 + displacement);
-        mechaPlates.forEach(p => {
-          p.mesh.position.x = p.norm.x * deployFactor * 2.2;
-          p.mesh.position.y = p.norm.y * deployFactor * 2.2;
-          p.mesh.position.z = p.basePos.z + p.norm.z * deployFactor * 1.8;
-          p.mesh.rotation.x = p.norm.y * deployFactor * 0.4;
-          p.mesh.rotation.y = -p.norm.x * deployFactor * 0.4;
-        });
-        if (mechaPlates.core) {
-          mechaPlates.core.rotation.x += 0.02 * rotationSpeed;
-          mechaPlates.core.rotation.y += 0.03 * rotationSpeed;
-          mechaPlates.core.scale.setScalar(1 + deployFactor * 0.4);
+
+        renderer.render(scene, camera)
+
+        if (asciiMode) {
+          updateAsciiRender()
         }
       }
 
-      renderer.render(scene, camera);
+      // --- EVENT LISTENERS ---
+      document.querySelectorAll(".preset-btn").forEach((btn, idx) => {
+        btn.addEventListener("click", () => loadConcept(idx))
+      })
 
-      if (asciiMode) {
-        updateAsciiRender();
-      }
-    }
+      document.getElementById("speedSlider").addEventListener("input", (e) => {
+        rotationSpeed = parseFloat(e.target.value)
+        document.getElementById("speedVal").textContent = `${rotationSpeed.toFixed(1)}x`
+      })
 
-    // --- EVENT LISTENERS ---
-    document.querySelectorAll(".preset-btn").forEach((btn, idx) => {
-      btn.addEventListener("click", () => loadConcept(idx));
-    });
+      document.getElementById("displaceSlider").addEventListener("input", (e) => {
+        displacement = parseFloat(e.target.value)
+        document.getElementById("displaceVal").textContent = displacement.toFixed(2)
+      })
 
-    document.getElementById("speedSlider").addEventListener("input", (e) => {
-      rotationSpeed = parseFloat(e.target.value);
-      document.getElementById("speedVal").textContent = `${rotationSpeed.toFixed(1)}x`;
-    });
+      document.querySelectorAll(".palette-dot").forEach((dot) => {
+        dot.addEventListener("click", () => {
+          document.querySelectorAll(".palette-dot").forEach((d) => d.classList.remove("active"))
+          dot.classList.add("active")
+          activePalette = dot.dataset.theme
+          const pal = PALETTES[activePalette]
+          scene.background.setHex(pal.bg)
+          scene.fog.color.setHex(pal.bg)
+          centerPointLight.color.setHex(pal.primary)
+          rimLight.color.setHex(pal.secondary)
+          asciiLayer.style.color = pal.ascii
+          asciiLayer.style.textShadow = `0 0 4px ${pal.ascii}`
+          loadConcept(currentConceptIndex)
+        })
+      })
 
-    document.getElementById("displaceSlider").addEventListener("input", (e) => {
-      displacement = parseFloat(e.target.value);
-      document.getElementById("displaceVal").textContent = displacement.toFixed(2);
-    });
+      const btnAscii = document.getElementById("btnAscii")
+      btnAscii.addEventListener("click", () => {
+        asciiMode = !asciiMode
+        btnAscii.classList.toggle("active", asciiMode)
+        asciiLayer.style.display = asciiMode ? "block" : "none"
+        renderer.domElement.style.opacity = asciiMode ? "0.08" : "1.0"
+      })
 
-    document.querySelectorAll(".palette-dot").forEach(dot => {
-      dot.addEventListener("click", () => {
-        document.querySelectorAll(".palette-dot").forEach(d => d.classList.remove("active"));
-        dot.classList.add("active");
-        activePalette = dot.dataset.theme;
-        const pal = PALETTES[activePalette];
-        scene.background.setHex(pal.bg);
-        scene.fog.color.setHex(pal.bg);
-        centerPointLight.color.setHex(pal.primary);
-        rimLight.color.setHex(pal.secondary);
-        asciiLayer.style.color = pal.ascii;
-        asciiLayer.style.textShadow = `0 0 4px ${pal.ascii}`;
-        loadConcept(currentConceptIndex);
-      });
-    });
+      const btnWireframe = document.getElementById("btnWireframe")
+      btnWireframe.addEventListener("click", () => {
+        wireframeMode = !wireframeMode
+        btnWireframe.classList.toggle("active", wireframeMode)
+        loadConcept(currentConceptIndex)
+      })
 
-    const btnAscii = document.getElementById("btnAscii");
-    btnAscii.addEventListener("click", () => {
-      asciiMode = !asciiMode;
-      btnAscii.classList.toggle("active", asciiMode);
-      asciiLayer.style.display = asciiMode ? "block" : "none";
-      renderer.domElement.style.opacity = asciiMode ? "0.08" : "1.0";
-    });
+      const btnCrt = document.getElementById("btnCrt")
+      btnCrt.addEventListener("click", () => {
+        crtEnabled = !crtEnabled
+        btnCrt.classList.toggle("active", crtEnabled)
+        document.getElementById("crtOverlay").style.display = crtEnabled ? "block" : "none"
+      })
 
-    const btnWireframe = document.getElementById("btnWireframe");
-    btnWireframe.addEventListener("click", () => {
-      wireframeMode = !wireframeMode;
-      btnWireframe.classList.toggle("active", wireframeMode);
-      loadConcept(currentConceptIndex);
-    });
+      const btnGlitch = document.getElementById("btnGlitch")
+      btnGlitch.addEventListener("click", () => {
+        glitchActive = !glitchActive
+        btnGlitch.classList.toggle("active", glitchActive)
+        document.body.classList.toggle("glitching", glitchActive)
+      })
 
-    const btnCrt = document.getElementById("btnCrt");
-    btnCrt.addEventListener("click", () => {
-      crtEnabled = !crtEnabled;
-      btnCrt.classList.toggle("active", crtEnabled);
-      document.getElementById("crtOverlay").style.display = crtEnabled ? "block" : "none";
-    });
+      document.getElementById("btnSnapshot").addEventListener("click", () => {
+        const dataURL = renderer.domElement.toDataURL("image/png")
+        const a = document.createElement("a")
+        a.href = dataURL
+        a.download = `nikcli-ade-3d-logo-${CONCEPTS[currentConceptIndex].id}.png`
+        a.click()
+      })
 
-    const btnGlitch = document.getElementById("btnGlitch");
-    btnGlitch.addEventListener("click", () => {
-      glitchActive = !glitchActive;
-      btnGlitch.classList.toggle("active", glitchActive);
-      document.body.classList.toggle("glitching", glitchActive);
-    });
+      document.getElementById("btnResetCam").addEventListener("click", () => {
+        const c = CONCEPTS[currentConceptIndex]
+        gsapCamera(c.cameraPos[0], c.cameraPos[1], c.cameraPos[2])
+        controls.target.set(0, 0, 0)
+      })
 
-    document.getElementById("btnSnapshot").addEventListener("click", () => {
-      const dataURL = renderer.domElement.toDataURL("image/png");
-      const a = document.createElement("a");
-      a.href = dataURL;
-      a.download = `nikcli-ade-3d-logo-${CONCEPTS[currentConceptIndex].id}.png`;
-      a.click();
-    });
+      window.addEventListener("resize", () => {
+        camera.aspect = window.innerWidth / window.innerHeight
+        camera.updateProjectionMatrix()
+        renderer.setSize(window.innerWidth, window.innerHeight)
+      })
 
-    document.getElementById("btnResetCam").addEventListener("click", () => {
-      const c = CONCEPTS[currentConceptIndex];
-      gsapCamera(c.cameraPos[0], c.cameraPos[1], c.cameraPos[2]);
-      controls.target.set(0, 0, 0);
-    });
-
-    window.addEventListener("resize", () => {
-      camera.aspect = window.innerWidth / window.innerHeight;
-      camera.updateProjectionMatrix();
-      renderer.setSize(window.innerWidth, window.innerHeight);
-    });
-
-    loadConcept(0);
-    animate();
-  </script>
-</body>
+      loadConcept(0)
+      animate()
+    </script>
+  </body>
 </html>

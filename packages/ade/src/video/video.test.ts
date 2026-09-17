@@ -160,9 +160,9 @@ describe("frameFileName", () => {
 
 describe("describeState", () => {
   test("says the file, where it is, and what it is doing", () => {
-    expect(
-      describeState({ source: "out/demo.mp4", playing: true, position: 12.5, duration: 60, rate: 1 }),
-    ).toBe("out/demo.mp4 — 0:12.5 di 1:00.0, in riproduzione")
+    expect(describeState({ source: "out/demo.mp4", playing: true, position: 12.5, duration: 60, rate: 1 })).toBe(
+      "out/demo.mp4 — 0:12.5 di 1:00.0, in riproduzione",
+    )
   })
 
   test("mentions the rate only when it is not the ordinary one", () => {

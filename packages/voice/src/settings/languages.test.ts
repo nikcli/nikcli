@@ -1,8 +1,5 @@
 import { describe, expect, test } from "bun:test"
-import {
-  availableLanguages,
-  isLanguageSupported,
-} from "./languages"
+import { availableLanguages, isLanguageSupported } from "./languages"
 
 describe("settings/languages - availableLanguages", () => {
   test("reads Parakeet languages dynamically from parakeet.js rather than a constant", () => {
@@ -13,8 +10,7 @@ describe("settings/languages - availableLanguages", () => {
         languages: customLanguages,
       }),
       getLanguageName: (code: string) => `Custom ${code}`,
-      supportsLanguage: (_modelId: string, code?: string) =>
-        Boolean(code && customLanguages.includes(code)),
+      supportsLanguage: (_modelId: string, code?: string) => Boolean(code && customLanguages.includes(code)),
     }
 
     const langs = availableLanguages("parakeet", {
@@ -29,12 +25,12 @@ describe("settings/languages - availableLanguages", () => {
     expect(
       isLanguageSupported("parakeet", "elvish", {
         parakeetLib: fakeParakeetLib,
-      })
+      }),
     ).toBe(true)
     expect(
       isLanguageSupported("parakeet", "it", {
         parakeetLib: fakeParakeetLib,
-      })
+      }),
     ).toBe(false)
   })
 

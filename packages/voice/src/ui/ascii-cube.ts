@@ -60,9 +60,18 @@ const CORNERS: readonly (readonly [number, number, number])[] = [
 ]
 
 const EDGES: readonly (readonly [number, number])[] = [
-  [0, 1], [1, 2], [2, 3], [3, 0],
-  [4, 5], [5, 6], [6, 7], [7, 4],
-  [0, 4], [1, 5], [2, 6], [3, 7],
+  [0, 1],
+  [1, 2],
+  [2, 3],
+  [3, 0],
+  [4, 5],
+  [5, 6],
+  [6, 7],
+  [7, 4],
+  [0, 4],
+  [1, 5],
+  [2, 6],
+  [3, 7],
 ]
 
 /**
@@ -99,9 +108,18 @@ const FACES: readonly {
  * towards us is behind the cube, and behind the cube is nothing to draw.
  */
 const EDGE_FACES: readonly (readonly [number, number])[] = [
-  [1, 5], [1, 2], [1, 4], [1, 3],
-  [0, 5], [0, 2], [0, 4], [0, 3],
-  [3, 5], [2, 5], [2, 4], [3, 4],
+  [1, 5],
+  [1, 2],
+  [1, 4],
+  [1, 3],
+  [0, 5],
+  [0, 2],
+  [0, 4],
+  [0, 3],
+  [3, 5],
+  [2, 5],
+  [2, 4],
+  [3, 4],
 ]
 
 /** Distance from the eye to the cube's centre, in cube half-widths. */
@@ -114,11 +132,7 @@ interface Point {
   z: number
 }
 
-function rotate(
-  point: readonly [number, number, number],
-  angle: number,
-  tilt: number,
-): [number, number, number] {
+function rotate(point: readonly [number, number, number], angle: number, tilt: number): [number, number, number] {
   const [x0, y0, z0] = point
 
   // About the vertical axis first: this is the turn the eye reads.
@@ -144,11 +158,7 @@ function rotate(
  * out a tall box. The ratio here is what makes it read as a cube rather than
  * as a crate stood on end.
  */
-function project(
-  rotated: readonly [number, number, number],
-  cols: number,
-  rows: number,
-): Point {
+function project(rotated: readonly [number, number, number], cols: number, rows: number): Point {
   const [x, y, z] = rotated
   const scale = CAMERA / (CAMERA - z)
   /* 0.34 of the grid, which leaves the far corners inside it at every angle:
@@ -224,7 +234,11 @@ export function renderAsciiCube(options: AsciiCubeOptions): string {
   )
 
   const rotated = CORNERS.map((corner) => rotate(corner, angle, tilt))
-  const points = centre(rotated.map((corner) => project(corner, cols, rows)), cols, rows)
+  const points = centre(
+    rotated.map((corner) => project(corner, cols, rows)),
+    cols,
+    rows,
+  )
 
   /* How far towards us each face is turned. Positive is visible. */
   const facing = FACES.map((face) => rotate(face.normal, angle, tilt)[2])

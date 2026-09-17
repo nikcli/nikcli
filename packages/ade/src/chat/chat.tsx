@@ -231,9 +231,7 @@ export function Chat(props: ChatProps) {
           fallback={
             <div data-slot="chat-empty">
               <p data-slot="chat-empty-title">{t("chat.empty.title")}</p>
-              <p data-slot="chat-empty-body">
-                {t("chat.empty.body")}
-              </p>
+              <p data-slot="chat-empty-body">{t("chat.empty.body")}</p>
             </div>
           }
         >

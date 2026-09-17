@@ -201,7 +201,12 @@ export function createModelViewer(stage: HTMLElement, onLost: (reason: string) =
 
   /* ── Loading ──────────────────────────────────────────────────────── */
 
-  const load = async (path: string, read: ReadBytes, reframe: boolean, isCurrent?: () => boolean): Promise<LoadResult> => {
+  const load = async (
+    path: string,
+    read: ReadBytes,
+    reframe: boolean,
+    isCurrent?: () => boolean,
+  ): Promise<LoadResult> => {
     const format = modelFormat(path)
     if (!format) throw new Error("formato non supportato")
 

@@ -58,19 +58,21 @@ export function KeysSection(props: { host: KeysHost | undefined; agents: readonl
         <h3 data-slot="section-title" tabIndex={-1}>
           {t("settings.keys")}
         </h3>
-        <p data-slot="section-desc">
-          {t("keys.desc")}
-        </p>
+        <p data-slot="section-desc">{t("keys.desc")}</p>
       </div>
 
       <Show when={!props.host}>
         <p data-slot="section-desc">{t("keys.noKeychain")}</p>
       </Show>
       <Show when={loadProblem()}>
-        <p data-slot="keys-problem" role="alert">{loadProblem()}</p>
+        <p data-slot="keys-problem" role="alert">
+          {loadProblem()}
+        </p>
       </Show>
       <Show when={notice()}>
-        <p data-slot="keys-notice" role="status">{notice()}</p>
+        <p data-slot="keys-notice" role="status">
+          {notice()}
+        </p>
       </Show>
 
       <Show when={props.host}>
@@ -232,7 +234,11 @@ export function KeyForm(props: {
   const effectiveEnv = () => (envTouched() ? env() : suggestEnv(name()))
   const toggle = (id: string) =>
     setAgents((current) => (current.includes(id) ? current.filter((agent) => agent !== id) : [...current, id]))
-  const warnings = createMemo(() => agents().map((agent) => billingWarning(effectiveEnv(), agent)).filter(Boolean))
+  const warnings = createMemo(() =>
+    agents()
+      .map((agent) => billingWarning(effectiveEnv(), agent))
+      .filter(Boolean),
+  )
 
   const submit = async (event: Event) => {
     event.preventDefault()
@@ -297,7 +303,7 @@ export function KeyForm(props: {
         <input
           ref={valueField}
           type="password"
-          placeholder={props.existing ? props.existing.masked ?? "" : t("keys.field.paste")}
+          placeholder={props.existing ? (props.existing.masked ?? "") : t("keys.field.paste")}
           spellcheck={false}
           autocomplete="new-password"
         />
@@ -315,7 +321,9 @@ export function KeyForm(props: {
       </fieldset>
       <For each={warnings()}>{(warning) => <span data-slot="keys-warning">{warning}</span>}</For>
       <Show when={problem()}>
-        <p data-slot="keys-problem" role="alert">{problem()}</p>
+        <p data-slot="keys-problem" role="alert">
+          {problem()}
+        </p>
       </Show>
       <div data-slot="keys-actions">
         <button type="submit" data-slot="settings-choice" data-active="true" disabled={busy()}>
@@ -361,16 +369,20 @@ export function KeyRequestDialog(props: {
           <Show when={props.reason}>
             <span>«{props.reason}»</span>
           </Show>
-          <span>
-            {t("keys.request.hint")}
-          </span>
+          <span>{t("keys.request.hint")}</span>
         </header>
         <div data-slot="keys-dialog-body">
           <Show
             when={existing()}
             keyed
             fallback={
-              <KeyForm host={props.host} agents={props.agents} others={keys()} initialEnv={props.env} onDone={props.onClose} />
+              <KeyForm
+                host={props.host}
+                agents={props.agents}
+                others={keys()}
+                initialEnv={props.env}
+                onDone={props.onClose}
+              />
             }
           >
             {(key) => (

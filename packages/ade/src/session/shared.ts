@@ -92,8 +92,12 @@ export function applyKv(
     }
     case "list": {
       const prefix = key
-      const names = Object.keys(space.entries).filter((name) => name.startsWith(prefix)).sort()
-      const lockNames = Object.keys(space.locks).filter((name) => name.startsWith(prefix) && held(name)).sort()
+      const names = Object.keys(space.entries)
+        .filter((name) => name.startsWith(prefix))
+        .sort()
+      const lockNames = Object.keys(space.locks)
+        .filter((name) => name.startsWith(prefix) && held(name))
+        .sort()
       if (names.length === 0 && lockNames.length === 0) return { space, reply: "ok\n(vuoto)" }
       const lines = names.map((name) => {
         const entry = space.entries[name]!
@@ -102,14 +106,19 @@ export function applyKv(
       })
       for (const name of lockNames) {
         const lock = space.locks[name]!
-        lines.push(`lock ${name}: ${lock.ownerTitle}, scade tra ${age(lock.until - now)}${lock.note ? ` — ${lock.note}` : ""}`)
+        lines.push(
+          `lock ${name}: ${lock.ownerTitle}, scade tra ${age(lock.until - now)}${lock.note ? ` — ${lock.note}` : ""}`,
+        )
       }
       return { space, reply: `ok\n${lines.join("\n")}` }
     }
     case "set": {
       if (!who) return { space, reply: "errore: scrivere richiede una sessione avviata da ADE" }
       if (request.value.length > KV_MAX_VALUE) {
-        return { space, reply: `errore: valore oltre ${KV_MAX_VALUE} caratteri: mettilo in un file e salva il percorso` }
+        return {
+          space,
+          reply: `errore: valore oltre ${KV_MAX_VALUE} caratteri: mettilo in un file e salva il percorso`,
+        }
       }
       if (!space.entries[key] && Object.keys(space.entries).length >= KV_MAX_KEYS) {
         return { space, reply: `errore: lo store ha già ${KV_MAX_KEYS} chiavi: cancellane qualcuna con ade-msg kv del` }
@@ -143,13 +152,19 @@ export function applyKv(
         ...space.locks,
         [key]: { owner: who.id, ownerTitle: who.title, until: now + ttl * 1000, ...(note ? { note } : {}) },
       }
-      return { space: { ...space, locks }, reply: `ok: ${key} bloccata per ${age(ttl * 1000)}; rilasciala con ade-msg kv unlock ${key}` }
+      return {
+        space: { ...space, locks },
+        reply: `ok: ${key} bloccata per ${age(ttl * 1000)}; rilasciala con ade-msg kv unlock ${key}`,
+      }
     }
     case "unlock": {
       if (!who) return { space, reply: "errore: un lock richiede una sessione avviata da ADE" }
       const lock = held(key)
       if (lock && lock.owner !== who.id && !request.force) {
-        return { space, reply: `errore: ${key} è bloccata da "${lock.ownerTitle}"; solo lei può rilasciarla (o --force)` }
+        return {
+          space,
+          reply: `errore: ${key} è bloccata da "${lock.ownerTitle}"; solo lei può rilasciarla (o --force)`,
+        }
       }
       if (!space.locks[key]) return { space, reply: `ok: ${key} non era bloccata` }
       const locks = { ...space.locks }
@@ -185,8 +200,18 @@ export function parseKvStore(raw: string | null): Record<string, KvSpace> {
       }
       for (const [key, lock] of Object.entries((locks as Record<string, unknown>) ?? {})) {
         const l = lock as Partial<KvLock>
-        if (isKvKey(key) && typeof l?.owner === "string" && typeof l.ownerTitle === "string" && typeof l.until === "number") {
-          clean.locks[key] = { owner: l.owner, ownerTitle: l.ownerTitle, until: l.until, ...(typeof l.note === "string" ? { note: l.note } : {}) }
+        if (
+          isKvKey(key) &&
+          typeof l?.owner === "string" &&
+          typeof l.ownerTitle === "string" &&
+          typeof l.until === "number"
+        ) {
+          clean.locks[key] = {
+            owner: l.owner,
+            ownerTitle: l.ownerTitle,
+            until: l.until,
+            ...(typeof l.note === "string" ? { note: l.note } : {}),
+          }
         }
       }
       out[project] = clean
@@ -220,7 +245,12 @@ function pad(n: number): string {
  * One entry, or why it is refused. On one line: the file is read by agents
  * and by people, and a paragraph in it is something neither skims.
  */
-export function memoryEntry(type: string, text: string, author: string, at: Date): { line: string } | { error: string } {
+export function memoryEntry(
+  type: string,
+  text: string,
+  author: string,
+  at: Date,
+): { line: string } | { error: string } {
   const kind = MEMORY_TYPES.find((known) => known === type.trim().toLowerCase())
   if (!kind) return { error: `tipo non valido: ${type} (usa ${MEMORY_TYPES.join(", ")})` }
   const body = text.replace(/\s+/g, " ").trim()
@@ -271,7 +301,9 @@ function compact(n: number): string {
 }
 
 /** What `ade-msg stats` prints. */
-export function statsTable(rows: readonly { title: string; agent: string; project?: string; usage: TokenUsage }[]): string {
+export function statsTable(
+  rows: readonly { title: string; agent: string; project?: string; usage: TokenUsage }[],
+): string {
   if (rows.length === 0) return "nessun dato di consumo: servono sessioni claude o codex con una conversazione salvata"
   const total: TokenUsage = { input: 0, cacheRead: 0, cacheWrite: 0, output: 0, requests: 0 }
   const lines = ["cache  letti   scritti  pieni   output  richieste  sessione"]
