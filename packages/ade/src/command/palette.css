@@ -1,0 +1,148 @@
+/* Scrim, panel, border, shadow and entry animation come from `Overlay` and
+   `Surface` in `ui/layout.css`; only what is the palette's own is here. */
+
+[data-component="palette"] [data-slot="input-wrap"] {
+  padding: 0;
+  border-bottom: 1px solid var(--ade-border);
+}
+
+[data-component="palette"] [data-slot="input"] {
+  width: 100%;
+  background: transparent;
+  color: var(--ade-text);
+  border: 0;
+  border-radius: 0;
+  padding: var(--ade-space-6) var(--ade-space-7);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-xl);
+  outline: none;
+}
+
+[data-component="palette"] [data-slot="input"]:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+[data-component="palette"] [data-slot="input"]::placeholder {
+  color: var(--ade-text-weak);
+}
+
+[data-component="palette"] [data-slot="listbox"] {
+  max-height: 400px;
+  overflow-y: auto;
+  padding: var(--ade-space-2) 0;
+}
+
+[data-component="palette"] [data-slot="empty"] {
+  padding: var(--ade-space-6);
+  text-align: center;
+  color: var(--ade-text-soft);
+  font-size: var(--ade-font-md);
+}
+
+[data-component="palette"] [data-slot="group"] {
+  margin-bottom: var(--ade-space-2);
+}
+
+[data-component="palette"] [data-slot="group"]:last-child {
+  margin-bottom: 0;
+}
+
+[data-component="palette"] [data-slot="group-title"] {
+  padding: var(--ade-space-2) var(--ade-space-6);
+  font-size: var(--ade-font-xs);
+  font-weight: var(--ade-weight-semibold);
+  color: var(--ade-text-weak);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  user-select: none;
+}
+
+[data-component="palette"] [data-slot="option"] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--ade-space-2) var(--ade-space-6);
+  min-height: 32px;
+  cursor: pointer;
+  color: var(--ade-text-soft);
+  position: relative;
+  /* The palette list is flipped at speed. Transform in the transition so the
+     press-scale rides the same frame as the highlight background — every
+     option reads as one motion, not a colour flash followed by a shrink. */
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  [data-component="palette"] [data-slot="option"]:hover {
+    background: var(--ade-hover);
+    color: var(--ade-text);
+  }
+}
+
+/* A subtle press: rows are slim and the gesture is a directional tap. The
+   scale is small and the accent rail (already pinned to the left) stays put
+   because it is the parent pseudo, not the transforming row. */
+[data-component="palette"] [data-slot="option"]:active {
+  transform: scale(0.99);
+}
+
+[data-component="palette"] [data-slot="option"][data-selected] {
+  background: var(--ade-active);
+  color: var(--ade-text);
+  font-weight: var(--ade-weight-medium);
+}
+
+[data-component="palette"] [data-slot="option"][data-selected]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: var(--ade-space-1);
+  bottom: var(--ade-space-1);
+  width: 3px;
+  background: var(--ade-accent);
+  border-radius: 0 var(--ade-radius-sm) var(--ade-radius-sm) 0;
+}
+
+/* The selected option keeps its accent rail when focused. */
+[data-component="palette"] [data-slot="option"][data-selected]:focus-visible {
+  background: var(--ade-active);
+  color: var(--ade-text);
+  font-weight: var(--ade-weight-medium);
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-component="palette"] [data-slot="option"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-component="palette"] [data-slot="option"][aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+  /* Disabled options must not respond to press — the gesture is not theirs. */
+  transform: none;
+}
+
+[data-component="palette"] [data-slot="option-title"] {
+  font-size: var(--ade-font-md);
+  font-weight: inherit;
+}
+
+[data-component="palette"] [data-slot="highlight"] {
+  color: var(--ade-accent);
+  font-weight: var(--ade-weight-bold);
+}
+
+[data-component="palette"] [data-slot="option-shortcut"] {
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-xs);
+  color: var(--ade-text-weak);
+  background: var(--ade-raised);
+  padding: var(--ade-space-1) var(--ade-space-2);
+  border-radius: var(--ade-radius-sm);
+  border: 1px solid var(--ade-border);
+}

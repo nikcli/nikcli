@@ -1,0 +1,36 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "ADE",
+  "version": "0.0.0",
+  "identifier": "ai.nikcli.ade",
+  "build": {
+    "beforeDevCommand": "bun x vite",
+    "devUrl": "http://localhost:5177",
+    "beforeBuildCommand": "bun x vite build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' blob:; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob: http: https:; font-src 'self' data:; media-src 'self' blob: ade-media: http://ade-media.localhost; connect-src 'self' ipc: http://ipc.localhost http: https: ws: wss: blob: data:; worker-src 'self' blob:; frame-src http: https: blob:"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  },
+  "plugins": {
+    "updater": {
+      "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEExMDFFMDY3Njk0NzkyOUUKUldTZWtrZHBaK0FCb1RoUloreWxRMlRienJnSFdhaW1oY3lNNlN0MHd6N01nbVpDaWhPMGN5WG0K",
+      "endpoints": ["https://github.com/SandroHub013/nikcli/releases/download/ade-updater/latest.json"],
+      "windows": { "installMode": "passive" }
+    }
+  }
+}

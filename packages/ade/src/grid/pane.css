@@ -1,0 +1,1454 @@
+/*
+ * The session pane.
+ *
+ * The card the user stares at for hours, six at a time. Three rules shape it:
+ *
+ *   1. Status is structural, not a decoration. It tints the card's top edge and
+ *      the activity word, so a glance across the grid answers "who needs me?"
+ *      without reading a single label.
+ *   2. Output sits at the bottom, like a terminal. A three-line session floating
+ *      in the middle of an empty card reads as broken; anchored to the prompt it
+ *      reads as ready.
+ *   3. Chrome recedes. Window actions appear on hover or focus, metrics are
+ *      quiet until you look for them, and nothing but the agent's own output
+ *      uses the full text colour.
+ *
+ * Every value comes from the token layer in index.css. The one exception is the
+ * ANSI palette below, which is scoped to this component because it exists only
+ * to render what a terminal process emitted.
+ */
+
+[data-component="session-pane"] {
+  /*
+   * The ANSI palette used to be declared here, scoped to this element. It had
+   * to move to `:root` in index.css: xterm is handed concrete colours at
+   * creation time and cannot read a `var()`, so the values have to be readable
+   * from a probe that is not inside a pane. Scoped here, they were invisible to
+   * the one renderer that needed them most — see `terminal/registry.ts`.
+   */
+
+  /* The status hue for this card. Redefined per status below, once, so every
+     rule that needs it — edge, pulse, activity word — reads the same value. */
+  --pane-status: var(--ade-text-weak);
+
+  /*
+   * No border, no radius, no shadow.
+   *
+   * This card used to be a card: a hairline frame, rounded corners, a lift off
+   * the ground. Tiled six across that costs two pixels of frame and four of
+   * corner radius on every edge, and it buys nothing a terminal needs — the
+   * grid's one-pixel gap already says where one session ends and the next
+   * begins. Everything here that still draws is either information or a
+   * control; the pane's whole remaining job is to hand its height to xterm.
+   */
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  background: var(--ade-surface);
+  overflow: hidden;
+  /* Children query the card's own width to decide what to drop when it gets
+     narrow — a four-column grid halves this card twice. */
+  container-type: inline-size;
+}
+
+/*
+ * The status edge, and the liveness signal, in one hairline across the top.
+ *
+ * It was a 2px edge plus a separate 2px "pulse" lane under the header — four
+ * pixels of every pane spent saying something one line can say. Absolutely
+ * positioned, so it overlays the header instead of taking a row of its own and
+ * costs no layout height at all.
+ */
+[data-component="session-pane"]::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 1px;
+  z-index: 2;
+  background: var(--pane-status);
+  opacity: 0.6;
+  pointer-events: none;
+}
+
+/* Work in progress needs a sign that is not a word: across six panes the eye
+   finds motion long before it reads six activity labels. */
+[data-component="session-pane"][data-status="working"]::before,
+[data-component="session-pane"][data-status="provisioning"]::before {
+  opacity: 1;
+  background-image: linear-gradient(to right, transparent, var(--pane-status), transparent);
+  background-color: color-mix(in srgb, var(--pane-status) 25%, transparent);
+  background-size: 35% 100%;
+  background-repeat: no-repeat;
+  animation: ade-pane-sweep 1.6s var(--ade-ease) infinite;
+}
+
+[data-component="session-pane"][data-status="working"],
+[data-component="session-pane"][data-status="provisioning"] {
+  --pane-status: var(--ade-working);
+}
+[data-component="session-pane"][data-status="waiting"] {
+  --pane-status: var(--ade-waiting);
+}
+[data-component="session-pane"][data-status="done"] {
+  --pane-status: var(--ade-done);
+}
+[data-component="session-pane"][data-status="error"] {
+  --pane-status: var(--ade-error);
+}
+
+/*
+ * Focus is an outline drawn inside the pane, not a ring around it.
+ *
+ * A ring and a lift both need room outside the card, and there is no outside
+ * any more — the next terminal starts one pixel away. `outline-offset: -1px`
+ * paints the accent over the pane's own first pixel row, so the focused
+ * session is findable from across the screen without costing a single column
+ * or line of terminal.
+ */
+[data-component="session-pane"][data-focused] {
+  outline: 1px solid var(--ade-accent);
+  outline-offset: -1px;
+}
+
+/* ── header ────────────────────────────────────────────────────────────────── */
+
+/*
+ * The pane's only row of chrome.
+ *
+ * It used to be one of three — header, pulse lane, and a dock carrying the
+ * composer and a footer — and the three together took about seventy pixels off
+ * every tile, which at six panes is a whole terminal's worth of the window.
+ * Identity, tabs, tree, state and the window buttons all fit on one 22px line
+ * because none of them is ever more than a few words wide; what does not fit
+ * at a given width is dropped by the container queries at the end of this
+ * file, in order of how little it matters.
+ */
+[data-slot="pane-header"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-3);
+  padding: 0 var(--ade-space-2);
+  /*
+   * The header carries the status hue at a whisper. Alone, the top edge lost
+   * to the card border two columns away; the tinted ground is what makes the
+   * status readable from across a six-pane grid.
+   */
+  background:
+    linear-gradient(to bottom, color-mix(in srgb, var(--pane-status) 10%, transparent), transparent), var(--ade-raised);
+  border-bottom: 1px solid var(--ade-border-subtle);
+  flex: 0 0 auto;
+  min-height: 22px;
+}
+
+/* The agent's mark, in a chip that keeps it legible when the card is half a
+   column wide and the name itself has been dropped. */
+[data-slot="pane-identity"] {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  border-radius: var(--ade-radius-sm);
+  background: color-mix(in srgb, var(--pane-status) 16%, transparent);
+  color: var(--pane-status);
+  font-size: var(--ade-font-sm);
+  line-height: 1;
+}
+
+[data-slot="pane-title"] {
+  margin: 0;
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+  font-weight: var(--ade-weight-medium);
+  color: var(--ade-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  /*
+   * The title gives way first and the controls never do. Sharing the row with
+   * the tree and the state means something has to shrink, and a truncated
+   * session name is still recognisable while a clipped close button is gone.
+   */
+  flex: 1 1 0;
+  min-width: 0;
+  letter-spacing: -0.012em;
+}
+
+/*
+ * Hidden rather than unmounted while a live terminal is attached: the saved
+ * transcript is what a pane shows when its process is gone, and it has to keep
+ * its scroll position for that moment instead of jumping to the bottom.
+ */
+[data-slot="pane-transcript"][data-hidden] {
+  display: none;
+}
+
+/*
+ * A plugin's tile body. `overflow: auto` is the boundary that matters here:
+ * a plugin's markup is not reviewed, and without it a tall element would grow
+ * the grid cell and push every other session out of the viewport.
+ */
+[data-slot="pane-plugin"] {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  background: var(--ade-sunken);
+}
+
+[data-slot="pane-plugin-error"] {
+  padding: var(--ade-space-4) var(--ade-space-6);
+  color: var(--ade-error);
+  font-size: var(--ade-font-sm);
+}
+
+[data-slot="pane-plugin-error"] code {
+  display: block;
+  margin-top: var(--ade-space-2);
+  font-family: var(--ade-mono);
+  word-break: break-word;
+}
+
+/* ── the live terminal ─────────────────────────────────────────────────────── */
+
+/*
+ * The emulator measures itself against this box, so it has to be a box with a
+ * real size before xterm looks at it: `flex: 1; min-height: 0` and nothing that
+ * grows with its contents. The fit addon reads clientWidth/clientHeight, and a
+ * height that depends on the terminal that depends on the height never settles.
+ */
+[data-slot="pane-terminal"] {
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  overflow: hidden;
+  /*
+   * None at all. Padding here is bought with terminal columns, and at two
+   * panes across, four characters of gutter is a wrapped line in every
+   * paragraph the agent writes. There is no border left for the text to sit
+   * off, so the emulator gets the whole box.
+   */
+  padding: 0;
+  background: var(--ade-terminal-bg, var(--ade-sunken));
+}
+
+[data-slot="pane-terminal"][data-hidden] {
+  display: none;
+}
+
+/* xterm draws its own scrollbar; the pane's chrome must not add a second. */
+[data-slot="pane-terminal"] .xterm-viewport {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  background: transparent !important;
+}
+
+[data-slot="pane-terminal"] .xterm {
+  height: 100%;
+}
+
+[data-slot="pane-tokens"],
+[data-slot="pane-cost"] {
+  flex: 0 0 auto;
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--ade-text-weak);
+  white-space: nowrap;
+}
+
+[data-slot="pane-actions"] {
+  display: flex;
+  gap: var(--ade-space-1);
+  flex: 0 0 auto;
+  /* Held in the layout but invisible: revealing them must not shift the title. */
+  opacity: 0;
+  transition: opacity var(--ade-dur-fast) var(--ade-ease);
+}
+
+/*
+ * Revealed for every kind of pane, in one place. Each pane used to add its own
+ * rule, and the video and editor panes never did: their expand and close
+ * buttons stayed invisible (0.6.1). `pane-chrome.test.ts` keeps it so.
+ */
+[data-component$="-pane"]:hover [data-slot="pane-actions"],
+[data-component$="-pane"][data-focused] [data-slot="pane-actions"],
+[data-slot="pane-actions"]:focus-within {
+  opacity: 1;
+}
+
+[data-slot="pane-action"] {
+  display: grid;
+  place-items: center;
+  /* Sized to sit inside the 22px header row with a pixel to spare, rather than
+     forcing the row to be taller than the text on it needs. */
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ade-radius-sm);
+  background: transparent;
+  color: var(--ade-text-weak);
+  cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="pane-action"]:hover {
+  background: var(--ade-hover);
+  color: var(--ade-text);
+}
+
+[data-slot="pane-action"]:active {
+  background: var(--ade-active);
+  transform: scale(0.88);
+}
+
+[data-slot="pane-action"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+  color: var(--ade-text);
+}
+
+/* ── liveness ──────────────────────────────────────────────────────────────── */
+
+/*
+ * The band travels by moving its background rather than the element, because
+ * the element it lives on is the pane's own ::before: there is no lane to
+ * translate inside any more, and none to pay for either.
+ */
+@keyframes ade-pane-sweep {
+  0% {
+    background-position: -35% 0;
+  }
+  100% {
+    background-position: 135% 0;
+  }
+}
+
+/* ── transcript ────────────────────────────────────────────────────────────── */
+
+/*
+ * The transcript is a well sunk below the card surface: the depth makes the
+ * space under a short session read as a viewport waiting for output rather than
+ * as leftover card.
+ */
+[data-slot="pane-transcript"] {
+  position: relative;
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding: var(--ade-space-2) var(--ade-space-3);
+  background: var(--ade-sunken);
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-md);
+  line-height: var(--ade-leading);
+  display: flex;
+  flex-direction: column;
+}
+
+/* Short output falls to the bottom, next to the prompt, the way a terminal
+   behaves. Long output simply overflows upward and scrolls. */
+[data-slot="pane-lines"] {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-1);
+  min-width: 0;
+}
+
+[data-slot="pane-line"] {
+  display: flex;
+  gap: var(--ade-space-3);
+  align-items: baseline;
+  min-width: 0;
+  color: var(--ade-text-soft);
+}
+
+[data-slot="pane-line"][data-kind="step"] {
+  color: var(--ade-text);
+}
+
+[data-slot="pane-line"][data-kind="shell"] {
+  padding-left: var(--ade-space-3);
+  color: var(--ade-text-soft);
+}
+
+[data-slot="pane-line"][data-kind="note"] {
+  color: var(--ade-text-weak);
+}
+
+/*
+ * Diff and error are the two line kinds that carry a verdict, so they get a
+ * ground of their own: scanning a wall of mono for a stack trace is exactly the
+ * work the pane should be doing for the reader.
+ */
+[data-slot="pane-line"][data-kind="diff"] {
+  padding-left: var(--ade-space-3);
+  border-left: 2px solid var(--ade-border-strong);
+  color: var(--ade-text-soft);
+}
+
+[data-slot="pane-line"][data-kind="error"] {
+  padding: 0 var(--ade-space-3);
+  margin-left: calc(var(--ade-space-3) * -1);
+  border-left: 2px solid var(--ade-error);
+  border-radius: 0 var(--ade-radius-sm) var(--ade-radius-sm) 0;
+  background: var(--ade-error-bg);
+  color: var(--ade-error);
+}
+
+[data-slot="pane-bullet"] {
+  width: 4px;
+  height: 4px;
+  border-radius: var(--ade-radius-full);
+  background: var(--pane-status);
+  flex: 0 0 auto;
+  transform: translateY(-2px);
+}
+
+[data-slot="pane-elbow"] {
+  color: var(--ade-text-weak);
+  flex: 0 0 auto;
+}
+
+[data-slot="pane-text"] {
+  min-width: 0;
+  /* A transcript line is a command or a sentence; breaking mid-word turns a path
+     into confetti, so it wraps at whitespace and scrolls only as a last resort. */
+  overflow-wrap: break-word;
+  white-space: pre-wrap;
+}
+
+/* Progress bars emit the same line hundreds of times; the count is the whole
+   information, and it belongs beside the line rather than in place of it. */
+[data-slot="pane-repeat"] {
+  flex: 0 0 auto;
+  align-self: center;
+  padding: 0 var(--ade-space-2);
+  border-radius: var(--ade-radius-full);
+  background: var(--ade-active);
+  color: var(--ade-text-weak);
+  font-size: var(--ade-font-xs);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Appears only once the reader has scrolled away from the live edge. */
+[data-slot="pane-tail"] {
+  position: sticky;
+  bottom: 0;
+  align-self: center;
+  margin-top: var(--ade-space-3);
+  padding: var(--ade-space-1) var(--ade-space-4);
+  border: 1px solid var(--ade-border-strong);
+  border-radius: var(--ade-radius-full);
+  background: var(--ade-overlay);
+  color: var(--ade-text-soft);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-xs);
+  cursor: pointer;
+  box-shadow: var(--ade-shadow-md);
+  transition:
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="pane-tail"]:active {
+  transform: scale(0.97);
+}
+
+[data-slot="pane-tail"]:hover {
+  color: var(--ade-text);
+}
+
+[data-slot="pane-tail"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+/* ── prompt ────────────────────────────────────────────────────────────────── */
+
+[data-slot="pane-prompt"] {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--ade-space-3);
+  padding: var(--ade-space-1) var(--ade-space-3);
+  /* The dock draws the strip; the composer only tints itself when in use. */
+  background: transparent;
+  flex: 0 0 auto;
+  transition: background var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="pane-prompt"]:focus-within {
+  background: var(--ade-surface);
+}
+
+[data-slot="pane-caret"] {
+  color: var(--ade-accent);
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-md);
+  line-height: 18px;
+  flex: 0 0 auto;
+}
+
+[data-slot="pane-prompt"][data-disabled] [data-slot="pane-caret"] {
+  color: var(--ade-text-weak);
+}
+
+[data-slot="pane-input"] {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--ade-text);
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-md);
+  line-height: 18px;
+  padding: 0;
+  resize: none;
+  max-height: 120px;
+}
+
+[data-slot="pane-input"]:focus {
+  outline: none;
+  box-shadow: none;
+}
+
+[data-slot="pane-input"]::placeholder {
+  color: var(--ade-text-weak);
+}
+
+[data-slot="pane-send-hint"] {
+  flex: 0 0 auto;
+  color: var(--ade-text-weak);
+  font-size: var(--ade-font-sm);
+  line-height: 18px;
+}
+
+/* ── answers ───────────────────────────────────────────────────────────────── */
+
+/*
+ * A permission question is a decision, not a form. The bar is compact and right
+ * aligned, with the affirmative last, where the eye and the pointer finish.
+ */
+/* No border and no ground of its own: the dock already draws the single line
+   that separates this strip from the terminal above it. */
+[data-slot="pane-answers"] {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--ade-space-3);
+  padding: var(--ade-space-2) var(--ade-space-3);
+  flex: 0 0 auto;
+}
+
+[data-slot="pane-answer"] {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ade-space-3);
+  padding: var(--ade-space-2) var(--ade-space-5);
+  border-radius: var(--ade-radius-md);
+  border: 1px solid var(--ade-border-strong);
+  background: var(--ade-raised);
+  color: var(--ade-text-soft);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+  font-weight: var(--ade-weight-medium);
+  cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="pane-answer"]:hover {
+  background: var(--ade-overlay);
+  color: var(--ade-text);
+}
+
+[data-slot="pane-answer"]:active {
+  transform: scale(0.97);
+}
+
+[data-slot="pane-answer"][data-tone="primary"] {
+  border-color: transparent;
+  background: var(--ade-accent);
+  color: var(--ade-accent-fg);
+  font-weight: var(--ade-weight-semibold);
+}
+
+[data-slot="pane-answer"][data-tone="primary"]:hover {
+  background: var(--ade-accent-strong);
+  color: var(--ade-accent-fg);
+}
+
+[data-slot="pane-answer"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-slot="pane-answer-hint"] {
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-xs);
+  opacity: 0.7;
+}
+
+/* ── footer ────────────────────────────────────────────────────────────────── */
+
+/*
+ * A dock, only when there is something a terminal cannot do itself.
+ *
+ * It used to be permanent: a composer and a status strip under every pane,
+ * about twenty-six pixels each, paid six times over in a tiled window. But a
+ * live terminal already takes typing — the composer wrote into the same pty
+ * the emulator does — so below a running session it was a second keyboard for
+ * the same machine, charged in terminal rows. It now appears for a pane with
+ * no terminal to type into, and for the answer buttons of a permission
+ * question, which are real choices and cannot be typed blind.
+ */
+[data-slot="pane-dock"] {
+  display: flex;
+  align-items: flex-end;
+  flex: 0 0 auto;
+  min-width: 0;
+  border-top: 1px solid var(--ade-border);
+  background: var(--ade-raised);
+}
+
+[data-slot="pane-dock"] > [data-slot="pane-prompt"],
+[data-slot="pane-dock"] > [data-slot="pane-answers"] {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+/*
+ * Identity, tree and state ride in the header now.
+ *
+ * As a footer they were a row of their own for a handful of short words, and
+ * the row cost more height than the words needed. The identity group still
+ * truncates and the state still never does: what the session is doing right
+ * now is the thing worth keeping whole.
+ */
+[data-slot="pane-who"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-3);
+  min-width: 0;
+  flex: 0 1 auto;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-xs);
+  color: var(--ade-text-weak);
+}
+
+[data-slot="pane-agent"] {
+  color: var(--ade-text-soft);
+}
+
+/* Agent and mode, activity and elapsed, are two facts each — without a mark
+   between them they read as one broken phrase ("agy auto", "Ragionando 41s"). */
+[data-slot="pane-agent"]::after,
+[data-slot="pane-tree"]::before,
+[data-slot="pane-state"] > span:first-child:not(:only-child)::after {
+  content: "·";
+  color: var(--ade-text-weak);
+}
+
+[data-slot="pane-agent"]::after,
+[data-slot="pane-state"] > span:first-child:not(:only-child)::after {
+  margin-left: var(--ade-space-2);
+}
+
+[data-slot="pane-tree"]::before {
+  margin-right: var(--ade-space-2);
+}
+
+/* An orphaned separator would open the row with a dot that separates nothing. */
+[data-slot="pane-tree"]:first-child::before {
+  content: none;
+}
+
+[data-slot="pane-mode"] {
+  color: var(--ade-text-weak);
+}
+
+[data-slot="pane-tree"] {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ade-space-2);
+  min-width: 0;
+  padding: 0 var(--ade-space-2);
+  border-radius: var(--ade-radius-sm);
+  color: var(--ade-text-weak);
+}
+
+[data-slot="pane-tree-branch"] {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 28ch;
+}
+
+/*
+ * A degraded tree is caution, not failure — the session is working, only with
+ * less isolation than was asked for. Amber marks the two milder degradations;
+ * a fully isolated tree stays on the quiet text ramp.
+ */
+[data-slot="pane-tree"][data-fidelity="stale"],
+[data-slot="pane-tree"][data-fidelity="no-deps"] {
+  color: var(--ade-working);
+}
+
+[data-slot="pane-tree-note"] {
+  color: var(--ade-working);
+}
+
+/* The state never truncates and never wraps: everything else on the row gives
+   way to it, because a pane that cannot say what it is doing is not useful. */
+[data-slot="pane-state"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-3);
+  flex: 0 0 auto;
+  white-space: nowrap;
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-xs);
+  color: var(--ade-text-weak);
+}
+
+[data-slot="pane-activity-word"] {
+  color: var(--pane-status);
+}
+
+[data-slot="pane-meta"] {
+  color: var(--ade-text-weak);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── narrow cards ──────────────────────────────────────────────────────────── */
+
+/*
+ * Four columns on a laptop leaves each card around 300px, and now every fact
+ * the pane carries shares one row with the window buttons. Secondary facts go
+ * first and the status word goes last: a card that cannot say what it is doing
+ * has stopped being useful, while one without a token count has not. The two
+ * buttons are never dropped — they are the only way to resize or close the
+ * pane with a pointer.
+ */
+@container (max-width: 420px) {
+  [data-slot="pane-cost"],
+  [data-slot="pane-tree-note"],
+  [data-slot="pane-mode"] {
+    display: none;
+  }
+}
+
+@container (max-width: 340px) {
+  [data-slot="pane-tokens"],
+  [data-slot="pane-agent"],
+  [data-slot="pane-meta"] {
+    display: none;
+  }
+}
+
+@container (max-width: 260px) {
+  [data-slot="pane-tree"] {
+    display: none;
+  }
+}
+
+/* ── reduced motion ────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  [data-component="session-pane"],
+  [data-slot="pane-actions"],
+  [data-slot="pane-action"],
+  [data-slot="pane-answer"],
+  [data-slot="pane-prompt"] {
+    transition: none;
+  }
+
+  /* Liveness still has to be visible without movement: the edge fills instead
+     of sweeping. */
+  [data-component="session-pane"][data-status="working"]::before,
+  [data-component="session-pane"][data-status="provisioning"]::before {
+    background-image: none;
+    background-color: var(--pane-status);
+    animation: none;
+  }
+}
+
+/* ══ Conchiglia · C2 "Vetro" ══════════════════════════════════════════════════
+ *
+ * The evolution chosen from `sessioni-conchiglia-varianti.html`, after the
+ * sidebar took "Perla". The three rules at the top of this file still hold;
+ * what changes is the shape they are drawn in.
+ *
+ * The terminal takes the whole shell, out to the rounded corners. The header
+ * no longer owns a row above it: it is a pill of frosted glass floating over
+ * the first lines, and what scrolls past underneath shows through. That costs
+ * about two rows of terminal at the top — the one price of this direction —
+ * and buys a pane that reads as one object rather than as a bar with a
+ * terminal hung under it.
+ *
+ * Status moves off the top edge and onto the agent's mark: a halo in the
+ * status colour, which pulses while the session works. The sweep along the
+ * edge is gone with the edge.
+ *
+ * At the end of the file and scoped to the session pane throughout: the base
+ * rules above are shared with the file, browser and video panes, which keep
+ * their bar. Scoping is also what wins the cascade here — `index.css` loads
+ * after this sheet and ties go to it.
+ */
+
+/* ── the shell: the terminal's ground, corner to corner ── */
+[data-component="session-pane"] {
+  background: var(--ade-terminal-bg, var(--ade-sunken));
+  transition: box-shadow var(--ade-dur-fast) var(--ade-ease);
+}
+
+/* No edge: the status lives on the mark now. */
+[data-component="session-pane"]::before {
+  content: none;
+}
+
+/*
+ * Focus is a ring on the shell and a longer shadow, not a line drawn inside.
+ * There is an outside again — the gutter — so the ring can sit on it.
+ */
+[data-component="session-pane"][data-focused] {
+  outline: none;
+  box-shadow:
+    0 0 0 1.5px var(--ade-accent),
+    0 8px 24px light-dark(rgba(0, 0, 0, 0.12), rgba(0, 0, 0, 0.55));
+}
+
+/* ── the header: a pill of glass over the first lines ── */
+[data-component="session-pane"] > [data-slot="pane-header"] {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  right: 6px;
+  z-index: 3;
+  min-height: 30px;
+  padding: 0 var(--ade-space-3);
+  gap: var(--ade-space-4);
+  border: 0;
+  border-radius: var(--ade-radius-full);
+  background: color-mix(in srgb, var(--ade-raised) 78%, transparent);
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  box-shadow:
+    var(--ade-shadow-sm),
+    inset 0 0 0 1px light-dark(rgba(0, 0, 0, 0.05), rgba(255, 255, 255, 0.06));
+  font-family: var(--ade-sans);
+}
+
+[data-component="session-pane"][data-focused] > [data-slot="pane-header"] {
+  box-shadow:
+    var(--ade-shadow-sm),
+    inset 0 0 0 1px var(--ade-accent-soft);
+}
+
+/* The mark in a round chip, with the status as a halo around it. */
+[data-component="session-pane"] [data-slot="pane-identity"] {
+  width: 18px;
+  height: 18px;
+  border-radius: var(--ade-radius-full);
+  background: color-mix(in srgb, var(--pane-status) 18%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--pane-status) 10%, transparent);
+}
+
+/*
+ * Work in progress still needs a sign that is not a word: the halo breathes.
+ *
+ * It used to breathe by animating the chip's own `box-shadow`, and a shadow is
+ * paint: every working pane repainted its header pill on every frame for as
+ * long as the agent ran, which with six busy panes is most of an idle window's
+ * CPU. Now the two ends of the breath are drawn once, each on a pseudo-element
+ * of its own — the resting ring on ::before, the wide one on ::after — and
+ * the breath is a crossfade between them, which the compositor does alone.
+ * At either end it is exactly one of the old keyframes; in between it is a
+ * blend of the two rings rather than a ring of in-between width, which at
+ * two pixels of difference reads the same.
+ *
+ * Shadows on an otherwise empty box, not filled discs: a shadow is not drawn
+ * under its own box, so neither ring tints the translucent chip it surrounds.
+ */
+[data-component="session-pane"][data-status="working"] [data-slot="pane-identity"],
+[data-component="session-pane"][data-status="provisioning"] [data-slot="pane-identity"] {
+  position: relative;
+  box-shadow: none;
+}
+
+[data-component="session-pane"][data-status="working"] [data-slot="pane-identity"]::before,
+[data-component="session-pane"][data-status="working"] [data-slot="pane-identity"]::after,
+[data-component="session-pane"][data-status="provisioning"] [data-slot="pane-identity"]::before,
+[data-component="session-pane"][data-status="provisioning"] [data-slot="pane-identity"]::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  border-radius: inherit;
+  pointer-events: none;
+  animation: ade-pane-halo-rest 1.6s ease-in-out infinite;
+}
+
+[data-component="session-pane"][data-status="working"] [data-slot="pane-identity"]::before,
+[data-component="session-pane"][data-status="provisioning"] [data-slot="pane-identity"]::before {
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--pane-status) 10%, transparent);
+}
+
+[data-component="session-pane"][data-status="working"] [data-slot="pane-identity"]::after,
+[data-component="session-pane"][data-status="provisioning"] [data-slot="pane-identity"]::after {
+  box-shadow: 0 0 0 5px color-mix(in srgb, var(--pane-status) 22%, transparent);
+  opacity: 0;
+  animation-name: ade-pane-halo-peak;
+}
+
+@keyframes ade-pane-halo-rest {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0;
+  }
+}
+
+@keyframes ade-pane-halo-peak {
+  0%,
+  100% {
+    opacity: 0;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+[data-component="session-pane"] [data-slot="pane-title"] {
+  font-weight: var(--ade-weight-semibold);
+}
+
+[data-component="session-pane"] [data-slot="pane-title"][data-renamable] {
+  cursor: text;
+}
+
+/*
+ * The title while it is being edited: the same slot, the same face, the same
+ * width, so the swap from text to field moves nothing on the row. Only the
+ * accent underline and a whisper of ground say that typing now does something.
+ */
+[data-component="session-pane"] [data-slot="pane-title-input"] {
+  flex: 1 1 0;
+  min-width: 0;
+  margin: 0;
+  padding: 0 4px;
+  border: 0;
+  border-radius: 6px;
+  outline: none;
+  background: color-mix(in srgb, var(--ade-accent) 10%, transparent);
+  box-shadow: inset 0 -1.5px 0 var(--ade-accent);
+  font: inherit;
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+  font-weight: var(--ade-weight-semibold);
+  letter-spacing: -0.012em;
+  line-height: inherit;
+  color: var(--ade-text);
+}
+
+[data-component="session-pane"] [data-slot="pane-title-input"]::selection {
+  background: color-mix(in srgb, var(--ade-accent) 30%, transparent);
+}
+
+/* Meta in the same face as the title: a pill of glass is one object, and a
+   change of typeface halfway along splits it in two. */
+[data-component="session-pane"] [data-slot="pane-who"],
+[data-component="session-pane"] [data-slot="pane-state"],
+[data-component="session-pane"] [data-slot="pane-tokens"],
+[data-component="session-pane"] [data-slot="pane-cost"] {
+  font-family: var(--ade-sans);
+}
+
+/* The status word wears its colour as a tint, not only as ink. */
+[data-component="session-pane"] [data-slot="pane-activity-word"] {
+  padding: 1px var(--ade-space-4);
+  border-radius: var(--ade-radius-full);
+  background: color-mix(in srgb, var(--pane-status) 14%, transparent);
+  font-weight: var(--ade-weight-medium);
+}
+
+/* The dot that split "Ragionando 41s" is drawn on the word itself, and a
+   word with a ground of its own would carry the dot inside the pill. The
+   pill is the separation now. */
+[data-component="session-pane"] [data-slot="pane-state"] > span:first-child:not(:only-child)::after {
+  content: none;
+}
+
+[data-component="session-pane"] [data-slot="pane-action"] {
+  width: 20px;
+  height: 20px;
+  border-radius: var(--ade-radius-full);
+}
+
+/*
+ * Room for the pill.
+ *
+ * The header is out of flow, so the body would start under it. Forty-two
+ * pixels — six of margin, thirty of pill, six of air — is the top padding that
+ * keeps the first prompt readable, and it is the two rows this direction
+ * costs. Bottom and sides stay at zero: those are terminal columns.
+ */
+[data-component="session-pane"] [data-slot="pane-terminal"],
+[data-component="session-pane"] [data-slot="pane-transcript"],
+[data-component="session-pane"] [data-slot="pane-plugin"] {
+  padding-top: 42px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* The halo holds at its wider size instead of breathing: the wide ring on,
+     the resting one off, and nothing moving between them. */
+  [data-component="session-pane"][data-status="working"] [data-slot="pane-identity"]::before,
+  [data-component="session-pane"][data-status="working"] [data-slot="pane-identity"]::after,
+  [data-component="session-pane"][data-status="provisioning"] [data-slot="pane-identity"]::before,
+  [data-component="session-pane"][data-status="provisioning"] [data-slot="pane-identity"]::after {
+    animation: none;
+  }
+  [data-component="session-pane"][data-status="working"] [data-slot="pane-identity"]::before,
+  [data-component="session-pane"][data-status="provisioning"] [data-slot="pane-identity"]::before {
+    opacity: 0;
+  }
+  [data-component="session-pane"][data-status="working"] [data-slot="pane-identity"]::after,
+  [data-component="session-pane"][data-status="provisioning"] [data-slot="pane-identity"]::after {
+    opacity: 1;
+  }
+}
+
+/* ══ Proposta A · Barra densa (S8) ═════════════════════════════════════════ */
+
+:root {
+  --st-ask: var(--ade-ansi-magenta);
+  --st-limit: color-mix(in srgb, var(--ade-working) 45%, var(--ade-error));
+  --on-st: light-dark(#ffffff, #0e0c0c);
+}
+
+/* Canonical 6-state status colors on session pane */
+[data-component="session-pane"] {
+  --st: var(--ade-text-weak);
+}
+[data-component="session-pane"][data-st="work"] {
+  --st: var(--ade-working);
+  --pane-status: var(--ade-working);
+}
+[data-component="session-pane"][data-st="perm"] {
+  --st: var(--ade-waiting);
+  --pane-status: var(--ade-waiting);
+}
+[data-component="session-pane"][data-st="ask"] {
+  --st: var(--st-ask);
+  --pane-status: var(--st-ask);
+}
+[data-component="session-pane"][data-st="err"] {
+  --st: var(--ade-error);
+  --pane-status: var(--ade-error);
+}
+[data-component="session-pane"][data-st="limit"] {
+  --st: var(--st-limit);
+  --pane-status: var(--st-limit);
+}
+[data-component="session-pane"][data-st="idle"] {
+  --st: var(--ade-done);
+  --pane-status: var(--ade-done);
+}
+
+/* State vector icons: stroke-based on 16px grid */
+.ic {
+  width: 14px;
+  height: 14px;
+  flex: 0 0 auto;
+  color: var(--st);
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  overflow: visible;
+}
+.ic .f {
+  fill: currentColor;
+  stroke: none;
+}
+.ic-work {
+  animation: ade-spin 1s linear infinite;
+}
+.ic-perm {
+  animation: ade-attn 1.6s steps(1, end) infinite;
+}
+.ic-ask .d1,
+.ic-ask .d2,
+.ic-ask .d3 {
+  animation: ade-dot 1.2s ease-in-out infinite;
+}
+.ic-ask .d2 {
+  animation-delay: 0.2s;
+}
+.ic-ask .d3 {
+  animation-delay: 0.4s;
+}
+
+@keyframes ade-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+@keyframes ade-attn {
+  0%,
+  70% {
+    opacity: 1;
+  }
+  85% {
+    opacity: 0.3;
+  }
+}
+@keyframes ade-dot {
+  0%,
+  100% {
+    opacity: 0.3;
+  }
+  40% {
+    opacity: 1;
+  }
+}
+
+/* Dense header pill layout */
+.pill.hA {
+  position: absolute;
+  top: 6px;
+  left: 6px;
+  right: 6px;
+  height: 30px;
+  min-height: 30px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 6px 0 9px;
+  border: 0;
+  border-radius: var(--ade-radius-full);
+  background: color-mix(in srgb, var(--ade-raised) 90%, transparent);
+  box-shadow:
+    var(--ade-shadow-sm),
+    inset 0 0 0 1px light-dark(rgba(0, 0, 0, 0.06), rgba(255, 255, 255, 0.06));
+  white-space: nowrap;
+  -webkit-backdrop-filter: blur(10px);
+  backdrop-filter: blur(10px);
+  font-family: var(--ade-sans);
+  z-index: 3;
+}
+
+.hA .logo {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+}
+
+.hA .nm {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: -0.012em;
+  color: var(--ade-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 4ch;
+  flex: 0 1 auto;
+}
+
+.hA .chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 20px;
+  padding: 0 8px 0 5px;
+  border: 0;
+  border-radius: var(--ade-radius-full);
+  background: color-mix(in srgb, var(--st) 14%, transparent);
+  color: var(--ade-text-soft);
+  font: 500 11px / 1 var(--ade-sans);
+  white-space: nowrap;
+  min-width: 0;
+  overflow: hidden;
+  flex: 0 100 auto;
+  /* Inherited, so the chip shows the header's grab cursor: it is part of the
+     handle, not a control. */
+  cursor: inherit;
+}
+
+/* The chip takes focus so its state can be read out, and a keyboard user has
+   to see where the focus is even though there is nothing to press. */
+.hA .chip:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+.hA .lbl {
+  color: var(--st);
+  flex: 0 0 auto;
+}
+
+.hA .trunc {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+.hA .sp {
+  flex: 1 1 0;
+  min-width: 0;
+}
+
+.hA .mono {
+  font-family: var(--ade-mono);
+  font-variant-numeric: tabular-nums;
+}
+
+.hA .tok {
+  font: 10px var(--ade-mono);
+  color: var(--ade-text-weak);
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.hA .a-state {
+  flex: 0 100 auto;
+}
+
+.hA .a-q {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: 0 0 auto;
+}
+
+.hA .q,
+.hA [data-lv] {
+  --qc: var(--ade-text-soft);
+}
+.hA [data-lv="low"] {
+  --qc: var(--ade-working);
+}
+.hA [data-lv="crit"] {
+  --qc: var(--ade-error);
+}
+
+.hA .qbar {
+  display: inline-block;
+  width: 28px;
+  height: 4px;
+  border-radius: var(--ade-radius-full);
+  background: var(--ade-active);
+  overflow: hidden;
+  flex: 0 0 auto;
+}
+
+.hA .qbar i {
+  display: block;
+  height: 100%;
+  width: calc(var(--r, 0) * 100%);
+  background: var(--qc);
+  border-radius: inherit;
+}
+
+.hA .qv {
+  font: 600 10px var(--ade-mono);
+  color: var(--qc);
+  font-variant-numeric: tabular-nums;
+}
+
+.hA [data-lv="crit"] .qv::before {
+  content: "!";
+  margin-right: 1px;
+}
+
+.hA .qk,
+.hA .qr {
+  font: 10px var(--ade-mono);
+  color: var(--ade-text-weak);
+  white-space: nowrap;
+}
+
+.hA .a-br {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--ade-text-weak);
+  font: 10px var(--ade-mono);
+  min-width: 0;
+  flex: 0 50 auto;
+}
+
+.hA .a-brt {
+  max-width: 22ch;
+}
+
+/* The tree's fidelity note, next to the branch: amber, because a tree that is
+   behind or has no dependencies is a condition, not a failure. */
+.hA .a-brn {
+  color: var(--ade-working);
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+.hA .a-br[data-fidelity="pending"] {
+  font-style: italic;
+}
+
+.hA .a-mode {
+  font: 10px var(--ade-mono);
+  color: var(--ade-text-weak);
+  white-space: nowrap;
+  flex: 0 0 auto;
+}
+
+/* An old reading: the last figure there is, dimmed, with its time in place of
+   the countdown. Kept visible even when narrow, since the time is what says
+   the figure is old. */
+.hA [data-stale] .qbar,
+.hA [data-stale] .qv {
+  opacity: 0.55;
+}
+
+.hA [data-stale] .qat {
+  display: inline;
+  font-style: italic;
+}
+
+/* "quota n/d": no bar and no colour, so an absent reading never looks like a
+   low one. */
+.hA [data-lv="na"] .qv {
+  color: var(--ade-text-weak);
+  font-weight: 500;
+}
+
+.hA .acts {
+  display: flex;
+  gap: 2px;
+  flex: 0 0 auto;
+}
+
+.hA .act {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ade-radius-full);
+  background: transparent;
+  color: var(--ade-text-weak);
+  cursor: pointer;
+  flex: 0 0 auto;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease);
+}
+
+.hA .act:hover {
+  background: var(--ade-hover);
+  color: var(--ade-text);
+}
+
+.hA .act:focus-visible {
+  border-radius: var(--ade-radius-full);
+  color: var(--ade-text);
+}
+
+.hA .more {
+  display: none;
+}
+
+.hA .gi {
+  width: 12px;
+  height: 12px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.5;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.hA .gi .f {
+  fill: currentColor;
+  stroke: none;
+}
+
+/* ── Container queries (ordine di collasso Proposal A) ── */
+@container (max-width: 720px) {
+  .hA .tok,
+  .hA .a-mode,
+  .hA .a-brt,
+  .hA .qr {
+    display: none;
+  }
+  .hA [data-urg] .qr {
+    display: inline;
+  }
+}
+
+@container (max-width: 400px) {
+  .hA .a-det,
+  .hA .a-el,
+  .hA .a-br,
+  .hA .qbar,
+  .hA .qk,
+  .hA .acts {
+    display: none;
+  }
+  .hA .more {
+    display: grid;
+  }
+  .hA .a-state {
+    flex: 0 0 auto;
+  }
+}
+
+@container (max-width: 240px) {
+  .hA {
+    gap: 5px;
+    padding-left: 7px;
+  }
+  .hA > .logo,
+  .hA .lbl {
+    display: none;
+  }
+  .hA .a-state {
+    padding: 0;
+    width: 20px;
+    justify-content: center;
+    flex: 0 0 auto;
+  }
+  .hA [data-urg] .qv {
+    display: none;
+  }
+  .hA [data-urg] .qr {
+    display: inline;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ic-work,
+  .ic-perm,
+  .ic-ask .d1,
+  .ic-ask .d2,
+  .ic-ask .d3 {
+    animation: none !important;
+  }
+}

@@ -50,3 +50,14 @@ area/nix:
       - any-glob-to-any-file:
           - "**/*.nix"
           - "flake.lock"
+
+area/ade:
+  - changed-files:
+      - any-glob-to-any-file:
+          - "packages/ade/**"
+          - "packages/plugin/src/v2/ade/**"
+          - ".github/workflows/ade-*.yml"
+
+area/voice:
+  - changed-files:
+      - any-glob-to-any-file: "packages/voice/**"

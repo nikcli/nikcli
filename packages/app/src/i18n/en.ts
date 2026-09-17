@@ -893,6 +893,13 @@ export const dict = {
   "settings.worktrees.open": "Open",
   "settings.worktrees.current": "Current",
   "visualEditor.worktree.label": "Worktree",
+  "command.browser.designMode": "Toggle design mode",
+  "command.browser.designMode.on": "On — click elements to inspect and edit them",
+  "command.browser.designMode.off": "Off — the page behaves normally",
+  "browser.console.sendAll": "Send all to chat",
+  "browser.console.sent": "{{count}} errors sent to chat",
+  "browser.console.sent.one": "1 error sent to chat",
+  "browser.console.findCause": "Find the cause and fix it.",
 
   "settings.permissions.title": "Permissions",
   "settings.permissions.description": "Control what tools the server can use by default.",

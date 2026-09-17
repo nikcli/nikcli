@@ -1,0 +1,90 @@
+name: ade-checks
+
+# What a commit to ADE has to pass: subjects in the release format, then
+# typecheck and tests of ADE and voice. Runs on every push and pull request
+# that touches them, and `ade-auto-release` calls it on the exact commit it is
+# about to tag, so nothing red is ever released.
+#
+# Rust is not built here: `ade-release` builds it on every platform and
+# publishes nothing unless all of them succeed.
+on:
+  push:
+    branches: [feat/ade]
+    paths:
+      - "packages/ade/**"
+      - "packages/voice/**"
+      - "packages/plugin/src/v2/ade/**"
+      - ".github/workflows/ade-*.yml"
+  pull_request:
+    branches: [feat/ade]
+    paths:
+      - "packages/ade/**"
+      - "packages/voice/**"
+      - "packages/plugin/src/v2/ade/**"
+      - ".github/workflows/ade-*.yml"
+  workflow_call:
+    inputs:
+      ref:
+        description: "Commit to check"
+        required: true
+        type: string
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  commits:
+    # Inside a workflow_call `github.event_name` is the caller's event, so the
+    # input is what tells a release gate (subjects already checked on push) apart.
+    if: github.repository == 'SandroHub013/nikcli' && inputs.ref == ''
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - uses: oven-sh/setup-bun@0c5077e51419868618aeaa5fe8019c62421857d6 # v2.2.0
+        with:
+          bun-version-file: package.json
+
+      - name: Commit subjects
+        shell: bash
+        env:
+          BEFORE: ${{ github.event.before }}
+          BASE: ${{ github.event.pull_request.base.sha }}
+          HEAD: ${{ github.event.pull_request.head.sha || github.sha }}
+        run: |
+          set -euo pipefail
+          FROM="${BASE:-$BEFORE}"
+          # A new branch pushes from the zero sha; check what it adds over feat/ade.
+          if [ -z "$FROM" ] || [ "$FROM" = "0000000000000000000000000000000000000000" ]; then
+            FROM="$(git merge-base origin/feat/ade "$HEAD")"
+          fi
+          bun packages/ade/script/release-plan.ts check "$FROM..$HEAD"
+
+  test:
+    if: github.repository == 'SandroHub013/nikcli'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ inputs.ref || github.sha }}
+
+      - uses: ./.github/actions/setup-bun
+
+      - name: ADE typecheck
+        working-directory: packages/ade
+        run: bun run typecheck
+
+      - name: ADE tests
+        working-directory: packages/ade
+        run: bun run test
+
+      - name: Voice typecheck
+        working-directory: packages/voice
+        run: bun run typecheck
+
+      - name: Voice tests
+        working-directory: packages/voice
+        run: bun run test

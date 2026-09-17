@@ -1,0 +1,90 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Plancia — sessioni vive per progetto"
+    },
+    {
+      "file": "Avvio.dc.html",
+      "x": 1500,
+      "y": 1000,
+      "w": 1200,
+      "h": 900,
+      "title": "Avvio sessione — cosa parte, prima che parta"
+    },
+    {
+      "file": "Banco.dc.html",
+      "x": 1500,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Banco — file, editor, browser, terminali"
+    },
+    {
+      "file": "Alberi.dc.html",
+      "x": 3000,
+      "y": 0,
+      "w": 1440,
+      "h": 900,
+      "title": "Alberi — workspace e branch di tutti i progetti"
+    }
+  ],
+  "annotations": [
+    {
+      "id": "confine",
+      "x": -360,
+      "y": -420,
+      "w": 320,
+      "text": "QUESTO E' ADE, non un rifacimento della app principale.\n\nDal proprietario, 20 agosto: la desktop app deve restare una CHAT app desktop, con il concetto strutturale e architettonico che ha gia'. Miglioramenti e rifiniture si, stravolgimento no.\n\nQuindi queste schermate vivono su un branch a parte e come ADE.\n\nL'unico pezzo che lui ha detto esplicitamente di volere anche su main: il pannello terminali che ne mostra di piu' in questo modo."
+    },
+    {
+      "id": "regola-plancia",
+      "x": -360,
+      "y": 0,
+      "w": 320,
+      "text": "Ogni riquadro e' una sessione VIVA, non il suo riassunto: coda della trascrizione, input proprio, riga di stato con agente, modello e token.\n\nSi risponde dalla plancia. Si apre solo quando la coda non basta."
+    },
+    {
+      "id": "regola-progetto",
+      "x": -360,
+      "y": 300,
+      "w": 320,
+      "text": "Il progetto e' l'unita'.\n\nI terminali appartengono al progetto, non alla sessione: il server di sviluppo sopravvive alla sessione che lo ha acceso.\n\nBranch e worktree stanno nell'intestazione, non in un dialogo: quale albero un agente sta per toccare e' la prima cosa da sapere."
+    },
+    {
+      "id": "regola-finestre",
+      "x": -360,
+      "y": 640,
+      "w": 320,
+      "text": "Le finestre apribili sono nominate nella barra: File, Editor, Terminali, Browser, Review.\n\nNominarle e' la differenza tra 'i pannelli esistono' e 'so che posso aprirne uno'."
+    },
+    {
+      "id": "token",
+      "x": -360,
+      "y": 900,
+      "w": 320,
+      "text": "Tema scuro dell'app, valori risolti dalla sorgente:\nfondo #131010 · superficie #151313\nbordi #f7ecec3f e #f5e8e831\ntesto #fdfbfbf0 / #fcf9f9b2 / #faf5f477\ninterattivo #89b5ff\nverde #12c905 · ambra #ffb224 · rosso #fc533a\nInter con ss03, IBM Plex Mono, raggi 4/5/6/8"
+    },
+    {
+      "id": "regola-alberi",
+      "x": -360,
+      "y": 1200,
+      "w": 320,
+      "text": "Un albero e' occupato o libero, e l'occupazione e' la prima colonna.\n\nDue agenti nello stesso albero si sovrascrivono le modifiche: qui si vede prima che succeda, e la barra in fondo propone di spostarne uno.\n\nQuesto e' il pezzo che nel banco esisteva solo come selettore."
+    },
+    {
+      "id": "regola-avvio",
+      "x": -360,
+      "y": 1560,
+      "w": 320,
+      "text": "E' quello che apre il pulsante Sessione sulla plancia.\n\nResta cliccabile: preset, agente e conteggio cambiano davvero l'anteprima.\n\nConvertita al tema scuro per stare nello stesso flusso: chiara sembrava un'altra applicazione, non il passo dopo."
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  }
+}

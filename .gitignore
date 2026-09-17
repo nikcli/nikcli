@@ -27,6 +27,7 @@ target
 # Local dev files
 nikcli-dev
 logs/
+.ade-test/
 *.bun-build
 packages/nikcli/bun/
 
@@ -39,7 +40,15 @@ packages/bench-tui/bun.lock
 .opencode/references/effect-smol/
 .scratch/
 
+.cargo-ade/
+packages/ade/dist/
+packages/ade/src-tauri/target/
+.tmp-build/
+.ade-webview/
+.ade-appdata/
+.ade-trees/
 
 # Local wrangler state (D1/KV/R2 emulation), written by `wrangler dev` and
 # `d1 migrations apply --local`. Machine-local, never committed.
 .wrangler/
+packages/ade/.lavish/

@@ -1,0 +1,959 @@
+/*
+ * The bot section: three columns.
+ *
+ * Roster on the left, the conversation in the middle, the card on the right.
+ * The roster is drawn like a contact list — a face, a name, the last line,
+ * the time — because that is the layout people already read at a glance.
+ * Nothing here invents a colour: faces use the ANSI palette, everything else
+ * the tokens of the shell.
+ */
+
+[data-component="ade-bots"] {
+  display: flex;
+  align-items: stretch;
+  flex: 1;
+  min-height: 0;
+  min-width: 0;
+  background: var(--ade-bg);
+  font-family: var(--ade-sans);
+  color: var(--ade-text);
+}
+
+/* ── the face ────────────────────────────────────────────────────────────── */
+
+/*
+ * A shape, a colour and two eyes, all CSS.
+ *
+ * The shape is an inner element so that `clip-path` and a rotation can be
+ * applied to it without moving the eyes, which are the outer element's
+ * pseudo-elements and stay put. Sizes scale with `--bot-size`, so the same
+ * markup is a 20px mark beside a message and a 72px portrait on the card.
+ */
+[data-slot="bots-face"] {
+  --bot-size: 40px;
+  --bot-color: var(--ade-accent);
+  position: relative;
+  display: inline-block;
+  flex: 0 0 auto;
+  width: var(--bot-size);
+  height: var(--bot-size);
+  vertical-align: middle;
+}
+
+[data-slot="bots-face-shape"] {
+  position: absolute;
+  inset: 0;
+  display: block;
+  background: var(--bot-color);
+  transition: border-radius var(--ade-dur) var(--ade-ease);
+}
+
+[data-slot="bots-face"]::before,
+[data-slot="bots-face"]::after {
+  content: "";
+  position: absolute;
+  top: 38%;
+  z-index: 1;
+  width: calc(var(--bot-size) * 0.095);
+  height: calc(var(--bot-size) * 0.28);
+  border-radius: var(--ade-radius-full);
+  background: #fff;
+  transform: rotate(-14deg);
+  transition:
+    transform var(--ade-dur) var(--ade-ease),
+    height var(--ade-dur) var(--ade-ease);
+}
+[data-slot="bots-face"]::before {
+  left: 39%;
+}
+[data-slot="bots-face"]::after {
+  left: 56%;
+}
+
+[data-slot="bots-face"][data-shape="circle"] [data-slot="bots-face-shape"] {
+  border-radius: 50%;
+}
+[data-slot="bots-face"][data-shape="square"] [data-slot="bots-face-shape"] {
+  border-radius: 24%;
+}
+[data-slot="bots-face"][data-shape="egg"] [data-slot="bots-face-shape"] {
+  border-radius: 50% 50% 50% 50% / 62% 62% 38% 38%;
+}
+[data-slot="bots-face"][data-shape="blob"] [data-slot="bots-face-shape"] {
+  border-radius: 62% 38% 55% 45% / 48% 60% 40% 52%;
+}
+[data-slot="bots-face"][data-shape="hex"] [data-slot="bots-face-shape"] {
+  clip-path: polygon(50% 2%, 96% 26%, 96% 74%, 50% 98%, 4% 74%, 4% 26%);
+}
+[data-slot="bots-face"][data-shape="tri"] [data-slot="bots-face-shape"] {
+  clip-path: polygon(50% 4%, 100% 100%, 0 100%);
+}
+[data-slot="bots-face"][data-shape="tri"]::before,
+[data-slot="bots-face"][data-shape="tri"]::after {
+  top: 52%;
+}
+[data-slot="bots-face"][data-shape="drop"] [data-slot="bots-face-shape"] {
+  border-radius: 0 50% 50% 50%;
+  transform: rotate(45deg) scale(0.86);
+}
+[data-slot="bots-face"][data-shape="pill"] [data-slot="bots-face-shape"] {
+  border-radius: var(--ade-radius-full);
+  inset: 12% 0;
+}
+[data-slot="bots-face"][data-shape="cloud"] [data-slot="bots-face-shape"] {
+  border-radius: 50%;
+  transform: scale(0.72) translate(-4%, 14%);
+}
+[data-slot="bots-face"][data-shape="cloud"] [data-slot="bots-face-shape"]::before,
+[data-slot="bots-face"][data-shape="cloud"] [data-slot="bots-face-shape"]::after {
+  content: "";
+  position: absolute;
+  background: inherit;
+  border-radius: 50%;
+}
+[data-slot="bots-face"][data-shape="cloud"] [data-slot="bots-face-shape"]::before {
+  width: 74%;
+  height: 74%;
+  left: 34%;
+  top: -22%;
+}
+[data-slot="bots-face"][data-shape="cloud"] [data-slot="bots-face-shape"]::after {
+  width: 78%;
+  height: 78%;
+  left: 62%;
+  top: 6%;
+}
+
+/* The eyes: where they look is what the bot is doing. Two strokes, never a drawing. */
+[data-slot="bots-face"][data-expression="busy"]::before,
+[data-slot="bots-face"][data-expression="busy"]::after {
+  transform: rotate(-14deg) translateY(-22%);
+}
+[data-slot="bots-face"][data-expression="waiting"]::before,
+[data-slot="bots-face"][data-expression="waiting"]::after {
+  height: calc(var(--bot-size) * 0.34);
+  transform: rotate(0) translateY(-8%);
+}
+[data-slot="bots-face"][data-expression="off"]::before,
+[data-slot="bots-face"][data-expression="off"]::after {
+  height: calc(var(--bot-size) * 0.09);
+  transform: rotate(0) translateY(60%);
+}
+[data-slot="bots-face"][data-expression="off"] [data-slot="bots-face-shape"] {
+  opacity: 0.55;
+}
+[data-slot="bots-face"][data-expression="error"]::before {
+  transform: rotate(-30deg);
+}
+[data-slot="bots-face"][data-expression="error"]::after {
+  transform: rotate(30deg);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-slot="bots-face"]::before,
+  [data-slot="bots-face"]::after,
+  [data-slot="bots-face-shape"] {
+    transition: none;
+  }
+}
+
+/* ── the roster ──────────────────────────────────────────────────────────── */
+
+/* Drawn inside the sidebar, in place of its sections: the column's width,
+   background and foot are the sidebar's own. */
+[data-component="ade-bots-roster"] {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  font-family: var(--ade-sans);
+  color: var(--ade-text);
+}
+
+[data-slot="bots-roster-head"] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--ade-space-4) var(--ade-space-5) var(--ade-space-2);
+}
+
+[data-slot="bots-roster-title"] {
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ade-text-weak);
+}
+
+[data-slot="bots-new"] {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-full);
+  background: var(--ade-raised);
+  color: var(--ade-text-soft);
+  font-size: var(--ade-font-lg);
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  [data-slot="bots-new"]:hover {
+    background: var(--ade-hover);
+    color: var(--ade-text);
+  }
+}
+
+[data-slot="bots-new"]:active {
+  transform: scale(0.92);
+}
+
+[data-slot="bots-new"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-slot="bots-roster-empty"],
+[data-slot="bots-blank"] {
+  margin: 0;
+  padding: var(--ade-space-6);
+  color: var(--ade-text-weak);
+  font-size: var(--ade-font-sm);
+  line-height: var(--ade-leading);
+}
+
+/* The three at the top, large. A row of portraits, names under them. */
+[data-slot="bots-pinned"] {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--ade-space-2);
+  padding: var(--ade-space-2) var(--ade-space-4) var(--ade-space-5);
+  border-bottom: 1px solid var(--ade-border-subtle);
+}
+
+[data-slot="bots-pin"] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ade-space-4);
+  min-width: 0;
+  padding: var(--ade-space-4) var(--ade-space-2);
+  border: 0;
+  border-radius: var(--ade-radius-lg);
+  background: transparent;
+  color: var(--ade-text-soft);
+  font-family: inherit;
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  [data-slot="bots-pin"]:hover {
+    background: var(--ade-hover);
+  }
+}
+[data-slot="bots-pin"][data-active="true"] {
+  background: var(--ade-active);
+  color: var(--ade-text);
+}
+[data-slot="bots-pin"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-slot="bots-pin-name"] {
+  max-width: 100%;
+  font-size: var(--ade-font-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-slot="bots-list"] {
+  display: flex;
+  flex-direction: column;
+  padding: var(--ade-space-2) var(--ade-space-3);
+  gap: 1px;
+}
+
+/* A contact row: face, name over the last line, time at the right. */
+[data-slot="bots-row"] {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  gap: var(--ade-space-4);
+  width: 100%;
+  padding: var(--ade-space-3) var(--ade-space-3);
+  border: 0;
+  border-radius: var(--ade-radius-md);
+  background: transparent;
+  color: var(--ade-text);
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  [data-slot="bots-row"]:hover {
+    background: var(--ade-hover);
+  }
+}
+[data-slot="bots-row"][data-active="true"] {
+  background: var(--ade-active);
+}
+[data-slot="bots-row"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-slot="bots-row-text"] {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  gap: 1px;
+}
+
+[data-slot="bots-row-name"] {
+  font-size: var(--ade-font-md);
+  font-weight: var(--ade-weight-semibold);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-slot="bots-row-line"] {
+  font-size: var(--ade-font-sm);
+  color: var(--ade-text-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-slot="bots-row"][data-status="working"] [data-slot="bots-row-line"] {
+  color: var(--ade-working);
+}
+[data-slot="bots-row"][data-status="waiting"] [data-slot="bots-row-line"] {
+  color: var(--ade-waiting);
+}
+[data-slot="bots-row"][data-status="error"] [data-slot="bots-row-line"] {
+  color: var(--ade-error);
+}
+
+[data-slot="bots-row-when"] {
+  align-self: start;
+  padding-top: 2px;
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-xs);
+  color: var(--ade-text-weak);
+  white-space: nowrap;
+}
+
+[data-slot="bots-row"][data-status="working"] [data-slot="bots-row-when"] {
+  color: var(--ade-working);
+}
+[data-slot="bots-row"][data-status="waiting"] [data-slot="bots-row-when"] {
+  color: var(--ade-waiting);
+}
+
+/* ── the middle ──────────────────────────────────────────────────────────── */
+
+[data-slot="bots-main"] {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+[data-slot="bots-main-scroll"] {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--ade-space-7);
+}
+
+[data-slot="bots-thread"] {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+[data-slot="bots-messages"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-5);
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  padding: var(--ade-space-7) var(--ade-space-8);
+}
+
+[data-slot="bots-thread-empty"] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ade-space-4);
+  margin: auto;
+  max-width: 44ch;
+  text-align: center;
+  padding: var(--ade-space-9) 0;
+}
+
+[data-slot="bots-thread-empty-name"] {
+  margin: var(--ade-space-3) 0 0;
+  font-size: var(--ade-font-xl);
+  font-weight: var(--ade-weight-semibold);
+}
+
+[data-slot="bots-thread-empty-text"] {
+  margin: 0;
+  color: var(--ade-text-soft);
+  font-size: var(--ade-font-md);
+  line-height: var(--ade-leading);
+}
+
+/* A message: the face beside what the bot said; what you said, on the right in a bubble. */
+[data-slot="bots-msg"] {
+  display: grid;
+  grid-template-columns: 24px minmax(0, 1fr);
+  gap: var(--ade-space-4);
+  align-items: start;
+}
+
+[data-slot="bots-msg"][data-role="user"] {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+[data-slot="bots-msg-body"] {
+  min-width: 0;
+}
+
+[data-slot="bots-msg-text"] {
+  margin: 0;
+  max-width: 68ch;
+  font-size: var(--ade-font-md);
+  line-height: var(--ade-leading);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+[data-slot="bots-msg"][data-role="user"] [data-slot="bots-msg-text"] {
+  margin-left: auto;
+  width: fit-content;
+  padding: var(--ade-space-3) var(--ade-space-5);
+  border: 1px solid color-mix(in srgb, var(--ade-accent) 30%, transparent);
+  border-radius: var(--ade-radius-lg);
+  background: var(--ade-accent-soft);
+}
+
+[data-slot="bots-msg"][data-role="error"] [data-slot="bots-msg-text"] {
+  color: var(--ade-error);
+}
+
+/* A tool: name, what it did, output behind a click. */
+[data-slot="bots-tool"] {
+  max-width: 68ch;
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-md);
+  background: var(--ade-surface);
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-xs);
+  color: var(--ade-text-soft);
+}
+
+[data-slot="bots-tool-head"] {
+  display: flex;
+  gap: var(--ade-space-4);
+  align-items: baseline;
+  padding: var(--ade-space-3) var(--ade-space-5);
+  cursor: pointer;
+  list-style: none;
+}
+
+[data-slot="bots-tool-head"]::-webkit-details-marker {
+  display: none;
+}
+[data-slot="bots-tool-head"]::before {
+  content: "▸";
+  color: var(--ade-text-weak);
+}
+[data-slot="bots-tool"][open] [data-slot="bots-tool-head"]::before {
+  content: "▾";
+}
+
+[data-slot="bots-tool-name"] {
+  color: var(--ade-text);
+  font-weight: var(--ade-weight-medium);
+}
+
+[data-slot="bots-tool-title"] {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+[data-slot="bots-tool-output"] {
+  margin: 0;
+  max-height: 16rem;
+  overflow: auto;
+  padding: var(--ade-space-3) var(--ade-space-5) var(--ade-space-4);
+  border-top: 1px solid var(--ade-border-subtle);
+  color: var(--ade-text-weak);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+/* The question the bot is waiting on: one line, three answers. */
+[data-slot="bots-permission"] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ade-space-4);
+  max-width: 68ch;
+  padding: var(--ade-space-4) var(--ade-space-5);
+  border: 1px solid var(--ade-waiting);
+  border-radius: var(--ade-radius-md);
+  background: var(--ade-waiting-bg);
+  font-size: var(--ade-font-md);
+}
+
+[data-slot="bots-permission-text"] {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+[data-slot="bots-permission-text"] code {
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-sm);
+}
+
+[data-slot="bots-permission-actions"] {
+  display: inline-flex;
+  gap: var(--ade-space-3);
+  margin-left: auto;
+}
+
+[data-slot="bots-typing"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-4);
+  color: var(--ade-text-weak);
+  font-size: var(--ade-font-sm);
+}
+
+/* The other bots, one tap from being written to. */
+[data-slot="bots-mentions"] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ade-space-3);
+  padding: 0 var(--ade-space-8) var(--ade-space-3);
+}
+
+[data-slot="bots-mention"] {
+  padding: 2px var(--ade-space-4);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-sm);
+  background: var(--ade-raised);
+  color: var(--ade-text-soft);
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-xs);
+  cursor: pointer;
+}
+
+[data-slot="bots-mention"]:hover {
+  border-color: var(--ade-waiting);
+  color: var(--ade-waiting);
+}
+
+[data-slot="bots-composer"] {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--ade-space-4);
+  margin: 0 var(--ade-space-8) var(--ade-space-7);
+  padding: var(--ade-space-4) var(--ade-space-5);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-lg);
+  background: var(--ade-surface);
+}
+
+[data-slot="bots-composer"]:focus-within {
+  border-color: var(--ade-border-strong);
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-slot="bots-composer-field"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-height: 8rem;
+  padding: var(--ade-space-2) 0;
+  border: 0;
+  background: transparent;
+  color: var(--ade-text);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+  line-height: var(--ade-leading);
+  resize: none;
+  field-sizing: content;
+}
+
+[data-slot="bots-composer-field"]:focus {
+  outline: none;
+}
+
+[data-slot="bots-composer-cap"] {
+  flex: 0 0 auto;
+  align-self: center;
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-xs);
+  color: var(--ade-text-weak);
+  white-space: nowrap;
+}
+
+/* ── the card ────────────────────────────────────────────────────────────── */
+
+[data-slot="bots-card"] {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  width: 260px;
+  min-height: 0;
+  border-left: 1px solid var(--ade-border);
+  background: var(--ade-surface);
+  overflow-y: auto;
+}
+
+[data-slot="bots-card-body"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-6);
+  padding: var(--ade-space-7) var(--ade-space-6);
+}
+
+[data-slot="bots-card-head"] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ade-space-3);
+  text-align: center;
+}
+
+[data-slot="bots-card-name"] {
+  margin: var(--ade-space-3) 0 0;
+  font-size: var(--ade-font-xl);
+  font-weight: var(--ade-weight-semibold);
+  overflow-wrap: anywhere;
+}
+
+[data-slot="bots-card-desc"] {
+  margin: 0;
+  color: var(--ade-text-soft);
+  font-size: var(--ade-font-md);
+  line-height: var(--ade-leading);
+}
+
+[data-slot="bots-card-meta"] {
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-xs);
+  color: var(--ade-text-weak);
+  overflow-wrap: anywhere;
+}
+
+[data-slot="bots-card-actions"] {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--ade-space-3);
+}
+
+[data-slot="bots-card-section"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-2);
+  padding-top: var(--ade-space-5);
+  border-top: 1px solid var(--ade-border-subtle);
+}
+
+[data-slot="bots-card-objectives"] {
+  margin: 0;
+  padding-left: 16px;
+  color: var(--ade-text-soft);
+  font-size: var(--ade-font-md);
+  line-height: var(--ade-leading);
+}
+
+[data-slot="bots-card-stat"] {
+  font-size: var(--ade-font-md);
+  color: var(--ade-text-soft);
+}
+
+[data-slot="bots-card-path"] {
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-xs);
+  color: var(--ade-text-weak);
+  overflow-wrap: anywhere;
+}
+
+/* ── the form, shared by "new" and "edit" ───────────────────────────────── */
+
+[data-slot="bots-form"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-5);
+  width: 100%;
+  max-width: 640px;
+}
+
+[data-slot="bots-form"][data-compact="true"] {
+  padding-top: var(--ade-space-5);
+  border-top: 1px solid var(--ade-border-subtle);
+}
+
+[data-slot="bots-form-title"] {
+  margin: 0;
+  font-size: var(--ade-font-xl);
+  font-weight: var(--ade-weight-semibold);
+}
+
+[data-slot="bots-form-preview"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-5);
+}
+
+[data-slot="bots-field"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-2);
+}
+
+[data-slot="bots-label"] {
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-xs);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--ade-text-weak);
+}
+
+[data-slot="bots-input"] {
+  width: 100%;
+  box-sizing: border-box;
+  padding: var(--ade-space-3) var(--ade-space-4);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-md);
+  background: var(--ade-bg);
+  color: var(--ade-text);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+}
+
+[data-slot="bots-input"][data-multiline="true"] {
+  resize: vertical;
+  line-height: var(--ade-leading);
+}
+
+[data-slot="bots-input"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+  border-color: var(--ade-border-strong);
+}
+
+[data-slot="bots-row-fields"] {
+  display: grid;
+  grid-template-columns: 2fr 1fr;
+  gap: var(--ade-space-4);
+}
+
+[data-slot="bots-problem"] {
+  margin: 0;
+  color: var(--ade-error);
+  font-size: var(--ade-font-sm);
+  /* Often the program's own message, several lines; reflowing it loses the
+     shape that makes it readable. */
+  white-space: pre-wrap;
+}
+
+[data-slot="bots-hint"] {
+  margin: 0;
+  color: var(--ade-text-weak);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-sm);
+  line-height: var(--ade-leading);
+}
+
+[data-slot="bots-hint"][data-state="saved"] {
+  color: var(--ade-done, var(--ade-text-weak));
+}
+
+[data-slot="bots-form-actions"] {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--ade-space-3);
+}
+
+[data-slot="bots-form-actions"] [data-slot="bots-hint"] {
+  margin-right: auto;
+}
+
+[data-slot="bots-confirm"] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ade-space-3);
+  font-size: var(--ade-font-sm);
+  color: var(--ade-text-soft);
+}
+
+[data-slot="bots-btn"] {
+  padding: var(--ade-space-2) var(--ade-space-5);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-md);
+  background: var(--ade-raised);
+  color: var(--ade-text);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+[data-slot="bots-btn"]:hover {
+  background: var(--ade-hover);
+}
+[data-slot="bots-btn"][data-active="true"] {
+  background: var(--ade-active);
+}
+
+[data-slot="bots-btn"][data-tone="primary"] {
+  border-color: var(--ade-accent);
+  background: var(--ade-accent);
+  color: var(--ade-accent-fg, #fff);
+  font-weight: var(--ade-weight-semibold);
+}
+
+[data-slot="bots-btn"][data-tone="danger"] {
+  border-color: var(--ade-error);
+  color: var(--ade-error);
+}
+
+[data-slot="bots-btn"]:disabled {
+  opacity: 0.55;
+  cursor: default;
+}
+
+[data-slot="bots-btn"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-slot="bots-link"] {
+  align-self: flex-start;
+  border: 0;
+  padding: 0;
+  background: none;
+  color: var(--ade-accent);
+  font: inherit;
+  font-size: var(--ade-font-sm);
+  cursor: pointer;
+  text-decoration: underline;
+}
+
+[data-slot="bots-link"][data-tone="danger"] {
+  color: var(--ade-error);
+}
+
+/* ── narrow ──────────────────────────────────────────────────────────────── */
+
+@media (max-width: 1100px) {
+  [data-slot="bots-card"] {
+    width: 220px;
+  }
+}
+
+@media (max-width: 860px) {
+  [data-slot="bots-card"] {
+    display: none;
+  }
+  [data-slot="bots-row-fields"] {
+    grid-template-columns: 1fr;
+  }
+  [data-slot="bots-messages"],
+  [data-slot="bots-composer"] {
+    padding-inline: var(--ade-space-6);
+  }
+  [data-slot="bots-composer"] {
+    margin-inline: var(--ade-space-6);
+  }
+}
+
+/* ── choosing a face ─────────────────────────────────────────────────────── */
+
+[data-slot="bots-picker"] {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ade-space-6);
+}
+
+[data-slot="bots-picker-rows"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-3);
+  min-width: 0;
+}
+
+[data-slot="bots-picker-row"] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ade-space-2);
+}
+
+[data-slot="bots-picker-option"] {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--ade-radius-md);
+  background: transparent;
+  cursor: pointer;
+}
+
+[data-slot="bots-picker-option"]:hover {
+  background: var(--ade-hover);
+}
+[data-slot="bots-picker-option"][data-on="true"] {
+  border-color: var(--ade-accent);
+  background: var(--ade-accent-soft);
+}
+
+[data-slot="bots-picker-swatch"] {
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 2px solid transparent;
+  border-radius: var(--ade-radius-full);
+  background: var(--bot-color);
+  cursor: pointer;
+}
+
+[data-slot="bots-picker-swatch"][data-on="true"] {
+  border-color: var(--ade-text);
+  box-shadow: 0 0 0 2px var(--ade-surface) inset;
+}
+[data-slot="bots-picker-option"]:focus-visible,
+[data-slot="bots-picker-swatch"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+/* Inside the card the picker is narrow: the face above the rows, not beside them. */
+[data-slot="bots-form"][data-compact="true"] [data-slot="bots-picker"] {
+  flex-direction: column;
+  gap: var(--ade-space-4);
+}

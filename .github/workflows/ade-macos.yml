@@ -1,0 +1,88 @@
+name: ade-macos
+
+# Builds ADE for Apple Silicon and uploads the .dmg and a zipped ADE.app as a
+# workflow artifact, so the app can be handed to someone without a Mac build
+# environment. Not a release: nothing is attached to a tag.
+#
+# The bundle is ad-hoc signed (`signingIdentity: "-"`), as desktop-release does
+# for Nikcli: without a seal Apple Silicon reports the app as "damaged". It is
+# not notarized, so a downloaded copy still needs right-click → Open once (or
+# `xattr -dr com.apple.quarantine ADE.app`).
+on:
+  push:
+    branches: [feat/ade]
+    paths:
+      - "packages/ade/**"
+      - "packages/voice/**"
+      - "packages/plugin/src/v2/ade/**"
+      - ".github/workflows/ade-macos.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: ade-macos-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    if: github.repository == 'SandroHub013/nikcli'
+    runs-on: macos-14
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: ./.github/actions/setup-bun
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: aarch64-apple-darwin
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: packages/ade/src-tauri -> target
+          key: aarch64-apple-darwin
+
+      # Built here rather than through Tauri's beforeBuildCommand, which runs
+      # with node_modules/.bin on PATH and can pick up a bun shim instead of the
+      # toolchain binary (see desktop-release).
+      - name: Build frontend
+        working-directory: packages/ade
+        run: bun x vite build
+
+      - name: Build app
+        working-directory: packages/ade
+        shell: bash
+        run: |
+          set -euo pipefail
+          CONFIG_JSON='{"build":{"beforeBuildCommand":""},"bundle":{"macOS":{"signingIdentity":"-"}}}'
+          # `app` only: Tauri's dmg step (bundle_dmg.sh) dresses the window through
+          # Finder AppleScript and fails silently on the headless runner. The dmg
+          # is made from the finished bundle with hdiutil below.
+          bun x tauri build --target aarch64-apple-darwin --bundles app --config "$CONFIG_JSON"
+
+      - name: Collect bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          BUNDLE="packages/ade/src-tauri/target/aarch64-apple-darwin/release/bundle"
+          STAGE="ade-macos"
+          mkdir -p "$STAGE"
+          # A plain dmg: the app plus an Applications link to drag it onto.
+          DMGROOT="$(mktemp -d)"
+          cp -R "$BUNDLE/macos/ADE.app" "$DMGROOT/"
+          ln -s /Applications "$DMGROOT/Applications"
+          hdiutil create -volname ADE -srcfolder "$DMGROOT" -ov -format UDZO "$STAGE/ADE-aarch64-apple-darwin.dmg"
+          # ditto keeps the bundle's symlinks and extended attributes, which the
+          # ad-hoc seal depends on; a plain zip can break it.
+          ditto -c -k --keepParent "$BUNDLE/macos/ADE.app" "$STAGE/ADE-aarch64-apple-darwin.app.zip"
+          ls -la "$STAGE"
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: ADE-macos-arm64
+          path: ade-macos
+          if-no-files-found: error
+          retention-days: 14

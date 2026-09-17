@@ -1,0 +1,1057 @@
+/*
+ * The agent development environment — design token system.
+ *
+ * Tokens are role-named so the host theme can be swapped in by redefining this
+ * block. They are the single source of truth for every visual decision; no
+ * component may introduce a raw colour, size or timing value.
+ *
+ * Both palettes live in one place. Each colour is written once as
+ * `light-dark(light, dark)`, and which half applies is decided by the
+ * `color-scheme` in effect — set below from ADE's own `data-theme`, never from
+ * the host document, because ADE is mounted inside another application and must
+ * not restyle it. A palette duplicated across a media query drifts the first
+ * time someone tunes one copy; this cannot.
+ *
+ * Type scale: 10px micro labels and footer meta, 11px mono meta and controls,
+ * 12px UI base and transcript, 13px emphasis, 16px subheads, 18px/24px display
+ * titles. Hierarchy comes from size, weight (400/500/600/700) and the text ramp.
+ *
+ * Spacing: 4px base unit, with 2px half-steps for compact rows. Sidebar rows,
+ * pane chrome and grid gutters all derive from it so the shell shares one rhythm.
+ */
+
+/*
+ * Dark is the default: this is a tool for watching processes run, often for
+ * hours, and the light palette is the deliberate departure rather than the
+ * baseline. "system" is a real answer and gets both schemes.
+ */
+:root,
+[data-component="ade-shell"] {
+  color-scheme: dark;
+}
+
+[data-component="ade-shell"][data-theme="light"] {
+  color-scheme: light;
+}
+
+[data-component="ade-shell"][data-theme="dark"] {
+  color-scheme: dark;
+}
+
+[data-component="ade-shell"][data-theme="system"] {
+  color-scheme: light dark;
+}
+
+:root {
+  /* ── surfaces ──────────────────────────────────────────────────────────── */
+  /*
+   * Five depth stops, deepest to highest. `sunken` sits below `bg` for inset
+   * wells (the transcript). `overlay` is for floating layers (palette, menus).
+   * `scrim` is the semi-transparent backdrop behind them.
+   */
+  --ade-bg: light-dark(#f4f2f0, #131111);
+  --ade-sunken: light-dark(#eae7e4, #0e0c0c);
+  --ade-surface: light-dark(#faf9f8, #1a1818);
+  --ade-raised: light-dark(#ffffff, #211e1e);
+  --ade-overlay: light-dark(#ffffff, #2a2626);
+  --ade-scrim: light-dark(rgba(0, 0, 0, 0.3), rgba(0, 0, 0, 0.55));
+
+  /* ── borders ───────────────────────────────────────────────────────────── */
+  /*
+   * Three-step border ramp plus a highlight for inner-edge lighting. The
+   * highlight is a low-alpha line inside hairline borders that gives them
+   * perceived thickness — the technique that makes a card read as a surface
+   * rather than as a drawn rectangle.
+   */
+  --ade-border-subtle: light-dark(#e8e5e2, #232020);
+  --ade-border: light-dark(#d8d4d0, #2b2727);
+  --ade-border-strong: light-dark(#c2bdb8, #3a3535);
+  --ade-highlight: light-dark(rgba(255, 255, 255, 0.6), rgba(255, 255, 255, 0.04));
+
+  /* ── text ───────────────────────────────────────────────────────────────── */
+  /*
+   * Three-step ramp, measured against the lightest ground text sits on in each
+   * palette (--ade-raised: #211e1e dark, #ffffff light):
+   *   text  13.91:1 dark · 15.3:1 light — primary content, headings
+   *   soft   6.72:1 dark ·  5.12:1 light — secondary content, inactive labels
+   *   weak   4.86:1 dark ·  3.95:1 light — meta at 12px and above only
+   */
+  --ade-text: light-dark(#1a1817, #ecebeb);
+  --ade-text-soft: light-dark(#6b6562, #a9a4a4);
+  --ade-text-weak: light-dark(#8a8480, #8f8a8a);
+
+  /* ── accent ─────────────────────────────────────────────────────────────── */
+  /*
+   * The accent is for state, focus and primary actions — never decoration.
+   * The light value is darkened to clear 4.5:1 on white (4.62:1); the dark one
+   * measures 6.8:1 on raised.
+   */
+  --ade-accent: light-dark(#1a9e87, #7fd6c4);
+  --ade-accent-soft: light-dark(rgba(26, 158, 135, 0.1), rgba(127, 214, 196, 0.15));
+  --ade-accent-strong: light-dark(#148272, #5ec4ae);
+  --ade-accent-fg: light-dark(#ffffff, #0a1613);
+  --ade-accent-glow: light-dark(rgba(26, 158, 135, 0.15), rgba(127, 214, 196, 0.2));
+
+  /* ── status ─────────────────────────────────────────────────────────────── */
+  /*
+   * One family, near-equal perceived lightness, so no status shouts over
+   * another across a six-pane grid. Dark values clear 6.3:1 on all three
+   * surfaces; light values clear 4.5:1 on white. Each has a low-alpha `-bg`
+   * for badges and tinted rows.
+   */
+  --ade-working: light-dark(#9a6d28, #d9a45f);
+  --ade-working-bg: light-dark(rgba(154, 109, 40, 0.1), rgba(217, 164, 95, 0.12));
+  --ade-waiting: light-dark(#3b6fb0, #7da9e4);
+  --ade-waiting-bg: light-dark(rgba(59, 111, 176, 0.1), rgba(125, 169, 228, 0.12));
+  --ade-done: light-dark(#2e8a50, #71c491);
+  --ade-done-bg: light-dark(rgba(46, 138, 80, 0.1), rgba(113, 196, 145, 0.12));
+  --ade-error: light-dark(#b74a5e, #e0879a);
+  --ade-error-bg: light-dark(rgba(183, 74, 94, 0.1), rgba(224, 135, 154, 0.12));
+
+  /* ── interaction fills ──────────────────────────────────────────────────── */
+  /*
+   * Alpha ramps, not solid stops: they composite identically over bg, surface
+   * and raised. They darken on light grounds and lighten on dark ones.
+   */
+  --ade-hover: light-dark(rgba(0, 0, 0, 0.04), rgba(255, 255, 255, 0.045));
+  --ade-active: light-dark(rgba(0, 0, 0, 0.07), rgba(255, 255, 255, 0.08));
+
+  /* ── radii ──────────────────────────────────────────────────────────────── */
+  --ade-radius-sm: 5px;
+  --ade-radius-md: 8px;
+  --ade-radius-lg: 12px;
+  --ade-radius-xl: 16px;
+  --ade-radius-full: 9999px;
+
+  /* ── elevation ──────────────────────────────────────────────────────────── */
+  /* Short, low-opacity shadows: depth, not smoke. Lighter on light grounds,
+     where the same opacity would read as dirt. */
+  --ade-shadow-sm: light-dark(0 1px 2px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.25));
+  --ade-shadow-md: light-dark(0 2px 6px rgba(0, 0, 0, 0.1), 0 2px 6px rgba(0, 0, 0, 0.3));
+  --ade-shadow-lg: light-dark(0 4px 16px rgba(0, 0, 0, 0.14), 0 4px 16px rgba(0, 0, 0, 0.4));
+
+  /* ── motion ───────────────────────────────────────────────────────────────
+   *
+   * Three durations for three sizes of change: `fast` for hover and inline
+   * state, `base` for entrance and reposition, `slow` for layered reveals.
+   * Three easings: a balanced `ease` for the steady majority, an `ease-out`
+   * landing curve that the Apple / Emil playbook both reach for, and a
+   * slight overshoot `spring` for the moments a gesture carried momentum.
+   */
+  --ade-dur-fast: 120ms;
+  --ade-dur: 200ms;
+  --ade-dur-slow: 320ms;
+  --ade-ease: cubic-bezier(0.2, 0, 0.2, 1);
+  --ade-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --ade-ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --ade-spring: cubic-bezier(0.34, 1.4, 0.64, 1);
+
+  /* ── focus ──────────────────────────────────────────────────────────────── */
+  /* One ring, applied everywhere through :focus-visible. The second, softer
+     ring is what keeps it visible on top of an accent-filled button. */
+  --ade-focus-ring: 0 0 0 2px var(--ade-accent), 0 0 0 4px var(--ade-accent-glow);
+
+  --ade-scrollbar-thumb: light-dark(rgba(0, 0, 0, 0.18), rgba(255, 255, 255, 0.14));
+
+  /* Locked to GRID_GAP in grid/layout.ts. A separating line, not a gutter:
+     every pixel between two panes is a pixel not showing a terminal. */
+  --ade-grid-gap: 1px;
+
+  /* ── terminal ───────────────────────────────────────────────────────────── */
+  /*
+   * The emulator's own ground, and the sixteen colours an agent can ask for.
+   *
+   * These live on `:root` rather than on the pane, because two different
+   * renderers need them: xterm, which is handed concrete values at creation,
+   * and the transcript fallback, which resolves `var(--ade-ansi-*)` per span.
+   * They were defined only inside `[data-component="session-pane"]`, which no
+   * probe outside a pane could read — and xterm was never given them at all.
+   *
+   * They are not sRGB primaries. An agent printing red should look like it
+   * belongs in this window rather than like a screenshot pasted into it, so
+   * each hue is retuned for the ground it sits on: the dark values are tuned
+   * for the warm dark terminal, the light ones darkened to stay legible on a
+   * near-white one. A single set cannot do both — at 4.5:1 on dark, the same
+   * pink is 1.9:1 on white.
+   */
+  --ade-terminal-bg: light-dark(#fdfcfc, #0e0c0c);
+  --ade-terminal-fg: light-dark(#1a1817, #ecebeb);
+  --ade-selection: light-dark(rgba(10, 124, 107, 0.22), rgba(122, 215, 195, 0.26));
+
+  --ade-ansi-black: light-dark(#3b3634, #4a4444);
+  --ade-ansi-red: light-dark(#b03651, #e0879a);
+  --ade-ansi-green: light-dark(#2f7d4f, #71c491);
+  --ade-ansi-yellow: light-dark(#8a5d12, #d9a45f);
+  --ade-ansi-blue: light-dark(#2f5fa8, #7da9e4);
+  --ade-ansi-magenta: light-dark(#7d4b9c, #c79bdc);
+  --ade-ansi-cyan: light-dark(#1f7a6c, #7fd6c4);
+  --ade-ansi-white: light-dark(#6b6562, #a9a4a4);
+  --ade-ansi-brightBlack: light-dark(#8a8480, #6d6666);
+  --ade-ansi-brightRed: light-dark(#c8475f, #f0a0b0);
+  --ade-ansi-brightGreen: light-dark(#3c9760, #8fd8a8);
+  --ade-ansi-brightYellow: light-dark(#a3711f, #ecbc7c);
+  --ade-ansi-brightBlue: light-dark(#3f74c2, #9cc0ee);
+  --ade-ansi-brightMagenta: light-dark(#9260b4, #d9b5e8);
+  --ade-ansi-brightCyan: light-dark(#2a9184, #9fe3d5);
+  --ade-ansi-brightWhite: light-dark(#1a1817, #ecebeb);
+
+  /* ── type scale ─────────────────────────────────────────────────────────── */
+  --ade-font-xs: 10px;
+  --ade-font-sm: 11px;
+  --ade-font-md: 12px;
+  --ade-font-lg: 13px;
+  --ade-font-xl: 16px;
+  --ade-font-2xl: 18px;
+  --ade-font-3xl: 24px;
+  /* Half-step used in tight chrome where the named scale skips too far. */
+  --ade-font-md-half: 12.5px;
+
+  --ade-weight-normal: 400;
+  --ade-weight-medium: 500;
+  --ade-weight-semibold: 600;
+  --ade-weight-bold: 700;
+
+  /*
+   * One relative leading for running text. The fixed line-heights on the footer
+   * and the count badge are box heights, not text rhythm, so they stay literal
+   * at their call sites.
+   */
+  --ade-leading: 1.5;
+
+  /*
+   * Spacing scale in 2px steps up to 12px, then in 4px steps for the structural
+   * gaps between sections. Values off the scale stay literal with a note.
+   */
+  --ade-space-1: 2px;
+  --ade-space-2: 4px;
+  --ade-space-3: 6px;
+  --ade-space-4: 8px;
+  --ade-space-5: 10px;
+  --ade-space-6: 12px;
+  --ade-space-7: 16px;
+  --ade-space-8: 20px;
+  --ade-space-9: 24px;
+
+  --ade-mono: "IBM Plex Mono", "SF Mono", "Cascadia Mono", ui-monospace, monospace;
+  --ade-sans: "Inter", -apple-system, "Segoe UI", system-ui, sans-serif;
+}
+
+/* ── resets ─────────────────────────────────────────────────────────────────── */
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body,
+/* The mount point has to carry the height too, or the shell's `height: 100%`
+   resolves against an auto-height parent and collapses to its content. */
+#root {
+  margin: 0;
+  height: 100%;
+  background: var(--ade-bg);
+  color: var(--ade-text);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+  line-height: var(--ade-leading);
+  -webkit-font-smoothing: antialiased;
+}
+
+/*
+ * Global focus-visible: keyboard navigation is a first-class citizen.
+ * Every interactive element gets the same ring unless it defines its own.
+ */
+:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+/* Press feedback that survives global resets: the actual rule is per-element
+   with `transform: scale(...)`, but this smooths the transition the moment
+   any element with a non-zero transition gets touched. */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: var(--ade-scrollbar-thumb) transparent;
+}
+
+/* A scrollbar rail that does not eat layout when its track is hidden — a
+   styled scrollbar with the rail's edge kept invisible. */
+::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--ade-scrollbar-thumb);
+  border: 2px solid transparent;
+  background-clip: content-box;
+  border-radius: var(--ade-radius-full);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--ade-border-strong);
+  background-clip: content-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::-webkit-scrollbar-thumb {
+    border-width: 0;
+  }
+}
+
+/* ── reduced motion ────────────────────────────────────────────────────────── */
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ── grid ──────────────────────────────────────────────────────────────────── */
+
+/*
+ * The grid is a tray of shells, not a wall of terminals.
+ *
+ * It was: no padding, a one-pixel gap of border colour, every pane flush
+ * against the next and against the window. That matched a sidebar that was a
+ * flat column; the sidebar is now a rounded panel floating on the ground
+ * (`sidebar.css`, "Conchiglia · Perla"), and beside it a wall of square tiles
+ * read as a different application. So the grid takes the same ground and the
+ * same breathing room, and each cell's pane is a shell of its own — see the
+ * rule after this one. Ten pixels a side is what the sidebar's own margin
+ * is, so the gutters line up across the window.
+ */
+[data-component="session-grid"] {
+  display: grid;
+  gap: 10px;
+  padding: 10px;
+  width: 100%;
+  height: 100%;
+  overflow-y: auto;
+  align-content: start;
+  background: var(--ade-bg);
+}
+
+/*
+ * Whatever sits in a cell — a session, a file, a browser, a video, a plugin —
+ * gets the shell: corners, and a shadow instead of a border. On the cell's
+ * child rather than on each component, so a pane kind added tomorrow is
+ * rounded before anybody remembers to round it. What the shell contains is
+ * still each component's own business.
+ */
+[data-slot="grid-cell"] > [data-component] {
+  border-radius: 18px;
+  overflow: hidden;
+  box-shadow: 0 3px 10px light-dark(rgba(0, 0, 0, 0.08), rgba(0, 0, 0, 0.45));
+}
+
+/* With no panes there is nothing for the gaps to separate, so the ground goes
+   back to being a background rather than a sheet of line colour. */
+[data-component="session-grid"][data-empty] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--ade-bg);
+}
+
+[data-slot="grid-cell"] {
+  position: relative;
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+}
+
+/*
+ * Arranging the grid: a pane is picked up by its header, shows where it will
+ * land on the tile under the pointer, and is resized from its corner.
+ *
+ * The header says it can be grabbed only while the grid holds two panes or
+ * more — with one there is nowhere to put it. While a drag or a resize is in
+ * progress nothing inside the panes may select text or take the pointer, or a
+ * terminal under the cursor swallows the move and the drop never arrives.
+ */
+[data-component="session-grid"]:has(> [data-slot="grid-cell"] + [data-slot="grid-cell"]) [data-slot="pane-header"] {
+  cursor: grab;
+}
+
+[data-component="session-grid"][data-arranging] {
+  user-select: none;
+  cursor: grabbing;
+}
+
+[data-component="session-grid"][data-arranging] [data-slot="grid-cell"] > [data-component] {
+  pointer-events: none;
+}
+
+[data-slot="grid-cell"][data-dragging] > [data-component] {
+  opacity: 0.45;
+}
+
+[data-slot="drop-zone"] {
+  position: absolute;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  border: 2px dashed var(--ade-accent);
+  border-radius: 18px;
+  background: color-mix(in srgb, var(--ade-accent) 18%, transparent);
+}
+
+/*
+ * Each overlay is the exact shape `dropZone` in grid/arrange.ts answers to:
+ * the middle 40% square swaps, and each edge owns the trapezoid between it,
+ * the two diagonals and that square. Half-pane rectangles were simpler and
+ * wrong near a corner, where the highlight showed one side and the drop used
+ * the other. The dashed border is dropped for the edges, because a border
+ * follows the box and not the clip.
+ */
+[data-slot="drop-zone"] {
+  inset: 0;
+}
+[data-slot="drop-zone"][data-zone="swap"] {
+  inset: 30%;
+  border-radius: var(--ade-radius-lg);
+}
+[data-slot="drop-zone"]:not([data-zone="swap"]) {
+  border: none;
+  border-radius: 0;
+}
+[data-slot="drop-zone"][data-zone="before"] {
+  clip-path: polygon(0 0, 30% 30%, 30% 70%, 0 100%);
+  justify-content: flex-start;
+  padding-left: 4%;
+}
+[data-slot="drop-zone"][data-zone="after"] {
+  clip-path: polygon(100% 0, 70% 30%, 70% 70%, 100% 100%);
+  justify-content: flex-end;
+  padding-right: 4%;
+}
+[data-slot="drop-zone"][data-zone="above"] {
+  clip-path: polygon(0 0, 100% 0, 70% 30%, 30% 30%);
+  align-items: flex-start;
+  padding-top: 6%;
+}
+[data-slot="drop-zone"][data-zone="below"] {
+  clip-path: polygon(0 100%, 100% 100%, 70% 70%, 30% 70%);
+  align-items: flex-end;
+  padding-bottom: 6%;
+}
+
+[data-slot="drop-zone-label"] {
+  padding: var(--ade-space-2) var(--ade-space-4);
+  border-radius: var(--ade-radius-full);
+  font-size: var(--ade-font-md);
+  font-weight: var(--ade-weight-semibold);
+  color: var(--ade-accent-fg);
+  background: var(--ade-accent);
+  transition: background var(--ade-dur-fast) var(--ade-ease);
+}
+
+/* A corner grip, visible when the tile is hovered or focused, so resting
+   panes show no extra chrome. */
+[data-slot="tile-resize"] {
+  position: absolute;
+  right: 2px;
+  bottom: 2px;
+  z-index: 6;
+  width: 14px;
+  height: 14px;
+  cursor: nwse-resize;
+  opacity: 0;
+  border-right: 2px solid var(--ade-text-weak);
+  border-bottom: 2px solid var(--ade-text-weak);
+  border-bottom-right-radius: 10px;
+  transition: opacity 120ms ease;
+}
+
+[data-slot="grid-cell"]:hover > [data-slot="tile-resize"],
+[data-slot="grid-cell"][data-focused] > [data-slot="tile-resize"],
+[data-component="session-grid"][data-arranging] [data-slot="tile-resize"] {
+  opacity: 1;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-slot="tile-resize"] {
+    transition: none;
+  }
+}
+
+/* Pane rules live in grid/pane.css — the card owns its own stylesheet. */
+/*
+ * Working and provisioning are the only statuses that change without user
+ * input, so they are the only ones allowed to move: a slow opacity breathe
+ * reads as liveness, not alarm.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  [data-status="working"] [data-slot="pane-dot"],
+  [data-status="working"] [data-slot="session-dot"],
+  [data-status="provisioning"] [data-slot="pane-dot"],
+  [data-status="provisioning"] [data-slot="session-dot"] {
+    animation: ade-dot-breathe 2.4s var(--ade-ease-in-out) infinite;
+  }
+}
+
+@keyframes ade-dot-breathe {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* ── sidebar ──────────────────────────────────────────────────────────────── */
+
+[data-component="ade-sidebar"] {
+  display: flex;
+  flex-direction: column;
+  flex: 0 0 auto;
+  height: 100%;
+  background: var(--ade-surface);
+  border-right: 1px solid var(--ade-border);
+  position: relative;
+  user-select: none;
+  min-width: 0;
+}
+
+[data-slot="sidebar-header"] {
+  padding: var(--ade-space-4) var(--ade-space-6);
+  border-bottom: 1px solid var(--ade-border);
+  background: var(--ade-raised);
+  flex: 0 0 auto;
+  box-shadow: inset 0 -1px 0 var(--ade-highlight);
+}
+
+[data-slot="sidebar-tabs"] {
+  display: flex;
+  gap: var(--ade-space-1);
+  background: var(--ade-bg);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-md);
+  padding: var(--ade-space-1);
+}
+
+[data-slot="sidebar-tab"] {
+  flex: 1;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  background: transparent;
+  color: var(--ade-text-soft);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-sm);
+  font-weight: var(--ade-weight-medium);
+  border-radius: var(--ade-radius-sm);
+  cursor: pointer;
+  transition:
+    color var(--ade-dur-fast) var(--ade-ease),
+    background var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="sidebar-tab"]:hover {
+  color: var(--ade-text);
+  background: var(--ade-hover);
+}
+
+[data-slot="sidebar-tab"][data-active] {
+  background: var(--ade-raised);
+  color: var(--ade-text);
+  font-weight: var(--ade-weight-semibold);
+  box-shadow: var(--ade-shadow-sm);
+}
+
+[data-slot="sidebar-tab"]:focus-visible {
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-slot="sidebar-content"] {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--ade-space-2) 0;
+}
+
+/*
+ * The resize handle extends outside the sidebar box to provide a comfortable
+ * hit target without shifting the internal content layout.
+ */
+[data-slot="sidebar-resize-handle"] {
+  position: absolute;
+  top: 0;
+  right: -3px;
+  width: 6px;
+  height: 100%;
+  cursor: col-resize;
+  z-index: 20;
+  transition: background var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="sidebar-resize-handle"]:hover,
+[data-component="ade-sidebar"][data-resizing] [data-slot="sidebar-resize-handle"] {
+  background: var(--ade-accent);
+  opacity: 0.7;
+}
+
+/* ── workspace tree ───────────────────────────────────────────────────────── */
+
+/*
+ * The 1px gap is a hairline seam, not spacing: the rows read as one continuous
+ * list, and the scale floor (2px) would double the seam into a visible gutter.
+ */
+[data-component="workspace-tree"] {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 100%;
+}
+
+/* 6px vertical + 12px font at 16px line-height lands section headers on 28px. */
+[data-slot="workspace-header"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-3);
+  width: 100%;
+  padding: var(--ade-space-3) var(--ade-space-6);
+  border: 0;
+  background: transparent;
+  color: var(--ade-text);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+  font-weight: var(--ade-weight-semibold);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="workspace-header"]:hover {
+  background: var(--ade-hover);
+}
+
+[data-slot="workspace-header"]:active {
+  transform: scale(0.99);
+}
+
+[data-slot="workspace-header"]:focus-visible {
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-slot="workspace-chevron"] {
+  color: var(--ade-text-weak);
+  flex: 0 0 auto;
+  transition: transform var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="workspace-header"][data-expanded] [data-slot="workspace-chevron"] {
+  transform: rotate(90deg);
+}
+
+[data-slot="workspace-name"] {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-slot="workspace-count"] {
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-xs);
+  color: var(--ade-text-soft);
+  background: var(--ade-bg);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-full);
+  padding: 0 var(--ade-space-2);
+  line-height: 15px;
+  height: 16px;
+  min-width: 16px;
+  text-align: center;
+  flex: 0 0 auto;
+}
+
+/*
+ * A zero count sheds the pill: the chrome around a number implies there is
+ * something to count, so an empty workspace renders a bare dim 0 and a
+ * populated one keeps the badge.
+ */
+[data-slot="workspace-count"][data-empty] {
+  background: transparent;
+  border-color: transparent;
+  color: var(--ade-text-weak);
+}
+
+/*
+ * The 24px left indent plus the 6px dot and 8px gap places session titles one
+ * dot-width under the workspace name above — nesting reads from position, not
+ * from an extra guide line.
+ */
+[data-slot="session-row"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-4);
+  width: 100%;
+  padding: var(--ade-space-3) var(--ade-space-6) var(--ade-space-3) 24px;
+  border: 0;
+  background: transparent;
+  color: var(--ade-text-soft);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
+  position: relative;
+  /* Slightly taller rows for comfortable click targets. */
+  min-height: 28px;
+}
+
+[data-slot="session-row"]:hover {
+  background: var(--ade-hover);
+  color: var(--ade-text);
+}
+
+[data-slot="session-row"]:active {
+  transform: scale(0.99);
+}
+
+/*
+ * Selection is position (the accent bar) plus fill, never accent-colored text:
+ * the accent hue is reserved for focus and interactive affordances, and
+ * recoloring content made a selected row compete with the status dots.
+ */
+[data-slot="session-row"][data-selected] {
+  background: var(--ade-active);
+  color: var(--ade-text);
+  font-weight: var(--ade-weight-medium);
+}
+
+/* Accent bar on the leading edge for the selected row. */
+[data-slot="session-row"][data-selected]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: var(--ade-space-1);
+  bottom: var(--ade-space-1);
+  width: 3px;
+  background: var(--ade-accent);
+  border-radius: 0 var(--ade-radius-sm) var(--ade-radius-sm) 0;
+}
+
+[data-slot="session-row"]:focus-visible {
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-slot="session-dot"] {
+  width: 6px;
+  height: 6px;
+  border-radius: var(--ade-radius-full);
+  flex: 0 0 auto;
+  background: var(--ade-text-weak);
+}
+
+[data-status="working"] [data-slot="session-dot"] {
+  background: var(--ade-working);
+}
+[data-status="waiting"] [data-slot="session-dot"] {
+  background: var(--ade-waiting);
+}
+[data-status="done"] [data-slot="session-dot"] {
+  background: var(--ade-done);
+}
+[data-status="error"] [data-slot="session-dot"] {
+  background: var(--ade-error);
+}
+
+[data-slot="session-title"] {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--ade-sans);
+}
+
+/* ── file tree ────────────────────────────────────────────────────────────── */
+
+/* Same 1px hairline seam as the workspace tree — see the note there. */
+[data-component="file-tree"] {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  width: 100%;
+}
+
+[data-slot="tree-row"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-3);
+  width: 100%;
+  padding: var(--ade-space-2) var(--ade-space-6);
+  border: 0;
+  background: transparent;
+  color: var(--ade-text-soft);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
+  position: relative;
+}
+
+[data-slot="tree-row"]:hover {
+  background: var(--ade-hover);
+  color: var(--ade-text);
+}
+
+[data-slot="tree-row"]:active {
+  transform: scale(0.99);
+}
+
+[data-slot="tree-row"][data-selected] {
+  background: var(--ade-active);
+  color: var(--ade-text);
+  font-weight: var(--ade-weight-medium);
+}
+
+[data-slot="tree-row"][data-selected]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 2px;
+  bottom: 2px;
+  width: 3px;
+  background: var(--ade-accent);
+  border-radius: 0 var(--ade-radius-sm) var(--ade-radius-sm) 0;
+}
+
+[data-slot="tree-row"]:focus-visible {
+  box-shadow: var(--ade-focus-ring);
+}
+
+/*
+ * The row is a div now, not a button.
+ *
+ * Chromium's button swallows the press that would start a drag, so a
+ * draggable file row had to stop being one. A button brought two things with
+ * it that a div does not: `box-sizing: border-box`, without which `width:
+ * 100%` plus the padding above overflows the sidebar, and a default of not
+ * selecting its own text — which while dragging a filename is exactly the
+ * blue smear you do not want.
+ */
+[data-slot="tree-row"] {
+  box-sizing: border-box;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* Both files and directories can be picked up and dragged. */
+[data-slot="tree-row"][data-kind="file"],
+[data-slot="tree-row"][data-kind="directory"] {
+  cursor: grab;
+}
+
+[data-slot="tree-row"][data-kind="file"]:active,
+[data-slot="tree-row"][data-kind="directory"]:active {
+  cursor: grabbing;
+}
+
+[data-slot="tree-indent"] {
+  display: flex;
+  align-self: stretch;
+  flex: 0 0 auto;
+}
+
+/*
+ * Vertical guide lines provide visual alignment cues across deeply nested
+ * directories, mirroring standard IDE tree navigation.
+ */
+[data-slot="tree-guide"] {
+  width: 14px;
+  flex: 0 0 14px;
+  position: relative;
+  align-self: stretch;
+}
+
+[data-slot="tree-guide"]::before {
+  content: "";
+  position: absolute;
+  left: 6px;
+  top: 0;
+  bottom: 0;
+  width: 1px;
+  background: var(--ade-border);
+}
+
+[data-slot="tree-chevron"] {
+  color: var(--ade-text-weak);
+  flex: 0 0 auto;
+  transition: transform var(--ade-dur-fast) var(--ade-ease);
+}
+
+/*
+ * Holds the chevron's 12x12 box for rows that have no chevron (files, empty
+ * directories). Without it a depth-0 file sat 17px left of a depth-0 directory.
+ */
+[data-slot="tree-spacer"] {
+  width: 12px;
+  flex: 0 0 12px;
+  align-self: stretch;
+}
+
+[data-slot="tree-row"][data-expanded] [data-slot="tree-chevron"] {
+  transform: rotate(90deg);
+}
+
+[data-slot="tree-icon"] {
+  color: var(--ade-text-weak);
+  flex: 0 0 auto;
+}
+
+[data-slot="tree-row"][data-kind="directory"] [data-slot="tree-icon"] {
+  color: var(--ade-text-soft);
+}
+
+[data-slot="tree-label"] {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-family: var(--ade-sans);
+}
+
+/* Registrazione in corso (S36): sopra ogni cosa, perché nessuno deve filmare
+   senza saperlo. Il punto pulsa solo mentre si registra davvero. Sta nella
+   barra, prima dei pulsanti della finestra: fisso nell'angolo li copriva.
+   La barra non crea un contesto di impilamento, quindi lo z-index vale per
+   tutta la finestra. */
+[data-slot="ade-rec"] {
+  position: relative;
+  z-index: 60;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ade-space-3);
+  padding: var(--ade-space-2) var(--ade-space-5);
+  border: 1px solid color-mix(in oklab, red 45%, var(--ade-border));
+  border-radius: var(--ade-radius-full);
+  background: color-mix(in oklab, red 12%, var(--ade-surface));
+  color: var(--ade-text);
+  font: inherit;
+  font-size: var(--ade-font-sm);
+  letter-spacing: 0.08em;
+  cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="ade-rec"]:hover {
+  background: color-mix(in oklab, red 18%, var(--ade-surface));
+}
+
+[data-slot="ade-rec"]:active {
+  transform: scale(0.97);
+}
+
+[data-slot="ade-rec"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-slot="ade-rec-dot"] {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: red;
+  animation: ade-rec-pulse 1.4s var(--ade-ease-in-out) infinite;
+}
+
+[data-slot="ade-rec"][data-stopping] [data-slot="ade-rec-dot"] {
+  animation: none;
+  opacity: 0.5;
+}
+
+@keyframes ade-rec-pulse {
+  50% {
+    opacity: 0.25;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-slot="ade-rec-dot"] {
+    animation: none;
+  }
+}
+
+/* An agent asks to record (S36): one question, the microphone as its own switch. */
+[data-component="record-consent"] [data-slot="record-consent-body"] {
+  display: grid;
+  gap: var(--ade-space-4);
+  padding: var(--ade-space-6) var(--ade-space-7);
+  font-size: var(--ade-font-md-half);
+}
+[data-component="record-consent"] [data-slot="record-consent-note"] {
+  color: var(--ade-text-weak);
+}
+[data-component="record-consent"] [data-slot="record-consent-mic"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-4);
+}
+[data-component="record-consent"] [data-slot="record-consent-actions"] {
+  display: flex;
+  justify-content: flex-end;
+  gap: var(--ade-space-4);
+  padding: 0 var(--ade-space-7) var(--ade-space-7);
+}
+
+/*
+ * While a take runs (S36), secrets are not drawn at all, so no frame of the
+ * video can hold one. The user sees them covered too, which says why.
+ */
+html[data-ade-recording] [data-sensitive],
+html[data-ade-recording] input[type="password"],
+html[data-ade-recording] #openrouter-key-field {
+  color: transparent !important;
+  text-shadow: none !important;
+  caret-color: transparent !important;
+  background: var(--ade-active) !important;
+  -webkit-text-security: disc;
+}
+html[data-ade-recording] [data-sensitive]::selection,
+html[data-ade-recording] [data-sensitive] *::selection,
+html[data-ade-recording] input[type="password"]::selection,
+html[data-ade-recording] #openrouter-key-field::selection {
+  color: transparent !important;
+  background: transparent !important;
+}
+html[data-ade-recording] [data-sensitive] *,
+html[data-ade-recording] [data-sensitive]::placeholder,
+html[data-ade-recording] input[type="password"]::placeholder,
+html[data-ade-recording] #openrouter-key-field::placeholder {
+  visibility: hidden !important;
+  color: transparent !important;
+}

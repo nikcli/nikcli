@@ -1,0 +1,173 @@
+/*
+ * The turning cube.
+ *
+ * Everything is derived from `--cube-size`, so the mark is one number wide and
+ * the same object at 22px in a title bar or 64px on a splash. It draws itself
+ * entirely in `currentColor`: the host sets the colour, and the cube is as
+ * monochrome as the rest of the bar.
+ */
+
+/* ── the ASCII cut ────────────────────────────────────────────────────────── */
+
+/*
+ * Characters, and nothing else.
+ *
+ * `--cube-size` is the height here rather than the edge: the grid decides the
+ * width, and forcing a square box would either clip the drawing or leave a
+ * column of air on each side. Line height is exactly one row and the font size
+ * is a hair under it, so the rows stack with no gap — an ASCII drawing with
+ * leading between its rows is a drawing with holes in it.
+ */
+[data-component="nik-cube"][data-variant="ascii"] {
+  --cube-size: 22px;
+
+  display: block;
+  flex: 0 0 auto;
+  margin: 0;
+  font-family: var(--ade-mono, ui-monospace, monospace);
+  font-size: calc(var(--cube-size) / var(--cube-rows) * 0.98);
+  line-height: calc(var(--cube-size) / var(--cube-rows));
+  /* Every cell the same width whatever the face resolves to, so the grid does
+     not shift under the drawing when the font falls back. */
+  font-variant-ligatures: none;
+  letter-spacing: 0;
+  /*
+   * Greyscale antialiasing, not subpixel.
+   *
+   * At four pixels a glyph, LCD antialiasing puts a red edge on one side of
+   * every stroke and a blue one on the other, and the fringe is as wide as the
+   * stroke — the mark comes out iridescent. `-webkit-font-smoothing` would say
+   * this directly and does nothing outside macOS; promoting the element to its
+   * own compositing layer is what actually switches Chrome to greyscale, on
+   * every platform. The translation is a no-op and the layer is the point.
+   */
+  transform: translateZ(0);
+  text-rendering: geometricPrecision;
+  white-space: pre;
+  user-select: none;
+  /* The drawing is already `currentColor`; this only stops the empty cells
+     from taking a background from a parent that has one. */
+  background: none;
+}
+
+[data-component="nik-cube"][data-variant="solid"] {
+  --cube-size: 22px;
+  --cube-seconds: 14s;
+  /*
+   * The edge is smaller than the footprint, and has to be.
+   *
+   * A cube turned to any angle but square-on is wider than its edge — at 45°
+   * the silhouette is the diagonal, about 1.41 edges — so a cube built at the
+   * full box size swings out of it twice per turn and collides with whatever
+   * the bar put beside it. At 0.7 the diagonal is 0.99 of the box, so the
+   * mark's footprint is constant however far round it has got.
+   */
+  --cube-edge: calc(var(--cube-size) * 0.7);
+  /* How far each face is pushed out from the centre. */
+  --cube-half: calc(var(--cube-edge) / 2);
+
+  display: grid;
+  place-items: center;
+  width: var(--cube-size);
+  height: var(--cube-size);
+  flex: 0 0 auto;
+  /*
+   * Shallow, and that is deliberate. A strong perspective at 22px makes the
+   * near face balloon over the silhouette and the cube stops reading as a
+   * cube; at four edge-lengths the convergence is just enough to tell which
+   * face is nearer.
+   */
+  perspective: calc(var(--cube-edge) * 4.5);
+}
+
+[data-slot="cube"] {
+  position: relative;
+  display: block;
+  width: var(--cube-edge);
+  height: var(--cube-edge);
+  transform-style: preserve-3d;
+  animation: nik-cube-turn var(--cube-seconds) linear infinite;
+}
+
+/*
+ * A face: a hairline square with the letter in it.
+ *
+ * The fill is currentColor at a very low strength rather than a flat tint, so
+ * the cube picks up the ground it is on — it sits on a toolbar that is one
+ * colour in light and another in dark, and a face painted with its own colour
+ * would be right on exactly one of them.
+ */
+[data-slot="face"] {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  box-sizing: border-box;
+  border: 1px solid currentColor;
+  border-radius: 2px;
+  background: color-mix(in srgb, currentColor 9%, transparent);
+  /* Hidden, or the far faces show through the near ones and the cube becomes
+     a ball of hairlines. See the note in `nik-cube.tsx`. */
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+
+  font-family: var(--ade-mono, ui-monospace, monospace);
+  font-size: calc(var(--cube-edge) * 0.72);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0;
+  /* Optical: a capital N in most mono faces sits a touch high in its box once
+     the descender space below it is empty. */
+  padding-top: 1px;
+  user-select: none;
+}
+
+[data-slot="face"][data-face="front"] {
+  transform: translateZ(var(--cube-half));
+}
+[data-slot="face"][data-face="back"] {
+  transform: rotateY(180deg) translateZ(var(--cube-half));
+}
+[data-slot="face"][data-face="right"] {
+  transform: rotateY(90deg) translateZ(var(--cube-half));
+}
+[data-slot="face"][data-face="left"] {
+  transform: rotateY(-90deg) translateZ(var(--cube-half));
+}
+[data-slot="face"][data-face="top"] {
+  transform: rotateX(90deg) translateZ(var(--cube-half));
+}
+[data-slot="face"][data-face="bottom"] {
+  transform: rotateX(-90deg) translateZ(var(--cube-half));
+}
+
+/*
+ * One axis, tilted.
+ *
+ * The tilt is constant and shallow: it keeps a sliver of the lid in view at
+ * every angle, which is the only thing stopping the mark from reading as a
+ * flat rounded badge in the moment a face comes square-on. It is not enough to
+ * put a letter on the lid — that face is a thin ellipse from here — which is
+ * why the lid is blank. See the note in `nik-cube.tsx` for why the cube does
+ * not tumble.
+ */
+@keyframes nik-cube-turn {
+  from {
+    transform: rotateX(-14deg) rotateY(0deg);
+  }
+  to {
+    transform: rotateX(-14deg) rotateY(360deg);
+  }
+}
+
+/*
+ * Parked at a three-quarter view: still a cube, still showing two printed
+ * faces, just not turning. A mark that becomes a flat square when motion is
+ * off would be a different logo for those users.
+ */
+@media (prefers-reduced-motion: reduce) {
+  [data-slot="cube"] {
+    animation: none;
+    transform: rotateX(-14deg) rotateY(-34deg);
+  }
+}

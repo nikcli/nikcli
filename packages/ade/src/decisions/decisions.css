@@ -1,0 +1,696 @@
+/*
+ * Decisions: the badge in the bar, the one-at-a-time window, the panel.
+ *
+ * One card for the window and the panel. Everything is drawn in the theme's
+ * tokens; the only colour that means something is the working tone on the
+ * badge, the same one a busy session wears.
+ */
+
+/* The badge: hidden at zero, so at rest the bar is as it was. */
+[data-slot="decisions-badge"] {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ade-space-3);
+  height: 24px;
+  margin-left: var(--ade-space-2);
+  padding: 0 var(--ade-space-4);
+  border: 1px solid var(--ade-working);
+  border-radius: var(--ade-radius-full);
+  background: var(--ade-working-bg);
+  color: var(--ade-working);
+  font: inherit;
+  font-size: var(--ade-font-md-half);
+  font-weight: var(--ade-weight-semibold);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="decisions-badge"]::before {
+  content: "";
+  width: 6px;
+  height: 6px;
+  border-radius: var(--ade-radius-full);
+  background: currentColor;
+}
+
+[data-slot="decisions-badge"]:hover {
+  filter: brightness(1.08);
+}
+
+[data-slot="decisions-badge"]:active {
+  transform: scale(0.97);
+}
+
+[data-slot="decisions-badge"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+/* The window. */
+[data-component="decisions-sheet"] [data-layout="surface"] {
+  outline: none;
+}
+
+[data-slot="sheet-head"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-3);
+  padding: var(--ade-space-4) var(--ade-space-5) var(--ade-space-3);
+  font-size: var(--ade-font-lg);
+}
+
+[data-slot="sheet-count"] {
+  font-size: var(--ade-font-sm);
+  color: var(--ade-text-weak);
+}
+
+[data-slot="sheet-steps"] {
+  display: flex;
+  gap: var(--ade-space-2);
+  margin-left: auto;
+}
+
+[data-slot="sheet-steps"] i {
+  width: 18px;
+  height: 4px;
+  border-radius: var(--ade-radius-sm);
+  background: var(--ade-border);
+}
+
+[data-slot="sheet-steps"] i[data-on] {
+  background: var(--ade-accent);
+}
+
+[data-slot="sheet-close"] {
+  display: grid;
+  place-items: center;
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: var(--ade-radius-sm);
+  background: transparent;
+  color: var(--ade-text-weak);
+  cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="sheet-count"] + [data-slot="sheet-close"],
+[data-slot="sheet-head"] > strong + [data-slot="sheet-close"] {
+  margin-left: auto;
+}
+
+[data-slot="sheet-close"]:hover {
+  background: var(--ade-hover);
+  color: var(--ade-text);
+}
+
+[data-slot="sheet-close"]:active {
+  transform: scale(0.92);
+}
+
+[data-slot="sheet-close"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-slot="sheet-body"] {
+  padding: 0 var(--ade-space-5);
+  overflow: auto;
+  min-height: 0;
+}
+
+[data-slot="sheet-foot"] {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--ade-space-2) var(--ade-space-4);
+  padding: var(--ade-space-3) var(--ade-space-5) var(--ade-space-4);
+  font-size: var(--ade-font-sm);
+  color: var(--ade-text-weak);
+}
+
+[data-slot="sheet-foot"] > button {
+  margin-left: auto;
+}
+
+[data-slot="sheet-empty"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-2);
+  padding: var(--ade-space-5) 0;
+  font-size: var(--ade-font-md);
+  color: var(--ade-text-soft);
+}
+
+/* The card. */
+[data-slot="decision-card"] {
+  padding: var(--ade-space-4) var(--ade-space-6);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-md);
+  background: var(--ade-raised);
+  font-size: var(--ade-font-md);
+  color: var(--ade-text);
+}
+
+[data-slot="decision-head"] {
+  display: flex;
+  align-items: baseline;
+  gap: var(--ade-space-4);
+  min-width: 0;
+}
+
+[data-slot="decision-key"] {
+  flex: 0 0 auto;
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-sm);
+  color: var(--ade-accent-strong);
+}
+
+[data-slot="decision-title"] {
+  margin: 0;
+  min-width: 0;
+  font-size: var(--ade-font-lg);
+  font-weight: var(--ade-weight-semibold);
+  line-height: var(--ade-leading);
+}
+
+[data-slot="decision-meta"],
+[data-slot="decision-unlocks"],
+[data-slot="decision-hint"] {
+  font-size: var(--ade-font-sm);
+  color: var(--ade-text-weak);
+}
+
+[data-slot="decision-unlocks"] {
+  font-family: var(--ade-mono);
+}
+
+[data-slot="decision-context"] {
+  margin: var(--ade-space-3) 0 var(--ade-space-2);
+  line-height: var(--ade-leading);
+  color: var(--ade-text-soft);
+  white-space: pre-wrap;
+}
+
+[data-slot="decision-options"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-3);
+  margin-top: var(--ade-space-4);
+}
+
+[data-slot="decision-option"] {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--ade-space-4);
+  padding: var(--ade-space-3) var(--ade-space-4);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-sm);
+  background: var(--ade-surface);
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  /* Add transform so the press-scale rides the same frame as the hover
+     background — options read as one motion, not colour-then-shrink. */
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
+}
+
+[data-slot="decision-option"]:hover {
+  border-color: var(--ade-border-strong);
+  background: var(--ade-hover);
+}
+
+[data-slot="decision-option"]:active {
+  transform: scale(0.99);
+}
+
+[data-slot="decision-option"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-slot="decision-option"][data-on] {
+  border-color: var(--ade-accent);
+  background: var(--ade-accent-soft);
+}
+
+/* The chosen option keeps its accent fill when focused. */
+[data-slot="decision-option"][data-on]:focus-visible {
+  border-color: var(--ade-accent);
+  background: var(--ade-accent-soft);
+}
+
+[data-slot="decision-option-key"] {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  border: 1px solid var(--ade-border-strong);
+  border-radius: var(--ade-radius-sm);
+  font-size: var(--ade-font-xs);
+  color: var(--ade-text-weak);
+}
+
+[data-slot="decision-option"][data-on] [data-slot="decision-option-key"] {
+  border-color: var(--ade-accent);
+  background: var(--ade-accent);
+  color: var(--ade-accent-fg);
+}
+
+[data-slot="decision-option-text"] b {
+  display: block;
+  font-weight: var(--ade-weight-semibold);
+}
+
+[data-slot="decision-option-text"] small {
+  font-size: var(--ade-font-sm);
+  color: var(--ade-text-weak);
+}
+
+[data-slot="decision-note"] {
+  display: block;
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 40px;
+  margin-top: var(--ade-space-4);
+  padding: var(--ade-space-3) var(--ade-space-4);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-sm);
+  background: var(--ade-surface);
+  color: var(--ade-text);
+  font: inherit;
+  font-size: var(--ade-font-md-half);
+  resize: vertical;
+  /* Add box-shadow so the focus-ring animates as the same shape it would
+     reach on blur — without it the ring pops in. */
+  transition:
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    box-shadow var(--ade-dur-fast) var(--ade-ease-out);
+}
+
+[data-slot="decision-note"]:focus {
+  outline: none;
+  border-color: var(--ade-accent);
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-slot="decision-actions"],
+[data-slot="decision-defer"] {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: var(--ade-space-3);
+  margin-top: var(--ade-space-4);
+}
+
+[data-slot="decision-submit"],
+[data-slot="decision-ghost"],
+[data-slot="decision-chip"] {
+  height: 26px;
+  padding: 0 var(--ade-space-6);
+  border: 1px solid var(--ade-accent);
+  border-radius: var(--ade-radius-sm);
+  background: var(--ade-accent);
+  color: var(--ade-accent-fg);
+  font: inherit;
+  font-size: var(--ade-font-md-half);
+  font-weight: var(--ade-weight-semibold);
+  cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="decision-submit"]:hover:not(:disabled) {
+  background: var(--ade-accent-strong);
+}
+
+[data-slot="decision-submit"]:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+[data-slot="decision-ghost"],
+[data-slot="decision-chip"] {
+  border-color: var(--ade-border);
+  background: transparent;
+  color: var(--ade-text-soft);
+  font-weight: var(--ade-weight-medium);
+}
+
+[data-slot="decision-chip"] {
+  height: 22px;
+  padding: 0 var(--ade-space-4);
+}
+
+[data-slot="decision-ghost"]:hover:not(:disabled),
+[data-slot="decision-chip"]:hover:not(:disabled) {
+  background: var(--ade-hover);
+  color: var(--ade-text);
+}
+
+[data-slot="decision-ghost"]:active:not(:disabled),
+[data-slot="decision-chip"]:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+[data-slot="decision-submit"]:focus-visible,
+[data-slot="decision-ghost"]:focus-visible,
+[data-slot="decision-chip"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-slot="decision-submit"]:disabled,
+[data-slot="decision-ghost"]:disabled,
+[data-slot="decision-chip"]:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+[data-slot="decision-date"] {
+  height: 22px;
+  padding: 0 var(--ade-space-3);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-sm);
+  background: var(--ade-surface);
+  color: var(--ade-text);
+  font: inherit;
+  font-size: var(--ade-font-sm);
+  color-scheme: inherit;
+}
+
+[data-slot="decision-problem"] {
+  margin-top: var(--ade-space-4);
+  padding: var(--ade-space-3) var(--ade-space-4);
+  border-radius: var(--ade-radius-sm);
+  background: var(--ade-error-bg, var(--ade-hover));
+  color: var(--ade-error, var(--ade-text));
+  font-size: var(--ade-font-md-half);
+}
+
+[data-slot="decision-answer"] {
+  margin-top: var(--ade-space-3);
+  padding: var(--ade-space-3) var(--ade-space-4);
+  border-radius: var(--ade-radius-sm);
+  background: var(--ade-done-bg);
+  font-size: var(--ade-font-md);
+}
+
+[data-slot="decision-answer"] b {
+  color: var(--ade-done);
+}
+
+[data-slot="decision-pill"] {
+  flex: 0 0 auto;
+  margin-left: auto;
+  padding: 1px var(--ade-space-4);
+  border-radius: var(--ade-radius-full);
+  background: var(--ade-working-bg);
+  color: var(--ade-working);
+  font-size: var(--ade-font-xs);
+  white-space: nowrap;
+}
+
+[data-slot="decision-pill"][data-tone="done"] {
+  background: var(--ade-done-bg);
+  color: var(--ade-done);
+}
+
+[data-slot="decision-pill"][data-tone="later"],
+[data-slot="decision-pill"][data-tone="closed"] {
+  background: var(--ade-hover);
+  color: var(--ade-text-weak);
+}
+
+[data-slot="decision-pill"][data-tone="closed"] {
+  max-width: 45%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* The panel. */
+[data-component="decisions-pane"] {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  overflow: hidden;
+  position: relative;
+  background: var(--ade-surface);
+}
+
+[data-component="decisions-pane"][data-focused] {
+  outline: 1px solid var(--ade-accent);
+  outline-offset: -1px;
+}
+
+[data-slot="decisions-body"] {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--ade-space-4) var(--ade-space-5) var(--ade-space-6);
+}
+
+[data-slot="decisions-section"] {
+  display: block;
+  margin: var(--ade-space-5) 0 var(--ade-space-3);
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--ade-font-xs);
+  font-weight: var(--ade-weight-medium);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ade-text-weak);
+  text-align: left;
+}
+
+[data-slot="decisions-body"] > h4[data-slot="decisions-section"]:first-of-type {
+  margin-top: 0;
+}
+
+[data-slot="decisions-section"][data-toggle] {
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  [data-slot="decisions-section"][data-toggle]:hover {
+    color: var(--ade-text);
+  }
+}
+
+[data-slot="decisions-list"] {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+[data-slot="decisions-none"] {
+  margin: 0;
+  font-size: var(--ade-font-md);
+  color: var(--ade-text-weak);
+}
+
+/*
+ * A decision row in the panel.
+ *
+ * One 1px line between rows, same shape as settings-list. The decision-card
+ * in the sheet (full card) is a different surface: a row in the panel is a
+ * name in a stream, a card in the sheet is one question with options.
+ */
+[data-slot="decision-row"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-3);
+  min-width: 0;
+  padding: var(--ade-space-3) 0;
+  border-bottom: 1px solid var(--ade-border-subtle);
+  background: transparent;
+  color: var(--ade-text);
+  font: inherit;
+  font-size: var(--ade-font-md);
+  text-align: left;
+}
+
+[data-slot="decisions-list"] [data-slot="decision-row"]:last-child {
+  border-bottom: 0;
+}
+
+button[data-slot="decision-row"] {
+  cursor: pointer;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  button[data-slot="decision-row"]:hover {
+    color: var(--ade-text);
+  }
+}
+
+[data-slot="decisions-section"] {
+  display: block;
+  margin: 14px 0 6px;
+  padding: 0;
+  border: 0;
+  background: none;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ade-text-weak);
+  text-align: left;
+}
+
+[data-slot="decisions-body"] > h4[data-slot="decisions-section"]:first-of-type {
+  margin-top: 0;
+}
+
+[data-slot="decisions-section"][data-toggle] {
+  cursor: pointer;
+}
+
+[data-slot="decisions-section"][data-toggle]:hover {
+  color: var(--ade-text);
+}
+
+[data-slot="decisions-list"] {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+[data-slot="decisions-none"] {
+  margin: 0;
+  font-size: 12px;
+  color: var(--ade-text-weak);
+}
+
+[data-slot="decision-row"] {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  padding: 7px 10px;
+  border: 1px solid var(--ade-border-subtle);
+  border-radius: var(--ade-radius-sm);
+  background: var(--ade-raised);
+  color: var(--ade-text);
+  font: inherit;
+  font-size: 12px;
+  text-align: left;
+  /* Add transition + transform so the press-scale rides the same frame as
+     the border hover — without it the row has colour but no weight. */
+  transition:
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    background var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease-out);
+}
+
+button[data-slot="decision-row"] {
+  cursor: pointer;
+}
+
+button[data-slot="decision-row"]:hover {
+  border-color: var(--ade-border-strong);
+}
+
+/* A subtle press — rows are slim and the gesture is a directional tap. */
+button[data-slot="decision-row"]:active {
+  transform: scale(0.99);
+}
+
+button[data-slot="decision-row"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-slot="decision-row-title"] {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+[data-slot="decision-row"] [data-slot="decision-pill"] {
+  margin-left: 0;
+}
+
+[data-slot="decision-row"] [data-slot="decision-ghost"] {
+  height: 22px;
+  padding: 0 8px;
+}
+
+[data-slot="decisions-problems"] {
+  margin-bottom: var(--ade-space-3);
+  font-size: 11px;
+  color: var(--ade-text-weak);
+}
+
+[data-slot="decisions-problems"] ul {
+  margin: 4px 0 0;
+  padding-left: 18px;
+}
+
+[data-slot="decisions-recipient"] {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin-bottom: 10px;
+}
+
+[data-slot="decisions-recipient"] label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--ade-text-soft);
+}
+
+[data-slot="decisions-recipient"] select {
+  min-width: 0;
+  max-width: 100%;
+  flex: 1;
+  padding: 3px 6px;
+  font: inherit;
+  color: var(--ade-text);
+  background: var(--ade-surface, transparent);
+  border: 1px solid var(--ade-border, currentColor);
+  border-radius: 6px;
+}
+
+[data-slot="decisions-recipient-warning"],
+[data-slot="sheet-foot"] [data-tone="warn"] {
+  margin: 0;
+  font-size: 11px;
+  color: var(--ade-warning, #b7791f);
+}
+
+[data-slot="decisions-recipient-confirm"] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 11.5px;
+}
+
+[data-slot="decisions-recipient-confirm"] span {
+  flex: 1 1 12rem;
+}

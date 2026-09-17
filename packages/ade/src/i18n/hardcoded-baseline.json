@@ -1,0 +1,8 @@
+{
+  "agent/agent-console.tsx": 3,
+  "settings/sections.tsx": 11,
+  "splash/splash.tsx": 1,
+  "surface/nik-chrome-logo.tsx": 2,
+  "voice/global-shortcut.ts": 1,
+  "voice/host.ts": 1
+}

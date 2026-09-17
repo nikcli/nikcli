@@ -20,12 +20,11 @@ export const PluginSpec = z.union([z.string(), z.tuple([z.string(), PluginOption
 })
 export type PluginSpec = z.infer<typeof PluginSpec>
 
-export function pluginSpecifier(plugin: string | PluginSpec) {
-  if (typeof plugin === "string") return plugin
-  return plugin[0]
-}
-
-export function pluginOptions(plugin: string | PluginSpec) {
-  if (typeof plugin === "string") return
-  return plugin[1]
-}
+/*
+ * The two accessors live in `plugin-read.ts` and are re-exported here.
+ *
+ * Nothing about reading a tuple needs a schema library, and ADE — which runs
+ * in a webview and must not bundle zod — needs exactly these two. Keeping the
+ * import path callers already use means the move cost nobody anything.
+ */
+export { pluginOptions, pluginSpecifier } from "@nikcli-ai/util/plugin-read"

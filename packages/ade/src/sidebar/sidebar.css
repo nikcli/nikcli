@@ -1,0 +1,1932 @@
+/* sidebar styles */
+
+[data-component="ade-sidebar"] {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+/* ── project header ───────────────────────────────────────────────────────── */
+
+[data-slot="sidebar-header-project"] {
+  flex: 0 0 auto;
+  padding: var(--ade-space-5) var(--ade-space-6);
+  border-bottom: 1px solid var(--ade-border);
+  /* A whisper of background lift so the project header reads as a header, not
+     another row. */
+  background: linear-gradient(to bottom, color-mix(in srgb, var(--ade-text) 2%, transparent), transparent 60%);
+}
+
+/*
+ * Name and branch on one line, and the branch gets whatever is left.
+ *
+ * `min-width: 0` on both is what makes the truncation happen at all: a flex
+ * child's default minimum is its content, so without it the branch pushes the
+ * row wider than the 260px column instead of shortening.
+ */
+[data-slot="project-name"] {
+  display: flex;
+  align-items: baseline;
+  gap: var(--ade-space-4);
+  min-width: 0;
+}
+
+[data-slot="project-name-text"] {
+  flex: 0 1 auto;
+  min-width: 0;
+  font-size: var(--ade-font-lg);
+  font-weight: var(--ade-weight-semibold);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/*
+ * Truncated at the end, not the start.
+ *
+ * The old rule let it overflow and the column clipped it from the left, which
+ * ate `feat/` and then the words that distinguish one branch from another.
+ * The tail is the disposable half of a branch name; the head is not.
+ */
+[data-slot="project-branch"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  color: var(--ade-text-weak);
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-xs);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-slot="project-path"] {
+  display: block;
+  color: var(--ade-text-weak);
+  font-size: var(--ade-font-xs);
+  margin-top: 1px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ── live counts ──────────────────────────────────────────────────────────── */
+/*
+ * Only what is happening, and nothing when nothing is.
+ *
+ * This replaces a permanent row reading "Lavorando: 0 · Attesa: 0 · Errori: 0"
+ * — a full line of a 260px column spent reporting the absence of news, which
+ * teaches the eye to skip the exact place the news will appear.
+ */
+[data-slot="sidebar-pills"] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ade-space-2);
+  margin-top: var(--ade-space-4);
+}
+
+[data-slot="sidebar-pill"] {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ade-space-3);
+  padding: var(--ade-space-1) var(--ade-space-4);
+  border-radius: var(--ade-radius-full);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-xs);
+  font-variant-numeric: tabular-nums;
+  font-weight: var(--ade-weight-medium);
+  line-height: var(--ade-leading);
+  /* Subtle scale on hover — pills are metrics, not buttons, but a tiny
+     response makes them feel alive. */
+  transition:
+    transform var(--ade-dur-fast) var(--ade-ease),
+    filter var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="sidebar-pill"]:hover {
+  transform: scale(1.02);
+  filter: brightness(1.05);
+}
+
+[data-slot="sidebar-pill-dot"] {
+  width: 5px;
+  height: 5px;
+  flex: 0 0 auto;
+  border-radius: var(--ade-radius-full);
+  background: currentColor;
+}
+
+[data-slot="sidebar-pill"][data-tone="working"] {
+  background: var(--ade-working-bg);
+  color: var(--ade-working);
+}
+[data-slot="sidebar-pill"][data-tone="waiting"] {
+  background: var(--ade-waiting-bg);
+  color: var(--ade-waiting);
+}
+[data-slot="sidebar-pill"][data-tone="error"] {
+  background: var(--ade-error-bg);
+  color: var(--ade-error);
+}
+
+/* ── sections ─────────────────────────────────────────────────────────────── */
+
+[data-slot="sidebar-sections"] {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow: hidden;
+}
+
+/*
+ * Every section is as tall as its content. Nothing is ever taller.
+ *
+ * This is the whole of the fix. The project list used to carry a stored pixel
+ * height with a drag handle: holding one row it still claimed the ~320px it
+ * had been dragged to, which is where the column's empty middle came from.
+ *
+ * Giving that leftover to a section instead was the same bug with better
+ * manners, and it showed the moment a section was shut: with "File" closed the
+ * slack went to "Agenti attivi", which stretched to fill the column and left
+ * the shut "File" header stranded at the very bottom behind a field of
+ * nothing. So no section grows. What is left over is left over, and it sits
+ * under the last section where an empty column is supposed to be empty.
+ *
+ * `scrollingSection` in `sections.ts` names the one section that may shrink
+ * below its content and scroll inside itself; that is the only slack any
+ * section takes, and only when there is not enough room to go round.
+ */
+[data-slot="sidebar-section"] {
+  flex: 0 0 auto;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  border-bottom: 1px solid var(--ade-border-subtle);
+}
+
+[data-slot="sidebar-section"][data-scrolls] {
+  flex: 0 1 auto;
+  overflow: hidden;
+}
+
+/*
+ * A content-sized section still needs a ceiling.
+ *
+ * "As tall as its content" is only half a rule, and the missing half bites
+ * immediately: sixteen restored sessions made the project list 16 rows tall,
+ * `flex: 0 0 auto` honoured every one of them, and the file tree was pushed
+ * off the bottom of the column entirely — unreachable, with no scrollbar to
+ * suggest it existed. Shorter than the cap it takes what it needs; longer, it
+ * stops and scrolls inside itself.
+ *
+ * 45% rather than half: the scrolling section has a search box and a header of
+ * its own to pay for before its first row, so an even split leaves it showing
+ * fewer rows than the one that is merely capped.
+ */
+[data-slot="sidebar-section"][data-open]:not([data-scrolls]) {
+  max-height: 45%;
+  overflow: hidden;
+}
+
+[data-slot="sidebar-section"][data-open]:not([data-scrolls]) [data-slot="section-content"] {
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ade-scrollbar-thumb) transparent;
+}
+
+/* ── project search results ───────────────────────────────────────────────── */
+
+[data-component="file-results"] {
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+}
+
+[data-slot="file-result"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-1);
+  padding: var(--ade-space-3) var(--ade-space-6);
+  border: 0;
+  background: transparent;
+  text-align: left;
+  cursor: grab;
+  user-select: none;
+  -webkit-user-select: none;
+  position: relative;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="file-result"]:active {
+  cursor: grabbing;
+  transform: scale(0.99);
+}
+
+[data-slot="file-result"]:hover {
+  background: var(--ade-hover);
+}
+
+[data-slot="file-result"][data-selected] {
+  background: var(--ade-active);
+}
+
+[data-slot="file-result"][data-selected]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: var(--ade-space-1);
+  bottom: var(--ade-space-1);
+  width: 2px;
+  background: var(--ade-accent);
+  border-radius: 0 var(--ade-radius-sm) var(--ade-radius-sm) 0;
+}
+
+[data-slot="file-result"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-slot="file-result-name"] {
+  color: var(--ade-text);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+}
+
+/* The path is the disambiguator - three files named index.ts are otherwise
+   three identical rows - so it stays, quiet and truncated from the left. */
+[data-slot="file-result-path"] {
+  color: var(--ade-text-weak);
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-xs);
+  direction: rtl;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-component="file-tree"][data-hidden] {
+  display: none;
+}
+
+/* What a section says when it has nothing: quiet, but never blank. */
+[data-slot="section-empty"] {
+  margin: 0;
+  padding: var(--ade-space-5) var(--ade-space-6);
+  color: var(--ade-text-weak);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+  line-height: var(--ade-leading);
+  text-align: left;
+  font-style: italic;
+}
+
+/*
+ * One header shape for the whole column.
+ *
+ * There used to be three: "PROGETTI" with a chevron and a plus, "FILE" as a
+ * button that did nothing, and a lowercase "plugin" in another style
+ * entirely. Three ways of saying "this is a section" is two too many in a
+ * 260px rail, and the odd one out reads as a different kind of thing.
+ * The plugin and shot-tray headers are pulled into this shape further down.
+ */
+/*
+ * A section header in the column.
+ *
+ * 24px of vertical padding is what makes the headers read as section
+ * boundaries rather than as another row. The 6px of horizontal padding
+ * (instead of the 12px the rest of the column uses) is what keeps the
+ * count and the chevron aligned with the rows beneath them.
+ */
+[data-slot="section-header"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-4);
+  width: 100%;
+  padding: var(--ade-space-4) var(--ade-space-3) var(--ade-space-2);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-xs);
+  font-weight: var(--ade-weight-medium);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ade-text-weak);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition:
+    color var(--ade-dur-fast) var(--ade-ease),
+    background var(--ade-dur-fast) var(--ade-ease),
+    transform 120ms var(--ade-ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  [data-slot="section-header"]:hover {
+    color: var(--ade-text-soft);
+  }
+}
+
+[data-slot="section-header"]:active {
+  transform: scale(0.99);
+}
+
+[data-slot="section-header"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+  border-radius: var(--ade-radius-sm);
+}
+
+[data-slot="section-label"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-slot="section-count"] {
+  flex: 0 0 auto;
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-xs);
+  letter-spacing: 0;
+  color: var(--ade-text-weak);
+  font-variant-numeric: tabular-nums;
+}
+
+/* Points down when open, right when shut — the only state the header shows,
+   so it has to be legible at 10px. */
+[data-slot="section-chevron"] {
+  flex: 0 0 auto;
+  color: var(--ade-text-weak);
+  width: 16px;
+  height: 16px;
+  transition: transform var(--ade-dur) var(--ade-spring);
+}
+
+[data-slot="sidebar-section"][data-open] [data-slot="section-chevron"] {
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-slot="section-chevron"] {
+    transition: transform var(--ade-dur-fast) var(--ade-ease);
+  }
+}
+
+/*
+ * Never squeezed and never the reason the column scrolls: the file tree above
+ * it is the elastic part, this takes the height its thumbnails need.
+ */
+[data-slot="sidebar-section-bottom"] {
+  flex: 0 0 auto;
+  min-width: 0;
+}
+
+/*
+ * Same rule as the tray below it, plus a ceiling: what fills this comes from
+ * plugins, and a plugin with an unbounded list must not be able to push the
+ * file tree off the column.
+ */
+[data-slot="sidebar-section-extra"] {
+  flex: 0 0 auto;
+  min-width: 0;
+  max-height: 40%;
+  overflow: auto;
+  border-top: 1px solid var(--ade-border);
+}
+
+/*
+ * A plugin's section header, wearing the same clothes as the sidebar's own.
+ *
+ * Restyled here rather than in `plugin/pane.tsx` because the rule being
+ * enforced belongs to the column, not to the plugin system: whatever ends up
+ * in this rail announces itself the same way. It was lowercase and a size
+ * apart, which made a plugin's section read as a stray label rather than as
+ * one of the sidebar's sections.
+ */
+[data-slot="sidebar-section-plugin"] [data-slot="sidebar-section-title"] {
+  display: flex;
+  align-items: center;
+  padding: var(--ade-space-4) var(--ade-space-6);
+  color: var(--ade-text-weak);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-xs);
+  font-weight: var(--ade-weight-medium);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+}
+
+[data-slot="sidebar-section-error"] {
+  padding: var(--ade-space-2) var(--ade-space-4);
+  color: var(--ade-error);
+  font-size: var(--ade-font-sm);
+}
+
+[data-slot="section-header-row"] {
+  display: flex;
+  align-items: center;
+  flex: 0 0 auto;
+}
+
+[data-slot="section-header-row"] [data-slot="section-header"] {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+/* Held in the layout but quiet until wanted, like the pane's own actions. */
+/*
+ * The same width in every header, however many buttons it holds — two for
+ * Spaces, one for the agents, none for the files — so the counts before it
+ * end on one vertical line instead of stepping in by a button's width.
+ */
+[data-slot="section-actions"] {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  flex: 0 0 auto;
+  width: calc(2 * 22px + var(--ade-space-2));
+  gap: var(--ade-space-2);
+  margin-right: var(--ade-space-4);
+}
+
+[data-slot="section-add"] {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex: 0 0 auto;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ade-radius-sm);
+  background: transparent;
+  color: var(--ade-text-weak);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity var(--ade-dur-fast) var(--ade-ease),
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="section-header-row"]:hover [data-slot="section-add"],
+[data-slot="section-add"]:focus-visible {
+  opacity: 1;
+}
+
+[data-slot="section-add"]:hover {
+  background: var(--ade-hover);
+  color: var(--ade-text);
+}
+
+[data-slot="section-add"]:active {
+  transform: scale(0.92);
+}
+
+[data-slot="section-add"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+/*
+ * Scrolls only inside the section named to take the squeeze.
+ *
+ * In a content-sized section `flex: 1` would reintroduce the bug: the box
+ * would claim the leftover height and then have nothing to put in it. Here
+ * the `1 1` is shrink, not growth — the section above it never exceeds its
+ * content, so there is no leftover to claim; when the column is short the
+ * content is what gives, and the header it belongs to stays put.
+ */
+[data-slot="section-content"] {
+  flex: 0 0 auto;
+  overflow: visible;
+}
+
+[data-slot="sidebar-section"][data-scrolls] [data-slot="section-content"] {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: var(--ade-scrollbar-thumb) transparent;
+}
+
+/* A closed section is a header and nothing else, with no border doubling up
+   against the next one. */
+[data-slot="sidebar-section"]:last-of-type {
+  border-bottom: 0;
+}
+
+[data-slot="search-box"] {
+  padding: var(--ade-space-3) var(--ade-space-6);
+  border-bottom: 1px solid var(--ade-border);
+}
+
+[data-slot="search-input"] {
+  width: 100%;
+  padding: var(--ade-space-2) var(--ade-space-4);
+  background: var(--ade-sunken);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-sm);
+  color: var(--ade-text);
+  font-size: var(--ade-font-md);
+}
+[data-slot="search-input"]:focus {
+  outline: 1px solid var(--ade-accent);
+  border-color: var(--ade-accent);
+}
+
+/*
+ * Row height, which is the density of the whole column.
+ *
+ * 24px, down from 32. A 260px rail is a list, and eight pixels a row is the
+ * difference between seeing six sessions and seeing eight — at 32px the
+ * project list spent a third of its height on the gaps between rows. The
+ * target stays comfortably above the 24px minimum for a pointer, and the row
+ * is full-width, so the hit area is far larger than the text.
+ */
+[data-slot="session-row"],
+[data-slot="tree-row"],
+[data-slot="workspace-header"] {
+  min-height: 24px;
+}
+
+[data-slot="session-title"],
+[data-slot="tree-label"],
+[data-slot="workspace-name"] {
+  color: var(--ade-text);
+}
+
+[data-slot="session-activity"] {
+  display: block;
+  font-size: var(--ade-font-sm);
+  color: var(--ade-text-weak);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-left: var(--ade-space-8);
+  font-variant-numeric: tabular-nums;
+  line-height: var(--ade-leading);
+  padding-top: var(--ade-space-1);
+}
+
+/* Highlight match */
+.highlight-match {
+  color: var(--ade-accent);
+  font-weight: var(--ade-weight-semibold);
+}
+
+[data-component="file-preview"] {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  width: 100%;
+  overflow: hidden;
+  background: var(--ade-bg);
+}
+
+[data-slot="preview-header"] {
+  padding: var(--ade-space-4) var(--ade-space-8);
+  border-bottom: 1px solid var(--ade-border);
+  font-size: var(--ade-font-lg);
+  font-weight: var(--ade-weight-medium);
+  background: var(--ade-surface);
+}
+
+[data-slot="preview-body"] {
+  flex: 1;
+  overflow: auto;
+  padding: var(--ade-space-8);
+}
+
+[data-slot="preview-message"] {
+  font-size: var(--ade-font-lg);
+  color: var(--ade-text-weak);
+}
+[data-slot="preview-message"][data-error="true"] {
+  color: var(--ade-error);
+}
+
+[data-slot="preview-content"] {
+  margin: 0;
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-md);
+  line-height: var(--ade-leading);
+}
+
+[data-slot="preview-line"] {
+  display: flex;
+}
+
+[data-slot="preview-line-num"] {
+  width: 40px;
+  flex-shrink: 0;
+  color: var(--ade-text-weak);
+  text-align: right;
+  padding-right: var(--ade-space-6);
+  user-select: none;
+}
+
+[data-slot="preview-line-text"] {
+  white-space: pre;
+}
+
+/* ══ Direzione · Piatta ═══════════════════════════════════════════════════════
+ *
+ * La versione 6 fra le sei proposte, scelta dall'utente.
+ *
+ * Prima ogni gruppo era una carta: bordo, raggio, fondo più chiaro, ombra.
+ * In una colonna da 260px quelle carte incorniciavano soprattutto vuoto — la
+ * sezione FILE disegnava un rettangolo attorno a centinaia di pixel di niente
+ * — e nove linee da un pixel dall'alto al basso facevano più rumore delle
+ * righe che dovevano separare.
+ *
+ * Adesso: nessuna scatola. I gruppi sono separati da una sola linea sottile,
+ * l'etichetta è in tondo invece che in maiuscoletto monospaziato, il conteggio
+ * sta a destra, e la riga è l'unica cosa che prende una forma quando ci passi
+ * sopra. È l'impaginazione che usano VS Code, Linear e Slack: nessuna di
+ * quelle scelte appartiene a qualcuno, sono tutte convenzioni di lista.
+ *
+ * Niente verde: dove serviva l'accento — selezione, fuoco, marchio — c'è
+ * l'inchiostro del tema. Nero su bianco in chiaro, bianco su nero in scuro.
+ *
+ * In fondo al file e senza il prefisso del mock: la specificità torna pari a
+ * quella delle regole di base, quindi decide l'ordine, e il blocco resta
+ * leggibile come un insieme invece di essere spalmato dentro le regole che
+ * modifica.
+ */
+
+/* The selection veil — a subtle accent tint, slightly translucent so the
+   resting state bleeds through softly. A stronger tint reads as a button. */
+[data-component="ade-sidebar"] [data-slot="tree-row"][data-selected],
+[data-component="ade-sidebar"] [data-slot="file-result"][data-selected],
+[data-component="ade-sidebar"] [data-slot="workspace-header"][data-active],
+[data-component="ade-sidebar"] [data-slot="session-row"][data-selected],
+[data-component="ade-sidebar"] [data-slot="active-agent-card"][data-selected] {
+  background: var(--ade-accent-soft);
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--ade-text);
+  font-weight: var(--ade-weight-medium);
+}
+
+/* On the accent veil, the status dot and its halo would muddy together —
+   a hairline of the panel colour cuts them back out. */
+[data-slot="session-row"][data-selected] [data-slot="agent-status-dot"],
+[data-slot="active-agent-card"][data-selected] [data-slot="agent-status-dot"] {
+  outline: 2px solid var(--ade-raised);
+  outline-offset: 1px;
+}
+/* Non più una carta: il nome del progetto è il titolo della colonna, e un
+   titolo non ha bisogno di un riquadro per farsi riconoscere. */
+[data-slot="sidebar-header-project"] {
+  padding: var(--ade-space-5) var(--ade-space-6) var(--ade-space-4);
+  border-bottom: 1px solid var(--ade-border-subtle);
+}
+[data-slot="project-name"] {
+  align-items: center;
+}
+[data-slot="project-name-text"] {
+  flex: 0 0 auto;
+}
+[data-slot="sidebar-pills"] {
+  margin-top: var(--ade-space-4);
+}
+/* Senza carta sotto, la pillola è già distinta dal fondo: il contorno che le
+   serviva su una superficie chiara qui raddoppierebbe il colore. */
+[data-slot="sidebar-pill"] {
+  height: 17px;
+  padding: 0 var(--ade-space-4);
+}
+[data-slot="project-branch"] {
+  font-size: var(--ade-font-xs);
+}
+[data-slot="project-path"] {
+  margin-top: var(--ade-space-2);
+}
+
+/* ── i gruppi, separati da una linea e nient'altro ── */
+[data-slot="sidebar-sections"] {
+  padding: 0;
+  gap: 0;
+}
+[data-slot="sidebar-section"] {
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  overflow: hidden;
+}
+[data-slot="sidebar-section"] + [data-slot="sidebar-section"] {
+  border-top: 1px solid var(--ade-border-subtle);
+}
+[data-slot="sidebar-section"]:last-of-type {
+  border-bottom: 0;
+}
+
+/*
+ * L'etichetta del gruppo in tondo.
+ *
+ * Il maiuscoletto monospaziato spaziato è la voce di un'intestazione di
+ * tabella: grida, e in una colonna con tre gruppi grida tre volte. In tondo,
+ * piccola e tenue, resta un'etichetta — si legge se la cerchi e sparisce se
+ * stai leggendo le righe, che è quello che si fa il 95% delle volte.
+ */
+[data-slot="section-header"] {
+  min-height: 26px;
+  padding: var(--ade-space-4) var(--ade-space-6) var(--ade-space-2);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+  font-weight: var(--ade-weight-medium);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--ade-text-weak);
+}
+/* A destra, in cifre a larghezza fissa: incolonnati, due conteggi si
+   confrontano senza leggerli. */
+[data-slot="section-count"] {
+  margin-left: auto;
+  padding-left: var(--ade-space-4);
+  font-variant-numeric: tabular-nums;
+}
+/* Il contenuto rientra meno dell'etichetta: le righe sono la cosa da leggere,
+   e il margine che serviva a staccarle dal bordo di una carta qui non c'è. */
+[data-slot="section-content"] {
+  padding: 0 var(--ade-space-3) var(--ade-space-4);
+}
+
+/* ── le righe: la sola forma della colonna ── */
+/*
+ * Il riquadro arrotondato della riga è l'unica forma rimasta, quindi deve
+ * staccarsi dai due bordi: 6px li dà il contenitore, gli altri 8 la riga.
+ * Ristretto al componente perché l'albero dei file si monta anche altrove,
+ * dove la colonna non lo circonda.
+ */
+[data-component="ade-sidebar"] [data-slot="tree-row"],
+[data-component="ade-sidebar"] [data-slot="workspace-header"] {
+  line-height: 16px;
+  border-radius: var(--ade-radius-sm);
+  padding-inline: var(--ade-space-4);
+}
+[data-slot="tree-row"][data-selected] {
+  background: var(--ade-active);
+  color: var(--ade-text);
+  box-shadow: none;
+}
+[data-slot="tree-row"][data-selected]::before {
+  content: none;
+}
+[data-slot="tree-guide"]::before {
+  background: var(--ade-border-subtle);
+}
+/* L'albero dei file in tondo come il resto della colonna: il monospaziato
+   serve a incolonnare del codice, e qui non c'è codice, ci sono nomi. */
+[data-slot="tree-label"] {
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+}
+/* Anche la riga di un risultato di ricerca perde la striscia colorata. */
+[data-slot="file-result"] {
+  border-radius: var(--ade-radius-sm);
+}
+
+[data-slot="file-result"][data-selected]::before {
+  content: none;
+}
+[data-slot="file-result"][data-selected]::before {
+  content: none;
+}
+/* Il pezzo che corrisponde a quanto è stato digitato: in grassetto e in
+   inchiostro pieno, non in tinta. Su una riga tenue il contrasto basta a
+   dire quale parte è stata trovata. */
+.highlight-match {
+  color: var(--ade-text);
+  font-weight: var(--ade-weight-semibold);
+}
+/* La presa per il trascinamento, che solo qui si vede: due punti in colonna,
+   spenti finché il puntatore non è sulla riga. */
+[data-slot="row-grip"] {
+  display: block;
+  flex: 0 0 auto;
+  width: 6px;
+  height: 10px;
+  margin-left: auto;
+  opacity: 0;
+  background-image: radial-gradient(circle, var(--ade-text-weak) 0.9px, transparent 1px);
+  background-size: 3px 3px;
+  transition:
+    opacity var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
+}
+[data-slot="tree-row"]:hover [data-slot="row-grip"] {
+  opacity: 0.9;
+  transform: scale(1.05);
+}
+[data-slot="workspace-count"] {
+  background: transparent;
+}
+/* In colonna con i conteggi delle intestazioni: stessa larghezza minima e lo
+   stesso rientro da destra, che è lo spazio dei pulsanti "aggiungi" (56px):
+   riga e intestazione hanno già lo stesso padding orizzontale di 10px. */
+[data-component="ade-sidebar"] [data-slot="workspace-count"] {
+  min-width: 24px;
+  box-sizing: border-box;
+  margin-right: calc(2 * 22px + var(--ade-space-2) + var(--ade-space-4));
+}
+
+/* ── la ricerca, senza cornice ── */
+/*
+ * Un campo pieno invece che contornato: il bordo era la nona linea da un
+ * pixel della colonna, e il riempimento dice la stessa cosa senza aggiungere
+ * un'altra riga all'insieme. Il fondo è quello della riga premuta, non il più
+ * tenue: un campo che si vede solo passandoci sopra non è un campo.
+ */
+[data-slot="search-box"] {
+  padding: var(--ade-space-2) var(--ade-space-3) var(--ade-space-4);
+  border-bottom: 0;
+}
+[data-slot="search-field"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-3);
+  height: 28px;
+  padding: 0 var(--ade-space-4);
+  border: 1px solid transparent;
+  border-radius: var(--ade-radius-md);
+  background: var(--ade-active);
+  transition:
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    background var(--ade-dur-fast) var(--ade-ease),
+    box-shadow var(--ade-dur-fast) var(--ade-ease);
+}
+/* Il fuoco in inchiostro, non in tinta: il contorno è già il segnale, e
+   l'alone colorato era l'unico verde rimasto in fondo alla colonna. */
+[data-slot="search-field"]:focus-within {
+  border-color: var(--ade-text);
+  background: var(--ade-raised);
+  box-shadow: 0 0 0 1px var(--ade-text);
+}
+[data-slot="search-input"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+}
+[data-slot="search-input"]:focus {
+  outline: none;
+}
+[data-slot="search-leading"] {
+  display: block;
+  flex: 0 0 auto;
+  color: var(--ade-text-weak);
+}
+
+/* ── il vassoio delle schermate, in fondo e senza carta ────────────────────
+ *
+ * Non è una sezione come le altre: non ha intestazione, non si apre e non si
+ * chiude, e lo spazio in fondo alla colonna è riservato a lui. Le miniature
+ * si prendono al volo mentre si va verso una sessione, e una carta con un
+ * titolo sopra era un nome per una cosa che si riconosce guardandola.
+ */
+/* Due strisce impilate, non una riga: le schermate, e sotto la via per le
+   impostazioni. Il perché sta accanto al markup, in `sidebar.tsx`. */
+[data-slot="sidebar-footer"] {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: var(--ade-space-2);
+  flex: 0 0 auto;
+  padding: var(--ade-space-3) var(--ade-space-4) var(--ade-space-4);
+  border-top: 1px solid var(--ade-border);
+  background: var(--ade-sunken);
+}
+
+[data-slot="sidebar-shots"] {
+  flex: 0 1 auto;
+  min-width: 0;
+  min-height: 0;
+}
+
+/*
+ * Un binario di sole icone, come il resto della direzione piatta.
+ *
+ * L'ingranaggio portava il suo nome scritto perché era l'unica cosa su una
+ * riga vuota; ora divide la riga con tema e notifiche, e tre icone in fila
+ * si leggono come un gruppo — il nome scritto ne avrebbe fatta una diversa
+ * dalle altre due. Il nome resta dov'è sempre stato per chi non vede
+ * l'icona: in `aria-label` e nel tooltip.
+ */
+[data-slot="sidebar-settings-strip"] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ade-space-3);
+  flex: 0 0 auto;
+  padding-top: var(--ade-space-3);
+  border-top: 1px solid var(--ade-border-subtle);
+}
+
+[data-slot="sidebar-settings-label"] {
+  display: none;
+}
+
+/* Tema e notifiche, all'estremità opposta all'ingranaggio: sono lo stato
+   della finestra, non una voce di menu, e stanno insieme. */
+[data-slot="sidebar-footer-actions"] {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ade-space-1);
+  flex: 0 0 auto;
+}
+
+/* L'ingranaggio: in fondo, sotto tutto, perché le impostazioni sono
+   l'ultima cosa che si cerca e la prima che deve stare sempre allo stesso
+   posto. */
+[data-slot="sidebar-settings"] {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--ade-radius-md);
+  background: transparent;
+  color: var(--ade-text-weak);
+  font: inherit;
+  font-size: var(--ade-font-sm);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform 120ms var(--ade-ease-out);
+}
+
+[data-slot="sidebar-settings"] svg {
+  flex: 0 0 auto;
+}
+
+[data-slot="sidebar-settings-label"] {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  [data-slot="sidebar-settings"]:hover {
+    background: var(--ade-hover);
+    color: var(--ade-text);
+  }
+}
+
+[data-slot="sidebar-settings"]:active {
+  transform: scale(0.92);
+  transition: transform 80ms var(--ade-ease-out);
+}
+
+[data-slot="sidebar-settings"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+/* Senza intestazione, la striscia è il vassoio. */
+[data-slot="sidebar-shots"] [data-component="shot-tray"] {
+  border-top: 0;
+  background: transparent;
+}
+
+[data-slot="sidebar-shots"] [data-slot="shot-tray-strip"] {
+  padding: 0;
+}
+
+[data-slot="sidebar-shots"] [data-slot="shot"] {
+  border-color: var(--ade-border-subtle);
+}
+
+[data-slot="sidebar-shots"] [data-slot="shot"]:hover {
+  border-color: var(--ade-border-strong);
+  box-shadow: var(--ade-shadow-sm);
+}
+
+/* ── Spaces & Active Agents (Herdr-inspired) ──────────────────────────────── */
+
+[data-slot="workspace-header"][data-active] {
+  background: var(--ade-active);
+  color: var(--ade-text);
+}
+
+/* Look and tone from `Badge` in `ui/layout`; here only where it sits in the row.
+   The chip sits between name and count, so a touch of left margin reads as a
+   separator without drawing a line. */
+[data-slot="space-badge"] {
+  margin-left: var(--ade-space-2);
+  flex: 0 0 auto;
+  transition: filter var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="space-badge"]:hover {
+  filter: brightness(1.05);
+}
+
+[data-slot="session-mark-wrap"] {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 auto;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--ade-radius-full);
+  /* Subtle gradient ring as the avatar's ground; the mark sits over it. */
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ade-text) 12%, transparent),
+    color-mix(in srgb, var(--ade-text) 4%, transparent)
+  );
+  transition:
+    transform var(--ade-dur-fast) var(--ade-ease),
+    background var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="session-mark-wrap"]:hover {
+  background: linear-gradient(
+    135deg,
+    color-mix(in srgb, var(--ade-text) 18%, transparent),
+    color-mix(in srgb, var(--ade-text) 8%, transparent)
+  );
+}
+
+[data-slot="session-main"] {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: var(--ade-space-1);
+}
+
+[data-component="ade-sidebar"] [data-slot="session-row"][data-selected]::before {
+  display: none !important;
+  content: none !important;
+}
+
+/*
+ * A session card in the active-agents list.
+ *
+ * The card is a card: full border, raised fill, radius-sm. It sits inside a
+ * list (Rule B from the panels), and the margin-block: 1px 4px is what makes
+ * one card visibly end and the next visibly begin without a separator line.
+ */
+[data-slot="session-row"],
+[data-slot="active-agent-card"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-3);
+  width: 100%;
+  padding: var(--ade-space-3) var(--ade-space-4);
+  margin-block: var(--ade-space-1);
+  box-sizing: border-box;
+  background: var(--ade-surface);
+  border: 1px solid var(--ade-border-subtle);
+  border-radius: var(--ade-radius-sm);
+  color: var(--ade-text);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    box-shadow var(--ade-dur-fast) var(--ade-ease),
+    transform 120ms var(--ade-ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  [data-slot="session-row"]:hover,
+  [data-slot="active-agent-card"]:hover {
+    background: var(--ade-hover);
+    border-color: var(--ade-border);
+  }
+}
+
+[data-slot="session-row"]:active,
+[data-slot="active-agent-card"]:active {
+  transform: scale(0.99);
+}
+
+[data-slot="session-row"][data-selected],
+[data-slot="active-agent-card"][data-selected] {
+  background: var(--ade-active);
+  border-color: var(--ade-text);
+  box-shadow: 0 0 0 1px var(--ade-text);
+}
+
+[data-slot="session-mark-wrap"],
+[data-slot="active-agent-avatar"] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 0 0 26px;
+  width: 26px;
+  height: 26px;
+  border-radius: var(--ade-radius-sm);
+  background: var(--ade-sunken);
+  border: 1px solid var(--ade-border-subtle);
+  padding: 2px;
+  box-sizing: border-box;
+}
+
+[data-slot="session-main"],
+[data-slot="active-agent-body"] {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-width: 0;
+  gap: var(--ade-space-1);
+}
+
+[data-slot="session-top"],
+[data-slot="active-agent-top"] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ade-space-2);
+  min-width: 0;
+}
+
+[data-slot="session-title"],
+[data-slot="active-agent-title"] {
+  font-size: var(--ade-font-md-half);
+  font-weight: var(--ade-weight-medium);
+  color: var(--ade-text);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  flex: 1 1 auto;
+  min-width: 0;
+  line-height: 1.25;
+  letter-spacing: -0.005em;
+  transition: color var(--ade-dur-fast) var(--ade-ease);
+}
+
+/* On the accent veil, the title needs slightly tighter tracking to keep its
+   visual weight close to what it had at the resting size. */
+[data-component="ade-sidebar"] [data-slot="session-row"][data-selected] [data-slot="session-title"],
+[data-component="ade-sidebar"] [data-slot="active-agent-card"][data-selected] [data-slot="active-agent-title"] {
+  color: var(--ade-text);
+  font-weight: var(--ade-weight-semibold);
+  letter-spacing: -0.01em;
+}
+
+/* ── Status Dot Only ── */
+
+[data-slot="agent-status-dot"] {
+  display: inline-block;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex: 0 0 8px;
+  margin-left: auto;
+  transition:
+    transform var(--ade-dur-fast) var(--ade-ease),
+    background-color var(--ade-dur-fast) var(--ade-ease),
+    box-shadow var(--ade-dur-fast) var(--ade-ease);
+}
+
+/* 1. Disponibile (Green / Idle) */
+[data-slot="agent-status-dot"][data-agent-status="disponibile"] {
+  background-color: #22c55e;
+  box-shadow: 0 0 6px rgba(34, 197, 94, 0.65);
+}
+
+/* 2. A lavoro (Yellow / Working con pulse) */
+[data-slot="agent-status-dot"][data-agent-status="a lavoro"] {
+  background-color: #facc15;
+  box-shadow: 0 0 6px rgba(250, 204, 21, 0.65);
+}
+
+/* 3. In attesa di input (Orange / Blocked-Waiting con pulse) */
+[data-slot="agent-status-dot"][data-agent-status="in attesa di input"] {
+  background-color: #f97316;
+  box-shadow: 0 0 6px rgba(249, 115, 22, 0.65);
+}
+
+/*
+ * The pulse, for as long as a session works or waits — which is most of the
+ * time a sidebar is on screen.
+ *
+ * It used to grow a `box-shadow` ring out of the dot, and a shadow is paint:
+ * each pulsing row repainted on every frame. The ring is a disc on ::after now,
+ * the dot's own colour at the ring's starting strength, grown with `scale` and
+ * faded with `opacity` — both of which the compositor animates without asking
+ * for paint. Scaling a 7px disc to 2x is the old 3.5px spread exactly, and the
+ * disc sits inside the dot's own transform, so it swells with the dot the way
+ * the shadow did. At rest it covers the dot in the dot's own colour, which
+ * changes nothing.
+ *
+ * The glow in the rules above is what the old animation replaced while it
+ * ran, so it goes while this runs too. With reduced motion none of this
+ * applies and the dot keeps its steady glow.
+ */
+@media (prefers-reduced-motion: no-preference) {
+  [data-slot="agent-status-dot"][data-agent-status="a lavoro"],
+  [data-slot="agent-status-dot"][data-agent-status="in attesa di input"] {
+    position: relative;
+    box-shadow: none;
+  }
+
+  [data-slot="agent-status-dot"][data-agent-status="a lavoro"] {
+    animation: ade-agent-pulse-yellow 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  [data-slot="agent-status-dot"][data-agent-status="in attesa di input"] {
+    animation: ade-agent-pulse-amber 1.4s ease-in-out infinite;
+  }
+
+  [data-slot="agent-status-dot"][data-agent-status="a lavoro"]::after,
+  [data-slot="agent-status-dot"][data-agent-status="in attesa di input"]::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    border-radius: 50%;
+    pointer-events: none;
+  }
+
+  [data-slot="agent-status-dot"][data-agent-status="a lavoro"]::after {
+    background: rgba(250, 204, 21, 0.6);
+    animation: ade-agent-ripple 1.6s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+
+  [data-slot="agent-status-dot"][data-agent-status="in attesa di input"]::after {
+    background: rgba(249, 115, 22, 0.6);
+    animation: ade-agent-ripple 1.4s ease-in-out infinite;
+  }
+}
+
+/* 4. Task completata (Slate / Done) */
+[data-slot="agent-status-dot"][data-agent-status="task completata"] {
+  background-color: #94a3b8;
+  box-shadow: none;
+}
+
+/* 5. Errore (Red / Error) */
+[data-slot="agent-status-dot"][data-agent-status="errore"] {
+  background-color: #ef4444;
+  box-shadow: 0 0 6px rgba(239, 68, 68, 0.6);
+}
+
+@keyframes ade-agent-pulse-yellow {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.75;
+    transform: scale(1.22);
+  }
+}
+
+@keyframes ade-agent-pulse-amber {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.7;
+    transform: scale(1.22);
+  }
+}
+
+/* The ring of the two pulses above; see the comment on the rules that use it. */
+@keyframes ade-agent-ripple {
+  0%,
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0;
+    transform: scale(2);
+  }
+}
+
+/* ── Card Meta: Folder, Branch, Elapsed Time ── */
+
+[data-slot="session-meta"],
+[data-slot="active-agent-meta"] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ade-space-3);
+  font-size: var(--ade-font-sm);
+  color: var(--ade-text-weak);
+  min-width: 0;
+  line-height: var(--ade-leading);
+  padding-top: var(--ade-space-1);
+  /* The meta is read on squinting — give it a touch more air between the two halves. */
+  letter-spacing: 0.01em;
+}
+
+/* The separator between folder and branch — a hairline dot, kept narrow so it
+   never reads as its own character. */
+[data-slot="agent-card-sep"] {
+  color: var(--ade-border-strong);
+  flex-shrink: 0;
+  font-size: 8px;
+  margin-inline: var(--ade-space-1);
+  opacity: 0.8;
+  line-height: 1;
+}
+
+[data-slot="agent-card-loc"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-2);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1 1 auto;
+}
+
+[data-slot="agent-card-folder"] {
+  display: inline-flex;
+  align-items: center;
+  color: var(--ade-text-soft);
+  font-weight: var(--ade-weight-medium);
+  font-size: var(--ade-font-sm);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 120px;
+}
+
+[data-slot="agent-card-sep"] {
+  color: var(--ade-border);
+  flex-shrink: 0;
+  font-size: var(--ade-font-xs);
+  margin-inline: var(--ade-space-1);
+  opacity: 0.7;
+}
+
+[data-slot="agent-card-branch"] {
+  display: inline-flex;
+  align-items: center;
+  color: var(--ade-text-weak);
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-sm);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 100px;
+}
+
+[data-slot="agent-card-icon"] {
+  flex: 0 0 auto;
+  width: 11px;
+  height: 11px;
+  opacity: 0.65;
+}
+
+[data-slot="agent-card-time"] {
+  flex: 0 0 auto;
+  margin-left: auto;
+  font-size: var(--ade-font-xs);
+  font-family: var(--ade-mono);
+  color: var(--ade-text-weak);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Dedicated Active Agents Section ──────────────────────────────────────── */
+
+[data-slot="active-agents-list"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-1);
+  padding: var(--ade-space-1) var(--ade-space-3) var(--ade-space-4);
+}
+
+[data-slot="active-agents-empty"] {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--ade-space-3);
+  padding: var(--ade-space-4) var(--ade-space-3);
+  text-align: center;
+}
+
+[data-slot="empty-action-btn"] {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ade-space-2);
+  padding: var(--ade-space-2) var(--ade-space-4);
+  border-radius: var(--ade-radius-sm);
+  font-size: var(--ade-font-xs);
+  font-weight: var(--ade-weight-medium);
+  background: var(--ade-active);
+  color: var(--ade-text);
+  border: 1px solid var(--ade-border);
+  cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="empty-action-btn"]:hover {
+  background: var(--ade-hover);
+  border-color: var(--ade-text-weak);
+}
+
+[data-slot="empty-action-btn"]:active {
+  transform: scale(0.97);
+}
+
+[data-slot="empty-action-btn"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+/* ══ Conchiglia · C2 "Perla" ══════════════════════════════════════════════════
+ *
+ * La variante scelta fra le tre evoluzioni della conchiglia
+ * (`sidebar-conchiglia-varianti.html`).
+ *
+ * La colonna smette di essere un muro attaccato al bordo della finestra e
+ * diventa un pannello sospeso: raggio 20px, nessun bordo, nessun divisore —
+ * solo respiro. Dentro, ogni cosa che si può premere è una pillola: le
+ * intestazioni, il campo di ricerca, le righe dell'albero, le carte delle
+ * sessioni. La selezione è un velo d'accento senza contorni, perché su un
+ * fondo bianco un anello in più è una linea in più.
+ *
+ * Il footer resta quello che era: le schermate, l'ingranaggio, il tema e le
+ * notifiche non cambiano né forma né posto. L'unica riga che lo tocca è il
+ * raggio in basso, che è geometria del guscio e non una decisione di
+ * disegno: senza, gli angoli quadri della vaschetta sporgerebbero da quelli
+ * tondi del pannello.
+ *
+ * In fondo al file, dopo la direzione piatta che modifica: stessa
+ * specificità, quindi decide l'ordine.
+ */
+
+/* ── il guscio ── */
+/*
+ * Il margine è sull'`aside` stesso invece che su un contenitore in più: la
+ * larghezza in linea resta quella del pannello, il margine si aggiunge fuori
+ * dal box, e la presa per il ridimensionamento — che sta a `right: -3px` —
+ * cade esattamente a cavallo del bordo del pannello invece che a filo della
+ * finestra.
+ *
+ * `height: auto` perché il 100% ereditato si misurava sull'altezza piena del
+ * corpo e ignorava i 28px di margine: la colonna usciva dal fondo e
+ * `[data-slot="ade-body"]`, che ha `overflow: hidden`, tagliava via l'ultima
+ * striscia del footer. Allo stretch del flex quell'altezza la calcola da sé,
+ * margini compresi.
+ *
+ * Il selettore porta anche il nome dell'elemento, e non è un vezzo: le regole
+ * della colonna in `index.css` hanno la stessa specificità di queste, e
+ * arrivano dopo — `ade-surface.tsx` importa il workbench (che tira dentro
+ * questo foglio) alla riga 1 e `index.css` alla riga 2, quindi nel bundle
+ * l'ordine è l'opposto di quello che si legge. `aside[…]` mette una classe di
+ * specificità fra le due e rende il guscio indipendente da quell'ordine:
+ * senza, altezza, fondo e bordo destro restavano quelli di prima.
+ */
+aside[data-component="ade-sidebar"] {
+  height: auto;
+  align-self: stretch;
+  margin: 14px 12px;
+  padding: 0;
+  background: var(--ade-raised);
+  border: 0;
+  border-radius: 20px;
+  /*
+   * L'ombra sta dentro il margine che la ospita.
+   *
+   * `--ade-shadow-lg` scende 12px e sfuma per altri 32: metà cadeva oltre i
+   * 14px di margine e il corpo la tagliava netta, lasciando sotto il pannello
+   * proprio la riga dritta che l'ombra doveva evitare. 3+10 stanno comodi nel
+   * varco, quindi la sfumatura finisce dove finisce lo spazio.
+   */
+  box-shadow: 0 3px 10px light-dark(rgba(0, 0, 0, 0.1), rgba(0, 0, 0, 0.5));
+}
+
+/* ── la testata, senza linea sotto ── */
+[data-slot="sidebar-header-project"] {
+  padding: var(--ade-space-6) var(--ade-space-7) var(--ade-space-4);
+  border-bottom: 0;
+}
+
+[data-slot="project-name-text"] {
+  font-size: var(--ade-font-lg);
+}
+
+/* ── i gruppi: nessun divisore, solo due pixel d'aria ── */
+[data-slot="sidebar-sections"] {
+  padding: var(--ade-space-1) var(--ade-space-3) var(--ade-space-3);
+  gap: var(--ade-space-1);
+}
+
+[data-slot="sidebar-section"] + [data-slot="sidebar-section"] {
+  border-top: 0;
+}
+
+[data-slot="sidebar-section-extra"] {
+  border-top: 0;
+}
+
+/* L'etichetta del gruppo è una pillola come le righe sotto di lei: la stessa
+   forma per la stessa cosa, qualcosa che si preme. */
+[data-slot="section-header"] {
+  padding: var(--ade-space-3) var(--ade-space-5);
+  border-radius: var(--ade-radius-full);
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="section-header"]:hover {
+  background: var(--ade-hover);
+}
+
+[data-slot="section-header"]:active {
+  transform: scale(0.99);
+}
+
+[data-slot="section-header"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+  border-radius: var(--ade-radius-full);
+}
+
+/* Il conteggio diventa un gettone: a destra, in cifre a larghezza fissa, con
+   un fondo che lo stacca dall'etichetta senza aggiungere una linea. */
+[data-slot="section-count"] {
+  margin-left: auto;
+  min-width: 24px;
+  box-sizing: border-box;
+  text-align: center;
+  padding: 0 var(--ade-space-4);
+  border-radius: var(--ade-radius-full);
+  background: var(--ade-active);
+  color: var(--ade-text-soft);
+  font-size: var(--ade-font-xs);
+  line-height: var(--ade-space-8);
+  font-variant-numeric: tabular-nums;
+  font-family: var(--ade-mono);
+}
+
+[data-slot="section-content"] {
+  padding: 0 0 4px;
+}
+
+/* ── la ricerca, una pillola affondata ── */
+[data-slot="search-box"] {
+  padding: 0;
+  border-bottom: 0;
+}
+
+[data-slot="search-field"] {
+  /* 4px margin lets the focus ring sit *around* the field without being
+     cropped by the column's own border-radius. */
+  margin: var(--ade-space-1) var(--ade-space-1) var(--ade-space-3);
+  border-radius: var(--ade-radius-full);
+  background: var(--ade-sunken);
+}
+
+/* ── le righe: tutto è una pillola ── */
+[data-component="ade-sidebar"] [data-slot="workspace-header"],
+[data-component="ade-sidebar"] [data-slot="tree-row"] {
+  padding: var(--ade-space-2) var(--ade-space-5);
+  border-radius: var(--ade-radius-full);
+}
+
+[data-component="ade-sidebar"] [data-slot="file-result"] {
+  padding: var(--ade-space-2) var(--ade-space-5);
+  border-radius: var(--ade-radius-lg);
+}
+
+/*
+ * Le carte delle sessioni perdono contorno e fondo proprio.
+ *
+ * Su una colonna affondata il riquadro serviva a sollevarle; su un pannello
+ * bianco sono già in rilievo, e il bordo attorno a ognuna rimetteva in fila
+ * le linee da un pixel che il guscio ha appena tolto.
+ *
+ * Prefissate col componente per la stessa ragione del guscio: `index.css`
+ * detta `session-row` e `tree-row` con la stessa specificità e arriva dopo
+ * nel bundle. Il prefisso vale una classe in più e toglie l'ordine di mezzo.
+ */
+[data-component="ade-sidebar"] [data-slot="session-row"],
+[data-component="ade-sidebar"] [data-slot="active-agent-card"] {
+  padding: var(--ade-space-3) var(--ade-space-4);
+  margin-block: 0 var(--ade-space-1);
+  border-radius: var(--ade-radius-lg);
+  background: transparent;
+  border-color: transparent;
+  box-shadow: none;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="active-agents-list"] {
+  padding: 0;
+  gap: 0;
+}
+
+[data-component="ade-sidebar"] [data-slot="workspace-header"]:hover,
+[data-component="ade-sidebar"] [data-slot="tree-row"]:hover,
+[data-component="ade-sidebar"] [data-slot="session-row"]:hover,
+[data-component="ade-sidebar"] [data-slot="active-agent-card"]:hover {
+  background: var(--ade-hover);
+  border-color: transparent;
+}
+
+/* La selezione è un velo, non un anello: il colore dice già quale riga è
+   quella, e il contorno lo direbbe una seconda volta. */
+[data-component="ade-sidebar"] [data-slot="tree-row"][data-selected],
+[data-component="ade-sidebar"] [data-slot="file-result"][data-selected],
+[data-component="ade-sidebar"] [data-slot="workspace-header"][data-active],
+[data-component="ade-sidebar"] [data-slot="session-row"][data-selected],
+[data-component="ade-sidebar"] [data-slot="active-agent-card"][data-selected] {
+  background: var(--ade-accent-soft);
+  border-color: transparent;
+  box-shadow: none;
+  color: var(--ade-text);
+}
+
+/* E niente barretta sul bordo sinistro: era il segno della selezione quando
+   la riga non cambiava fondo, e sopra il velo diventa una seconda risposta
+   alla stessa domanda. */
+[data-component="ade-sidebar"] [data-slot="tree-row"][data-selected]::before,
+[data-component="ade-sidebar"] [data-slot="file-result"][data-selected]::before {
+  content: none;
+}
+
+/* Il segno dell'agente è tondo come tutto il resto, e senza contorno: il
+   fondo basta a dire dov'è. */
+[data-slot="session-mark-wrap"],
+[data-slot="active-agent-avatar"] {
+  background: var(--ade-active);
+  border-color: transparent;
+  border-radius: var(--ade-radius-full);
+}
+
+/* Sul velo d'accento il pallino di stato e il suo alone si confonderebbero
+   col fondo: un filo del colore del pannello lo ritaglia. */
+[data-slot="session-row"][data-selected] [data-slot="agent-status-dot"],
+[data-slot="active-agent-card"][data-selected] [data-slot="agent-status-dot"] {
+  outline: 2px solid var(--ade-raised);
+  outline-offset: 1px;
+}
+
+/* ── il fondo, invariato ──────────────────────────────────────────────────
+ * Le schermate, l'ingranaggio, il tema e le notifiche restano esattamente
+ * come stavano. Solo gli angoli seguono quelli del guscio, altrimenti la
+ * vaschetta sporgerebbe dal pannello che la contiene.
+ */
+[data-slot="sidebar-footer"] {
+  border-radius: 0 0 20px 20px;
+}
+
+/* ── ricerca: filtro file/cartelle, conteggio, risultati con icona ── */
+[data-slot="search-field"] {
+  position: relative;
+}
+
+[data-slot="search-clear"] {
+  flex: 0 0 auto;
+  width: 18px;
+  height: 18px;
+  margin-right: var(--ade-space-2);
+  border: 0;
+  border-radius: var(--ade-radius-full);
+  background: transparent;
+  color: var(--ade-text-weak);
+  font-size: var(--ade-font-lg);
+  line-height: 1;
+  cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="search-clear"]:hover {
+  background: var(--ade-hover);
+  color: var(--ade-text);
+}
+
+[data-slot="search-clear"]:active {
+  transform: scale(0.88);
+}
+
+[data-slot="search-clear"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-slot="search-kinds"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-2);
+  margin: calc(var(--ade-space-1) * -1) var(--ade-space-2) var(--ade-space-3);
+}
+
+[data-slot="search-kind"] {
+  padding: var(--ade-space-1) var(--ade-space-4);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-full);
+  background: transparent;
+  color: var(--ade-text-soft);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-xs);
+  line-height: var(--ade-leading);
+  font-weight: var(--ade-weight-medium);
+  cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="search-kind"]:hover {
+  color: var(--ade-text);
+  background: var(--ade-hover);
+  border-color: var(--ade-border-strong);
+}
+
+[data-slot="search-kind"]:active {
+  transform: scale(0.95);
+}
+
+[data-slot="search-kind"][data-active] {
+  border-color: transparent;
+  background: var(--ade-accent);
+  color: var(--ade-accent-fg);
+  font-weight: var(--ade-weight-semibold);
+}
+
+[data-slot="search-kind"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-slot="search-count"] {
+  margin-left: auto;
+  color: var(--ade-text-weak);
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-xs);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.04em;
+}
+
+[data-component="ade-sidebar"] [data-slot="file-result"] {
+  display: grid;
+  grid-template-columns: 14px minmax(0, 1fr);
+  column-gap: var(--ade-space-3);
+  row-gap: 0;
+  align-items: center;
+}
+
+[data-slot="file-result-icon"] {
+  grid-row: 1 / span 2;
+  display: grid;
+  place-items: center;
+  color: var(--ade-text-weak);
+}
+
+[data-slot="file-result"][data-kind="directory"] [data-slot="file-result-icon"] {
+  color: var(--ade-accent);
+}
+
+[data-slot="file-result-name"] {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-slot="file-result-path"] {
+  grid-column: 2;
+  min-width: 0;
+}
+
+/* The row the arrows are on: the same veil as hover, so pointer and keyboard
+   agree on which row Enter will open. */
+[data-component="ade-sidebar"] [data-slot="file-result"][data-active] {
+  background: var(--ade-hover);
+}
+
+/* ── il fondo: impostazioni, tema e notifiche vicini; a destra le risorse ──
+ *
+ * One row, buttons and numbers on the same line. The numbers carry marks
+ * instead of CPU/RAM/MEM, which is what makes them fit beside the buttons
+ * on a narrow column; they never shrink, so nothing is clipped — the gaps
+ * tighten first.
+ */
+[data-slot="sidebar-settings-strip"] {
+  flex-wrap: nowrap;
+  justify-content: flex-start;
+  gap: var(--ade-space-3);
+}
+
+[data-slot="sidebar-footer-group"] {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ade-space-1);
+  flex: 0 0 auto;
+}
+
+[data-slot="sidebar-footer-group"] [data-slot="sidebar-footer-actions"] {
+  gap: var(--ade-space-1);
+}
+
+[data-slot="sidebar-stats"] {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--ade-space-4);
+  flex: 0 0 auto;
+  margin-left: auto;
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-xs);
+  font-variant-numeric: tabular-nums;
+  color: var(--ade-text-soft);
+  white-space: nowrap;
+}
+
+[data-slot="sidebar-stat"] {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ade-space-2);
+  cursor: default;
+  transition: color var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="sidebar-stat-icon"] {
+  flex: 0 0 auto;
+  color: var(--ade-text-weak);
+  transition: color var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="sidebar-stat"][data-load="busy"],
+[data-slot="sidebar-stat"][data-load="busy"] [data-slot="sidebar-stat-icon"] {
+  color: var(--ade-working);
+}
+
+[data-slot="sidebar-stat"][data-load="high"],
+[data-slot="sidebar-stat"][data-load="high"] [data-slot="sidebar-stat-icon"] {
+  color: var(--ade-error);
+}
+/* A narrow column tightens the buttons before anything would overflow. */
+[data-slot="sidebar-footer"] {
+  container-type: inline-size;
+}
+
+@container (max-width: 230px) {
+  [data-slot="sidebar-settings"],
+  [data-slot="sidebar-footer-actions"] [data-slot="ade-icon"] {
+    width: 22px;
+    height: 22px;
+    border-radius: var(--ade-radius-sm);
+  }
+
+  [data-slot="sidebar-stats"] {
+    gap: var(--ade-space-3);
+    font-size: var(--ade-font-xs);
+  }
+
+  [data-slot="sidebar-settings-strip"] {
+    gap: var(--ade-space-2);
+  }
+}
+
+/*
+ * Un contenuto al posto delle sezioni: la sezione bot.
+ *
+ * Con `content` la colonna non ha intestazione né sezioni; al loro posto c'è
+ * quello che la sezione passa — la rubrica dei bot — e il piede resta com'è
+ * nella sezione code: le schermate in una striscia bassa che scorre, e sotto
+ * le impostazioni.
+ */
+[data-slot="sidebar-content"] {
+  display: flex;
+  flex-direction: column;
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+/* `hidden` has to win over the sections' own `display`, or the bot roster
+   would sit on top of the sessions and files it replaces. */
+[data-slot="sidebar-sections"][hidden] {
+  display: none;
+}

@@ -37,7 +37,7 @@ export function PointPromptPopover(props: PointPromptPopoverProps): JSX.Element 
 
   return (
     <div
-      class="fixed z-50 w-96 bg-surface-base border border-border-base rounded-xl shadow-2xl p-3 flex flex-col gap-2.5 backdrop-blur-md animate-in fade-in zoom-in-95 duration-150"
+      class="fixed z-50 w-96 bg-surface-raised-stronger-non-alpha border border-border-base rounded-xl shadow-2xl p-3 flex flex-col gap-2.5 animate-in fade-in zoom-in-95 duration-150"
       style={{
         top: `${posTop()}px`,
         left: `${posLeft()}px`,
@@ -47,7 +47,7 @@ export function PointPromptPopover(props: PointPromptPopoverProps): JSX.Element 
       {/* Header with element tag and class info */}
       <div class="flex items-center justify-between border-b border-border-weak-base pb-2">
         <div class="flex items-center gap-1.5 min-w-0">
-          <span class="px-1.5 py-0.5 rounded bg-primary-base/15 text-primary-text font-mono text-12-medium">
+          <span class="px-1.5 py-0.5 rounded bg-surface-brand-base/40 text-text-strong font-mono text-13-medium">
             &lt;{props.element.tagName}&gt;
           </span>
           <Show when={props.element.id}>
@@ -64,7 +64,7 @@ export function PointPromptPopover(props: PointPromptPopoverProps): JSX.Element 
 
       {/* Text snippet preview */}
       <Show when={props.element.innerText}>
-        <div class="text-12-regular text-text-weak italic line-clamp-1 bg-surface-subtle px-2 py-1 rounded">
+        <div class="text-13-regular text-text-weak italic line-clamp-1 bg-surface-base px-2 py-1 rounded">
           "{props.element.innerText}"
         </div>
       </Show>
@@ -72,7 +72,7 @@ export function PointPromptPopover(props: PointPromptPopoverProps): JSX.Element 
       {/* Prompt Form */}
       <form onSubmit={handleSubmit} class="flex flex-col gap-2">
         <textarea
-          class="w-full h-20 p-2 text-13-regular bg-background-base text-text-strong border border-border-weak-base rounded-lg focus:outline-none focus:border-primary-base resize-none"
+          class="w-full h-20 p-2 text-13-regular bg-background-base text-text-strong border border-border-weak-base rounded-lg focus:outline-none focus:border-border-base resize-none"
           placeholder="Point & prompt: Describe what to change on this element..."
           value={promptText()}
           onInput={(e) => setPromptText(e.currentTarget.value)}
@@ -105,7 +105,7 @@ export function PointPromptPopover(props: PointPromptPopoverProps): JSX.Element 
           {quickActions.map((qa) => (
             <button
               type="button"
-              class="text-11-regular px-2 py-1 rounded bg-surface-subtle hover:bg-surface-elevated hover:text-text-strong text-text-weak transition-colors cursor-pointer border border-border-weak-base"
+              class="text-11-regular px-2 py-1 rounded bg-surface-base hover:bg-surface-base-hover hover:text-text-strong text-text-weak transition-colors cursor-pointer border border-border-weak-base"
               onClick={() => props.onQuickAction(qa.action, props.element)}
             >
               {qa.label}

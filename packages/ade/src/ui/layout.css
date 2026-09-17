@@ -1,0 +1,182 @@
+/*
+ * Layout primitives.
+ *
+ * Arrangement only: direction, spacing, alignment, scrolling, and the one
+ * surface every overlay shares. What a component looks like stays in its own
+ * stylesheet under `data-slot`; how its pieces sit next to each other is here,
+ * once, and only in token steps — `data-gap="3"` is `--ade-space-3`, and there
+ * is no attribute for a spacing the scale does not have.
+ *
+ * Driven by attributes rather than classes, like the rest of ADE, and written
+ * with `:where()` so every rule has zero specificity: a component's own
+ * `[data-slot]` rule always wins without `!important`.
+ */
+
+/* ── Stack / Row ───────────────────────────────────────────────────────────── */
+
+:where([data-layout="stack"]) {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+:where([data-layout="row"]) {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  min-width: 0;
+}
+
+:where([data-layout="row"][data-wrap]) {
+  flex-wrap: wrap;
+}
+
+:where([data-layout="grid"]) {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(min(var(--ade-grid-min, 160px), 100%), 1fr));
+}
+
+:where([data-layout][data-grow]) {
+  flex: 1 1 auto;
+  min-height: 0;
+}
+
+/* ── gap ──────────────────────────────────────────────────────────────────── */
+
+:where([data-layout][data-gap="1"]) { gap: var(--ade-space-1); }
+:where([data-layout][data-gap="2"]) { gap: var(--ade-space-2); }
+:where([data-layout][data-gap="3"]) { gap: var(--ade-space-3); }
+:where([data-layout][data-gap="4"]) { gap: var(--ade-space-4); }
+:where([data-layout][data-gap="5"]) { gap: var(--ade-space-5); }
+:where([data-layout][data-gap="6"]) { gap: var(--ade-space-6); }
+:where([data-layout][data-gap="7"]) { gap: var(--ade-space-7); }
+:where([data-layout][data-gap="8"]) { gap: var(--ade-space-8); }
+:where([data-layout][data-gap="9"]) { gap: var(--ade-space-9); }
+
+/* ── padding: all sides, or the inline axis alone ────────────────────────── */
+
+:where([data-layout][data-pad="1"]) { padding: var(--ade-space-1); }
+:where([data-layout][data-pad="2"]) { padding: var(--ade-space-2); }
+:where([data-layout][data-pad="3"]) { padding: var(--ade-space-3); }
+:where([data-layout][data-pad="4"]) { padding: var(--ade-space-4); }
+:where([data-layout][data-pad="5"]) { padding: var(--ade-space-5); }
+:where([data-layout][data-pad="6"]) { padding: var(--ade-space-6); }
+:where([data-layout][data-pad="7"]) { padding: var(--ade-space-7); }
+:where([data-layout][data-pad="8"]) { padding: var(--ade-space-8); }
+:where([data-layout][data-pad="9"]) { padding: var(--ade-space-9); }
+
+:where([data-layout][data-pad-x="4"]) { padding-inline: var(--ade-space-4); }
+:where([data-layout][data-pad-x="5"]) { padding-inline: var(--ade-space-5); }
+:where([data-layout][data-pad-x="6"]) { padding-inline: var(--ade-space-6); }
+:where([data-layout][data-pad-x="7"]) { padding-inline: var(--ade-space-7); }
+
+:where([data-layout][data-pad-y="2"]) { padding-block: var(--ade-space-2); }
+:where([data-layout][data-pad-y="3"]) { padding-block: var(--ade-space-3); }
+:where([data-layout][data-pad-y="4"]) { padding-block: var(--ade-space-4); }
+:where([data-layout][data-pad-y="5"]) { padding-block: var(--ade-space-5); }
+
+/* ── alignment ────────────────────────────────────────────────────────────── */
+
+:where([data-layout][data-align="start"]) { align-items: flex-start; }
+:where([data-layout][data-align="center"]) { align-items: center; }
+:where([data-layout][data-align="end"]) { align-items: flex-end; }
+:where([data-layout][data-align="baseline"]) { align-items: baseline; }
+:where([data-layout][data-align="stretch"]) { align-items: stretch; }
+
+:where([data-layout][data-justify="start"]) { justify-content: flex-start; }
+:where([data-layout][data-justify="center"]) { justify-content: center; }
+:where([data-layout][data-justify="end"]) { justify-content: flex-end; }
+:where([data-layout][data-justify="between"]) { justify-content: space-between; }
+
+/* ── dividers ─────────────────────────────────────────────────────────────── */
+
+:where([data-layout][data-border="top"]) { border-top: 1px solid var(--ade-border); }
+:where([data-layout][data-border="bottom"]) { border-bottom: 1px solid var(--ade-border); }
+
+/* ── Scroll ───────────────────────────────────────────────────────────────── */
+
+:where([data-layout="scroll"]) {
+  display: block;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  min-height: 0;
+  max-height: var(--ade-scroll-max, none);
+}
+
+/* ── Overlay + Surface ────────────────────────────────────────────────────── */
+
+:where([data-layout="overlay"]) {
+  position: absolute;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 12vh var(--ade-space-6) 0;
+  background: var(--ade-scrim);
+}
+
+:where([data-layout="overlay"][data-place="center"]) {
+  align-items: center;
+  padding-top: 0;
+}
+
+:where([data-layout="surface"]) {
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  max-width: var(--ade-surface-max, 560px);
+  max-height: 76vh;
+  overflow: hidden;
+  background: var(--ade-overlay);
+  border: 1px solid var(--ade-border-strong);
+  border-radius: var(--ade-radius-xl);
+  box-shadow: var(--ade-shadow-lg), inset 0 1px 0 var(--ade-highlight);
+  color: var(--ade-text);
+  animation: ade-surface-in var(--ade-dur-fast) var(--ade-ease-out);
+}
+
+:where([data-layout="surface"][data-size="sm"]) { --ade-surface-max: 420px; }
+:where([data-layout="surface"][data-size="md"]) { --ade-surface-max: 560px; }
+:where([data-layout="surface"][data-size="lg"]) { --ade-surface-max: 640px; }
+:where([data-layout="surface"][data-size="xl"]) { --ade-surface-max: 880px; }
+
+@keyframes ade-surface-in {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  :where([data-layout="surface"]) {
+    animation: none;
+  }
+}
+
+/* ── Badge ────────────────────────────────────────────────────────────────── */
+
+:where([data-ui="badge"]) {
+  display: inline-flex;
+  align-items: center;
+  padding: 1px var(--ade-space-3);
+  border-radius: var(--ade-radius-full);
+  font-size: var(--ade-font-xs);
+  font-weight: var(--ade-weight-semibold);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: var(--ade-badge-fg, var(--ade-text-soft));
+  background: var(--ade-badge-bg, var(--ade-hover));
+  border: 1px solid color-mix(in srgb, var(--ade-badge-fg, var(--ade-text-soft)) 30%, transparent);
+}
+
+:where([data-ui="badge"][data-tone="accent"]) { --ade-badge-fg: var(--ade-accent); --ade-badge-bg: var(--ade-accent-soft); }
+:where([data-ui="badge"][data-tone="working"]) { --ade-badge-fg: var(--ade-working); --ade-badge-bg: var(--ade-working-bg); }
+:where([data-ui="badge"][data-tone="waiting"]) { --ade-badge-fg: var(--ade-waiting); --ade-badge-bg: var(--ade-waiting-bg); }
+:where([data-ui="badge"][data-tone="done"]) { --ade-badge-fg: var(--ade-done); --ade-badge-bg: var(--ade-done-bg); }
+:where([data-ui="badge"][data-tone="error"]) { --ade-badge-fg: var(--ade-error); --ade-badge-bg: var(--ade-error-bg); }

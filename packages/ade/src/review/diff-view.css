@@ -1,0 +1,265 @@
+[data-component="diff-view"] {
+  display: flex;
+  height: 100%;
+  overflow: hidden;
+  background-color: var(--ade-bg);
+  color: var(--ade-text);
+  font-family: var(--ade-sans);
+}
+
+[data-component="diff-view"] [data-slot="empty"] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+  color: var(--ade-text-weak);
+}
+
+[data-component="diff-view"] [data-slot="empty"][data-error="true"] {
+  color: var(--ade-error);
+}
+
+[data-component="diff-view"] [data-slot="sidebar"] {
+  width: 250px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  border-right: 1px solid var(--ade-border);
+  background-color: var(--ade-raised);
+}
+
+[data-component="diff-view"] [data-slot="header"] {
+  padding: var(--ade-space-6);
+  font-weight: var(--ade-weight-semibold);
+  font-size: var(--ade-font-lg);
+  border-bottom: 1px solid var(--ade-border);
+  color: var(--ade-text);
+}
+
+[data-component="diff-view"] [data-slot="file-list"] {
+  flex-grow: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+}
+
+/*
+ * A file in the diff-view sidebar.
+ *
+ * Same shape as a workspace-tree row in the sidebar: bare list, no card
+ * border, no surface fill — the panel's own ground shows through and a
+ * single 1px line separates one file from the next. Selection is the
+ * accent rail on the leading edge, matching the tree.
+ */
+[data-component="diff-view"] [data-slot="file-row"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-4);
+  padding: var(--ade-space-3) var(--ade-space-6);
+  min-height: 32px;
+  border: 0;
+  border-bottom: 1px solid var(--ade-border-subtle);
+  background: transparent;
+  color: var(--ade-text-soft);
+  text-align: left;
+  cursor: pointer;
+  font-size: var(--ade-font-md);
+  font-family: var(--ade-sans);
+  position: relative;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-component="diff-view"] [data-slot="file-list"] [data-slot="file-row"]:last-child {
+  border-bottom: 0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-component="diff-view"] [data-slot="file-row"] {
+    transition: none;
+  }
+}
+
+@media (hover: hover) and (pointer: fine) {
+  [data-component="diff-view"] [data-slot="file-row"]:hover {
+    background-color: var(--ade-hover);
+    color: var(--ade-text);
+  }
+}
+
+[data-component="diff-view"] [data-slot="file-row"][data-selected] {
+  background-color: var(--ade-active);
+  color: var(--ade-text);
+  font-weight: var(--ade-weight-medium);
+}
+
+[data-component="diff-view"] [data-slot="file-row"][data-selected]::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: var(--ade-space-1);
+  bottom: var(--ade-space-1);
+  width: 3px;
+  background: var(--ade-accent);
+  border-radius: 0 var(--ade-radius-sm) var(--ade-radius-sm) 0;
+}
+
+[data-component="diff-view"] [data-slot="file-row"]:focus-visible {
+  box-shadow: var(--ade-focus-ring);
+  outline: none;
+}
+
+[data-component="diff-view"] [data-slot="status"] {
+  width: 10px;
+  height: 10px;
+  /* full circle radius */
+  border-radius: var(--ade-radius-full);
+  flex-shrink: 0;
+}
+
+[data-component="diff-view"] [data-slot="status"][data-status="added"] {
+  background-color: var(--ade-done);
+}
+[data-component="diff-view"] [data-slot="status"][data-status="modified"] {
+  background-color: var(--ade-accent);
+}
+[data-component="diff-view"] [data-slot="status"][data-status="deleted"] {
+  background-color: var(--ade-error);
+}
+[data-component="diff-view"] [data-slot="status"][data-status="renamed"] {
+  background-color: var(--ade-accent);
+}
+
+[data-component="diff-view"] [data-slot="file-path"] {
+  flex-grow: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--ade-text);
+}
+
+[data-component="diff-view"] [data-slot="stats"] {
+  display: flex;
+  gap: var(--ade-space-1);
+  font-variant-numeric: tabular-nums;
+  font-size: var(--ade-font-md);
+}
+
+[data-component="diff-view"] [data-slot="added"] {
+  color: var(--ade-done);
+}
+
+[data-component="diff-view"] [data-slot="removed"] {
+  color: var(--ade-error);
+}
+
+[data-component="diff-view"] [data-slot="content"] {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+[data-component="diff-view"] [data-slot="banner"] {
+  padding: var(--ade-space-6);
+  background-color: var(--ade-working-bg);
+  color: var(--ade-working);
+  font-size: var(--ade-font-lg);
+  border-bottom: 1px solid var(--ade-border);
+}
+
+[data-component="diff-view"] [data-slot="placeholder"] {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-grow: 1;
+  color: var(--ade-text-weak);
+}
+
+[data-component="diff-view"] [data-slot="file-detail"] {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+[data-component="diff-view"] [data-slot="file-header"] {
+  padding: var(--ade-space-6);
+  font-weight: var(--ade-weight-semibold);
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-lg);
+  border-bottom: 1px solid var(--ade-border);
+  background-color: var(--ade-bg);
+}
+
+[data-component="diff-view"] [data-slot="rename"] {
+  color: var(--ade-text-weak);
+  font-weight: var(--ade-weight-normal);
+}
+
+[data-component="diff-view"] [data-slot="hunks"] {
+  flex-grow: 1;
+  overflow-y: auto;
+  overflow-x: auto;
+}
+
+[data-component="diff-view"] [data-slot="hunk"] {
+  margin-bottom: var(--ade-space-8);
+}
+
+[data-component="diff-view"] [data-slot="hunk-header"] {
+  padding: var(--ade-space-1) var(--ade-space-6);
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-md);
+  color: var(--ade-text-weak);
+  background-color: var(--ade-raised);
+  border-bottom: 1px solid var(--ade-border);
+}
+
+[data-component="diff-view"] [data-slot="table"] {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-lg);
+}
+
+[data-component="diff-view"] [data-slot="diff-line"] {
+  line-height: var(--ade-leading);
+}
+
+[data-component="diff-view"] [data-slot="diff-line"][data-kind="add"] {
+  background-color: var(--ade-done-bg);
+}
+
+[data-component="diff-view"] [data-slot="diff-line"][data-kind="remove"] {
+  background-color: var(--ade-error-bg);
+}
+
+[data-component="diff-view"] [data-slot="line-number"] {
+  width: 40px;
+  min-width: 40px;
+  padding: 0 var(--ade-space-4);
+  text-align: right;
+  color: var(--ade-text-weak);
+  user-select: none;
+  white-space: nowrap;
+}
+
+[data-component="diff-view"] [data-slot="line-number"]::before {
+  content: attr(data-line-number);
+}
+
+[data-component="diff-view"] [data-slot="diff-line"][data-kind="add"] [data-slot="line-number"] {
+  color: var(--ade-done);
+}
+
+[data-component="diff-view"] [data-slot="diff-line"][data-kind="remove"] [data-slot="line-number"] {
+  color: var(--ade-error);
+}
+
+[data-component="diff-view"] [data-slot="line-text"] {
+  padding: 0 var(--ade-space-4);
+  white-space: pre;
+  word-break: normal;
+}

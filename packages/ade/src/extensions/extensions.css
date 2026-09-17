@@ -1,0 +1,340 @@
+/*
+ * Impostazioni › Estensioni.
+ *
+ * Built on the settings panel's rows and buttons (`settings-choice`,
+ * `settings-meta`, from `settings/sections.css`). The cards are quiet: one
+ * border, the logo in the theme's ink, and colour only where it means
+ * something — a community badge, a warning.
+ */
+
+[data-slot="ext-tabs"] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ade-space-1);
+  margin: var(--ade-space-3) 0 var(--ade-space-4);
+  padding: var(--ade-space-1);
+  width: fit-content;
+  max-width: 100%;
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-md);
+  background: var(--ade-raised);
+}
+
+[data-slot="ext-tab"],
+[data-slot="ext-filter"] {
+  height: 26px;
+  padding: 0 var(--ade-space-4);
+  border: 0;
+  border-radius: var(--ade-radius-sm);
+  background: transparent;
+  color: var(--ade-text-soft);
+  font: inherit;
+  font-size: var(--ade-font-md);
+  white-space: nowrap;
+  cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="ext-tab"]:hover,
+[data-slot="ext-filter"]:hover {
+  color: var(--ade-text);
+}
+
+[data-slot="ext-tab"]:active,
+[data-slot="ext-filter"]:active {
+  transform: scale(0.97);
+}
+
+[data-slot="ext-tab"][data-active],
+[data-slot="ext-filter"][data-active] {
+  background: var(--ade-surface);
+  color: var(--ade-text);
+  box-shadow: 0 0 0 1px var(--ade-border);
+}
+
+[data-slot="ext-tab"]:focus-visible,
+[data-slot="ext-filter"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-slot="ext-toolbar"] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ade-space-3);
+  margin-bottom: var(--ade-space-4);
+}
+
+[data-slot="ext-search"] {
+  flex: 1 1 220px;
+  min-width: 0;
+  height: 30px;
+  padding: 0 var(--ade-space-4);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-sm);
+  background: var(--ade-surface);
+  color: var(--ade-text);
+  font: inherit;
+  font-size: var(--ade-font-md-half);
+  transition:
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    background var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="ext-search"]:focus {
+  outline: none;
+  border-color: var(--ade-accent);
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-slot="ext-filters"] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ade-space-1);
+}
+
+[data-slot="ext-grid"] {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+  gap: var(--ade-space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+[data-slot="ext-card"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-3);
+  min-width: 0;
+  padding: var(--ade-space-6);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-md);
+  background: var(--ade-raised);
+  transition:
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    box-shadow var(--ade-dur-fast) var(--ade-ease);
+}
+
+/*
+ * An extension card: a free-standing block on the grid above the installed
+ * list. Full border, raised fill, radius-md — the same shape as a
+ * provider-row in settings. The list below uses bare rows; the grid uses
+ * cards. Two different things on screen, two different frames.
+ */
+[data-slot="ext-card"]:hover {
+  border-color: var(--ade-border-strong);
+  box-shadow: var(--ade-shadow-sm);
+}
+
+[data-slot="ext-card-head"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-4);
+  min-width: 0;
+}
+
+[data-slot="ext-logo"] {
+  display: grid;
+  place-items: center;
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border-radius: var(--ade-radius-sm);
+}
+
+[data-slot="ext-logo"] img {
+  width: 24px;
+  height: 24px;
+  object-fit: contain;
+}
+
+[data-slot="ext-logo"][data-mono] {
+  width: 22px;
+  height: 22px;
+  margin: 3px;
+  background: var(--ade-text);
+  mask-repeat: no-repeat;
+  mask-position: center;
+  mask-size: contain;
+  -webkit-mask-repeat: no-repeat;
+  -webkit-mask-position: center;
+  -webkit-mask-size: contain;
+}
+
+[data-slot="ext-logo"][data-monogram] {
+  border: 1px solid var(--ade-border-strong);
+  background: var(--ade-surface);
+  color: var(--ade-text-soft);
+  font-size: var(--ade-font-sm);
+  font-weight: var(--ade-weight-semibold);
+  letter-spacing: 0.02em;
+}
+
+[data-slot="ext-card-title"] {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+}
+
+[data-slot="ext-card-title"] b {
+  font-size: var(--ade-font-lg);
+  font-weight: var(--ade-weight-semibold);
+  color: var(--ade-text);
+}
+
+[data-slot="ext-card-title"] span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--ade-font-sm);
+  color: var(--ade-text-weak);
+}
+
+[data-slot="ext-badge"] {
+  flex: 0 0 auto;
+  padding: var(--ade-space-1) var(--ade-space-4);
+  border-radius: var(--ade-radius-full);
+  background: var(--ade-hover);
+  color: var(--ade-text-weak);
+  font-size: var(--ade-font-xs);
+}
+
+[data-slot="ext-badge"][data-origin="community"] {
+  background: var(--ade-working-bg);
+  color: var(--ade-working);
+}
+
+[data-slot="ext-card-desc"] {
+  margin: 0;
+  font-size: var(--ade-font-md);
+  line-height: var(--ade-leading);
+  color: var(--ade-text-soft);
+}
+
+[data-slot="ext-card-meta"] {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--ade-space-1) var(--ade-space-5);
+  font-size: var(--ade-font-sm);
+  color: var(--ade-text-weak);
+}
+
+[data-slot="ext-warning"] {
+  margin: 0;
+  font-size: var(--ade-font-sm);
+  line-height: var(--ade-leading);
+  color: var(--ade-working);
+}
+
+[data-slot="ext-card-actions"] {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--ade-space-3);
+  margin-top: auto;
+  padding-top: var(--ade-space-2);
+}
+
+[data-slot="ext-card-actions"] [data-slot="settings-choice"] {
+  height: 26px;
+  padding: 0 var(--ade-space-4);
+  font-size: var(--ade-font-md);
+}
+
+[data-slot="ext-installed"] {
+  font-size: var(--ade-font-md);
+  color: var(--ade-done);
+}
+
+[data-slot="ext-link"] {
+  margin-left: auto;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--ade-text-weak);
+  font: inherit;
+  font-size: var(--ade-font-sm);
+  text-decoration: underline;
+  cursor: pointer;
+  transition: color var(--ade-dur-fast) var(--ade-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  [data-slot="ext-link"]:hover {
+    color: var(--ade-text);
+  }
+}
+
+[data-slot="ext-link"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+  border-radius: var(--ade-radius-sm);
+}
+
+/* A status notice: tinted ground, matching radius with the cards above. */
+[data-slot="ext-notice"] {
+  margin: 0 0 var(--ade-space-4);
+  padding: var(--ade-space-3) var(--ade-space-4);
+  border-radius: var(--ade-radius-md);
+  background: var(--ade-done-bg);
+  color: var(--ade-done);
+  font-size: var(--ade-font-md);
+}
+
+[data-slot="ext-notice"][data-tone="error"] {
+  background: var(--ade-error-bg, var(--ade-hover));
+  color: var(--ade-error, var(--ade-text));
+}
+
+[data-slot="ext-group"] {
+  margin: var(--ade-space-5) 0 var(--ade-space-2);
+  font-size: var(--ade-font-xs);
+  font-weight: var(--ade-weight-medium);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--ade-text-weak);
+}
+
+[data-slot="ext-installed-list"] {
+  display: flex;
+  flex-direction: column;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+[data-slot="ext-row"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-4);
+  padding: var(--ade-space-4) 0;
+  border-bottom: 1px solid var(--ade-border-subtle);
+}
+
+[data-slot="ext-installed-list"] [data-slot="ext-row"]:last-child {
+  border-bottom: 0;
+}
+
+[data-slot="ext-row-text"] {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 0;
+  gap: var(--ade-space-1);
+  font-size: var(--ade-font-md-half);
+}
+
+[data-slot="ext-row-text"] code {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-sm);
+  color: var(--ade-text-weak);
+}

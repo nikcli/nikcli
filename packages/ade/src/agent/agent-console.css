@@ -1,0 +1,514 @@
+/*
+ * The agent console.
+ *
+ * One column, centred and capped, because this is reading material: the
+ * transcript of a conversation, not a dashboard. The cap is 720px — wide
+ * enough for a plan step to sit on one line, narrow enough that prose does
+ * not run past the eye's comfortable saccade.
+ *
+ * The palette is the shared one. Nothing here introduces a colour: the reply
+ * tones reuse the pane status ramp so that amber means the same thing in this
+ * section as it does in the grid one chip to the right.
+ */
+
+[data-component="agent-console"] {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  height: 100%;
+  background: var(--ade-bg);
+}
+
+/* ── head ─────────────────────────────────────────────────────────────────── */
+
+[data-slot="agent-head"] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ade-space-6);
+  flex: 0 0 auto;
+  padding: var(--ade-space-5) var(--ade-space-7);
+  border-bottom: 1px solid var(--ade-border-subtle);
+  background: var(--ade-surface);
+}
+
+[data-slot="agent-identity"] {
+  display: flex;
+  align-items: baseline;
+  gap: var(--ade-space-5);
+  min-width: 0;
+}
+
+[data-slot="agent-name"] {
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-lg);
+  font-weight: var(--ade-weight-semibold);
+  letter-spacing: 0.01em;
+  color: var(--ade-text);
+}
+
+[data-slot="agent-presence"] {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--ade-space-3);
+  min-width: 0;
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+  color: var(--ade-text-soft);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-slot="agent-dot"] {
+  width: 6px;
+  height: 6px;
+  flex: 0 0 auto;
+  border-radius: var(--ade-radius-full);
+  background: var(--ade-text-weak);
+}
+
+[data-slot="agent-presence"][data-tone="done"] [data-slot="agent-dot"] {
+  background: var(--ade-done);
+}
+[data-slot="agent-presence"][data-tone="working"] [data-slot="agent-dot"] {
+  background: var(--ade-working);
+}
+[data-slot="agent-presence"][data-tone="waiting"] [data-slot="agent-dot"] {
+  background: var(--ade-waiting);
+}
+[data-slot="agent-presence"][data-tone="error"] [data-slot="agent-dot"] {
+  background: var(--ade-error);
+}
+
+/* Only the live states pulse. A steady dot for "off" and "asleep" is the
+   point: motion in the corner of the eye must mean the microphone is open. */
+[data-slot="agent-presence"][data-tone="done"] [data-slot="agent-dot"],
+[data-slot="agent-presence"][data-tone="working"] [data-slot="agent-dot"] {
+  animation: agent-pulse 2s var(--ade-ease) infinite;
+}
+
+@keyframes agent-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.35;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-slot="agent-dot"] {
+    animation: none !important;
+  }
+}
+
+[data-slot="agent-head-actions"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-3);
+  flex: 0 0 auto;
+}
+
+[data-slot="agent-action"] {
+  height: 26px;
+  padding: 0 var(--ade-space-5);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-md);
+  background: var(--ade-raised);
+  color: var(--ade-text-soft);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+  cursor: pointer;
+  transition:
+    border-color var(--ade-dur-fast) var(--ade-ease),
+    background var(--ade-dur-fast) var(--ade-ease),
+    color var(--ade-dur-fast) var(--ade-ease),
+    transform 120ms var(--ade-ease-out);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  [data-slot="agent-action"]:hover {
+    border-color: var(--ade-border-strong);
+    background: var(--ade-hover);
+    color: var(--ade-text);
+  }
+}
+
+[data-slot="agent-action"]:active {
+  transform: scale(0.97);
+}
+
+[data-slot="agent-action"][data-primary] {
+  border-color: transparent;
+  background: var(--ade-accent);
+  color: var(--ade-accent-fg);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  [data-slot="agent-action"][data-primary]:hover {
+    background: var(--ade-accent-strong);
+  }
+}
+
+[data-slot="agent-action"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+/* ── notice ───────────────────────────────────────────────────────────────── */
+
+[data-slot="agent-held"] {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-5);
+  padding: var(--ade-space-4) var(--ade-space-7);
+  border-top: 1px solid var(--ade-border-subtle);
+  background: var(--ade-waiting-bg);
+  color: var(--ade-text-soft);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+}
+
+[data-slot="agent-held-text"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+[data-slot="agent-notice"] {
+  flex: 0 0 auto;
+  margin: 0;
+  padding: var(--ade-space-5) var(--ade-space-7);
+  border-bottom: 1px solid var(--ade-border-subtle);
+  background: var(--ade-waiting-bg);
+  color: var(--ade-text-soft);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+  line-height: var(--ade-leading);
+}
+
+/* ── scroll region ────────────────────────────────────────────────────────── */
+
+[data-slot="agent-scroll"] {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding: var(--ade-space-8) var(--ade-space-7);
+  scrollbar-width: thin;
+  scrollbar-color: var(--ade-scrollbar-thumb) transparent;
+}
+
+[data-slot="agent-turn"] {
+  max-width: 720px;
+  margin: 0 auto var(--ade-space-8);
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-4);
+}
+
+[data-slot="agent-turn"]:last-child {
+  margin-bottom: 0;
+}
+
+/* ── the prompt ───────────────────────────────────────────────────────────── */
+
+/* Aligned right and filled, so the eye can find the question without reading:
+   a long console is scanned for "what did I ask", not for "what did it say". */
+[data-slot="agent-prompt"] {
+  align-self: flex-end;
+  display: flex;
+  align-items: baseline;
+  gap: var(--ade-space-5);
+  max-width: 85%;
+  padding: var(--ade-space-4) var(--ade-space-6);
+  border-radius: var(--ade-radius-lg) var(--ade-radius-lg) var(--ade-radius-sm) var(--ade-radius-lg);
+  background: var(--ade-accent-soft);
+  color: var(--ade-text);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-lg);
+  line-height: var(--ade-leading);
+}
+
+[data-slot="agent-prompt"][data-pending] {
+  background: transparent;
+  border: 1px dashed var(--ade-border-strong);
+  color: var(--ade-text-soft);
+  font-style: italic;
+}
+
+[data-slot="agent-prompt-text"] {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+[data-slot="agent-time"] {
+  flex: 0 0 auto;
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-xs);
+  color: var(--ade-text-weak);
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── replies ──────────────────────────────────────────────────────────────── */
+
+[data-slot="agent-reply"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-2);
+  align-self: flex-start;
+  max-width: 85%;
+  padding-left: var(--ade-space-6);
+  border-left: 2px solid var(--ade-border);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-lg);
+  line-height: var(--ade-leading);
+  color: var(--ade-text);
+  overflow-wrap: anywhere;
+}
+
+/* An action is a fact about the workbench, not speech: smaller, monospaced,
+   and colour-coded, so it reads as a log line inside the conversation. */
+[data-slot="agent-reply"][data-kind="action"],
+[data-slot="agent-reply"][data-kind="error"] {
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-md);
+}
+
+[data-slot="agent-reply"][data-tone="done"] {
+  border-left-color: var(--ade-done);
+}
+[data-slot="agent-reply"][data-tone="error"] {
+  border-left-color: var(--ade-error);
+  color: var(--ade-error);
+}
+
+[data-slot="agent-reply-detail"] {
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+  color: var(--ade-text-weak);
+}
+
+/* ── a plan ───────────────────────────────────────────────────────────────── */
+
+[data-slot="agent-plan"] {
+  align-self: flex-start;
+  width: 100%;
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-md);
+  background: var(--ade-surface);
+  overflow: hidden;
+}
+
+[data-slot="agent-plan-head"] {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--ade-space-5);
+  padding: var(--ade-space-4) var(--ade-space-6);
+  border-bottom: 1px solid var(--ade-border-subtle);
+  background: var(--ade-raised);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+  font-weight: var(--ade-weight-medium);
+  color: var(--ade-text-soft);
+}
+
+[data-slot="agent-plan-count"] {
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-sm);
+  color: var(--ade-text-weak);
+  font-variant-numeric: tabular-nums;
+}
+
+[data-slot="agent-plan-steps"] {
+  margin: 0;
+  padding: var(--ade-space-3) 0;
+  list-style: none;
+  counter-reset: agent-step;
+}
+
+[data-slot="agent-plan-step"] {
+  display: flex;
+  align-items: baseline;
+  gap: var(--ade-space-5);
+  padding: var(--ade-space-3) var(--ade-space-6);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+  line-height: var(--ade-leading);
+  color: var(--ade-text);
+  overflow-wrap: anywhere;
+}
+
+/* The marker carries the outcome, so the step text stays readable rather than
+   being recoloured into low contrast. */
+[data-slot="agent-plan-step"]::before {
+  content: "✓";
+  flex: 0 0 auto;
+  width: 12px;
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-sm);
+  color: var(--ade-done);
+}
+
+[data-slot="agent-plan-step"][data-ok="false"] {
+  color: var(--ade-text-soft);
+}
+
+[data-slot="agent-plan-step"][data-ok="false"]::before {
+  content: "✕";
+  color: var(--ade-error);
+}
+
+/* ── empty state ──────────────────────────────────────────────────────────── */
+
+[data-slot="agent-empty"] {
+  max-width: 460px;
+  margin: 12vh auto 0;
+  text-align: center;
+  font-family: var(--ade-sans);
+}
+
+[data-slot="agent-empty-title"] {
+  margin: 0 0 var(--ade-space-4);
+  font-size: var(--ade-font-xl);
+  font-weight: var(--ade-weight-medium);
+  color: var(--ade-text);
+}
+
+[data-slot="agent-empty-body"] {
+  margin: 0 0 var(--ade-space-7);
+  font-size: var(--ade-font-lg);
+  line-height: var(--ade-leading);
+  color: var(--ade-text-soft);
+}
+
+[data-slot="agent-examples"] {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-3);
+}
+
+[data-slot="agent-examples"] li {
+  padding: var(--ade-space-4) var(--ade-space-6);
+  border: 1px solid var(--ade-border-subtle);
+  border-radius: var(--ade-radius-md);
+  background: var(--ade-surface);
+  font-size: var(--ade-font-md);
+  color: var(--ade-text-soft);
+}
+
+/* ── composer ─────────────────────────────────────────────────────────────── */
+
+[data-slot="agent-composer"] {
+  display: flex;
+  align-items: flex-end;
+  gap: var(--ade-space-4);
+  flex: 0 0 auto;
+  width: min(720px, 100%);
+  margin: 0 auto;
+  padding: var(--ade-space-6) var(--ade-space-7) var(--ade-space-7);
+}
+
+/*
+ * The voice HUD is fixed to the bottom of the window, which in this view is
+ * exactly where the composer is: the pill covered the box, and a click in the
+ * middle of it landed on the HUD. While the console is on screen the HUD sits
+ * above the composer instead — its padding, its input and a gap.
+ */
+body:has([data-component="agent-console"]) [data-component="voice-hud"] {
+  padding-bottom: calc(var(--ade-space-6) + 38px + var(--ade-space-7) + var(--ade-space-4));
+}
+
+[data-slot="agent-input"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 36px;
+  max-height: 160px;
+  padding: var(--ade-space-4) var(--ade-space-6);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-lg);
+  background: var(--ade-raised);
+  color: var(--ade-text);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-lg);
+  line-height: var(--ade-leading);
+  resize: vertical;
+  transition: border-color var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="agent-input"]::placeholder {
+  color: var(--ade-text-weak);
+}
+
+[data-slot="agent-input"]:focus-visible {
+  outline: none;
+  border-color: var(--ade-accent);
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-slot="agent-send"] {
+  flex: 0 0 auto;
+  height: 36px;
+  padding: 0 var(--ade-space-7);
+  border: 1px solid transparent;
+  border-radius: var(--ade-radius-lg);
+  background: var(--ade-accent);
+  color: var(--ade-accent-fg);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-md);
+  font-weight: var(--ade-weight-medium);
+  cursor: pointer;
+  transition:
+    background var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  [data-slot="agent-send"]:hover:not(:disabled) {
+    background: var(--ade-accent-strong);
+  }
+}
+
+[data-slot="agent-send"]:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+[data-slot="agent-send"]:disabled {
+  background: var(--ade-surface);
+  border-color: var(--ade-border);
+  color: var(--ade-text-weak);
+  cursor: default;
+}
+
+[data-slot="agent-send"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+/* ── narrow ───────────────────────────────────────────────────────────────── */
+
+@media (max-width: 620px) {
+  [data-slot="agent-head"] {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--ade-space-4);
+  }
+
+  [data-slot="agent-scroll"] {
+    padding: var(--ade-space-6) var(--ade-space-5);
+  }
+  [data-slot="agent-composer"] {
+    padding: var(--ade-space-5);
+  }
+  [data-slot="agent-prompt"],
+  [data-slot="agent-reply"] {
+    max-width: 100%;
+  }
+}

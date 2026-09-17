@@ -1,0 +1,37 @@
+{
+  "artboards": [
+    {
+      "file": "Main.dc.html",
+      "x": 0,
+      "y": 0,
+      "w": 1200,
+      "h": 900
+    }
+  ],
+  "annotations": [
+    {
+      "id": "note-tokens",
+      "x": -300,
+      "y": 0,
+      "w": 260,
+      "text": "Valori presi dalla sorgente, non stimati:\nInter con ss03, scala 10/11/13/14/16/20\nradius-md 6px, controlli 32px\ntesto #211e1e / #656363 / #737070\ninterattivo cobalto #034cff\nbordo #0b060032, superficie #fdfcfc"
+    },
+    {
+      "id": "note-custom",
+      "x": -300,
+      "y": 260,
+      "w": 260,
+      "text": "La regola che il riferimento mostra ma non spiega:\nun preset fissa il numero, ma se lo cambi a mano il piede smette di rivendicare quel preset e dice Personalizzata.\nCoppia e Banco valgono entrambi 2, quindi il numero da solo non riseleziona mai un preset."
+    },
+    {
+      "id": "note-marks",
+      "x": -300,
+      "y": 540,
+      "w": 260,
+      "text": "I marchi degli agenti sono segnaposto geometrici, non i loghi veri: un logo sbagliato sembra un bug, un segnaposto sembra un segnaposto."
+    }
+  ],
+  "launch": {
+    "view": "canvas"
+  }
+}

@@ -1,0 +1,288 @@
+/* ── the screenshot tray ───────────────────────────────────────────────────── */
+
+/*
+ * The last section of the sidebar, under the file tree.
+ *
+ * In the flow rather than floating over the grid: a panel over the terminals
+ * covers the thing the window exists to show, and the corner it would cover is
+ * where the newest output of the bottom-left session appears. Here it takes
+ * only the height its contents need, and none at all when empty.
+ */
+[data-component="shot-tray"] {
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-1);
+  flex: 0 0 auto;
+  min-width: 0;
+  padding-bottom: var(--ade-space-2);
+  border-top: 1px solid var(--ade-border-subtle);
+}
+
+[data-slot="shot-tray-head"] {
+  display: flex;
+  align-items: center;
+}
+
+/*
+ * The sidebar's section-header shape, worn by the tray.
+ *
+ * The tray is the last section of that column, and it was announcing itself
+ * in its own typeface at its own size next to headers that all agree with
+ * each other. Matching here rather than inventing a shared component: the
+ * tray has its own reasons to exist and its own host, and the only thing it
+ * has to share is how a section says its name.
+ */
+[data-slot="shot-tray-toggle"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-4);
+  width: 100%;
+  padding: var(--ade-space-4) var(--ade-space-6);
+  border: 0;
+  background: transparent;
+  color: var(--ade-text-weak);
+  font-family: var(--ade-sans);
+  font-size: var(--ade-font-xs);
+  font-weight: var(--ade-weight-medium);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  cursor: pointer;
+  transition: color var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="shot-tray-toggle"]:hover {
+  color: var(--ade-text-soft);
+}
+
+[data-slot="shot-tray-label"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  text-align: left;
+}
+
+/* Plain, like the other section counts: a filled accent badge here made the
+   screenshot count the loudest thing in a column whose job is navigation. */
+[data-slot="shot-tray-count"] {
+  flex: 0 0 auto;
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-xs);
+  letter-spacing: 0;
+  color: var(--ade-text-weak);
+  font-variant-numeric: tabular-nums;
+}
+
+/*
+ * A wrapping grid, not a sideways strip. The sidebar is a column: room for two
+ * thumbnails across and as many rows as fit, capped so a burst of screenshots
+ * cannot push the file tree off the bottom of the window.
+ */
+[data-slot="shot-tray-strip"] {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: 56px;
+  gap: var(--ade-space-2);
+  padding: 0 var(--ade-space-4) var(--ade-space-1);
+  max-height: 184px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /*
+   * Scrolls, and says nothing about it.
+   *
+   * The strip is two columns wide in a sidebar that is already narrow, and a
+   * scrollbar took a visible bite out of the second column — the thumbnails
+   * beside it ended up a different size from the ones above. The wheel, the
+   * trackpad and the keyboard all still work; only the bar is gone.
+   */
+  scrollbar-width: none;
+}
+
+[data-slot="shot-tray-strip"]::-webkit-scrollbar {
+  display: none;
+}
+
+[data-slot="shot"] {
+  position: relative;
+  margin: 0;
+  min-width: 0;
+  height: 56px;
+  border-radius: var(--ade-radius-sm);
+  overflow: hidden;
+  background: var(--ade-sunken);
+  border: 1px solid var(--ade-border);
+  cursor: grab;
+}
+
+[data-slot="shot"]:active {
+  cursor: grabbing;
+}
+
+[data-slot="shot"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-slot="shot-image"] {
+  width: 100%;
+  height: 100%;
+  /* Cover, not contain: at this size the point is to recognise which screenshot
+     it is, and letterboxing spends half the tile on empty ground. */
+  object-fit: cover;
+  display: block;
+}
+
+[data-slot="shot-loading"] {
+  display: block;
+  width: 100%;
+  height: 100%;
+  background: linear-gradient(100deg, var(--ade-sunken), var(--ade-raised), var(--ade-sunken));
+  background-size: 300% 100%;
+  animation: ade-shot-shimmer 1.2s var(--ade-ease) infinite;
+}
+
+@keyframes ade-shot-shimmer {
+  from {
+    background-position: 100% 0;
+  }
+  to {
+    background-position: 0 0;
+  }
+}
+
+[data-slot="shot-dismiss"] {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  padding: 0;
+  border: 0;
+  border-radius: var(--ade-radius-full);
+  background: color-mix(in srgb, var(--ade-surface) 80%, transparent);
+  color: var(--ade-text);
+  cursor: pointer;
+  opacity: 0;
+  transition:
+    opacity var(--ade-dur-fast) var(--ade-ease),
+    background var(--ade-dur-fast) var(--ade-ease),
+    transform var(--ade-dur-fast) var(--ade-ease);
+}
+
+[data-slot="shot-dismiss"]:hover {
+  background: var(--ade-surface);
+}
+
+[data-slot="shot-dismiss"]:active {
+  transform: scale(0.88);
+}
+
+[data-slot="shot-dismiss"]:focus-visible {
+  outline: none;
+  box-shadow: var(--ade-focus-ring);
+}
+
+[data-slot="shot"]:hover [data-slot="shot-dismiss"],
+[data-slot="shot-dismiss"]:focus-visible {
+  opacity: 1;
+}
+
+/* ── the opened screenshot ─────────────────────────────────────────────────── */
+
+[data-component="shot-viewer"] {
+  position: fixed;
+  inset: 0;
+  z-index: 120;
+  display: grid;
+  place-items: center;
+  padding: var(--ade-space-6);
+  background: var(--ade-scrim);
+}
+
+[data-slot="shot-viewer-frame"] {
+  margin: 0;
+  max-width: min(1200px, 92vw);
+  max-height: 88vh;
+  display: flex;
+  flex-direction: column;
+  gap: var(--ade-space-3);
+  padding: var(--ade-space-3);
+  border: 1px solid var(--ade-border-strong);
+  border-radius: var(--ade-radius-lg);
+  background: var(--ade-overlay);
+  box-shadow: var(--ade-shadow-lg);
+  min-width: 0;
+}
+
+[data-slot="shot-viewer-frame"] [data-slot="shot-image"] {
+  /* Contain here, unlike the thumbnail: this one is being read, so nothing may
+     be cropped away. */
+  object-fit: contain;
+  max-height: 76vh;
+  height: auto;
+  border-radius: var(--ade-radius-sm);
+}
+
+[data-slot="shot-viewer-caption"] {
+  display: flex;
+  align-items: center;
+  gap: var(--ade-space-4);
+  min-width: 0;
+  font-family: var(--ade-mono);
+  font-size: var(--ade-font-xs);
+  color: var(--ade-text-weak);
+}
+
+[data-slot="shot-viewer-name"] {
+  color: var(--ade-text);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+
+[data-slot="shot-viewer-hint"] {
+  flex: 1 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+[data-slot="shot-viewer-close"] {
+  flex: 0 0 auto;
+  padding: var(--ade-space-1) var(--ade-space-3);
+  border: 1px solid var(--ade-border);
+  border-radius: var(--ade-radius-sm);
+  background: var(--ade-raised);
+  color: var(--ade-text);
+  font-family: inherit;
+  font-size: inherit;
+  cursor: pointer;
+}
+
+[data-slot="shot-viewer-close"]:hover {
+  background: var(--ade-hover);
+}
+
+[data-slot="shot-viewer-close"][data-tone="danger"] {
+  color: var(--ade-danger, #b4342a);
+}
+
+/* ── the pane being dropped on ─────────────────────────────────────────────── */
+
+/*
+ * Said with the pane's own border rather than an overlay: an overlay would sit
+ * between the cursor and the terminal, and a drop target that swallows the drop
+ * it was advertising is worse than no highlight at all.
+ */
+[data-component="session-pane"][data-dropping] {
+  outline: 2px solid var(--ade-accent);
+  outline-offset: -2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-slot="shot-loading"] {
+    animation: none;
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "artboards": [
+    { "file": "Main.dc.html", "x": 0, "y": 0, "w": 900, "h": 640, "title": "A · Il diff è il documento" },
+    { "file": "Flusso.dc.html", "x": 960, "y": 0, "w": 900, "h": 640, "title": "B · Una colonna, un flusso" },
+    { "file": "Plancia.dc.html", "x": 0, "y": 700, "w": 900, "h": 640, "title": "C · Plancia" },
+    { "file": "Comando.dc.html", "x": 960, "y": 700, "w": 900, "h": 640, "title": "D · Chrome evocato" }
+  ],
+  "annotations": [
+    { "id": "come-guardarle", "x": -340, "y": 0, "w": 300, "text": "Quattro assi diversi, non quattro sfumature.\n\nA sposta l'oggetto primario: il diff invece della chat.\nB toglie i pannelli: separazione nel tempo invece che nello spazio.\nC cambia scala: molte sessioni invece di una.\nD toglie il chrome permanente: si evoca e sparisce.\n\nSono combinabili a coppie. A+B stanno insieme; C+D anche. A e D litigano." },
+    { "id": "da-cosa-nascono", "x": -340, "y": 330, "w": 300, "text": "Misurato sull'app di oggi, non supposto:\n\nil pannello centrale tiene 590px anche quando e' vuoto;\ntre pannelli, tre trattamenti di intestazione diversi;\nla trascrizione era una pila di lastroni identici separati da 77px di aria (ora 32);\nla gerarchia poggia su differenze di un pixel nella scala tipografica." },
+    { "id": "prossimo-passo", "x": -340, "y": 700, "w": 300, "text": "Non serve sceglierne una intera.\nDimmi quale asse ti interessa e la porto a fedelta' alta con i token veri dell'app: da wireframe a schermata che si puo' portare in codice." }
+  ],
+  "launch": { "view": "canvas" }
+}

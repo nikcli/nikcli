@@ -1,0 +1,93 @@
+/*
+ * Concept 04: Fullscreen 3D ASCII Synaptic Swarm (NiK).
+ *
+ * Fullscreen real-time 3D neural swarm with pure ASCII post-processing
+ * typography, organic breathing physics, and CRT terminal scanlines.
+ * Continuous rotation is disabled: typography faces forward crisply.
+ */
+
+[data-component="ade-splash"] {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  z-index: 9999;
+  overflow: hidden;
+  background: #07090e;
+  transition: opacity var(--splash-fade, var(--ade-dur-slow)) var(--ade-ease-in-out);
+  opacity: 1;
+  cursor: default;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+[data-component="ade-splash"][data-leaving] {
+  opacity: 0;
+  pointer-events: none;
+}
+
+/* Three.js WebGL canvas: hidden offscreen/zero opacity, purely used as render source for ASCII sampling */
+[data-slot="splash-canvas-container"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 1;
+  display: block;
+  opacity: 0;
+  pointer-events: none;
+}
+
+[data-slot="splash-canvas-container"] canvas {
+  width: 100% !important;
+  height: 100% !important;
+  display: block;
+}
+
+/* Real-time 3D ASCII Post-Processing Typography Layer (Perfect Centering) */
+[data-slot="ascii-layer"] {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  margin: 0;
+  padding: 0;
+  z-index: 2;
+  pointer-events: none;
+  font-family: var(--ade-mono, "Fira Code", "JetBrains Mono", Consolas, monospace);
+  font-size: 10px;
+  line-height: 10px;
+  letter-spacing: 1px;
+  white-space: pre;
+  overflow: hidden;
+  background: #07090e;
+  color: #58a6ff;
+  text-shadow: 0 0 5px rgba(88, 166, 255, 0.9);
+  display: block;
+  user-select: none;
+  text-align: center;
+}
+
+/* CRT scanlines & vignette for terminal authenticity */
+[data-slot="splash-crt"] {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 3;
+  pointer-events: none;
+  background:
+    linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.22) 50%),
+    radial-gradient(circle at center, transparent 65%, rgba(0, 0, 0, 0.7) 100%);
+  background-size:
+    100% 4px,
+    100% 100%;
+  opacity: 0.5;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  [data-component="ade-splash"] {
+    transition: none;
+  }
+}

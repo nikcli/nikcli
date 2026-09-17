@@ -1,0 +1,417 @@
+/*
+ * The orb.
+ *
+ * Black and white, and white and black: the sphere takes the theme's ink and
+ * the iris takes the theme's ground, so in a light window it is a dark lens
+ * with a bright ring and in a dark one the two swap. Nothing here is tinted —
+ * the only colour the orb is allowed is the semantic one for "waiting for an
+ * answer" and "working", because those two say something no amount of
+ * brightness can.
+ *
+ * Two hosts override the two ink variables rather than restyling anything:
+ * the toolbar leaves them at the theme's, and the widget points them at its
+ * own pill tones, so the orb is the same object wearing the ground it sits on.
+ *
+ * Sizing is one number. `--orb-size` is the diameter; every layer is a
+ * percentage of it, so the same drawing is a 28px control in a toolbar and a
+ * 32px mark in a widget without a second set of rules.
+ */
+
+[data-component="orb-mark"] {
+  --orb-size: 28px;
+  /* Written by the component from the microphone amplitude, 0…1. */
+  --orb-level: 0;
+  --orb-ink: var(--ade-text, #111);
+  --orb-lit: var(--ade-bg, #fff);
+
+  position: relative;
+  display: block;
+  width: var(--orb-size);
+  height: var(--orb-size);
+  flex: 0 0 auto;
+  isolation: isolate;
+}
+
+/* ── the sphere ───────────────────────────────────────────────────────────── */
+
+/*
+ * A ground that is darkest away from the light, not a flat disc: the top-left
+ * lift and the bottom-right fall-off are what make a circle read as a ball,
+ * and everything drawn on top of it inherits that reading for free.
+ */
+[data-component="orb-mark"] [data-slot="orb-body"] {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  overflow: hidden;
+  background:
+    radial-gradient(circle at 32% 26%, color-mix(in srgb, var(--orb-lit) 34%, transparent), transparent 52%),
+    radial-gradient(circle at 68% 82%, rgb(0 0 0 / 0.45), transparent 60%),
+    var(--orb-ink);
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--orb-ink) 70%, var(--orb-lit)),
+    0 1px 3px rgb(0 0 0 / 0.34);
+  transition: box-shadow var(--ade-dur-fast, 120ms) var(--ade-ease, ease);
+}
+
+[data-component="orb-mark"]:hover [data-slot="orb-body"] {
+  box-shadow:
+    inset 0 0 0 1px var(--orb-lit),
+    0 1px 5px rgb(0 0 0 / 0.4);
+}
+
+/* ── what circulates inside it ────────────────────────────────────────────── */
+
+/*
+ * Two arcs, masked into a ring so they never cross the pupil.
+ *
+ * A conic gradient with one bright quadrant, turned continuously, is the whole
+ * effect: at rest the arcs are nearly invisible and the orb is a still lens;
+ * awake they lift, and the louder the room the faster and brighter they run.
+ * The mask is what keeps them from reading as a spinner — they live under the
+ * surface of the sphere, between the iris and the rim.
+ */
+[data-component="orb-mark"] [data-slot="orb-swirl"] {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  opacity: 0;
+  mask: radial-gradient(circle, transparent 44%, #000 58%, #000 88%, transparent 97%);
+  -webkit-mask: radial-gradient(circle, transparent 44%, #000 58%, #000 88%, transparent 97%);
+  transition: opacity var(--ade-dur-med, 200ms) var(--ade-ease, ease);
+  pointer-events: none;
+}
+
+[data-component="orb-mark"] [data-slot="orb-swirl"][data-arc="a"] {
+  background: conic-gradient(
+    from 0deg,
+    transparent 0deg,
+    color-mix(in srgb, var(--orb-lit) 62%, transparent) 60deg,
+    transparent 150deg,
+    transparent 360deg
+  );
+  animation: ade-orb-spin 4.2s linear infinite;
+}
+
+[data-component="orb-mark"] [data-slot="orb-swirl"][data-arc="b"] {
+  background: conic-gradient(
+    from 180deg,
+    transparent 0deg,
+    color-mix(in srgb, var(--orb-lit) 38%, transparent) 44deg,
+    transparent 120deg,
+    transparent 360deg
+  );
+  animation: ade-orb-spin 2.6s linear infinite reverse;
+}
+
+/*
+ * Asleep the arcs are at opacity 0, and turning something nobody can see still
+ * costs a frame every frame for as long as the window is open. Paused rather
+ * than removed: a paused animation asks for nothing, and it keeps the angle it
+ * reached, so the arcs neither snap back to 0deg during the fade-out nor start
+ * from the same place every time the orb wakes.
+ */
+[data-component="orb-mark"]:not([data-awake]) [data-slot="orb-swirl"] {
+  animation-play-state: paused;
+}
+
+/* ── the eye ──────────────────────────────────────────────────────────────── */
+
+/*
+ * The iris is a ring of the theme's ground held at low strength; asleep it is
+ * the only thing separating the orb from a plain dark dot, which is exactly
+ * what a closed eye should look like.
+ */
+[data-component="orb-mark"] [data-slot="orb-iris"] {
+  position: absolute;
+  inset: 22%;
+  border-radius: 50%;
+  border: 1px solid color-mix(in srgb, var(--orb-lit) 38%, transparent);
+  transition:
+    border-color var(--ade-dur-med, 200ms) var(--ade-ease, ease),
+    transform var(--ade-dur-med, 200ms) var(--ade-ease, ease);
+  pointer-events: none;
+}
+
+/*
+ * The glow the mark stands in, and the part that answers a person directly:
+ * speak and it opens, stop and it settles.
+ *
+ * It used to be the pupil itself, a solid disc. With the N in the middle a
+ * solid disc would either swallow the letter or force it to be knocked out of
+ * one — and a knockout is a second colour to keep in step with the theme. A
+ * soft radial instead: the mark sits on top and stays the same ink at every
+ * level, while the light behind it breathes.
+ *
+ * A scale rather than a width so it stays perfectly round at every size, and a
+ * short transition so it follows the voice instead of strobing on every frame
+ * of amplitude.
+ */
+[data-component="orb-mark"] [data-slot="orb-pupil"] {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 56%;
+  height: 56%;
+  margin: -28% 0 0 -28%;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--orb-lit) 26%, transparent),
+    transparent 68%
+  );
+  transform: scale(calc(0.62 + var(--orb-level) * 0.45));
+  transition:
+    transform 90ms var(--ade-ease-out, ease-out),
+    background var(--ade-dur-med, 200ms) var(--ade-ease, ease);
+  pointer-events: none;
+}
+
+/*
+ * The N, dead centre and a fixed size.
+ *
+ * Everything else in the orb reacts to the voice; the mark does not. It is the
+ * identity, and an identity that pulses is a logo animation — the sphere is
+ * already saying how loud the room is in three other ways. Held at 40% of the
+ * diameter, which is what fits inside the iris with air on both sides at the
+ * 26px the toolbar draws it.
+ */
+[data-component="orb-mark"] [data-slot="orb-mark-n"] {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 40%;
+  height: 40%;
+  margin: -20% 0 0 -20%;
+  color: color-mix(in srgb, var(--orb-lit) 62%, transparent);
+  overflow: visible;
+  transition: color var(--ade-dur-med, 200ms) var(--ade-ease, ease);
+  pointer-events: none;
+}
+
+/* The specular: one small highlight, always in the same place, because a
+   light source that moves is a light source nobody believes. */
+[data-component="orb-mark"] [data-slot="orb-gloss"] {
+  position: absolute;
+  top: 12%;
+  left: 20%;
+  width: 34%;
+  height: 26%;
+  border-radius: 50%;
+  background: linear-gradient(
+    160deg,
+    color-mix(in srgb, var(--orb-lit) 38%, transparent),
+    transparent 70%
+  );
+  pointer-events: none;
+}
+
+/* ── the ring that says which of three things is true ─────────────────────── */
+
+/*
+ * A coloured collar around the sphere, and the one colour the orb is allowed.
+ *
+ * The drawing is monochrome by design and stays that way — the ring is around
+ * the glass, not in it, so the eye reads a black lens wearing a green collar
+ * rather than a green orb. That matters: the sphere's own brightness already
+ * means "how loud is the room", and tinting it would make one channel carry
+ * two meanings.
+ *
+ * Three states, and each earns its colour by naming something a brightness
+ * cannot: it is hearing you; it is broken; it is waiting on a permission you
+ * have to grant outside this window. They take ADE's own semantic tokens, so
+ * green here is the same green a finished session is, and amber the same amber
+ * a pane uses to say it is waiting on you.
+ *
+ * Two rings, not one: a solid hairline for the edge and a soft bloom outside
+ * it, because a 1px ring on a 32px sphere over a moving terminal is invisible
+ * and a 3px one turns the orb into a button.
+ */
+[data-component="orb-mark"][data-rim] [data-slot="orb-body"] {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--orb-ink) 70%, var(--orb-lit)),
+    0 0 0 1.5px var(--orb-rim),
+    0 0 7px 1px color-mix(in srgb, var(--orb-rim) 45%, transparent),
+    0 1px 3px rgb(0 0 0 / 0.34);
+}
+
+/* It is hearing you. */
+[data-component="orb-mark"][data-rim="listening"] {
+  --orb-rim: var(--ade-done, #2e8a50);
+}
+
+/* It is not, and the reason is not something you can fix from here. */
+[data-component="orb-mark"][data-rim="failed"] {
+  --orb-rim: var(--ade-error, #b74a5e);
+}
+
+/*
+ * The microphone has not been granted. Amber rather than red because this is
+ * not a fault: nothing is broken, something is simply still being asked for,
+ * and it is the one failure on this list a person can clear in five seconds.
+ */
+[data-component="orb-mark"][data-rim="mic-auth"] {
+  --orb-rim: var(--ade-working, #9a6d28);
+}
+
+/*
+ * The listening ring breathes with the level, the other two do not.
+ *
+ * A ring that says "I can hear you" should show that it can; a ring that says
+ * "this is broken" is a fact, and a fact that pulses reads as an alarm that
+ * wants to be dismissed.
+ */
+[data-component="orb-mark"][data-rim="listening"] [data-slot="orb-body"] {
+  box-shadow:
+    inset 0 0 0 1px color-mix(in srgb, var(--orb-ink) 70%, var(--orb-lit)),
+    0 0 0 1.5px var(--orb-rim),
+    0 0 calc(6px + var(--orb-level) * 8px) 1px
+      color-mix(in srgb, var(--orb-rim) calc(40% + var(--orb-level) * 40%), transparent),
+    0 1px 3px rgb(0 0 0 / 0.34);
+  transition: box-shadow 110ms var(--ade-ease-out, ease-out);
+}
+
+/* ── the air around it ────────────────────────────────────────────────────── */
+
+/*
+ * Outside the sphere and behind it. It is the only thing allowed to grow with
+ * the level, and it grows out of the box rather than inside it: the orb's own
+ * footprint never changes, so a loud room does not push its neighbours along
+ * the bar or reflow the widget's pill.
+ */
+[data-component="orb-mark"] [data-slot="orb-halo"] {
+  position: absolute;
+  inset: -5px;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--orb-lit) 40%, transparent),
+    transparent 68%
+  );
+  opacity: 0;
+  transform: scale(0.8);
+  transition:
+    opacity var(--ade-dur-med, 200ms) var(--ade-ease, ease),
+    transform 120ms var(--ade-ease-out, ease-out);
+  pointer-events: none;
+}
+
+/* ── awake ────────────────────────────────────────────────────────────────── */
+
+/*
+ * The ceiling matters more than the floor.
+ *
+ * Turned all the way up, the first cut washed the sphere out to a chrome
+ * ring: the arcs, the halo and the dilated pupil all peaked together and the
+ * black ground — the thing that makes it an eye rather than a spinner —
+ * disappeared exactly when the orb was most active. The sphere stays dark at
+ * every level now, and what a loud room buys is motion and a wider pupil.
+ */
+[data-component="orb-mark"][data-awake] [data-slot="orb-swirl"][data-arc="a"] {
+  opacity: calc(0.3 + var(--orb-level) * 0.4);
+}
+
+[data-component="orb-mark"][data-awake] [data-slot="orb-swirl"][data-arc="b"] {
+  opacity: calc(0.18 + var(--orb-level) * 0.32);
+}
+
+[data-component="orb-mark"][data-awake] [data-slot="orb-iris"] {
+  border-color: color-mix(in srgb, var(--orb-lit) 80%, transparent);
+  animation: ade-orb-breathe 3.4s var(--ade-ease, ease-in-out) infinite;
+}
+
+[data-component="orb-mark"][data-awake] [data-slot="orb-pupil"] {
+  background: radial-gradient(
+    circle,
+    color-mix(in srgb, var(--orb-lit) 55%, transparent),
+    transparent 70%
+  );
+}
+
+/* Awake, the mark is the ground colour outright — the brightest thing in the
+   sphere, standing in its own light. */
+[data-component="orb-mark"][data-awake] [data-slot="orb-mark-n"] {
+  color: var(--orb-lit);
+}
+
+/*
+ * Dictation, on the same orb.
+ *
+ * There is one control now, so it has to say which of the two has the
+ * microphone without turning into a different object. The arcs stop: nothing
+ * is being interpreted, the words are going straight through, and a sphere
+ * with a still interior and a lit mark is exactly that — a channel rather
+ * than a mind.
+ */
+[data-component="orb-mark"][data-awake][data-mode="transcription"] [data-slot="orb-swirl"] {
+  opacity: 0.08;
+}
+
+[data-component="orb-mark"][data-awake][data-mode="transcription"] [data-slot="orb-iris"] {
+  border-style: dashed;
+  animation: none;
+}
+
+[data-component="orb-mark"][data-awake] [data-slot="orb-halo"] {
+  opacity: calc(0.14 + var(--orb-level) * 0.4);
+  transform: scale(calc(0.85 + var(--orb-level) * 0.3));
+}
+
+/*
+ * Waiting for an answer and carrying one out are the two states where the orb
+ * has to say something a brightness cannot. They borrow the workbench's own
+ * status colours — the same two a pane uses — so the meaning is already
+ * learned by the time anyone looks at the orb.
+ */
+[data-component="orb-mark"][data-status="confirming"] {
+  --orb-lit: var(--ade-waiting, #d9a441);
+}
+
+[data-component="orb-mark"][data-status="executing"] {
+  --orb-lit: var(--ade-working, #4a8fd9);
+}
+
+/* Awake but deaf until the wake word: the eye is open and nothing circulates. */
+[data-component="orb-mark"][data-awake][data-status="asleep"] [data-slot="orb-swirl"] {
+  opacity: 0.12;
+}
+
+@keyframes ade-orb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes ade-orb-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.06);
+  }
+}
+
+/*
+ * Still, but not dead.
+ *
+ * Reduced motion removes the turning and the breathing; it does not remove the
+ * orb's answer to the level, because that is not decoration — it is the only
+ * on-screen confirmation that the microphone is hearing anything at all.
+ */
+@media (prefers-reduced-motion: reduce) {
+  [data-component="orb-mark"] [data-slot="orb-swirl"],
+  [data-component="orb-mark"] [data-slot="orb-iris"] {
+    animation: none;
+  }
+  [data-component="orb-mark"][data-awake] [data-slot="orb-swirl"][data-arc="a"] {
+    opacity: 0.4;
+  }
+  [data-component="orb-mark"] [data-slot="orb-pupil"],
+  [data-component="orb-mark"] [data-slot="orb-halo"] {
+    transition: none;
+  }
+}
