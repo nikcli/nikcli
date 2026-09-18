@@ -47,13 +47,13 @@ const { AccountRepo } = await import("@/account/repo")
 const ACCOUNT_ID = "acc_localsession"
 const EMAIL = "owner@example.com"
 
-function jwt(expiresInSeconds: number) {
+function jwt(expiresInSeconds: number, account: { id: string; email: string } = { id: ACCOUNT_ID, email: EMAIL }) {
   const now = Math.floor(Date.now() / 1000)
-  return new SignJWT({ email: EMAIL, client_id: "nikcli" })
+  return new SignJWT({ email: account.email, client_id: "nikcli" })
     .setProtectedHeader({ alg: "HS256" })
     .setIssuer("https://auth.test")
     .setAudience("nikcli-api")
-    .setSubject(ACCOUNT_ID)
+    .setSubject(account.id)
     .setIssuedAt(now)
     .setExpirationTime(now + expiresInSeconds)
     .sign(new TextEncoder().encode(process.env.NIKCLI_AUTH_JWT_SECRET!))
@@ -150,5 +150,135 @@ describe("local account session", () => {
     const remote = new Request("http://nikcli.local/user/me")
     expect(Auth.isLocal(remote)).toBe(false)
     expect(await Auth.sessionFor(remote)).toBeNull()
+  })
+})
+
+/**
+ * Keeping the machine signed in needs the network, and how a refresh *fails*
+ * decides whether the sign-in dialog is honest. An issuer that answers "this
+ * chain is over" ends the session; an issuer that cannot be reached has said
+ * nothing, and reading that as signed out is what greeted a signed-in user
+ * with the sign-in chooser on launch.
+ */
+describe("refreshing the machine's session", () => {
+  type Issuer = {
+    url: string
+    calls: number
+    stop: () => void
+  }
+
+  /** The `POST {account.url}oauth/token` endpoint `Account.token` refreshes against. */
+  function issuer(reply: () => Response | Promise<Response>): Issuer {
+    const state = { calls: 0 }
+    const server = Bun.serve({
+      port: 0,
+      hostname: "127.0.0.1",
+      fetch: async (request) => {
+        if (new URL(request.url).pathname !== "/oauth/token") return new Response("not found", { status: 404 })
+        state.calls++
+        return reply()
+      },
+    })
+    return {
+      url: `http://127.0.0.1:${server.port}/`,
+      get calls() {
+        return state.calls
+      },
+      stop: () => server.stop(true),
+    }
+  }
+
+  /**
+   * A machine that signed in and whose access token has since aged out: the
+   * account row is active with an expired token, and the local user row beside
+   * it is the one the sign-in provisioned.
+   */
+  async function signedIn(account: { id: string; email: string }, url: string) {
+    AccountRepo.persistAccount(account.id, account.email, url, await jwt(-60, account), "refresh-1" as never, -60)
+    const provisioned = await request("/user/me", await jwt(900, account))
+    expect(provisioned.status).toBe(200)
+  }
+
+  it("refreshes the stored pair and answers from the new token", async () => {
+    const account = { id: "acc_refresh_ok", email: "refresh-ok@example.com" }
+    const auth = issuer(async () =>
+      Response.json({
+        access_token: await jwt(900, account),
+        refresh_token: "refresh-2",
+        expires_in: 900,
+        token_type: "Bearer",
+      }),
+    )
+    try {
+      await signedIn(account, auth.url)
+
+      const response = await request("/user/me")
+      expect(response.status).toBe(200)
+      expect(((await response.json()) as { email: string }).email).toBe(account.email)
+      expect(auth.calls).toBe(1)
+      // The rotated token has to land in the row, or the next launch presents
+      // the spent one and the issuer revokes the whole family.
+      expect(AccountRepo.getRow(account.id)?.refresh_token).toBe("refresh-2")
+    } finally {
+      auth.stop()
+    }
+  })
+
+  it("stays signed in when the issuer cannot be reached", async () => {
+    const account = { id: "acc_refresh_offline", email: "refresh-offline@example.com" }
+    const closed = issuer(() => new Response("unused"))
+    const url = closed.url
+    closed.stop()
+    await signedIn(account, url)
+
+    const response = await request("/user/me")
+    expect(response.status).toBe(200)
+    expect(((await response.json()) as { email: string }).email).toBe(account.email)
+  })
+
+  it("never spends the refresh token while another process holds the claim", async () => {
+    // Two nikcli processes — an installed TUI and a dev build, a background
+    // service and a `nikcli` command — read the same row. Whichever posts the
+    // token second gets the family revoked and signs the machine out for good,
+    // so a claim held elsewhere means this one does not post at all.
+    const account = { id: "acc_refresh_claimed", email: "refresh-claimed@example.com" }
+    const auth = issuer(async () =>
+      Response.json({
+        access_token: await jwt(900, account),
+        refresh_token: "refresh-2",
+        expires_in: 900,
+        token_type: "Bearer",
+      }),
+    )
+    try {
+      await signedIn(account, auth.url)
+      const claim = path.join(testHome, "state", `account-refresh-${account.id}.lock`)
+      await fs.mkdir(path.dirname(claim), { recursive: true })
+      await Bun.write(claim, JSON.stringify({ pid: 4, at: Date.now() }))
+
+      // Still signed in — from the account row, which is what "could not
+      // renew" should cost, rather than the sign-in dialog.
+      const response = await request("/user/me")
+      expect(auth.calls).toBe(0)
+      expect(response.status).toBe(200)
+      expect(AccountRepo.getRow(account.id)?.refresh_token).toBe("refresh-1")
+      await fs.unlink(claim)
+    } finally {
+      auth.stop()
+    }
+  })
+
+  it("reports signed out when the issuer rejects the refresh token", async () => {
+    // The one failure that really is a signed-out machine: a refresh token the
+    // issuer says is spent or revoked cannot be recovered without a new
+    // sign-in, so the dialog is the right answer here and only here.
+    const account = { id: "acc_refresh_dead", email: "refresh-dead@example.com" }
+    const auth = issuer(() => Response.json({ error: "invalid_grant" }, { status: 400 }))
+    try {
+      await signedIn(account, auth.url)
+      expect((await request("/user/me")).status).toBe(401)
+    } finally {
+      auth.stop()
+    }
   })
 })

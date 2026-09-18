@@ -521,7 +521,12 @@ function App(props: { checkUpgrade?: () => Promise<UpdateAvailable | undefined> 
         // account, so only an explicit `false` counts as first run.
         const isFirstRun = (await UserApi.hasUsers(sdk)) === false
 
-        const validUser = await UserApi.me(sdk)
+        // Three answers, and only one of them is a reason to interrupt. The
+        // server is asked whether this machine holds a session; while it is
+        // still booting — or being restarted by an auto-update — it cannot
+        // answer, and reading that silence as "signed out" is what put the
+        // sign-in dialog in front of someone who had never signed out.
+        const account = await UserApi.session(sdk)
 
         if (isFirstRun && !kv.get("onboarding_complete", false)) {
           // First-time user: unified onboarding handles account creation + provider setup
@@ -556,9 +561,13 @@ function App(props: { checkUpgrade?: () => Promise<UpdateAvailable | undefined> 
               variant: "error",
             })
           }
-        } else if (!validUser) {
+        } else if (account.status === "signed-out") {
           // Returning user with no active session: standard login
           await DialogLogin.run(dialog, sdk)
+        } else if (account.status === "unknown") {
+          log.warn("could not read the account session at startup; not prompting", {
+            service: "tui.account",
+          })
         }
       }
 

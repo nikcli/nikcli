@@ -2,6 +2,7 @@ import { verifyAccessToken, type VerifyAccessTokenOptions } from "@nikcli-ai/aut
 import { Effect } from "effect"
 import { Flag } from "@nikcli-ai/util/flag"
 import { Account } from "@/account"
+import { AccountDB } from "@/account/db"
 import { runPromiseWithLayer } from "@/effect"
 import { UserDB } from "@/user/users"
 
@@ -31,13 +32,24 @@ export function identityVerifierOptions(): VerifyAccessTokenOptions | undefined 
   }
 }
 
+/**
+ * A verdict, not an outage: carrying a `code` is what tells
+ * `localAccountSession` this token was judged rather than unreachable.
+ */
+class MissingEmailClaim extends Error {
+  readonly code = "ERR_IDENTITY_NO_EMAIL"
+  constructor() {
+    super("Identity token is missing the verified email claim")
+  }
+}
+
 export async function externalSessionForToken(
   token: string,
 ): Promise<{ user: UserDB.PublicUser; token: string } | undefined> {
   const verifier = identityVerifierOptions()
   if (!verifier) return
   const auth = await verifyAccessToken(token, verifier)
-  if (!auth.email) throw new Error("Identity token is missing the verified email claim")
+  if (!auth.email) throw new MissingEmailClaim()
   return {
     user: Effect.runSync(UserDB.ensureExternalUser({ sub: auth.accountID, email: auth.email })),
     token,
@@ -59,18 +71,89 @@ export async function externalSessionForToken(
  * is never trusted, it is ignored. That is also why only callers the router
  * already admits without credentials may reach this — see `Auth.sessionFor`.
  * It answers "who is signed in on this machine", not "who sent this request".
+ *
+ * Renewing needs the network, and a laptop that cannot reach the issuer is not
+ * a laptop whose owner signed out. A refresh the issuer *answered* — a dead or
+ * reused refresh token — does end the session and the sign-in dialog is then
+ * correct; anything that never got an answer falls back to the account row and
+ * the user it already provisioned here, which is state only a sign-in on this
+ * machine could have written.
  */
 export async function localAccountSession(): Promise<{ user: UserDB.PublicUser; token: string } | undefined> {
   if (!identityVerifierOptions()) return
-  const token = await runPromiseWithLayer(
+  const active = await runPromiseWithLayer(
     Account.defaultLayer,
     Effect.gen(function* () {
       const account = yield* Account.Service
-      const active = yield* account.active()
-      if (!active) return undefined
-      return yield* account.token(active.id)
+      return yield* account.active()
     }),
-  )
+  ).catch(() => undefined)
+  if (!active) return
+
+  let token: string | undefined
+  try {
+    token = await runPromiseWithLayer(
+      Account.defaultLayer,
+      Effect.gen(function* () {
+        const account = yield* Account.Service
+        return yield* account.token(active.id)
+      }),
+    )
+  } catch (error) {
+    if (isSignedOut(error)) return
+    return heldSession(active)
+  }
   if (!token) return
-  return externalSessionForToken(token)
+
+  try {
+    return await externalSessionForToken(token)
+  } catch (error) {
+    // The token is this machine's own and freshly issued, so a verifier that
+    // rejects it on its merits is a real problem — but one that could not
+    // fetch the JWKS has decided nothing at all.
+    if (!isUnreachable(error)) throw error
+    return heldSession(active)
+  }
+}
+
+/**
+ * The account this machine is signed into, as it stands without the issuer.
+ *
+ * Only a completed sign-in writes the account row *and* provisions the local
+ * user beside it, so finding both is what makes this a session rather than a
+ * guess. The token handed back is the stored one — stale, and labelled that
+ * way by its own `exp` — because inventing a credential here would be worse
+ * than reporting the one the machine actually holds.
+ */
+function heldSession(active: { id: string; email: string }): { user: UserDB.PublicUser; token: string } | undefined {
+  const user = Effect.runSync(UserDB.findByEmail(active.email))
+  if (!user) return
+  const row = Effect.runSync(AccountDB.getAccount(active.id))
+  if (!row) return
+  return { user: UserDB.toPublic(user), token: row.access_token }
+}
+
+/** An answer from the issuer that this machine's refresh chain is over. */
+function isSignedOut(error: unknown): boolean {
+  return tagOf(error) === "AccountTokenExpired"
+}
+
+function tagOf(error: unknown): string | undefined {
+  if (typeof error !== "object" || error === null) return undefined
+  const tag = (error as { _tag?: unknown })._tag
+  return typeof tag === "string" ? tag : undefined
+}
+
+/**
+ * Whether a verifier failure means "could not reach the issuer" rather than
+ * "this token is not good".
+ *
+ * jose labels every verdict it reaches with an `ERR_*` code; a fetch that
+ * never completed arrives as a plain `TypeError`, and its own timeout is the
+ * one coded error that is still an absence of an answer.
+ */
+function isUnreachable(error: unknown): boolean {
+  const code = (error as { code?: unknown } | null)?.code
+  if (typeof code !== "string") return true
+  return code === "ERR_JWKS_TIMEOUT"
 }

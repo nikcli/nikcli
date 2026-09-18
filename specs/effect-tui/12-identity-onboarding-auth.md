@@ -57,6 +57,15 @@ opt-outs (`NIKCLI_AUTH_ISSUER=off`, etc.). Do not migrate `packages/identity` it
     error, and the TUI returns to the login state with a clear reason.
 11. Re-authentication during a session: the TUI surfaces a banner, not a silent retry. Background operations pause, the
     user re-authenticates, and the pending work resumes; the typed recovery does not guess identities.
+12. A refresh token is single-use machine-wide, not process-wide. The issuer rotates it on first use and revokes the
+    whole family on the second, so several nikcli processes on one machine (installed TUI, dev build, background service,
+    a `nikcli` command) serialize the refresh through a lock every one of them can see (`FileLock`) and re-read the
+    account row from the database — never a cache — before spending the token. A process that cannot take the claim does
+    not refresh; it answers from the account row and lets the holder rotate.
+13. "Could not ask" is never "signed out". A startup that cannot reach the server, a `/user/me` that never answered, and
+    an issuer that cannot be reached for a refresh all leave the session as it was: the sign-in dialog is opened only on
+    an answer — a 401/403 from the server, or an `invalid_grant` on the refresh. Only that last one ends a session
+    without the user asking, and the account row plus the local user it provisioned keep the machine signed in offline.
 
 ## Trust Topology
 
@@ -94,6 +103,9 @@ never appear in logs, errors, telemetry, or metric labels.
   the TUI surfaces the missing step rather than reporting ready.
 - Token refresh on a transient failure retries with bounded budget; expiry, revocation, and unknown grant do not retry;
   the user sees a typed banner with a reason and a re-auth button.
+- Concurrent refreshes never present the same refresh token twice: a claim held elsewhere on the machine means no request
+  is sent at all, and an unreachable issuer leaves the machine signed in rather than opening the sign-in dialog. Covered
+  by `test/server/local-account-session.test.ts`, `test/util/file-lock.test.ts`, and `test/tui/user-api-session.test.ts`.
 - Revocation issued from the issuer propagates to a connected TUI within EOT-04's reconnect window. A revoked token cannot
   silently re-authenticate using a previously cached refresh token.
 - No tokens, OAuth codes, PKCE verifiers, email tokens, passkey challenges, or password material appear in logs, error

@@ -1,6 +1,9 @@
+import path from "path"
 import { AccountDB } from "./db"
 import { AccountRepo } from "./repo"
 import { normalizeServerUrl } from "./url"
+import { FileLock } from "@/util/file-lock"
+import { Global } from "@nikcli-ai/util/global"
 import { Identifier } from "@nikcli-ai/util/id"
 import { Lock } from "@/util/lock"
 import { Log } from "@nikcli-ai/util/log"
@@ -511,6 +514,11 @@ export namespace Account {
             result.refresh_token,
             result.expires_in,
           )
+          // A row cached from before this sign-in names a refresh token the
+          // issuer has already retired. Reading it once is enough to revoke
+          // the family the sign-in just created, so it goes now.
+          accountRowCache.delete(accountID)
+          tokenCache.delete(accountID)
 
           return {
             accountID,
@@ -586,14 +594,33 @@ export namespace Account {
     const lockKey = `account-refresh:${accountID}`
     using _ = await Lock.write(lockKey)
 
-    // Re-check after acquiring lock
-    const recheck = getAccountRowCached(accountID)
+    // …and under a lock the *other* nikcli processes on this machine can see.
+    // The issuer rotates the refresh token on first use and revokes the family
+    // on the second, so two processes reaching this line with the same stored
+    // token do not race for a slower refresh, they end the session for both.
+    await using claim = await claimRefresh(accountID)
+
+    // Past the row cache deliberately: the process that just held the claim
+    // persisted a new pair, and the point of waiting was to use it rather than
+    // spend a token the issuer has already retired.
+    const recheck = readAccountRow(accountID)
     if (!recheck) {
       throw new NotFoundError({ message: `Account not found: ${accountID}`, accountID })
     }
 
     if (recheck.token_expiry > Date.now() + 60_000) {
+      tokenCache.set(accountID, { accessToken: recheck.access_token, expiresAt: recheck.token_expiry })
       return recheck.access_token
+    }
+
+    if (claim.contended) {
+      // Nobody released the claim and the row is still stale. Presenting the
+      // stored token now is exactly the double-use that kills the session, so
+      // this asks the caller to try again instead.
+      throw new TokenRefreshError({
+        message: "Another nikcli process is still refreshing this session. Try again in a moment.",
+        accountID,
+      })
     }
 
     // Refresh the token
@@ -785,10 +812,65 @@ export namespace Account {
     if (cached && now - cached.cachedAt < ACCOUNT_ROW_CACHE_TTL) {
       return cached.row
     }
+    return readAccountRow(accountID)
+  }
+
+  /**
+   * The row as the database has it *now*, refilling the cache rather than
+   * reading it. What the cache can hand back is a refresh token another
+   * process has already spent, which is the one thing this row must never be
+   * stale about.
+   */
+  function readAccountRow(accountID: string): AccountRow | undefined {
     const row = Effect.runSync(AccountDB.getAccount(accountID))
-    if (row) {
-      accountRowCache.set(accountID, { row, cachedAt: now })
-    }
+    if (row) accountRowCache.set(accountID, { row, cachedAt: Date.now() })
+    else accountRowCache.delete(accountID)
     return row
+  }
+
+  /** One refresh claim per account, beside the rest of this machine's runtime state. */
+  function refreshLockPath(accountID: string) {
+    return path.join(Global.Path.state, `account-refresh-${accountID.replace(/[^\w.-]/g, "_")}.lock`)
+  }
+
+  /**
+   * The right to spend this account's refresh token, as against the other
+   * nikcli processes on this machine.
+   *
+   * `contended` means someone else has it and would not let go — the caller
+   * must not refresh. A state directory that cannot hold a lock at all is a
+   * different matter: it leaves the in-process lock as the only guard, which is
+   * what the code did before, and is far better than a machine that can never
+   * renew its session again.
+   */
+  type RefreshClaim = { contended: boolean; [Symbol.asyncDispose](): Promise<void> }
+
+  /**
+   * How long to wait for the process that holds the claim.
+   *
+   * Long enough to inherit the pair it is about to write — a refresh is one
+   * round trip — and short enough that a caller on the startup path is not
+   * parked behind it. Giving up is not signing out: the local session answers
+   * from the account row while the other process rotates.
+   */
+  const REFRESH_CLAIM_TIMEOUT_MS = 3_000
+
+  async function claimRefresh(accountID: string): Promise<RefreshClaim> {
+    const held = await FileLock.acquire(refreshLockPath(accountID), {
+      staleMs: 30_000,
+      timeoutMs: REFRESH_CLAIM_TIMEOUT_MS,
+    }).catch((error: unknown) => {
+      log.warn("refresh claim unavailable; falling back to the in-process lock", {
+        accountID,
+        error: error instanceof Error ? error.message : String(error),
+      })
+      return null
+    })
+    return {
+      contended: held === undefined,
+      async [Symbol.asyncDispose]() {
+        await held?.[Symbol.asyncDispose]()
+      },
+    }
   }
 }
