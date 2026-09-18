@@ -104,8 +104,50 @@ if (!Script.preview) {
     }
     const rebase = await $`git rebase origin/${branch}`.nothrow()
     if (rebase.exitCode !== 0) {
-      await $`git rebase --abort`.nothrow()
-      throw new Error(`Failed to rebase release commit onto origin/${branch}`)
+      /*
+       * A release that landed while this one was publishing.
+       *
+       * Runs queue behind each other on the branch, and the second one builds
+       * its release commit on the tip it checked out rather than on the one
+       * the first left behind. Both rewrite the same lines — the "version" of
+       * every package.json, the zed extension, the lockfile, the top of
+       * CHANGELOG.md — so the rebase conflicts in all of them and the release
+       * dies here, with its packages already on npm.
+       *
+       * Those files are the release commit's own output: it says "every
+       * version is now X", and X is published, so its side wins. CHANGELOG.md
+       * is the exception — the section the other release wrote has to survive
+       * — so the remote file is kept and this version's section written into
+       * it again, above the one already there. A conflict anywhere else is not
+       * something a release commit produces, and still fails loudly.
+       */
+      const conflicted = (await $`git diff --name-only --diff-filter=U`.text())
+        .split("\n")
+        .map((line) => line.trim())
+        .filter(Boolean)
+      const releaseOwned = (file: string) =>
+        file.endsWith("package.json") ||
+        file === "bun.lock" ||
+        file === "CHANGELOG.md" ||
+        file === "packages/extensions/zed/extension.toml"
+      if (conflicted.length === 0 || !conflicted.every(releaseOwned)) {
+        await $`git rebase --abort`.nothrow()
+        throw new Error(`Failed to rebase release commit onto origin/${branch}`)
+      }
+      console.log(`resolving ${conflicted.length} release conflicts against origin/${branch}`)
+      for (const file of conflicted) {
+        // Mid-rebase, "ours" is the remote tip and "theirs" is the commit being
+        // replayed: this release.
+        if (file === "CHANGELOG.md") await $`git checkout --ours -- ${file}`
+        else await $`git checkout --theirs -- ${file}`
+      }
+      if (conflicted.includes("CHANGELOG.md")) await writeReleaseSection(Script.version, notes)
+      await $`git add -A`
+      const resumed = await $`git -c core.editor=true rebase --continue`.nothrow()
+      if (resumed.exitCode !== 0) {
+        await $`git rebase --abort`.nothrow()
+        throw new Error(`Failed to rebase release commit onto origin/${branch}`)
+      }
     }
     const push = await $`git push origin HEAD:${branch}`.nothrow()
     branchPushed = push.exitCode === 0
