@@ -1,0 +1,73 @@
+---
+// One OS card per platform, one link per asset. Every download section on
+// /download renders through this: desktop, ADE, CLI and mobile only differ in
+// whether the detected-platform script should highlight them.
+import { formatBytes, OS_META, type ClassifiedAsset, type OS } from "../lib/releases"
+
+export interface DownloadGroup {
+  os: Exclude<OS, "any">
+  assets: ClassifiedAsset[]
+}
+
+interface Props {
+  groups: DownloadGroup[]
+  /** Mark the cards for the client-side "you're on macOS" highlight. */
+  detect?: boolean
+}
+
+const { groups, detect = true } = Astro.props
+
+const osIcon = (icon: string): string => {
+  switch (icon) {
+    case "apple":
+      return `<path d="M16.36 12.78c.02 2.6 2.28 3.46 2.3 3.47-.02.06-.36 1.24-1.19 2.46-.72 1.06-1.46 2.1-2.64 2.13-1.15.02-1.52-.68-2.84-.68s-1.73.66-2.82.7c-1.13.05-2-.13-2.74-.18-1.4-1.6-2.5-4.55-2.6-7.4-.06-1.5.21-3 .92-4.16C5.66 9.8 6.9 9.06 8.2 9.04c1.1-.02 2.13.74 2.8.74.66 0 1.92-.92 3.24-.78.55.02 2.1.22 3.1 1.68-.08.05-1.85 1.08-1.83 3.22M14.2 7.3c.58-.7.97-1.68.86-2.65-.84.03-1.85.56-2.45 1.26-.54.62-1.01 1.61-.88 2.56.93.07 1.89-.47 2.47-1.17"/>`
+    case "windows":
+      return `<path d="M3 5.5 10.2 4.5v6.9H3V5.5m0 13L10.2 19.5v-6.8H3V18.5M11.2 4.3 21 3v8.4H11.2V4.3m0 15.4L21 21v-8.3H11.2v7Z"/>`
+    case "linux":
+      return `<path d="M12 2c-1.7 0-3 1.5-3 3.3 0 1 .1 1.9-.4 2.9-.5 1-1.6 1.8-2.1 3.3-.4 1.2-.2 2.2.2 3.2.2.5-.3.9-.5 1.4-.3.8.1 1.6.7 2 .5.4 1.3.3 1.8-.1.5.4 1.2.6 2.3.6s1.8-.2 2.3-.6c.5.4 1.3.5 1.8.1.6-.4 1-1.2.7-2 .4-.5.7-.9.5-1.4.4-1 .6-2 .2-3.2-.5-1.5-1.6-2.3-2.1-3.3-.5-1-.4-1.9-.4-2.9C15 3.5 13.7 2 12 2m-1.3 4.2c.3 0 .5.3.5.7s-.2.7-.5.7-.5-.3-.5-.7.2-.7.5-.7m2.6 0c.3 0 .5.3.5.7s-.2.7-.5.7-.5-.3-.5-.7.2-.7.5-.7Z"/>`
+    case "android":
+      return `<path d="M6 9v7a1 1 0 0 0 1 1h1v3a1 1 0 0 0 2 0v-3h4v3a1 1 0 0 0 2 0v-3h1a1 1 0 0 0 1-1V9H6m-2 0a1 1 0 0 0-1 1v5a1 1 0 0 0 2 0v-5a1 1 0 0 0-1-1m16 0a1 1 0 0 0-1 1v5a1 1 0 0 0 2 0v-5a1 1 0 0 0-1-1M15.5 2l1.2-1.7-.6-.4L14.8 1.7A6 6 0 0 0 12 1c-1 0-2 .25-2.8.7L8 0l-.6.4L8.5 2A5 5 0 0 0 6 6h12a5 5 0 0 0-2.5-4M9.5 4.5a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1m5 0a.5.5 0 1 1 0-1 .5.5 0 0 1 0 1Z"/>`
+    case "ios":
+      return `<path d="M16.36 12.78c.02 2.6 2.28 3.46 2.3 3.47-.02.06-.36 1.24-1.19 2.46-.72 1.06-1.46 2.1-2.64 2.13-1.15.02-1.52-.68-2.84-.68s-1.73.66-2.82.7c-1.13.05-2-.13-2.74-.18-1.4-1.6-2.5-4.55-2.6-7.4-.06-1.5.21-3 .92-4.16C5.66 9.8 6.9 9.06 8.2 9.04c1.1-.02 2.13.74 2.8.74.66 0 1.92-.92 3.24-.78.55.02 2.1.22 3.1 1.68-.08.05-1.85 1.08-1.83 3.22M14.2 7.3c.58-.7.97-1.68.86-2.65-.84.03-1.85.56-2.45 1.26-.54.62-1.01 1.61-.88 2.56.93.07 1.89-.47 2.47-1.17"/>`
+    default:
+      return ""
+  }
+}
+---
+
+<div class="grid gap-5 sm:grid-cols-2 lg:grid-cols-3">
+  {groups.map((group) => (
+    <article
+      data-os={detect ? group.os : undefined}
+      class:list={[
+        "rounded-[var(--radius-card)] border border-terminal-border/60 bg-terminal-panel p-6 shadow-soft",
+        detect && "os-card transition-[border-color,box-shadow] duration-200 hover:border-terminal-accent/30 hover:shadow-strong",
+      ]}
+    >
+      <div class="mb-4 flex items-center gap-3">
+        <div class="flex h-10 w-10 items-center justify-center rounded-xl border border-terminal-accent/25 bg-terminal-accent/10 text-terminal-accent">
+          <svg viewBox="0 0 24 24" class="h-5 w-5" fill="currentColor" aria-hidden="true" set:html={osIcon(OS_META[group.os].icon)} />
+        </div>
+        <h3 class="font-display text-[1.05rem] font-bold text-terminal-text">{OS_META[group.os].label}</h3>
+      </div>
+      <ul class="space-y-2">
+        {group.assets.map((a) => (
+          <li>
+            <a
+              href={a.url}
+              class="group flex items-center justify-between gap-3 rounded-[var(--radius-md)] border border-terminal-border/50 bg-terminal-bg/50 px-3.5 py-2.5 transition-[border-color,background-color] duration-150 hover:border-terminal-accent/40 hover:bg-terminal-accent/8"
+            >
+              <span class="flex flex-col">
+                <span class="text-[13.5px] font-semibold text-terminal-text group-hover:text-terminal-accent">{a.label}</span>
+                <span class="font-mono text-[11px] text-terminal-muted/70">{formatBytes(a.size)}</span>
+              </span>
+              <svg class="h-4 w-4 shrink-0 text-terminal-muted group-hover:text-terminal-accent" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24" aria-hidden="true">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3" />
+              </svg>
+            </a>
+          </li>
+        ))}
+      </ul>
+    </article>
+  ))}
+</div>

@@ -5,7 +5,7 @@
 const REPO = "nikomatt69/nikcli"
 const API = `https://api.github.com/repos/${REPO}/releases`
 
-export type DownloadCategory = "desktop" | "cli" | "mobile" | "other"
+export type DownloadCategory = "desktop" | "ade" | "cli" | "mobile" | "other"
 export type OS = "macos" | "windows" | "linux" | "android" | "ios" | "any"
 export type Arch = "arm64" | "x64" | "universal" | "any"
 
@@ -84,8 +84,32 @@ const isInternal = (name: string): boolean => {
     n.endsWith(".sig") ||
     n.endsWith(".app.tar.gz") ||
     // Tauri updater zips for macOS (the .dmg is the user-facing installer)
-    /-(?:aarch64|x86_64)-apple-darwin\.zip$/.test(n)
+    /-(?:aarch64|x86_64)-apple-darwin\.zip$/.test(n) ||
+    // ADE also ships its .app as a bare zip; same bits as its .dmg for that arch
+    n.endsWith(".app.zip")
   )
+}
+
+/**
+ * ADE rides in the same release as nikcli: `ade-release` in attach_only mode
+ * uploads its installers into the existing `v*` release, in the same Tauri
+ * bundle formats as the nikcli desktop app. The product name in the filename
+ * is the only thing that separates the two, so that is what the category keys
+ * off — otherwise both apps' installers land in one "Desktop" list under
+ * identical labels ("Apple Silicon (.dmg)" twice, and so on).
+ */
+const isAde = (name: string): boolean => /^ade[-_]/i.test(name)
+
+/** Tauri installer bundles, shared by the nikcli desktop app and ADE. */
+const installerOf = (n: string, format: string, arch: Arch): { os: OS; label: string } | null => {
+  if (/\.dmg$/.test(n)) return { os: "macos", label: `${fmtArch(arch, "macos")} (.dmg)` }
+  if (/-setup\.exe$/.test(n) || /\.msi$/.test(n))
+    return { os: "windows", label: `${fmtArch(arch, "windows")} (${format === ".exe" ? "installer" : format})` }
+  if (/\.deb$/.test(n)) return { os: "linux", label: `Debian / Ubuntu — ${fmtArch(arch, "linux")} (.deb)` }
+  if (/\.rpm$/.test(n)) return { os: "linux", label: `Fedora / RHEL — ${fmtArch(arch, "linux")} (.rpm)` }
+  if (/\.appimage$/.test(n)) return { os: "linux", label: `AppImage — ${fmtArch(arch, "linux")} (.AppImage)` }
+  if (/\.exe$/.test(n)) return { os: "windows", label: `${fmtArch(arch, "windows")} (.exe)` }
+  return null
 }
 
 function classify(asset: RawAsset): ClassifiedAsset {
@@ -120,31 +144,14 @@ function classify(asset: RawAsset): ClassifiedAsset {
     const variantTag = variant ? ` · ${variant}` : ""
     label = `${fmtArch(arch, os)}${variantTag} (${format})`
   }
-  // Desktop GUI installers (Tauri): Nikcli_<ver>_… / Nikcli-<ver>-…
-  else if (/\.dmg$/.test(n)) {
-    category = "desktop"
-    os = "macos"
-    label = `${fmtArch(arch, os)} (.dmg)`
-  } else if (/-setup\.exe$/.test(n) || /\.msi$/.test(n)) {
-    category = "desktop"
-    os = "windows"
-    label = `${fmtArch(arch, os)} (${format === ".exe" ? "installer" : format})`
-  } else if (/\.deb$/.test(n)) {
-    category = "desktop"
-    os = "linux"
-    label = `Debian / Ubuntu — ${fmtArch(arch, os)} (.deb)`
-  } else if (/\.rpm$/.test(n)) {
-    category = "desktop"
-    os = "linux"
-    label = `Fedora / RHEL — ${fmtArch(arch, os)} (.rpm)`
-  } else if (/\.appimage$/.test(n)) {
-    category = "desktop"
-    os = "linux"
-    label = `AppImage — ${fmtArch(arch, os)} (.AppImage)`
-  } else if (/\.exe$/.test(n)) {
-    category = "desktop"
-    os = "windows"
-    label = `${fmtArch(arch, os)} (.exe)`
+  // GUI installers (Tauri): Nikcli_<ver>_… for the desktop app, ADE_<ver>_… for ADE.
+  else {
+    const installer = installerOf(n, format, arch)
+    if (installer) {
+      category = isAde(name) ? "ade" : "desktop"
+      os = installer.os
+      label = installer.label
+    }
   }
 
   return {
