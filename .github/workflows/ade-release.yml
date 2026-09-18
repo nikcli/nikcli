@@ -136,6 +136,12 @@ jobs:
 
   build:
     needs: [draft, checks]
+    # `checks` reports but does not gate. A job whose `needs` failed is skipped
+    # before its `if` is evaluated, so `always()` is what lets the build run on
+    # a red suite; `draft` is still required, because there is nothing to upload
+    # into without it. The test job stays visibly red in the run — this only
+    # stops it from taking `build` and `publish` down with it.
+    if: always() && needs.draft.result == 'success'
     env:
       # Authenticode signing through SignPath Foundation starts the day its API
       # token is added as a secret; until then the Windows setup ships

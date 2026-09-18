@@ -21,3 +21,12 @@ packages/mobile/android/
 # byte-for-byte by the CI "Generated HTTP client drift" gate. Prettier collapses the
 # array onto one line, which makes the next codegen run show a diff and fail CI.
 **/.httpapi-codegen.json
+
+# Written by packages/ade/scripts/gen-frame-script.ts and pinned byte-for-byte by
+# `frame-script.test.ts` (`expect(file).toBe(frameScript())`). The release runs
+# `script/format.ts` (`prettier --write .`) and folds the result into the
+# `release: v*` commit, so reformatting this file silently reverts every
+# regeneration and fails that test on the tag — which is the only ref
+# `ade / checks / test` ever looks at. Verified 2026-09-18: prettier's output is
+# byte-identical at v1.369.0 and v1.370.0.
+packages/ade/src-tauri/scripts/browser-frame.js
