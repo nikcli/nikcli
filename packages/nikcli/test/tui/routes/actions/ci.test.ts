@@ -57,7 +57,12 @@ describe("parseRuns", () => {
 describe("parseWorkflows", () => {
   it("falls back to the path when a workflow has no name", () => {
     const parsed = parseWorkflows('[{"id":1,"path":".github/workflows/ci.yml","state":"active"}]')
-    expect(parsed[0]).toEqual({ id: 1, name: ".github/workflows/ci.yml", path: ".github/workflows/ci.yml", state: "active" })
+    expect(parsed[0]).toEqual({
+      id: 1,
+      name: ".github/workflows/ci.yml",
+      path: ".github/workflows/ci.yml",
+      state: "active",
+    })
   })
 
   it("tolerates junk", () => {
