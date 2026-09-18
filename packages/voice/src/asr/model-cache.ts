@@ -303,11 +303,14 @@ export async function inspectLocalFilesystemModel(): Promise<{
         const tauriCore: any = await new Function('return import("@tauri-apps/api/core")')().catch(() => null)
         if (tauriCore && typeof tauriCore.invoke === "function") {
           invoke = tauriCore.invoke
-        } else if (typeof (window as any).__TAURI_INTERNALS__?.invoke === "function") {
-          invoke = (window as any).__TAURI_INTERNALS__.invoke
         }
       } catch {
-        // Tauri import unavailable
+        // Tauri import unavailable — and in a packaged app it always is: the
+        // CSP there allows no 'unsafe-eval', so `new Function` throws before
+        // the import is even attempted. The internals below are the way in.
+      }
+      if (!invoke && typeof (window as any).__TAURI_INTERNALS__?.invoke === "function") {
+        invoke = (window as any).__TAURI_INTERNALS__.invoke
       }
 
       if (invoke) {

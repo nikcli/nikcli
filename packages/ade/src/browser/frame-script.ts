@@ -215,10 +215,20 @@ const FRAME_GUARD_SOURCE = `function frameGuard(win, bridge) {
  * source are tied to the same string, so the test that pins the generated
  * artifact (`bun scripts/gen-frame-script.ts`) and the runtime guard can
  * never diverge.
+ *
+ * Compiled on the first call and never while the module loads. The packaged
+ * app serves its bundle under the CSP in `tauri.conf.json`, which allows no
+ * 'unsafe-eval'; a `new Function` evaluated at module scope throws there and
+ * takes the whole entry chunk — and therefore the window — down with it. A
+ * dev run never sees it, because Tauri applies that CSP only to the embedded
+ * protocol, not to the Vite server. Nothing in the app calls this: the host
+ * injects the generated `browser-frame.js` into every frame instead, and the
+ * tests are the only caller, so the eval never happens in a packaged window.
  */
-export const frameGuard: (win: any, bridge: (shim: any) => void) => void = new Function(
-  "return (" + FRAME_GUARD_SOURCE + ")",
-)()
+type FrameGuard = (win: any, bridge: (shim: any) => void) => void
+let compiledGuard: FrameGuard | undefined
+const compileGuard = (): FrameGuard => (compiledGuard ??= new Function("return (" + FRAME_GUARD_SOURCE + ")")())
+export const frameGuard: FrameGuard = (win, bridge) => compileGuard()(win, bridge)
 
 /** What `FrameGate` needs of a port: a browser `MessagePort`, or a test's. */
 export type GatePort = Pick<MessagePort, "postMessage" | "close" | "onmessage">
