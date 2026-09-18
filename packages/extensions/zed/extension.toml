@@ -1,7 +1,7 @@
 id = "nikcli"
 name = "nikcli"
 description = "The AI coding agent for developers."
-version = "1.371.0"
+version = "1.372.0"
 schema_version = 1
 authors = ["nikomatt69"]
 repository = "https://github.com/nikomatt69/nikcli"
@@ -11,26 +11,26 @@ name = "nikcli"
 icon = "./icons/nikcli.svg"
 
 [agent_servers.nikcli.targets.darwin-aarch64]
-archive = "https://github.com/nikomatt69/nikcli/releases/download/v1.371.0/nikcli-darwin-arm64.zip"
+archive = "https://github.com/nikomatt69/nikcli/releases/download/v1.372.0/nikcli-darwin-arm64.zip"
 cmd = "./nikcli"
 args = ["acp"]
 
 [agent_servers.nikcli.targets.darwin-x86_64]
-archive = "https://github.com/nikomatt69/nikcli/releases/download/v1.371.0/nikcli-darwin-x64.zip"
+archive = "https://github.com/nikomatt69/nikcli/releases/download/v1.372.0/nikcli-darwin-x64.zip"
 cmd = "./nikcli"
 args = ["acp"]
 
 [agent_servers.nikcli.targets.linux-aarch64]
-archive = "https://github.com/nikomatt69/nikcli/releases/download/v1.371.0/nikcli-linux-arm64.tar.gz"
+archive = "https://github.com/nikomatt69/nikcli/releases/download/v1.372.0/nikcli-linux-arm64.tar.gz"
 cmd = "./nikcli"
 args = ["acp"]
 
 [agent_servers.nikcli.targets.linux-x86_64]
-archive = "https://github.com/nikomatt69/nikcli/releases/download/v1.371.0/nikcli-linux-x64.tar.gz"
+archive = "https://github.com/nikomatt69/nikcli/releases/download/v1.372.0/nikcli-linux-x64.tar.gz"
 cmd = "./nikcli"
 args = ["acp"]
 
 [agent_servers.nikcli.targets.windows-x86_64]
-archive = "https://github.com/nikomatt69/nikcli/releases/download/v1.371.0/nikcli-windows-x64.zip"
+archive = "https://github.com/nikomatt69/nikcli/releases/download/v1.372.0/nikcli-windows-x64.zip"
 cmd = "./nikcli.exe"
 args = ["acp"]

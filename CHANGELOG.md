@@ -3,6 +3,19 @@
 <!-- UNRELEASED:START -->
 <!-- UNRELEASED:END -->
 
+## v1.372.0 (September 2026)
+
+## Core
+
+- Stop asking a signed-in machine to sign in again (@nikomatt69)
+
+**Thank you to 1 community contributor:**
+
+- @nikomatt69:
+  - fix(auth): stop asking a signed-in machine to sign in again
+  - feat(web): list ADE's installers on the download page
+  - fix(ade): stop the packaged app opening to a black window
+
 ## v1.371.0 (September 2026)
 
 - No notable changes
