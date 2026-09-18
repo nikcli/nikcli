@@ -8,6 +8,7 @@ import { useTheme } from "@tui/context/theme"
 import { useKeybind } from "@tui/context/keybind"
 import { useDialog } from "@tui/ui/dialog"
 import { usePromptRef } from "@tui/context/prompt"
+import { useKeyboardCapture } from "@tui/routes/workspace/shell"
 import { SessionTreeColumnHeaders, SessionTreeHeader } from "./header"
 import { SessionTreeFooter } from "./footer"
 import { sessionTreeActivityDisplay } from "./session-activity-line"
@@ -36,6 +37,9 @@ export function SessionTree() {
   const [messageTimelineOpen, setMessageTimelineOpen] = createSignal<Set<string>>(new Set())
   const [filterOpen, setFilterOpen] = createSignal(false)
   const [filterText, setFilterText] = createSignal("")
+
+  // While the filter box has the keyboard, the shell must not read `1`-`5`.
+  useKeyboardCapture(filterOpen)
 
   // MCP and LSP counts for footer
   const mcpCount = createMemo(() => Object.values(sync.data.mcp).filter((x) => x.status === "connected").length)

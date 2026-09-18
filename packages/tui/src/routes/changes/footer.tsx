@@ -55,7 +55,7 @@ export function Footer(props: {
             {label()}
           </text>
           <FooterSep />
-          <FooterHint keys="tab · ← · →" label="panes" />
+          <FooterHint keys="← · →" label="panes" />
           <FooterSep />
           <FooterHint keys="esc" label={escLabel()} />
           <Show when={props.mode === "list" && !props.filterActive}>

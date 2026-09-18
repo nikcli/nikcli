@@ -46,9 +46,15 @@ export type GitHubRoute = {
   workspaceID?: string
 }
 
+export type ActionsRoute = {
+  type: "actions"
+  sessionID?: string
+  workspaceID?: string
+}
+
 export type WorkspaceRoute = {
   type: "workspace"
-  tab?: "tree" | "changes" | "graph" | "github"
+  tab?: "tree" | "changes" | "graph" | "github" | "actions"
   sessionID?: string
   workspaceID?: string
 }
@@ -61,6 +67,7 @@ export type Route =
   | SessionTreeRoute
   | GitGraphRoute
   | GitHubRoute
+  | ActionsRoute
   | WorkspaceRoute
 
 export type RouteContext = {

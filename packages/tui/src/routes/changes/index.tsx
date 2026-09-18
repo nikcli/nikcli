@@ -13,6 +13,7 @@ import { useTheme } from "@tui/context/theme"
 import { useKV } from "@tui/context/kv"
 import { useToast } from "@tui/ui/toast"
 import { useDialog } from "@tui/ui/dialog"
+import { useKeyboardCapture } from "@tui/routes/workspace/shell"
 import { Identifier } from "@nikcli-ai/util/id"
 import { LANGUAGE_EXTENSIONS } from "@nikcli-ai/util/language"
 import { FileList, order } from "./file-list"
@@ -78,6 +79,9 @@ export function Changes() {
   const [reviewed, setReviewed] = createSignal<ReadonlySet<string>>(new Set<string>())
   const [filterText, setFilterText] = createSignal("")
   const [filterActive, setFilterActive] = createSignal(false)
+
+  // While the filter box has the keyboard, the shell must not read `1`-`5`.
+  useKeyboardCapture(filterActive)
   const [reviewPanelOpen, setReviewPanelOpen] = createSignal(true)
   const [store, setStore] = createStore({
     pane: "list" as "list" | "diff",
@@ -341,12 +345,6 @@ export function Changes() {
       return
     }
 
-    if (evt.name === "tab") {
-      evt.preventDefault()
-      if (dialog.stack.length) dialog.clear()
-      setStore("pane", store.pane === "list" ? "diff" : "list")
-      return
-    }
     if (evt.name === "left") {
       evt.preventDefault()
       if (dialog.stack.length) dialog.clear()

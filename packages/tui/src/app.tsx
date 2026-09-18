@@ -300,7 +300,7 @@ export function tui(input: {
 }
 
 function LegacyRedirect(props: {
-  tab: "tree" | "changes" | "graph" | "github"
+  tab: "tree" | "changes" | "graph" | "github" | "actions"
   sessionID?: string
   workspaceID?: string
 }) {
@@ -874,7 +874,7 @@ function App(props: { checkUpgrade?: () => Promise<UpdateAvailable | undefined> 
       },
     },
     {
-      title: "Workspace panel (sessions · changes · graph · github)",
+      title: "Workspace panel (sessions · changes · graph · github · actions)",
       value: "workspace.open",
       category: "Git",
       suggested: true,
@@ -966,6 +966,25 @@ function App(props: { checkUpgrade?: () => Promise<UpdateAvailable | undefined> 
         route.navigate({
           type: "workspace",
           tab: "github",
+          sessionID,
+          workspaceID: sessionID
+            ? (route.data.workspaceID ?? sync.session.get(sessionID)?.workspaceID)
+            : route.data.workspaceID,
+        })
+        dialog.clear()
+      },
+    },
+    {
+      title: "Open CI actions tab",
+      value: "workspace.tab.actions",
+      category: "Git",
+      hidden: true,
+      slash: { name: "actions", aliases: ["ci", "workflows"] },
+      onSelect: () => {
+        const sessionID = route.data.type === "session" ? route.data.sessionID : undefined
+        route.navigate({
+          type: "workspace",
+          tab: "actions",
           sessionID,
           workspaceID: sessionID
             ? (route.data.workspaceID ?? sync.session.get(sessionID)?.workspaceID)
@@ -1629,6 +1648,9 @@ function App(props: { checkUpgrade?: () => Promise<UpdateAvailable | undefined> 
           </Match>
           <Match when={route.data.type === "github" && route.data}>
             {(data) => <LegacyRedirect tab="github" sessionID={data().sessionID} workspaceID={data().workspaceID} />}
+          </Match>
+          <Match when={route.data.type === "actions" && route.data}>
+            {(data) => <LegacyRedirect tab="actions" sessionID={data().sessionID} workspaceID={data().workspaceID} />}
           </Match>
           <Match when={route.data.type === "workspace"}>
             <Workspace />

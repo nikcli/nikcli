@@ -135,6 +135,21 @@ function routeNavigate(
     return
   }
 
+  if (name === "actions" || name === "ci") {
+    const sessionID =
+      typeof params?.sessionID === "string"
+        ? params.sessionID
+        : route.data.type === "session"
+          ? route.data.sessionID
+          : undefined
+    const workspaceID = sessionID
+      ? (sync.session.get(sessionID)?.workspaceID ??
+        (route.data.type === "session" ? route.data.workspaceID : undefined))
+      : route.data.workspaceID
+    route.navigate({ type: "workspace", tab: "actions", sessionID, workspaceID })
+    return
+  }
+
   route.navigate({ type: "plugin", id: name, data: params })
 }
 
@@ -176,6 +191,13 @@ function routeCurrent(route: ReturnType<typeof useRoute>): TuiPluginApi["route"]
   if (route.data.type === "github") {
     return {
       name: "github",
+      params: route.data.sessionID ? { sessionID: route.data.sessionID } : undefined,
+    }
+  }
+
+  if (route.data.type === "actions") {
+    return {
+      name: "actions",
       params: route.data.sessionID ? { sessionID: route.data.sessionID } : undefined,
     }
   }

@@ -12,6 +12,8 @@ import { useToast } from "@tui/ui/toast"
 import { FooterHint, FooterSep } from "@tui/ui/footer-hints"
 import { useDialog } from "@tui/ui/dialog"
 import { useKeybind } from "@tui/context/keybind"
+import { isPlainShortcut } from "@tui/util/keys"
+import { useKeyboardCapture } from "@tui/routes/workspace/shell"
 import open from "open"
 
 const FIELD = "\x1f"
@@ -149,10 +151,6 @@ function scoreColor(value: string, theme: ReturnType<typeof useTheme>["theme"]) 
   if (ratio >= 0.9) return theme.status.success.fg
   if (ratio >= 0.7) return theme.status.warning.fg
   return theme.status.error.fg
-}
-
-function isPlainShortcut(evt: { ctrl?: boolean; meta?: boolean; super?: boolean; name?: string }, ...names: string[]) {
-  return !evt.ctrl && !evt.meta && !evt.super && names.includes(evt.name ?? "")
 }
 
 async function runProcess(
@@ -367,6 +365,9 @@ export function GitGraph() {
   const [selected, setSelected] = createSignal(0)
   const [filterOpen, setFilterOpen] = createSignal(false)
   const [filterText, setFilterText] = createSignal("")
+
+  // While the filter box has the keyboard, the shell must not read `1`-`5`.
+  useKeyboardCapture(filterOpen)
   const [commitsOpen, setCommitsOpen] = createSignal(true)
   const [listScroll, setListScroll] = createSignal<ScrollBoxRenderable>()
   const directory = createMemo(() => sync.data.path.directory || sdk.directory || process.cwd())

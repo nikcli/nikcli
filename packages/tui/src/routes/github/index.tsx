@@ -13,6 +13,8 @@ import { useToast } from "@tui/ui/toast"
 import { FooterHint, FooterSep } from "@tui/ui/footer-hints"
 import { useDialog } from "@tui/ui/dialog"
 import { useKeybind } from "@tui/context/keybind"
+import { isPlainShortcut } from "@tui/util/keys"
+import { useKeyboardCapture, useWorkspaceShell } from "@tui/routes/workspace/shell"
 import { DialogConfirm } from "@tui/ui/dialog-confirm"
 import { DialogPrompt } from "@tui/ui/dialog-prompt"
 import { DialogSelect, type DialogSelectOption } from "@tui/ui/dialog-select"
@@ -293,12 +295,16 @@ export function GitHubPanel() {
   const toast = useToast()
   const dialog = useDialog()
   const keybind = useKeybind()
+  const shell = useWorkspaceShell()
   const { theme } = useTheme()
 
   const [section, setSection] = createSignal<Section>("commits")
   const [selected, setSelected] = createSignal(0)
   const [filterOpen, setFilterOpen] = createSignal(false)
   const [filterText, setFilterText] = createSignal("")
+
+  // While the filter box has the keyboard, the shell must not read `1`-`5`.
+  useKeyboardCapture(filterOpen)
 
   const directory = createMemo(() => sync.data.path.directory || sdk.directory || process.cwd())
   const [state, { refetch }] = createResource(directory, loadGitHubState)
@@ -500,7 +506,13 @@ export function GitHubPanel() {
   }
 
   function actionCreateCommit() {
-    toast.show({ message: "Use the prompt to create commits via git commands", variant: "info", duration: 3000 })
+    // Committing lives in the workspace repository menu, next to stage, stash
+    // and push — `c` on the commit list opens it rather than dead-ending.
+    if (shell) {
+      shell.openActions()
+      return
+    }
+    toast.show({ message: "Open the workspace panel to commit", variant: "info", duration: 3000 })
   }
 
   function actionCreatePR() {
@@ -767,11 +779,13 @@ export function GitHubPanel() {
       else if (section() === "issues") actionCloseIssue()
       return
     }
-    if (evt.name === "tab" || evt.name === "shift+tab") {
+    // `tab` belongs to the workspace shell, which cycles the outer panels — the
+    // sections move on `[` / `]` so both levels stay reachable from the keyboard.
+    if (isPlainShortcut(evt, "[", "]")) {
       evt.preventDefault()
       const tabs = sectionItems()
       const idx = tabs.findIndex((t) => t.id === section())
-      const next = evt.name === "tab" ? (idx + 1) % tabs.length : (idx - 1 + tabs.length) % tabs.length
+      const next = evt.name === "]" ? (idx + 1) % tabs.length : (idx - 1 + tabs.length) % tabs.length
       setSection(tabs[next].id)
       setSelected(0)
       return
@@ -1317,7 +1331,7 @@ export function GitHubPanel() {
             <FooterSep />
             <FooterHint keys="o" label="open" />
             <FooterSep />
-            <FooterHint keys="tab" label="switch section" />
+            <FooterHint keys="[ · ]" label="section" />
             <FooterSep />
             <FooterHint keys="r" label="refresh" />
             <FooterSep />
@@ -1333,8 +1347,4 @@ export function GitHubPanel() {
       </box>
     </box>
   )
-}
-
-function isPlainShortcut(evt: { ctrl?: boolean; meta?: boolean; super?: boolean; name?: string }, ...names: string[]) {
-  return !evt.ctrl && !evt.meta && !evt.super && names.includes(evt.name ?? "")
 }

@@ -13,10 +13,7 @@ import { useSync } from "@tui/context/sync"
 import { DialogSelect, type DialogSelectOption } from "@tui/ui/dialog-select"
 import { QRCode, qrCanImageFit, qrDialogBudget, qrFittedSize, useQRRepaint } from "@tui/component/qr"
 import { createWorkspaceArchive, uploadWorkspaceArchive } from "@nikcli-ai/util/teleport-archive"
-
-function isPlainShortcut(evt: { ctrl?: boolean; meta?: boolean; super?: boolean; name?: string }, ...names: string[]) {
-  return !evt.ctrl && !evt.meta && !evt.super && names.includes(evt.name ?? "")
-}
+import { isPlainShortcut } from "@tui/util/keys"
 
 type Pairing = {
   serverUrl: string
