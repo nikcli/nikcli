@@ -33,43 +33,40 @@
  * which is what a navigation looks like and a `document.open()` does not.
  */
 
-import { INSPECTOR_BRIDGE_SCRIPT } from "./protocol";
+import { INSPECTOR_BRIDGE_SCRIPT } from "./protocol"
 
 /** The `name` of a browser pane's frame. */
-export const FRAME_NAME = "ade-browser";
+export const FRAME_NAME = "ade-browser"
 /** Frame → pane, on the window, with a port: "send me the secret". Anyone in the frame can send it. */
-export const FRAME_ASK = "ade-browser:ask";
+export const FRAME_ASK = "ade-browser:ask"
 /** Pane → frame, on the port: the secret. */
-export const FRAME_HELLO = "ade-browser:hello";
+export const FRAME_HELLO = "ade-browser:hello"
 /** Pane → frame and back, on the port: "is the document that asked still there?" */
-export const FRAME_PING = "ade-browser:ping";
-export const FRAME_PONG = "ade-browser:pong";
+export const FRAME_PING = "ade-browser:ping"
+export const FRAME_PONG = "ade-browser:pong"
 /** Frame → pane, on the port: one bridge message, with the secret. */
-export const FRAME_ENVELOPE = "ade-browser:bridge";
+export const FRAME_ENVELOPE = "ade-browser:bridge"
 
 export interface FrameEnvelope {
-  type: typeof FRAME_ENVELOPE;
-  secret: string;
-  message: unknown;
+  type: typeof FRAME_ENVELOPE
+  secret: string
+  message: unknown
 }
 
 /** The bridge message inside an envelope, when the envelope carries `secret`. */
 export function openEnvelope(data: unknown, secret: string): unknown {
-  if (!data || typeof data !== "object") return undefined;
-  const envelope = data as Partial<FrameEnvelope>;
-  if (envelope.type !== FRAME_ENVELOPE || typeof envelope.secret !== "string")
-    return undefined;
-  if (envelope.secret !== secret || secret.length < 16) return undefined;
-  return envelope.message;
+  if (!data || typeof data !== "object") return undefined
+  const envelope = data as Partial<FrameEnvelope>
+  if (envelope.type !== FRAME_ENVELOPE || typeof envelope.secret !== "string") return undefined
+  if (envelope.secret !== secret || secret.length < 16) return undefined
+  return envelope.message
 }
 
 /** A fresh secret for one pane. */
 export function newFrameSecret(): string {
-  const bytes = new Uint8Array(18);
-  crypto.getRandomValues(bytes);
-  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join(
-    "",
-  );
+  const bytes = new Uint8Array(18)
+  crypto.getRandomValues(bytes)
+  return Array.from(bytes, (byte) => byte.toString(16).padStart(2, "0")).join("")
 }
 
 /**
@@ -211,7 +208,7 @@ const FRAME_GUARD_SOURCE = `function frameGuard(win, bridge) {
   })
   portStart(port)
   postToParent(parent, { type: "ade-browser:ask" }, "*", [channel.port2])
-}`;
+}`
 
 /**
  * The guard, compiled from `FRAME_GUARD_SOURCE`. Behaviour and serialised
@@ -219,11 +216,12 @@ const FRAME_GUARD_SOURCE = `function frameGuard(win, bridge) {
  * artifact (`bun scripts/gen-frame-script.ts`) and the runtime guard can
  * never diverge.
  */
-export const frameGuard: (win: any, bridge: (shim: any) => void) => void =
-  new Function("return (" + FRAME_GUARD_SOURCE + ")")();
+export const frameGuard: (win: any, bridge: (shim: any) => void) => void = new Function(
+  "return (" + FRAME_GUARD_SOURCE + ")",
+)()
 
 /** What `FrameGate` needs of a port: a browser `MessagePort`, or a test's. */
-export type GatePort = Pick<MessagePort, "postMessage" | "close" | "onmessage">;
+export type GatePort = Pick<MessagePort, "postMessage" | "close" | "onmessage">
 
 /**
  * The pane's side of the channel: which ask gets the secret.
@@ -241,96 +239,87 @@ export type GatePort = Pick<MessagePort, "postMessage" | "close" | "onmessage">;
  * secret, and the old port is closed.
  */
 export class FrameGate {
-  private current: GatePort | undefined;
-  private asks: { port: GatePort; alive: boolean }[] = [];
-  private currentAlive = false;
-  private graceTimer: ReturnType<typeof setTimeout> | undefined;
-  private waitTimer: ReturnType<typeof setTimeout> | undefined;
+  private current: GatePort | undefined
+  private asks: { port: GatePort; alive: boolean }[] = []
+  private currentAlive = false
+  private graceTimer: ReturnType<typeof setTimeout> | undefined
+  private waitTimer: ReturnType<typeof setTimeout> | undefined
 
   constructor(
     private readonly options: {
       /** One bridge message from the document that holds the secret. */
-      onMessage: (message: unknown) => void;
-      newSecret?: () => string;
-      grace?: number;
-      wait?: number;
+      onMessage: (message: unknown) => void
+      newSecret?: () => string
+      grace?: number
+      wait?: number
     },
   ) {}
 
   ask(port: GatePort | undefined): void {
-    if (!port) return;
+    if (!port) return
     if (!this.current) {
-      this.accept(port);
-      return;
+      this.accept(port)
+      return
     }
-    const entry = { port, alive: false };
-    this.asks.push(entry);
+    const entry = { port, alive: false }
+    this.asks.push(entry)
     port.onmessage = (event) => {
-      if (!isPong(event.data) || entry.alive) return;
-      entry.alive = true;
-      this.graceTimer ??= setTimeout(
-        () => this.settle(),
-        this.options.grace ?? 300,
-      );
-    };
-    port.postMessage({ type: FRAME_PING });
-    if (this.asks.length > 1) return;
-    this.currentAlive = false;
-    this.current.postMessage({ type: FRAME_PING });
-    this.waitTimer = setTimeout(() => this.settle(), this.options.wait ?? 3000);
+      if (!isPong(event.data) || entry.alive) return
+      entry.alive = true
+      this.graceTimer ??= setTimeout(() => this.settle(), this.options.grace ?? 300)
+    }
+    port.postMessage({ type: FRAME_PING })
+    if (this.asks.length > 1) return
+    this.currentAlive = false
+    this.current.postMessage({ type: FRAME_PING })
+    this.waitTimer = setTimeout(() => this.settle(), this.options.wait ?? 3000)
   }
 
   dispose(): void {
-    this.clearTimers();
-    for (const entry of this.asks) entry.port.close();
-    this.asks = [];
-    this.current?.close();
-    this.current = undefined;
+    this.clearTimers()
+    for (const entry of this.asks) entry.port.close()
+    this.asks = []
+    this.current?.close()
+    this.current = undefined
   }
 
   private settle(): void {
-    this.clearTimers();
-    const asks = this.asks;
-    this.asks = [];
+    this.clearTimers()
+    const asks = this.asks
+    this.asks = []
     // The document that holds the secret is still there: nobody else gets one.
-    const winner = this.currentAlive
-      ? undefined
-      : asks.find((entry) => entry.alive);
-    for (const entry of asks) if (entry !== winner) entry.port.close();
-    if (!winner) return;
-    this.current?.close();
-    this.accept(winner.port);
+    const winner = this.currentAlive ? undefined : asks.find((entry) => entry.alive)
+    for (const entry of asks) if (entry !== winner) entry.port.close()
+    if (!winner) return
+    this.current?.close()
+    this.accept(winner.port)
   }
 
   private accept(port: GatePort): void {
-    this.current = port;
-    const secret = (this.options.newSecret ?? newFrameSecret)();
+    this.current = port
+    const secret = (this.options.newSecret ?? newFrameSecret)()
     port.onmessage = (event) => {
-      if (this.current !== port) return;
+      if (this.current !== port) return
       if (isPong(event.data)) {
-        this.currentAlive = true;
-        return;
+        this.currentAlive = true
+        return
       }
-      const message = openEnvelope(event.data, secret);
-      if (message !== undefined) this.options.onMessage(message);
-    };
-    port.postMessage({ type: FRAME_HELLO, secret });
+      const message = openEnvelope(event.data, secret)
+      if (message !== undefined) this.options.onMessage(message)
+    }
+    port.postMessage({ type: FRAME_HELLO, secret })
   }
 
   private clearTimers(): void {
-    if (this.graceTimer) clearTimeout(this.graceTimer);
-    if (this.waitTimer) clearTimeout(this.waitTimer);
-    this.graceTimer = undefined;
-    this.waitTimer = undefined;
+    if (this.graceTimer) clearTimeout(this.graceTimer)
+    if (this.waitTimer) clearTimeout(this.waitTimer)
+    this.graceTimer = undefined
+    this.waitTimer = undefined
   }
 }
 
 function isPong(data: unknown): boolean {
-  return (
-    !!data &&
-    typeof data === "object" &&
-    (data as { type?: unknown }).type === FRAME_PONG
-  );
+  return !!data && typeof data === "object" && (data as { type?: unknown }).type === FRAME_PONG
 }
 
 /** The whole script, as the host injects it. */
@@ -339,7 +328,7 @@ export function frameScript(): string {
     "// Generated by packages/ade/scripts/gen-frame-script.ts from src/browser/frame-script.ts. Do not edit.",
     `;(${FRAME_GUARD_SOURCE})(window, function (window) {${INSPECTOR_BRIDGE_SCRIPT}});`,
     "",
-  ].join("\n");
+  ].join("\n")
 }
 
 /**
@@ -347,4 +336,4 @@ export function frameScript(): string {
  * function compiled from it behaves like `frameGuard`, which keeps the two
  * views (runtime + serialised) anchored to the same string.
  */
-export const FRAME_GUARD_BODY = FRAME_GUARD_SOURCE;
+export const FRAME_GUARD_BODY = FRAME_GUARD_SOURCE

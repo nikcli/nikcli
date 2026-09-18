@@ -179,9 +179,9 @@ describe("<RepoStrip>", () => {
   })
 
   test("falls back to the git error, then to loading", async () => {
-    expect(paint((await mount({ status: { ...STATUS, error: "fatal: not a git repository" } })).captureSpans)).toContain(
-      "fatal: not a git repository",
-    )
+    expect(
+      paint((await mount({ status: { ...STATUS, error: "fatal: not a git repository" } })).captureSpans),
+    ).toContain("fatal: not a git repository")
     expect(paint((await mount({ loading: true })).captureSpans)).toContain("reading repository…")
   })
 

@@ -3,6 +3,19 @@
 <!-- UNRELEASED:START -->
 <!-- UNRELEASED:END -->
 
+## v1.370.0 (September 2026)
+
+## Core
+
+- Format ci.test.ts so the validation gate passes (@nikomatt69)
+- Enhance frame-script tests and improve code consistency (@nikomatt69)
+
+**Thank you to 1 community contributor:**
+
+- @nikomatt69:
+  - refactor(tests): enhance frame-script tests and improve code consistency
+  - fix(ci): format ci.test.ts so the validation gate passes
+
 ## v1.369.0 (September 2026)
 
 - No notable changes
