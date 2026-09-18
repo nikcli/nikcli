@@ -73237,22 +73237,20 @@ ${n}
           }, [i, t.values, p, f])
           let b = i.length - l,
             x = (v) =>
-              i
-                .slice(0, v ? i.length : l)
-                .map(([g, y]) =>
-                  (0, ao.jsx)(
-                    Uhe,
-                    {
-                      name: g,
-                      meta: y,
-                      value: t.values[g],
-                      onChange: (w) => t.setProp(g, w),
-                      onOpenChange: m,
-                      inert: v,
-                    },
-                    g,
-                  ),
+              i.slice(0, v ? i.length : l).map(([g, y]) =>
+                (0, ao.jsx)(
+                  Uhe,
+                  {
+                    name: g,
+                    meta: y,
+                    value: t.values[g],
+                    onChange: (w) => t.setProp(g, w),
+                    onOpenChange: m,
+                    inert: v,
+                  },
+                  g,
                 ),
+              ),
             h = (v, g) =>
               (0, ao.jsx)("button", {
                 type: "button",
