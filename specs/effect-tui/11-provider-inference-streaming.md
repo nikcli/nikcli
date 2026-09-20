@@ -117,3 +117,59 @@ the adapter. Verify byte-identical user-visible output for the recorded fixture 
 to other providers and to the live route. Roll back the adapter behind the existing `provider/provider.ts` facade; never
 delete the AI SDK route until every caller uses the new seam. Cache invalidation must be additive; never delete
 user-visible cache state as part of a streaming refactor.
+
+## Coverage Before Convergence — 2026-09-21
+
+The plan for this spec was per-route granularity on `experimental.nativeLlm`, then a soak. Reading
+the runtime says that is the wrong order, and that `specs/v2/todo.md` describes the gate worse than
+it is. The flag is not binary and global in effect:
+
+- `LLMNativeRuntime.status()` already returns a **typed** verdict with a reason, before anything is
+  sent (`session/llm.ts`, the `nativeLlmEnabled && modelRef` block).
+- A native stream that throws mid-turn already **falls back per turn** to the AI SDK, with a warning.
+- With the flag **off**, the native request is still compiled in shadow — the block commented
+  "Debug-only route compile".
+
+So the per-turn rollback exists, and so does the shadow path a measurement would ride on. What was
+missing is that every one of those verdicts went to `l.debug` and was discarded. Nothing aggregated
+them, which is exactly the invisibility the todo names: `mapToModelRef` returns `undefined` for what
+it cannot map, and no one is told which models took the AI SDK path because of it.
+
+`session/llm/coverage.ts` keeps them. Six outcomes, each with exactly one call site in
+`session/llm.ts`:
+
+| Outcome           | Branch                                                              |
+| ----------------- | ------------------------------------------------------------------- |
+| `unmapped`        | `getModelRef` produced nothing                                      |
+| `disabled`        | flag off, `ModelRef` present — this turn *would* have gone native   |
+| `ineligible`      | flag on, pre-flight `status()` refused — a configuration verdict    |
+| `ineligible-late` | flag on, `streamRequestOnly` refused — a protocol verdict           |
+| `native`          | the native runtime streamed the turn                                |
+| `fallback`        | native threw mid-stream, the AI SDK finished                        |
+
+Three things about the shape, each a rule this catalogue has already paid for:
+
+1. **`disabled` is the point.** It is readable with the flag down, so the soak the todo asks for runs
+   today, on real traffic, without turning anything on. The decision this spec is blocked on needs
+   numbers, not a finer flag; a finer flag is what the numbers will specify.
+2. **The two ineligible outcomes are kept apart deliberately.** They produce the same user-visible
+   result and have different causes — one is credentials or catalog, the other is the route refusing
+   after it compiled. Collapsing them would produce a number nobody can act on, which is the mistake
+   `04-event-delivery.md` records for eviction reasons.
+3. **Cardinality is fixed** (EOT-01 requirement 6): the counter key is `providerID:outcome`, both
+   bounded. Model ids are not keys — refused pairs go in a set capped at 64 with the overflow counted,
+   and refusal reasons cap at 32 with the rest under `other`, so the totals never disagree with the
+   counters. No session ids, prompts, tokens or paths.
+
+Nothing here changes production behaviour, and that is the argument for landing it before any part of
+the convergence: it is the only slice of this spec that can go in without a soak, because it *is* the
+soak.
+
+`test/session/llm-coverage.test.ts` drives the counters and, in its second half, asserts that every
+declared outcome appears as a call site in `session/llm.ts` and that no call site records an outcome
+the union does not declare. A seventh outcome added without its branch fails there — the
+"counter with no emitter is anti-evidence" rule from `01-performance-baseline.md`, applied to the
+one module that was about to repeat it.
+
+**What this is not.** It is not the adapter convergence. The AI SDK path and the native path are
+still two pipelines, and this spec's release gate still asks for one.

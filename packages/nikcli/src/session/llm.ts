@@ -44,6 +44,7 @@ import { Effect } from "effect"
 import { InstanceState, runPromiseWithLayer, withCurrentInstance } from "@/effect"
 import { LLMNativeRuntime } from "./llm/native-runtime"
 import { suppressEmptyTextResult, toProcessorStream } from "./llm/llm-event-adapter"
+import * as LLMCoverage from "./llm/coverage"
 
 export namespace LLM {
   const log = Log.create({ service: "llm" })
@@ -319,6 +320,15 @@ export namespace LLM {
         modelID: modelRef.id,
         providerID: modelRef.provider,
       })
+    } else {
+      // `mapToModelRef` returned undefined. Safe — the AI SDK takes the turn —
+      // and invisible until now: this is the branch `specs/v2/todo.md` calls
+      // "coverage is invisible". See `session/llm/coverage.ts`.
+      LLMCoverage.record({
+        outcome: "unmapped",
+        providerID: input.model.providerID,
+        modelID: input.model.id,
+      })
     }
     const isCodex = provider.id === "openai" && auth?.type === "oauth"
 
@@ -397,6 +407,14 @@ export namespace LLM {
 
     // Debug-only route compile when native runtime is off (AI SDK still handles HTTP).
     if (modelRef && !nativeLlmEnabled) {
+      // A ModelRef exists and the flag is down, so this turn would have gone
+      // native. Counting it is how the soak in EOT-11 runs without flipping
+      // anything on.
+      LLMCoverage.record({
+        outcome: "disabled",
+        providerID: modelRef.provider,
+        modelID: modelRef.id,
+      })
       try {
         const llmRequest = buildLLMRequest(
           input,
@@ -528,14 +546,35 @@ export namespace LLM {
             isCodex,
             l,
           })
-          if (nativeResult) return nativeResult
+          // A falsy result is the late refusal inside `streamNative`, which
+          // records `ineligible-late` itself — it is the only place the reason
+          // exists.
+          if (nativeResult) {
+            LLMCoverage.record({
+              outcome: "native",
+              providerID: modelRef.provider,
+              modelID: modelRef.id,
+            })
+            return nativeResult
+          }
         } catch (e) {
           l.warn("native llm stream failed, falling back to ai-sdk", {
             error: String(e),
           })
+          LLMCoverage.record({
+            outcome: "fallback",
+            providerID: modelRef.provider,
+            modelID: modelRef.id,
+          })
         }
       } else {
         l.debug("native llm ineligible, using ai-sdk", {
+          reason: nativeStatus.reason,
+        })
+        LLMCoverage.record({
+          outcome: "ineligible",
+          providerID: modelRef.provider,
+          modelID: modelRef.id,
           reason: nativeStatus.reason,
         })
       }
@@ -935,6 +974,15 @@ export namespace LLM {
 
     if (native.type === "unsupported") {
       input.l.debug("native llm unsupported, falling back to ai-sdk", {
+        reason: native.reason,
+      })
+      // Distinct from the pre-flight `ineligible`: that one is a configuration
+      // verdict, this one is the route refusing once it has been compiled. Same
+      // user-visible outcome, different thing to fix.
+      LLMCoverage.record({
+        outcome: "ineligible-late",
+        providerID: input.modelRef.provider,
+        modelID: input.modelRef.id,
         reason: native.reason,
       })
       return undefined
