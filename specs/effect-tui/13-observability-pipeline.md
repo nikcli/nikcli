@@ -155,3 +155,66 @@ everything passes a "nothing escaped" test and is useless, so the allowed schema
 to survive; and whole-word matching is asserted to leave `tokenizer.name` and `queue.depth`
 alone. Redaction happening _before_ truncation is pinned too — slicing to the budget first
 would put the first 200 characters of a credential on screen and in the export.
+
+## Gate Closure — 2026-09-20
+
+The two remaining gate items — _live panel bounded_ and _OTLP smoke against a local
+collector_ — are done, and the smoke found the serious one.
+
+### The redaction choke point did not cover the exporter
+
+`sanitizeSpanAttributes` was called from `stringifyAttributes`, which runs inside
+`buildRecord` — the function that builds the `TelemetryRecord` for the **live panel**. The
+OTLP exporter serialises `span.attributes` itself and never went through it. So with
+`OTEL_EXPORTER_OTLP_ENDPOINT` set, span attributes left the machine **unredacted**: the
+first smoke run posted `user.token` with an `nku_` value and a `postgres://user:pw@host`
+connection string, verbatim, to the collector.
+
+The comment above the function said _"Every span reaches the live panel and the exporter
+through here, so the attribute contract is enforced once, at the choke point."_ It was
+false, and no structural check could see it — `otlp.ts` did contain the call, which is all
+`check-observability-schema.ts` could assert.
+
+`sanitizeSpanInPlace` now cleans the span's own attribute map **before** `realEnd`, which
+is what hands the span to the exporter. One pass covers both readers, and the record for
+the panel is built from the same cleaned map. Forbidden keys are removed rather than
+emptied: a `[REDACTED]` value still announces that the key was present, and the key is the
+half the forbidden list is about.
+
+The wrapper is also applied unconditionally now. It used to be `live ? wrapTracer(base) :
+base`, so an export-only configuration — `NIKCLI_DISABLE_OTEL_LIVE=1` with an endpoint —
+had no wrapper and therefore no redaction at all. `live` now decides only whether the bus
+also hears about the span.
+
+### Why the smoke needs a subprocess
+
+`otlp.ts` reads `OTEL_EXPORTER_OTLP_ENDPOINT` once at module load and decides `enabled`
+and `layer` from it; `otlp.test.ts` already documented that flipping the variable inside a
+test cannot move them. So `test/observability/otlp-smoke.test.ts` starts a throwaway
+`Bun.serve` collector and spawns `script/otlp-smoke-emit.ts` with the endpoint already in
+its environment. It asserts on what the collector actually received — allowed keys present,
+forbidden keys absent, the credential redacted, and no `nku_` or `hunter2` anywhere in the
+payload, including fields the test does not model.
+
+Verified by removing `sanitizeSpanInPlace` and watching it fail on `user.token`.
+
+### Live panel bounded
+
+The panel was bounded and nothing else. `context/telemetry.tsx` capped at 2000 records but
+wrote a Solid signal per `telemetry.record` event, rebuilding a 2000-element array each
+time — a full re-render per span of a busy turn, to show frames faster than a terminal can
+repaint. The cap limits what is _kept_; it says nothing about how often the rest of the app
+is told, which is the part the input thread pays for.
+
+`packages/tui/src/util/telemetry-buffer.ts` is the bounded, coalescing buffer the panel now
+uses: `push` is synchronous and never calls the sink inline, flushes are windowed, and
+`flushNow` exists so a window parked behind the throttle is not the one the panel never
+receives. Its `schedule` is injected, so
+`packages/nikcli/test/tui/telemetry-buffer.test.ts` drives the clock instead of sleeping
+long enough that the throttle has probably fired.
+
+`src/observability/telemetry-consumer.ts` is deleted. It was a reference implementation
+with no caller, written because the real consumer — the panel — was not found, and
+`check-observability-schema.ts` had been made to require its existence. A gate enforcing
+dead code it introduced is circular and certified nothing about the panel anyone sees; the
+gate now asserts the real buffer, its test, and that the panel routes through it.

@@ -87,8 +87,9 @@ async function getPublish(): Promise<(record: TelemetryRecord) => void> {
 }
 
 function stringifyAttributes(input: Iterable<readonly [string, unknown]>): Record<string, string> | undefined {
-  // Every span reaches the live panel and the exporter through here, so the
-  // attribute contract is enforced once, at the choke point.
+  // Idempotent by the time it runs on an exported span: `sanitizeSpanInPlace`
+  // has already cleaned the map. It still runs for the bus-only tracer, which
+  // has no exporter to sanitize for.
   return sanitizeSpanAttributes(input).attributes
 }
 
@@ -193,14 +194,47 @@ function makeBusTracer(): Tracer.Tracer {
 
 // Wraps a real (OTLP-exporting) tracer so spans are both exported and streamed to
 // the bus for the live panel.
-function wrapTracer(base: Tracer.Tracer): Tracer.Tracer {
+/**
+ * Sanitize the span's own attribute map, in place, before anything reads it.
+ *
+ * This is the half the choke point was missing. `stringifyAttributes` ran
+ * inside `buildRecord`, which builds the record for the live panel — so the
+ * panel was clean and **the OTLP exporter was not**. It serialises
+ * `span.attributes` itself, and an end-to-end smoke against a local collector
+ * showed `user.token` and a `nku_` value going out over the wire verbatim,
+ * under a comment claiming both paths were covered.
+ *
+ * Mutating the map is what makes one pass cover both readers: the record below
+ * is built from the same already-sanitized attributes, and the exporter sees
+ * exactly what the panel does. Dropped keys are removed rather than emptied —
+ * an attribute whose value is `[REDACTED]` still tells a reader the key was
+ * present, and the key is the half the forbidden list is about.
+ */
+function sanitizeSpanInPlace(span: Tracer.Span) {
+  const attributes = span.attributes as Map<string, unknown>
+  if (!(attributes instanceof Map) || attributes.size === 0) return
+  const safe = sanitizeSpanAttributes(attributes.entries()).attributes ?? {}
+  attributes.clear()
+  for (const [key, value] of Object.entries(safe)) attributes.set(key, value)
+}
+
+/**
+ * `publishToBus` is what the live panel needs; the sanitizing is what the
+ * exporter needs. They are separate because the live panel can be turned off
+ * (`NIKCLI_DISABLE_OTEL_LIVE`) and the redaction cannot — wrapping only when
+ * live was on meant an export-only configuration shipped raw attributes.
+ */
+function wrapTracer(base: Tracer.Tracer, publishToBus: boolean): Tracer.Tracer {
   return Tracer.make({
     context: base.context,
     span(options) {
       const span = base.span(options)
       const realEnd = span.end.bind(span)
       ;(span as { end: Tracer.Span["end"] }).end = (endTime, exit) => {
+        // Before `realEnd`, which is what hands the span to the exporter.
+        sanitizeSpanInPlace(span)
         realEnd(endTime, exit)
+        if (!publishToBus) return
         const parent = Option.getOrUndefined(options.parent)
         publish(
           buildRecord({
@@ -248,7 +282,9 @@ function tracerLayer(runID: string): Layer.Layer<never, never, never> {
               resource: resource(runID),
               headers,
             })
-            return Layer.succeed(Tracer.Tracer, live ? wrapTracer(base) : base)
+            // Always wrapped: the wrapper is the redaction, not just the live
+            // feed. `live` only decides whether the bus also hears about it.
+            return Layer.succeed(Tracer.Tracer, wrapTracer(base, live))
           }),
         ).pipe(
           Layer.provide(OtlpSerialization.layerJson),
