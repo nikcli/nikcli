@@ -5,7 +5,6 @@ import { SessionRepo } from "./repo"
 import { ProjectRepo } from "../project/repo"
 import { Project } from "../project/project"
 import { bootstrap } from "@/cli/bootstrap"
-import { cmd } from "@/cli/cmd/cmd"
 import { Effect } from "effect"
 import { runPromiseWithLayer, withCurrentInstance } from "@/effect"
 
@@ -47,43 +46,6 @@ interface SessionStats {
   tokensPerSession: number
   medianTokensPerSession: number
 }
-
-export const StatsCommand = cmd({
-  command: "stats",
-  describe: "show token usage and cost statistics",
-  builder: (yargs: Argv) => {
-    return yargs
-      .option("days", {
-        describe: "show stats for the last N days (default: all time)",
-        type: "number",
-      })
-      .option("tools", {
-        describe: "number of tools to show (default: all)",
-        type: "number",
-      })
-      .option("models", {
-        describe: "show model statistics (default: hidden). Pass a number to show top N, otherwise shows all",
-      })
-      .option("project", {
-        describe: "filter by project (default: all projects, empty string: current project)",
-        type: "string",
-      })
-  },
-  handler: async (args) => {
-    await bootstrap(process.cwd(), async (instance) => {
-      const stats = await aggregateSessionStats(instance.project, args.days, args.project)
-
-      let modelLimit: number | undefined
-      if (args.models === true) {
-        modelLimit = Infinity
-      } else if (typeof args.models === "number") {
-        modelLimit = args.models
-      }
-
-      displayStats(stats, args.tools, modelLimit)
-    })
-  },
-})
 
 async function getAllSessions(): Promise<Session.Info[]> {
   const sessions: Session.Info[] = []

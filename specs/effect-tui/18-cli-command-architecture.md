@@ -127,3 +127,36 @@ exit-code mapping first (it is observable and cheap to test), then headless post
 daemon/attach. Each is additive and independently revertible — a command that has not adopted the new policy keeps its
 current behaviour. Bootstrap changes stay additive; never delete a previously-installed global or DB connection as part
 of a dispatch refactor.
+
+## Lifecycle, After the Framework Migration — 2026-09-20
+
+This spec's requirement 1 was pinned to `cli/cmd/cmd.ts`'s `Lifecycle<T>` wrapper, and the
+plan asked to _"verify the teardown across all 147 commands"_. Both descriptions were
+written before the CLI framework migration and stopped being true when it landed.
+
+`cmd()` had **two importing files and zero registered commands**. `StatsCommand`,
+`AuthCommand`, `AuthListCommand`, `AuthLoginCommand` and `AuthLogoutCommand` in
+`src/session/` each had no reference outside their own file: `auth` and `stats` are live
+commands, declared with `Spec.make` in `cli/commands.ts`, and the definitions in
+`src/session/` were duplicates the migration left behind. Verified before removing them —
+`nikcli auth --help` and `nikcli stats --help` both still answer.
+
+So the guarantee the requirement describes does not live there and never did after the
+migration. **It lives in `cli/bootstrap.ts`**, whose `finally` disposes the instance on
+every exit path, and it is covered by `test/cli/bootstrap-exit.test.ts` — including the two
+cases that matter: a teardown that fails does not replace the body's error, and an
+interruption is never surfaced as the failure.
+
+The wrapper and the five dead command definitions are removed. A dead abstraction whose
+docblock claims to guarantee something across every command is worse than no abstraction:
+it reads as the guarantee, and the plan cited it as evidence that the requirement was met.
+
+### Exit codes
+
+Audited while here, since the gate asks for consistency. Forty sites exit `1`, three exit
+`0`, and five call `process.exit()` with no argument. The bare calls were the suspicious
+ones — `process.exit()` exits `0`, so a failure path using it reports success to every
+script that checks `$?`. None does: the fatal handler in `cli/main-effect.ts` sets
+`process.exitCode = 1` before calling it, and the only other bare exit is the `SIGHUP`
+handler, where `0` is right. No change needed, and now recorded so the next audit does not
+start from the same suspicion.
