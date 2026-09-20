@@ -46,7 +46,7 @@ These documents explain V2 behavior that is difficult to recover from one source
 | [Share v2 contract](./share-v2-contract.md)                                       | Accepted and implemented | The envelope list, `remote` vs `local`, local-only public reads, and delete-not-tombstone.          |
 | [CLI command surface](./cli-command-surface.md)                                   | Accepted and implemented | What `nikcli …` actually registers; the command table is gated by a test.                           |
 | [Brain consolidation pass](./brain-consolidation-pass.md)                         | Accepted and implemented | What the scheduled pass reads and writes, and when it counts as having run.                         |
-| [Config review](./config.md)                                                      | **Proposed**             | Per-field keep/remove/redesign ledger for `nikcli.json`. Missing: a per-field migration test.       |
+| [Config review](./config.md)                                                      | **Proposed**             | Per-field keep/remove/redesign ledger for `nikcli.json`. Its legacy-key tests landed; what keeps it proposed is that no field has been renamed yet. |
 
 ## Historical Context
 
@@ -67,6 +67,8 @@ These are not contracts. They carry no invariants and pin no tests; they exist s
 
 Every **contract** in this directory is `Accepted and implemented`: its invariants are named in its header table and pinned by the tests listed there. The status is not decoration — a contract earns it by having a test that fails when the behavior changes, and the last seven earned it on 2026-09-10 (ROADMAP **D2**).
 
-A new document may enter as `Proposed`, and while it does it must carry a **Missing** row naming the one test that would promote it. A `Proposed` status with no such row is incomplete, not pending. [config.md](./config.md) is the one document currently in that state.
+A new document may enter as `Proposed`, and while it does it must carry a **Missing** row naming the one thing that would promote it. A `Proposed` status with no such row is incomplete, not pending. [config.md](./config.md) is the one document currently in that state.
+
+That row usually names a test, and said so until 2026-09-21, when writing the test it named produced the case the rule did not cover. `config.md` is a **ledger of decisions**, not a description of behaviour: its legacy-key mappings are now covered in both directions, and it is still not a contract, because nothing it proposes has been done. So the **Missing** row names whatever is actually absent — a test where behaviour is untested, an execution where the behaviour does not exist yet. What it may never do is go empty while the status stays `Proposed`.
 
 Put actionable, dated work in [../ROADMAP.md](../ROADMAP.md), not here.

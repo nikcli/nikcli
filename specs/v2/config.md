@@ -4,7 +4,7 @@
 | ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | Status  | **Proposed** — a decision ledger, not a contract. No field below has been renamed or removed yet                                                                  |
 | Scope   | `src/config/config.ts` (`Config.Info`), `src/config/paths.ts`, `src/config/tui-schema.ts`                                                                         |
-| Missing | A per-field migration test asserting that each `redesign` row's legacy key still loads and maps to its new key. Until that exists this document stays `Proposed`. |
+| Missing | Nothing testable. The test this row asked for landed 2026-09-21 — `test/config/legacy-keys.test.ts` (pure mappings) and `test/config/legacy-keys-loader.test.ts` (the three that need a document on disk) cover **all six** mappings the loader performs today. This document stays `Proposed` because it is a ledger and **no field below has been renamed yet**, not because coverage is missing. It is promoted by executing a group, not by writing another test. |
 
 This document breaks nikcli's configuration schema into review groups. Work through one group at a
 time and decide whether each field is ported as-is, removed, or redesigned.
@@ -226,3 +226,44 @@ top-level shape that groups 2 and 3 are being reviewed against.
 - `tui.json` already exists and `migrateTuiConfig` already populates it. What is the deprecation
   window after which `theme`, `keybinds`, and `tui` can be deleted from `Config.Info` outright —
   and does `ads` / `notifications` / `experimental.tui` ride the same migration or a second one?
+
+## The Two Precedents Do Not Disagree — 2026-09-21
+
+[todo.md](./todo.md) presents the migration mechanism as an open choice between two precedents that
+conflict, and asks that one be picked "before the first rename lands, not after the third". Counted
+against the source, they are not in conflict. They answer different questions, and the ledger's
+renames only ever ask one of them.
+
+| Mechanism                       | Times used | What it is for                                       |
+| ------------------------------- | ---------- | ---------------------------------------------------- |
+| Accept both keys in the loader  | **6**      | a rename **within** the same document                |
+| Rewrite the file                | **1**      | moving fields into a **different** document          |
+
+The six: `autoshare` → `share`, `mode` → `agent`, top-level `tools` → `permission`, agent-level
+`tools` → `permission`, agent-level `maxSteps` → `steps`, and `enabled_providers` /
+`disabled_providers` → policy statements. The one: `migrateTuiConfig`, which moves `theme`,
+`keybinds` and `tui` into a sibling `tui.json` — a *different* published schema, which is precisely
+what loader mapping cannot do.
+
+Every rename this ledger proposes (`plugin` → `plugins`, `agent` → `agents`, `permission` →
+`permissions`, `provider` → `providers`, `snapshot` → `snapshots`, `attachment` → `attachments`)
+stays inside `nikcli.json`. So the file rewrite is not a candidate for them, and the choice the todo
+describes is not one.
+
+This is an argument, not a ratification: the decision belongs to whoever owns the published schema at
+`https://nikcli.store/config.json`, and nothing here has been renamed.
+
+### Execute the three statuses separately — they are not one job
+
+The ledger's 68 fields split into three groups with incomparable risk, and running them as one pass
+is how a breaking change reaches users behind a cleanup.
+
+- **17 `remove` is two jobs, not one.** The fields with *no reader at all* — `logLevel`, `server`,
+  `teleport`, verified 2026-09-21 as having zero readers in `src` and `packages/tui` — can leave the
+  published schema without changing any behaviour, because nothing observes them. The fields that are
+  *read but superseded* — `theme`, `keybinds`, `tui`, already migrated into `tui.json` — must keep
+  parsing so old documents still load; those get hidden from the published schema, not deleted from
+  `Config.Info`.
+- **16 `redesign` is the part with the public contract.** One PR per group, with the mapping in the
+  loader and a case added to `test/config/legacy-keys.test.ts` in the same change.
+- **5 `pending` are decisions**, not work. They cost a line each and block nothing until answered.
