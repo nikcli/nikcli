@@ -1,4 +1,5 @@
 import { afterAll, describe, expect, it } from "bun:test"
+import { preserveTestEnv } from "../helpers/env"
 import fs from "node:fs/promises"
 import os from "node:os"
 import path from "node:path"
@@ -30,6 +31,22 @@ process.env.XDG_DATA_HOME = path.join(home, "data")
 process.env.XDG_CACHE_HOME = path.join(home, "cache")
 process.env.XDG_CONFIG_HOME = path.join(home, "config")
 process.env.XDG_STATE_HOME = path.join(home, "state")
+
+// `preload.ts` deletes every `NIKCLI_*` / `XDG_*` before the first test, so a
+// module-scope assignment that is not declared here is silently reverted and
+// the suite falls back to the real user database. `env-discipline.test.ts`
+// fails the run when one is missing — it was, from the commit that added this
+// file until 2026-09-21.
+preserveTestEnv([
+  "NIKCLI_TEST_HOME",
+  "NIKCLI_TEST_MODE",
+  "NIKCLI_DISABLE_PROJECT_CONFIG",
+  "NIKCLI_DISABLE_MODELS_FETCH",
+  "XDG_DATA_HOME",
+  "XDG_CACHE_HOME",
+  "XDG_CONFIG_HOME",
+  "XDG_STATE_HOME",
+])
 
 const { publicRoutes } = await import("@/server/httpapi/inventory")
 const { Server } = await import("@/server/server")
