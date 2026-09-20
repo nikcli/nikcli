@@ -157,6 +157,31 @@ the TUI _source text_ precisely because mounting a dialog drags in the whole app
 the tool for pinning a dialog contract without a terminal, and it was available the whole
 time.
 
+### The host was testable after all, and the contract is pinned
+
+"What blocks it" above said the dialog host could not be constructed in a test. **That was
+wrong, in the same way as the "no test directory" claim.** `testRender` from
+`@opentui/solid` builds a real renderer — five tests in `packages/nikcli/test/tui/` already
+use it — and `DialogProvider` yields its context with only a `ToastProvider` above it. The
+cost appears one step later: rendering an _entry_ pulls in `ThemeProvider`, which pulls in
+`SyncProvider`, which bootstraps against a live server.
+
+`test/tui/dialog-replace-contract.test.ts` pins the fact that sat under both wrong rounds,
+using the source-assertion trade `dialog-lifecycle.test.ts` documents:
+
+- `replace` assigns a **single-entry** stack rather than pushing. Making it push fails the
+  test — and would also make the reverted guards correct, which is why this is the line to
+  pin rather than any of the call sites.
+- It carries **no empty-stack guard**, so "the stack is empty" cannot stand in for "the
+  user left": opening from nothing is what a command does.
+- Escape runs `closeTop()`, which on a one-deep stack empties it.
+- `DialogPrompt.show` and `DialogConfirm.show` both open through `replace` — the mechanism
+  by which they unmount their caller.
+
+Plus the owner half, which needs no renderer: a guard whose owner is torn down reports
+disposed whatever tore it down, so in a chaining dialog `if (alive.disposed()) return`
+after such an await always returns.
+
 ### What is kept from all of this
 
 `script/audit-late-side-effects.ts`, which reproduces the candidate scan; and one fix that

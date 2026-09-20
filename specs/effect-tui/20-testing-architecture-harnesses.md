@@ -167,6 +167,15 @@ they codify the helpers and patterns that already exist so a code reviewer does 
    grep for its tests by _subject_ rather than by the package you happen to be editing —
    `packages/tui/src/util/lifecycle.ts` is tested two packages away.
 
+7. **A string literal holding a whole `import … from "…"` is rewritten before the assertion
+   runs.** `test/tui/onboarding-auth.test.ts` asserted that `app.tsx` imports its dialogs
+   statically by comparing against literals of that shape, and the module transform
+   resolved the specifier inside them: the expected value arrived as
+   `file:///…/dialog-onboarding.tsx`, so the test compared the file against a path and
+   failed. It surfaced only in a full-directory run, which made it read as a flake for the
+   third time in this catalogue. Assemble such a literal from parts — nothing asserting on
+   source should spell an import statement out in one piece.
+
 The lifecycle counters from EOT-01 (`packages/nikcli/src/effect/lifecycle-counters.ts`) are observable from any test via
 `snapshot()` so a test can assert `scope.completed === 1` or `runtime.bridge.failure === 0` after a behavior assertion
 without having to instrument the production code. Use this when the assertion would otherwise be a magic `sleep`.

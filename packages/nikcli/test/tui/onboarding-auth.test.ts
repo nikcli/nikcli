@@ -23,9 +23,15 @@ describe("onboarding account step", () => {
     expect(appSource).not.toMatch(/while\s*\(!postUser\)/)
     // Account dialogs are on the startup path. Lazy-importing them during
     // plugin load flashed the sign-in chooser over "Loading plugins...".
-    expect(appSource).toContain('import { DialogOnboarding } from "@tui/component/dialog-onboarding"')
-    expect(appSource).toContain('import { DialogLogin } from "@tui/component/dialog-login"')
-    expect(appSource).toContain('import { DialogAccountLogin } from "@tui/component/dialog-account-login"')
+    // Assembled rather than written out, because a string literal holding a
+    // whole `import … from "…"` is rewritten by the module transform before
+    // the assertion ever runs: the specifier came back as a resolved
+    // `file:///…` URL, so the test failed comparing app.tsx against a path.
+    // It only surfaced in a full-directory run, which made it read as a flake.
+    const staticImport = (name: string, specifier: string) => `import { ${name} } from ` + `"${specifier}"`
+    expect(appSource).toContain(staticImport("DialogOnboarding", "@tui/component/dialog-onboarding"))
+    expect(appSource).toContain(staticImport("DialogLogin", "@tui/component/dialog-login"))
+    expect(appSource).toContain(staticImport("DialogAccountLogin", "@tui/component/dialog-account-login"))
     expect(appSource).not.toMatch(/import\(["']@tui\/component\/dialog-(onboarding|login|account-login)["']\)/)
   })
 
