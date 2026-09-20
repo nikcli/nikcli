@@ -288,7 +288,7 @@ appears more than once.
 | EOT-20 | TUI tests already lived in `packages/nikcli/test/tui` (55 files); a duplicate directory removed, `adopt` covered | `995fff77ba`                                            |
 | EOT-01 | P0 closed: the probe never returned, so no baseline existed; artifact + gate now in CI                           | `7376aed1e1`                                            |
 | EOT-13 | Redaction fuzz: camelCase keys, `:`/space/`                                                                      | ` separators, URL userinfo and glued tokens all escaped | `936ae2289a06` |
-| EOT-13 | OTLP smoke: the exporter was shipping span attributes unredacted; panel now coalesced too                        | `<pending>`                                             |
+| EOT-13 | OTLP smoke: the exporter was shipping span attributes unredacted; panel now coalesced too                        | `46b4b5d1ae`                                            |
 | EOT-03 | `useAbortOnCleanup` cannot guard a dialog that opens dialogs — two reverted rounds, and why                      | `29735847d4fc`                                          |
 
 Every spec has been opened and every spec now has at least one landed slice,
