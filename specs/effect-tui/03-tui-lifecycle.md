@@ -130,10 +130,28 @@ level. Roughly one in five hits is real. A blocking gate would mean accepting th
 or maintaining an allowlist longer than the findings, so it always exits 0 and prints a
 list for a human.
 
-### What is not verified
+### The harness that was missing
 
-`packages/tui` has **no test directory**. The package carrying every one of these sites
-has no unit-test surface at all, so the `dialog-auth-manage` fix is verified by reading
-the four cancel contracts and by `tsc`, and not by running it. Giving this package a test
-harness is EOT-20 work and is the precondition for auditing the other 87 sites with any
-confidence.
+`packages/tui` had **no test directory at all**, which is why an audit of 88 sites could
+not be carried out with confidence: there was nowhere to put the evidence. `test/` now
+exists, `bun test` is wired into `script/ci-validate.ts`, and the first file covers
+`util/lifecycle.ts` — the primitive the rest of the audit builds on.
+
+No renderer is involved, and that is what makes it cheap: `createRoot` supplies a real
+Solid owner and a `dispose` that runs `onCleanup`, which is precisely the lifecycle these
+helpers hook. A dialog being dismissed is this, with a renderer attached. Ten tests, under
+100ms, so adding it to the validation run does not re-create the full-suite problem
+ROADMAP's non-negotiables warn about.
+
+They were checked against the bugs their docblocks describe, not just run: making `adopt`
+return early instead of releasing fails the two resource cases, and collapsing the
+generation counter to a boolean fails three more. A lifecycle test that cannot fail is the
+same nothing as a counter with no emitter.
+
+### What is still not verified
+
+The `dialog-auth-manage` fix itself is verified by reading the four cancel contracts and
+by `tsc`, **not by running the TUI**. The remaining 87 candidate sites each need the same
+per-site reading — what the awaited call returns on cancel, and whether the effect after it
+is a call or a call site. The harness is the precondition for that work, not a substitute
+for it.

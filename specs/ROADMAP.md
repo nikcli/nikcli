@@ -277,6 +277,7 @@ appears more than once.
 | EOT-20 | `withFixture` as the shared harness; both new gates driven by tests that make them fail               | `644a8f28`, `6d880fc3`  |
 | EOT-12 | Flag capture-at-import is a CI gate, not four fixes; the legacy-credential pair moves together        | `ac52fff3`              |
 | EOT-03 | Dialogs that discarded a cancel and reopened themselves; `replace()` has no empty-stack guard         | `0a8cccc7fb`            |
+| EOT-20 | `packages/tui` gets a test directory and a CI step; the lifecycle primitive covered first             | `<pending>`             |
 
 Every spec has been opened and every spec now has at least one landed slice,
 EOT-14 and EOT-19 included.
