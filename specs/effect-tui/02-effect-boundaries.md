@@ -98,3 +98,36 @@ the internal implementation behind the same facade; never add a second runtime o
 
 1. **The two bridge entry points classify differently, and the asymmetry is real.** `runPromiseExitWithLayer` sees the `Exit`, so it separates `runtime.bridge.interrupted` from `runtime.bridge.failure` via `Cause.hasInterruptsOnly`. `runPromiseWithLayer` only sees a rejected promise and books every non-success as `runtime.bridge.failure`. Rewriting it on top of `runPromiseExit` and rethrowing `Cause.squash` would classify correctly and would also change the rejection value at roughly 165 call sites — a behaviour change disguised as instrumentation. The asymmetry stays until those call sites are the actual subject of a slice.
 2. **Instrumentation must not change what the bridge throws.** Both wrappers count and re-throw the original value untouched. A bridge whose failure mode depends on whether a counter was enabled is worse than no counter.
+
+## What the Bridge Preserves — 2026-09-20
+
+The stated gate — no `R extends any`, multi-instance teardown green — is met. What was not
+checked is ROADMAP non-negotiable 2, which the bridge is the place to enforce: the boundary
+must distinguish interruption, defect, timeout, transport failure and an empty successful
+result.
+
+Four of the five survive the promise bridge intact. A typed failure is rethrown as itself
+with its `_tag`, a timeout arrives as a tagged `TimeoutError`, and an empty success resolves
+`undefined` rather than reading as an absence.
+
+**A defect and an interruption do not.** Both arrive as a bare `Error` with no `_tag`, no
+`cause`, no symbol — differing only in their message, "boom" against "All fibers
+interrupted without error". Classifying on a message is not classifying. A caller that
+needs the distinction has to use `runPromiseExitWithLayer`, which still carries the
+`Cause`.
+
+That is now asserted as a limitation rather than left to be rediscovered: if a future
+Effect release attaches the Cause to the rejection, the test fails, and that is the moment
+to delete the workaround the Exit variant exists for.
+
+### The counters were naming it wrong
+
+`runPromiseWithLayer` booked every non-success as `runtime.bridge.failure`, because that is
+all a rejected promise can tell you — so an interrupted TUI dialog read as a failed one.
+The fix is to classify from the Exit _inside_ the effect, with `Effect.onExit`: the Cause
+is still there, the outcome is untouched, and the rejection the caller sees is byte-for-byte
+what `runPromise` has always thrown. That is what keeps this out of the ~165 call sites that
+catch it.
+
+Both bridges now classify through one function, so they cannot drift into naming the same
+outcome two ways — asserted by running the same effect through each and comparing.

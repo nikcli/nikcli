@@ -293,6 +293,7 @@ appears more than once.
 | EOT-09 | Durable recovery against a real database: a crashed owner's row, re-read, not a pure predicate                   | `a1069153ab`                                            |
 | EOT-09 | `Semaphore`/`workMap` were uncovered; `work()` dropped items after a nullable one                                | `ff7e7badc5`                                            |
 | EOT-04 | No-silent-loss as a property over every eviction path; the three have different radius                           | `149d9745aa`                                            |
+| EOT-02 | The bridge cannot tell a defect from an interruption; counters said every one was a failure                      | `<pending>`                                             |
 | EOT-03 | `useAbortOnCleanup` cannot guard a dialog that opens dialogs — two reverted rounds, and why                      | `29735847d4fc`                                          |
 
 Every spec has been opened and every spec now has at least one landed slice,
