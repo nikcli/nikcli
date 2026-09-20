@@ -89,6 +89,36 @@ introduce bounded admission and measured query improvements. Do not combine this
 Rollback scheduler/adapter changes while preserving durable records, terminal-state guards, and logs. Additive schema
 changes require a tested compatibility/downgrade plan; never roll back by deleting user data or replaying side effects.
 
+## Bounded Concurrency — 2026-09-20
+
+The other half of the gate. `src/util/queue.ts` holds the two primitives the bound rests
+on, and both were uncovered: `AsyncQueue` and `work` had tests, `Semaphore` and `workMap`
+had none. `Semaphore` is what caps the background-agent fan-out in `tool/task.ts`, and six
+call sites in the session and instruction paths bound their I/O with `workMap`.
+
+Covered now, and each case was checked against a break rather than only run:
+
+- **The permit is released when the body throws.** Removing the `finally` fails it. Without
+  it one rejection removes a permit permanently and the cap walks itself down to zero over
+  a long-running process — a deadlock that appears only after enough failures.
+- **A freed permit is handed to a waiter, not dropped.** Deleting the waiter shift fails
+  three cases. The lost-wakeup shape reads as a hang, not an error.
+- **FIFO order**, and an unpaired `release()` does not hand out extra capacity.
+- **`workMap` returns results in input order however they finish.** The six call sites zip
+  the results back against the input array, so an order that follows completion is silent
+  corruption: the right values attached to the wrong paths.
+
+### One latent bug, fixed
+
+`work()` used `pending.pop() === undefined` as its end-of-queue sentinel, which cannot tell
+an absent item from a present one. A worker that met a nullable item treated it as the end
+of the queue and **silently dropped the rest of its share** — `work(2, [1, undefined, 3,
+4])` ran three of four. Nothing in `src` passes a nullable array today, which is why it
+never showed, and why the next caller would have inherited it. It now walks on
+`pending.length`. `workMap` was never affected: it pops `{item, index}` objects, which are
+never `undefined` — pinned by a test so a simplification back to the plain array
+reintroduces it loudly.
+
 ## Durable Recovery — 2026-09-20
 
 The release gate says _durable_ terminal states, and the word was doing work nothing

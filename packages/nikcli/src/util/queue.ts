@@ -42,10 +42,15 @@ export async function work<T>(concurrency: number, items: T[], fn: (item: T) => 
   const pending = [...items]
   await Promise.all(
     Array.from({ length: concurrency }, async () => {
-      while (true) {
-        const item = pending.pop()
-        if (item === undefined) return
-        await fn(item)
+      // `pending.length` rather than `pop() === undefined`: an `undefined`
+      // *item* is indistinguishable from an empty queue, so a worker that met
+      // one stopped and everything behind it in that worker's share was
+      // silently skipped. Nothing in `src` passes a nullable array today, which
+      // is why it never showed — and why the next caller would have inherited
+      // it. `workMap` below was never affected: it pops `{item, index}`
+      // objects, which are never undefined.
+      while (pending.length > 0) {
+        await fn(pending.pop() as T)
       }
     }),
   )

@@ -55,8 +55,13 @@ async function project<T>(label: string, fn: () => Promise<T>): Promise<T> {
   return Instance.provide({ directory, fn })
 }
 
+// Spelled out rather than `BackgroundRun.Status`: the module is pulled in with
+// a dynamic import so the binding is a value, and its namespace is not in scope
+// for types. Kept in step with `StatusSchema` in `src/background/run.ts`.
+type Status = "running" | "complete" | "error" | "timeout" | "cancelled" | "orphaned"
+
 type Overrides = Partial<{
-  status: BackgroundRun.Status
+  status: Status
   ownerID: string | undefined
   heartbeatAt: number | undefined
 }>
@@ -67,7 +72,7 @@ function record(id: string, over: Overrides = {}) {
     parentSessionID: "ses_parent",
     agent: "explore",
     prompt: "p",
-    status: "running" as BackgroundRun.Status,
+    status: "running" as Status,
     createdAt: 1_700_000_000_000,
     updatedAt: 1_700_000_000_000,
     artifactPath: `/tmp/${id}.md`,
