@@ -296,7 +296,7 @@ appears more than once.
 | EOT-02 | The bridge cannot tell a defect from an interruption; counters said every one was a failure                      | `88c404b2ca`                                            |
 | EOT-18 | `Lifecycle<T>` had zero registered commands; the guarantee lives in `cli/bootstrap.ts`                           | `1377a04033`                                            |
 | EOT-15 | Cross-process seq uniqueness pinned; SSE documented as _not_ a replay protocol                                   | `430b6472f4`                                            |
-| —      | `check:spec-paths`: 22 cited files did not resolve; the rot that produced four stale claims                      | `<pending>`                                             |
+| —      | `check:spec-paths`: 22 cited files did not resolve; the rot that produced four stale claims                      | `628f69111d`                                            |
 | EOT-03 | `useAbortOnCleanup` cannot guard a dialog that opens dialogs — two reverted rounds, and why                      | `29735847d4fc`                                          |
 
 Every spec has been opened and every spec now has at least one landed slice,
