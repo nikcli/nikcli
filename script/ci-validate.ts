@@ -101,6 +101,16 @@ const steps: ValidationStep[] = [
     timeout: 30_000,
   },
   {
+    // The deterministic half of the EOT-01 baseline: shape and lifecycle
+    // counters, which hold on any machine. Timings are printed, never gated —
+    // see the script's docblock for why a millisecond threshold on a shared
+    // runner is a gate that fires for the runner's reasons.
+    name: "Perf baseline gate",
+    command: ["bun", "run", "script/check-perf-baseline.ts"],
+    cwd: "packages/nikcli",
+    timeout: 30_000,
+  },
+  {
     name: "Spec commit-reference gate",
     command: ["bun", "run", "script/check-spec-commit-refs.ts"],
     cwd: "packages/nikcli",

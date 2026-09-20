@@ -111,6 +111,15 @@ prerequisites. Run memory-heavy verification serially even when implementation w
 
 ### P0: Establish Truth
 
+**Status 2026-09-20: closed.** The baseline artifact exists at
+`packages/nikcli/specs/perf-baseline.json` and `check:perf-baseline` gates it in
+`script/ci-validate.ts`. It had not been closed because the probe never returned —
+`perf-baseline.ts` finished measuring in under a second and then hung on open handles, so
+no artifact could be produced. The gate enforces the machine-independent half (shape,
+sample counts, lifecycle-counter balance) and deliberately does not gate wall-clock, for
+the reason this section already states: a noisy baseline is not a pass either. See the P0
+Closure section in `effect-tui/01-performance-baseline.md`.
+
 - Record versions, host modes, workload fixtures, raw metrics, queue/resource counters, and a baseline comparison format.
 - Add missing behavioral probes before modifying hot paths; characterize existing best-effort and fallback semantics.
 - Ratify EOT-01 candidate budgets in a reviewed baseline artifact. A noisy or missing baseline is not a pass.
@@ -277,6 +286,7 @@ appears more than once.
 | EOT-20 | `withFixture` as the shared harness; both new gates driven by tests that make them fail                          | `644a8f28`, `6d880fc3`  |
 | EOT-12 | Flag capture-at-import is a CI gate, not four fixes; the legacy-credential pair moves together                   | `ac52fff3`              |
 | EOT-20 | TUI tests already lived in `packages/nikcli/test/tui` (55 files); a duplicate directory removed, `adopt` covered | `995fff77ba`            |
+| EOT-01 | P0 closed: the probe never returned, so no baseline existed; artifact + gate now in CI                           | `<pending>`             |
 | EOT-03 | `useAbortOnCleanup` cannot guard a dialog that opens dialogs — two reverted rounds, and why                      | `29735847d4fc`          |
 
 Every spec has been opened and every spec now has at least one landed slice,

@@ -108,3 +108,50 @@ Lifecycle counters landed (`packages/nikcli/src/effect/lifecycle-counters.ts`, c
 4. **`scope.finalizer-leak` is a watchdog, not a guess.** `InstanceScope.with` promises that interrupting the caller waits for the inner fiber's finalizers. A finalizer that never returns breaks that promise with no other symptom in the process, so the canceller arms an unref'd `FINALIZER_GRACE_MS` timer and counts the leak if the Exit has not arrived. Unref'd deliberately: an outstanding leak must not itself keep Bun alive.
 
 Counters are module state. `bun test` shares one module registry across a run, so a test that reads them resets in `beforeEach`, not only in `afterEach` — otherwise it inherits whatever an earlier file in the run left behind.
+
+## P0 Closure — 2026-09-20
+
+P0's exit asked for a ratified baseline artifact and a CI gate on the comparison. Neither
+existed, and the reason turned out to be a defect rather than an omission: **the probe
+never returned.**
+
+`script/perf-baseline.ts` finished its measurements in about half a second and then hung
+forever. `main()` fell off the end without `process.exit`, and the in-process server and
+the instance it had booted kept handles open. Anyone who ran it saw a command that never
+came back, so no artifact was ever produced. Two smaller faults came out with it:
+
+- The third probe measured `POST /session/list`, which does not exist — the group is
+  declared with `.prefix("/session")` and the endpoint path is `/`. The router answered
+  405 in microseconds and `time()` recorded it as a sample, so the baseline would have
+  carried an excellent number for a route nobody serves.
+- `time()` caught everything and returned `undefined`. A probe that cannot reach its route
+  produced no gap in the data, which would have been noticeable; it produced a plausible
+  lie, which is not.
+
+All three are fixed, and `specs/perf-baseline.json` is the first real recording: three
+routes, 30 samples each, with the host written into the artifact.
+
+### What the gate enforces, and what it refuses to
+
+`script/check-perf-baseline.ts` splits the artifact along the line that matters.
+
+**Deterministic, enforced.** Every declared route is present with its full sample count,
+`min ≤ median ≤ p95 ≤ max`, and the lifecycle counters balance: `scope.created` equals
+completed + interrupted + failed, and `scope.finalizer-leak` is zero. A scope entered and
+never settled is a behaviour change on any machine, so it blocks.
+
+**Host-dependent, reported.** The timings are printed and, with `--against`, diffed
+against a threshold. They are never gated in CI, and the roadmap's own wording is the
+argument: _"A noisy or missing baseline is not a pass."_ The same probe reports 0.07 ms
+p95 here and something else on a shared runner, so a committed millisecond threshold would
+fire for the runner's reasons rather than the code's — and a gate that fires for reasons
+unrelated to the change is one people learn to re-run until it passes. A diff across
+different hosts refuses outright rather than reporting a percentage nobody should act on.
+
+`test/script/check-perf-baseline.test.ts` drives it in both directions: a missing artifact,
+a short sample count, percentiles out of order, an unsettled scope, a finalizer leak, a
+probe that measured nothing, a regression past the threshold, a move inside it, and the
+cross-host refusal.
+
+Regenerate with `bun run bench:baseline` and review the diff rather than committing it
+blind — the artifact is evidence only for the machine named in it.

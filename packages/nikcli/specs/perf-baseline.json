@@ -1,0 +1,53 @@
+{
+  "version": 1,
+  "recordedAt": "2026-09-20T17:52:25.423Z",
+  "samples": 30,
+  "host": {
+    "platform": "darwin",
+    "arch": "arm64",
+    "cpus": 8,
+    "bun": "1.4.2"
+  },
+  "routes": [
+    {
+      "name": "global/event-head",
+      "method": "GET",
+      "path": "/global/event",
+      "n": 30,
+      "min": 0.033707999999933236,
+      "median": 0.04233399999975518,
+      "p95": 0.07083300000022064,
+      "max": 0.1380410000001575
+    },
+    {
+      "name": "event-head",
+      "method": "GET",
+      "path": "/event",
+      "n": 30,
+      "min": 0.07691699999986668,
+      "median": 0.09420799999998053,
+      "p95": 0.15354100000013204,
+      "max": 0.30291699999997945
+    },
+    {
+      "name": "session-list",
+      "method": "GET",
+      "path": "/session",
+      "n": 30,
+      "min": 0.20191700000032142,
+      "median": 0.2612500000000182,
+      "p95": 0.4264579999999114,
+      "max": 0.6660830000000715
+    }
+  ],
+  "counters": {
+    "scope.created": 62,
+    "scope.completed": 62,
+    "scope.interrupted": 0,
+    "scope.failed": 0,
+    "scope.finalizer-leak": 0,
+    "runtime.bridge.success": 19,
+    "runtime.bridge.failure": 0,
+    "runtime.bridge.interrupted": 0
+  }
+}
