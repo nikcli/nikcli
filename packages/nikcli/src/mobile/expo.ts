@@ -22,6 +22,25 @@ export namespace Expo {
     return (await Bun.which("npx")) !== null
   }
 
+  /**
+   * Probe arguments for `npx`.
+   *
+   * `--no-install` is what keeps a version check from becoming a download:
+   * plain `npx expo --version` on a machine without the package *fetches it
+   * from the registry first*, so a probe meant to answer "is this installed"
+   * takes however long the network does, and installs the thing it was asking
+   * about. Actions the user asked for (`start`, `build`, `install`, `publish`)
+   * deliberately do not pass this — there, fetching is the point.
+   */
+  const PROBE = ["--no-install"]
+
+  /**
+   * How long a single "is this CLI here" probe may take. Short on purpose:
+   * the answer is a local file lookup, and anything slower is a probe that
+   * has gone to the network despite `--no-install`.
+   */
+  const PROBE_TIMEOUT_MS = 3_000
+
   async function exec(args: string[], opts?: { cwd?: string; timeout?: number }): Promise<string> {
     const proc = Bun.spawn(["npx", ...args], {
       windowsHide: true,
@@ -49,7 +68,7 @@ export namespace Expo {
 
   export async function version(): Promise<string> {
     try {
-      const output = await exec(["expo", "--version"], { timeout: 10000 })
+      const output = await exec([...PROBE, "expo", "--version"], { timeout: PROBE_TIMEOUT_MS })
       return output
     } catch {
       return "not available"
@@ -169,49 +188,42 @@ export namespace Expo {
     nodeVersion: string
     details: string[]
   }> {
+    // Concurrently: three independent "is this here" questions, each paying a
+    // process spawn. Run in sequence they added up to seconds on a route the
+    // app calls on every connect, for an answer that is the same either way.
+    // `details` is assembled afterwards so its order stays stable regardless
+    // of which probe finishes first.
+    const [node, expoVersion, easVersion] = await Promise.all([
+      (async () => {
+        try {
+          const proc = Bun.spawn(["node", "--version"], { windowsHide: true, stdout: "pipe", stderr: "pipe" })
+          const timer = setTimeout(() => proc.kill(), PROBE_TIMEOUT_MS)
+          const [code, out] = await Promise.all([proc.exited, new Response(proc.stdout).text()])
+          clearTimeout(timer)
+          return code === 0 ? out.trim() : undefined
+        } catch {
+          return undefined
+        }
+      })(),
+      version().then((value) => (value === "not available" ? undefined : value)),
+      // Through `exec`, so this one is bounded too. Spawned directly it had no
+      // timer at all — `doctor` is reached from `GET /mobile/bootstrap`, so an
+      // `npx` that sat waiting on the registry held a request open for as long
+      // as it liked.
+      exec([...PROBE, "eas", "--version"], { cwd: opts?.cwd, timeout: PROBE_TIMEOUT_MS }).catch(() => undefined),
+    ])
+
     const details: string[] = []
-    let expoCli = false
-    let easCli = false
-    let nodeVersion = ""
+    if (node) details.push(`Node.js: ${node}`)
+    else details.push("Node.js: not found")
+    details.push(`Expo CLI: ${expoVersion ?? "not installed"}`)
+    details.push(`EAS CLI: ${easVersion ?? "not installed"}`)
 
-    try {
-      const nodeProc = Bun.spawn(["node", "--version"], { windowsHide: true, stdout: "pipe", stderr: "pipe" })
-      const [nodeCode, nodeOut] = await Promise.all([nodeProc.exited, new Response(nodeProc.stdout).text()])
-      if (nodeCode === 0) {
-        nodeVersion = nodeOut.trim()
-        details.push(`Node.js: ${nodeVersion}`)
-      }
-    } catch {
-      details.push("Node.js: not found")
+    return {
+      expoCli: Boolean(expoVersion),
+      easCli: Boolean(easVersion),
+      nodeVersion: node ?? "",
+      details,
     }
-
-    try {
-      const expoVersion = await version()
-      expoCli = expoVersion !== "not available"
-      details.push(`Expo CLI: ${expoCli ? expoVersion : "not installed"}`)
-    } catch {
-      details.push("Expo CLI: not installed")
-    }
-
-    try {
-      const proc = Bun.spawn(["npx", "eas", "--version"], {
-        windowsHide: true,
-        stdout: "pipe",
-        stderr: "pipe",
-        cwd: opts?.cwd,
-        env: process.env as Record<string, string>,
-      })
-      const [exitCode, stdout] = await Promise.all([proc.exited, new Response(proc.stdout).text()])
-      if (exitCode === 0) {
-        easCli = true
-        details.push(`EAS CLI: ${stdout.trim()}`)
-      } else {
-        details.push("EAS CLI: not installed")
-      }
-    } catch {
-      details.push("EAS CLI: not installed")
-    }
-
-    return { expoCli, easCli, nodeVersion, details }
   }
 }
