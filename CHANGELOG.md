@@ -3,6 +3,19 @@
 <!-- UNRELEASED:START -->
 <!-- UNRELEASED:END -->
 
+## v1.379.0 (September 2026)
+
+## Core
+
+- Pin the replace-not-push contract, and unbreak a rewritten literal (@nikomatt69)
+
+**Thank you to 1 community contributor:**
+
+- @nikomatt69:
+  - docs(plan): rewrite the status for what the day actually established
+  - test(tui): pin the replace-not-push contract, and unbreak a rewritten literal
+  - docs(specs): point the EOT-03 and EOT-20 rows at their commit
+
 ## v1.378.0 (September 2026)
 
 ## Core
