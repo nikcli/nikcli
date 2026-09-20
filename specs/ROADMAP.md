@@ -292,6 +292,7 @@ appears more than once.
 | EOT-10 | Fresh-install sweep over all 89 parameterless GETs — the state where both shipped 400s hit                       | `2f839ef7f4`                                            |
 | EOT-09 | Durable recovery against a real database: a crashed owner's row, re-read, not a pure predicate                   | `a1069153ab`                                            |
 | EOT-09 | `Semaphore`/`workMap` were uncovered; `work()` dropped items after a nullable one                                | `ff7e7badc5`                                            |
+| EOT-04 | No-silent-loss as a property over every eviction path; the three have different radius                           | `<pending>`                                             |
 | EOT-03 | `useAbortOnCleanup` cannot guard a dialog that opens dialogs — two reverted rounds, and why                      | `29735847d4fc`                                          |
 
 Every spec has been opened and every spec now has at least one landed slice,

@@ -107,3 +107,41 @@ Slice 3 promotes `BYTE_BUDGET` from a candidate ceiling (`src/server/httpapi/eve
 3. **The two budgets answer different questions.** Frame-count eviction (`SubscriberOverflowError`, `LAG_BUDGET = 4096`) catches a reader that cannot keep up. Frame-size eviction (`ByteBudgetExceededError`) catches a producer emitting a single event nobody should have to receive. Neither subsumes the other, and both write their reason into the close frame so a client knows which one tripped.
 
 Tests in `packages/nikcli/test/server/event-feed.test.ts` exercise all of it: a reader handed more than `BYTE_BUDGET` _in total_ stays attached, a single oversized broadcast evicts with `ByteBudgetExceededError` and is itself never delivered, and local frames bypass the check. A future change that introduces a new eviction reason must add a matching test in the same describe block before merge.
+
+## No Silent Loss — 2026-09-20
+
+The gate's third clause — _recovery verified, no silent loss_ — needed the invariant
+rather than another case.
+
+Each eviction already had a test asserting its own reason. What none of them said is that
+a connection cannot leave **without** one. A fourth eviction path added later that calls
+`close()` instead of `fail()` passes every one of those tests and drops a client with no way
+to tell a server eviction from a network failure — and that difference is exactly what the
+client's recovery turns on. `/event` frames carry no sequence numbers, so a reconnecting
+client cannot resume into a gap; it refetches, and the close reason is what tells it to.
+(`detectSequenceGap` in `src/sync/gap.ts` serves the sync path, which does carry sequence
+numbers. It is not reusable here and does not need to be.)
+
+So the eviction table is now driven as a table: every trigger is provoked, and each is
+asserted to put a named `server.error` on the wire, with a message, before the stream
+closes. Breaking one path to close silently fails three cases.
+
+### The three evictions have different radius
+
+Writing this the first time assumed all three were per-connection. Two are not, and the
+difference is worth stating because it looks like an inconsistency until you see why:
+
+- **Overflow is per connection.** Only the reader that fell behind is dropped.
+- **The byte budget is per frame.** One frame over the ceiling is over it for every reader
+  it was offered to, so they all go — which is the correct reading of a producer bug:
+  nobody should receive it.
+- **An encoding failure drops every current connection**, deliberately. The event cannot be
+  serialised at all, so every attached client would otherwise carry a gap it has no way to
+  learn about. The feed stays usable for whoever connects next.
+
+The names are asserted to be distinct, because backing off is the right response to
+overflow and the wrong one to an oversized producer. One shared name would make them
+indistinguishable at the client.
+
+`abandon` is the single silent exit and has to be: the controller is already dead, so
+writing a reason would throw on the way out. That it does not throw is pinned.

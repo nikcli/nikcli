@@ -384,3 +384,153 @@ describe("EventFeed byte budget (EOT-04)", () => {
     expect(connection.cost.bytes).toBeLessThan(1_000)
   })
 })
+
+/**
+ * "No silent loss", as a property over every way out rather than a case each.
+ *
+ * The individual eviction tests above each assert their own reason. What none
+ * of them says is the invariant the gate actually needs: that a connection
+ * cannot leave *without* one. A fourth eviction path added later that calls
+ * `close()` instead of `fail()` passes every test above and drops a client
+ * with no way to tell a server eviction from a network failure — and the
+ * client's recovery depends on that difference. `/event` frames carry no
+ * sequence numbers, so a reconnecting client cannot resume into a gap; it
+ * refetches, and the close reason is what tells it to.
+ *
+ * `specs/effect-tui/04-event-delivery.md`.
+ */
+describe("no eviction is silent (EOT-04)", () => {
+  /** Every way the server drops a connection, and how to provoke it. */
+  const evictions = [
+    {
+      name: "SubscriberOverflowError",
+      provoke: (feed: EventFeed.Feed) => {
+        // A reader that consumes nothing reaches zero desiredSize.
+        for (let i = 0; i < 3; i++) feed.broadcast({ type: "t", i })
+      },
+      budget: 1,
+    },
+    {
+      name: "ByteBudgetExceededError",
+      provoke: (feed: EventFeed.Feed) => {
+        feed.broadcast({ type: "oversized", payload: "x".repeat(EventFeed.BYTE_BUDGET + 64) })
+      },
+      budget: EventFeed.LAG_BUDGET,
+    },
+    {
+      name: "EncodingError",
+      provoke: (feed: EventFeed.Feed) => {
+        const cyclic: Record<string, unknown> = { type: "bad" }
+        cyclic.self = cyclic
+        feed.broadcast(cyclic)
+      },
+      budget: EventFeed.LAG_BUDGET,
+    },
+  ] as const
+
+  for (const eviction of evictions) {
+    it(`states ${eviction.name} on the wire before closing`, () => {
+      const feed = new EventFeed.Feed(identity)
+      const conn = fakeConnection(eviction.budget)
+      feed.attach(conn.controller)
+
+      eviction.provoke(feed)
+
+      expect(feed.size).toBe(0)
+      const last = conn.data.at(-1)
+      expect(last).toMatchObject({ type: "server.error", properties: { name: eviction.name } })
+      // A name alone is not enough to act on; the message is what reaches a log.
+      expect(typeof (last as { properties: { message?: unknown } }).properties.message).toBe("string")
+    })
+  }
+
+  /**
+   * The three evictions have different radius, and guessing wrong about which
+   * is which is easy — writing this test the first time assumed all three were
+   * per-connection.
+   *
+   *  - **Overflow is per connection.** Only the reader that fell behind is
+   *    dropped; everyone keeping up is unaffected.
+   *  - **The byte budget is per frame.** One frame over the ceiling is over it
+   *    for every reader it was offered to, so they all go. That is the correct
+   *    reading of a producer bug: nobody should receive it.
+   *  - **An encoding failure drops every current connection**, deliberately.
+   *    The event cannot be serialised at all, so every attached client would
+   *    otherwise carry a gap it has no way to learn about.
+   */
+  it("evicts only the reader that fell behind, on overflow", () => {
+    const feed = new EventFeed.Feed(identity)
+    const doomed = fakeConnection(1)
+    const healthy = fakeConnection(EventFeed.LAG_BUDGET)
+    feed.attach(doomed.controller)
+    feed.attach(healthy.controller)
+
+    for (let i = 0; i < 3; i++) {
+      feed.broadcast({ type: "t", i })
+      healthy.drain()
+    }
+
+    expect(feed.size).toBe(1)
+    feed.broadcast({ type: "after" })
+    expect(healthy.data.at(-1)).toMatchObject({ type: "after" })
+  })
+
+  it("evicts every reader offered an oversized frame, and says so to each", () => {
+    const feed = new EventFeed.Feed(identity)
+    const a = fakeConnection(EventFeed.LAG_BUDGET)
+    const b = fakeConnection(EventFeed.LAG_BUDGET)
+    feed.attach(a.controller)
+    feed.attach(b.controller)
+
+    feed.broadcast({ type: "oversized", payload: "x".repeat(EventFeed.BYTE_BUDGET + 64) })
+
+    expect(feed.size).toBe(0)
+    for (const conn of [a, b]) {
+      expect(conn.data.at(-1)).toMatchObject({
+        type: "server.error",
+        properties: { name: "ByteBudgetExceededError" },
+      })
+    }
+  })
+
+  it("drops every current connection on an encoding failure, each with a reason", () => {
+    const feed = new EventFeed.Feed(identity)
+    const a = fakeConnection()
+    const b = fakeConnection()
+    feed.attach(a.controller)
+    feed.attach(b.controller)
+
+    const cyclic: Record<string, unknown> = { type: "bad" }
+    cyclic.self = cyclic
+    feed.broadcast(cyclic)
+
+    expect(feed.size).toBe(0)
+    for (const conn of [a, b]) {
+      expect(conn.data.at(-1)).toMatchObject({ type: "server.error", properties: { name: "EncodingError" } })
+    }
+    // Still usable for whoever connects next: the feed is not poisoned.
+    const fresh = fakeConnection()
+    feed.attach(fresh.controller)
+    feed.broadcast({ type: "after" })
+    expect(fresh.data.at(-1)).toMatchObject({ type: "after" })
+  })
+
+  it("gives each eviction a distinct name, so a client can tell them apart", () => {
+    // Backing off is right for overflow and wrong for an oversized producer;
+    // one shared name would make both indistinguishable at the client.
+    const names = evictions.map((e) => e.name)
+    expect(new Set(names).size).toBe(names.length)
+  })
+
+  it("closes without a reason only when the client has already gone", () => {
+    // `abandon` is the one silent exit, and it has to be: the controller is
+    // dead, so writing a reason would throw on the way out.
+    const feed = new EventFeed.Feed(identity)
+    const conn = fakeConnection()
+    const connection = feed.attach(conn.controller)
+    conn.controller.close()
+
+    expect(() => connection.local({ type: "server.heartbeat", properties: {} })).not.toThrow()
+    expect(feed.size).toBe(0)
+  })
+})
