@@ -232,7 +232,20 @@ export namespace Auth {
     const bearer = MobileAuth.bearer(request) ?? extractQueryToken(new URL(request.url))
     if (bearer) {
       const principal = await resolveBearer(request)
-      if (principal) return { ok: true, principal }
+      if (principal) {
+        // Capability gating, for bearer principals only. A local caller with no
+        // token never reaches here, so this cannot affect the desktop or the
+        // TUI talking to their own server.
+        if (principal.type === "mobile") {
+          const pathname = new URL(request.url).pathname
+          const required = MobileAuth.requiredCapability(pathname)
+          if (required && !MobileAuth.can(principal.token.scope, required)) {
+            log.warn("mobile capability denied", { scope: principal.token.scope, required, pathname })
+            return forbidden(required)
+          }
+        }
+        return { ok: true, principal }
+      }
       // A local caller is admitted with no bearer at all, so an *aged-out* one
       // must not leave it less authorized than sending none. The terminal
       // holds a fifteen-minute issuer token on disk and sends it on every
@@ -324,6 +337,24 @@ export namespace Auth {
 
   function unauthorized(): AuthenticateResult {
     return { ok: false, response: new Response("Unauthorized", { status: 401 }) }
+  }
+
+  /**
+   * A capability refusal, which is not a 401.
+   *
+   * The token is valid and the caller is who they say; the scope simply does
+   * not carry this operation. Answering 401 would tell a paired device to
+   * re-authenticate, which cannot help and which
+   * `specs/effect-tui/19-mobile-companion-bridge.md` calls out by name: the
+   * phone shows a button, the button does nothing, and the user concludes the
+   * host is broken. The capability is named in the body so the client can say
+   * which one is missing.
+   */
+  function forbidden(capability: string): AuthenticateResult {
+    return {
+      ok: false,
+      response: new Response(`Forbidden: token scope lacks the "${capability}" capability`, { status: 403 }),
+    }
   }
 
   function isTailscaleLoginAllowed(login: string) {

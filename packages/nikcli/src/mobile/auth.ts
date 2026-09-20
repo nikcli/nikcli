@@ -70,6 +70,31 @@ export namespace MobileAuth {
     return capabilities(scope).includes(capability)
   }
 
+  /**
+   * The capability a request path requires, or `undefined` for no requirement.
+   *
+   * This is the half that makes `can` more than a table nobody consults. It is
+   * evaluated once, in `Auth.authenticate`, for bearer principals only — a
+   * local caller with no token is admitted as it always was, so the desktop
+   * terminal on loopback is untouched.
+   *
+   * **Only the three unambiguous capabilities are listed.** `pty`, `teleport`
+   * and `git` each map to a route prefix that means exactly the thing the
+   * capability names. `read` and `write` do not: classifying every mobile and
+   * session route as one or the other is a larger slice with real blast radius
+   * — `/sync/*` in particular moves journal rows for `cli-sync`, whose only
+   * capability is `read`, so a hasty `write` rule there would stop sync dead.
+   * Leaving them out means a `cli-sync` token can still reach routes it has no
+   * business on; that hole is narrower than the one a wrong rule opens, and
+   * closing it is its own change.
+   */
+  export function requiredCapability(pathname: string): Capability | undefined {
+    if (pathname.startsWith("/mobile/pty") || pathname.startsWith("/pty/")) return "pty"
+    if (pathname.includes("/teleport")) return "teleport"
+    if (pathname.startsWith("/mobile/git/") || pathname.startsWith("/mobile/github/")) return "git"
+    return undefined
+  }
+
   export const Token = z
     .object({
       id: z.string(),

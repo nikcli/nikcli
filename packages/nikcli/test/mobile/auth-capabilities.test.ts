@@ -42,3 +42,58 @@ describe("MobileAuth capabilities", () => {
     expect([...MobileAuth.capabilities("mobile")].sort()).toEqual(["git", "pty", "read", "teleport", "write"])
   })
 })
+
+/**
+ * The half that turns the table above into enforcement.
+ *
+ * Until 2026-09-21 `can` had zero production call sites: the capabilities were
+ * declared, tested, and consulted by nobody, so a `cli-sync` token could open a
+ * pty. `requiredCapability` is the path side of the pairing, evaluated once in
+ * `Auth.authenticate`.
+ */
+describe("MobileAuth.requiredCapability", () => {
+  it("guards every pty entry point, including the raw connect route", () => {
+    // `/pty/:id/connect` is served outside the `/mobile` group (it is in
+    // `rawRouteImplementations`). Guarding create while leaving connect open
+    // would be a hole of exactly the kind this pairing exists to close.
+    expect(MobileAuth.requiredCapability("/mobile/pty")).toBe("pty")
+    expect(MobileAuth.requiredCapability("/mobile/pty/pty_123")).toBe("pty")
+    expect(MobileAuth.requiredCapability("/pty/pty_123/connect")).toBe("pty")
+  })
+
+  it("guards teleport wherever it appears in the path", () => {
+    expect(MobileAuth.requiredCapability("/mobile/teleport")).toBe("teleport")
+    expect(MobileAuth.requiredCapability("/mobile/teleport/upload")).toBe("teleport")
+    expect(MobileAuth.requiredCapability("/mobile/session/ses_1/teleport")).toBe("teleport")
+  })
+
+  it("guards the git and github surfaces", () => {
+    expect(MobileAuth.requiredCapability("/mobile/git/status")).toBe("git")
+    expect(MobileAuth.requiredCapability("/mobile/github/repos")).toBe("git")
+  })
+
+  it("requires nothing of the routes read and write would cover", () => {
+    // Deliberate, and stated in the source: `/sync/*` moves journal rows for
+    // `cli-sync`, whose only capability is `read`, so a hasty `write` rule
+    // there stops sync dead. The narrow hole beats the wrong rule.
+    expect(MobileAuth.requiredCapability("/mobile/session")).toBeUndefined()
+    expect(MobileAuth.requiredCapability("/sync/outbox")).toBeUndefined()
+    expect(MobileAuth.requiredCapability("/config")).toBeUndefined()
+  })
+
+  it("leaves a paired phone able to reach everything it is guarded on", () => {
+    // The regression that matters most: this pairing must not lock out the
+    // device it was written for.
+    for (const pathname of ["/mobile/pty", "/mobile/teleport", "/mobile/git/status", "/pty/p/connect"]) {
+      const required = MobileAuth.requiredCapability(pathname)
+      expect(required).toBeTruthy()
+      expect(MobileAuth.can("mobile", required!)).toBe(true)
+    }
+  })
+
+  it("stops a sync token on every guarded path", () => {
+    for (const pathname of ["/mobile/pty", "/mobile/teleport", "/mobile/git/status"]) {
+      expect(MobileAuth.can("cli-sync", MobileAuth.requiredCapability(pathname)!)).toBe(false)
+    }
+  })
+})
