@@ -61,10 +61,7 @@ export function DialogAuthManage() {
           category: "Account",
           description: displayName ? `Current: ${displayName}` : "Set the name shown in chat and account views",
           onSelect: async () => {
-            // Only reopen when something was actually changed. `esc` at the
-            // prompt used to land back here, so the way out of this dialog
-            // reopened it.
-            if ((await updateDisplayName(dialog, sdk, user.id, user.display_name)).cancelled) return
+            await updateDisplayName(dialog, sdk, user.id, user.display_name)
             dialog.replace(() => <DialogAuthManage />)
           },
         },
@@ -74,9 +71,7 @@ export function DialogAuthManage() {
           category: "Account",
           description: "Update the password stored for this local account",
           onSelect: async () => {
-            // `updatePassword` already returns false for every cancel — it
-            // retries bad input itself — and the caller discarded it.
-            if (!(await updatePassword(dialog, sdk))) return
+            await updatePassword(dialog, sdk)
             dialog.replace(() => <DialogAuthManage />)
           },
         },
@@ -86,8 +81,6 @@ export function DialogAuthManage() {
           category: "Account",
           description: `Signed in as ${user.username}`,
           onSelect: async () => {
-            // No cancel path: logout always completes, and reopening is how the
-            // signed-out state gets shown. Unlike its neighbours above.
             await logout(sdk)
             dialog.replace(() => <DialogAuthManage />)
           },
@@ -100,8 +93,7 @@ export function DialogAuthManage() {
         category: "Account",
         description: "Continue with nikcli (browser) or use a local password",
         onSelect: async () => {
-          // `run` resolves with null when the user backs out of the sign-in.
-          if (!(await DialogLogin.run(dialog, sdk))) return
+          await DialogLogin.run(dialog, sdk)
           dialog.replace(() => <DialogAuthManage />)
         },
       })
@@ -446,11 +438,11 @@ function ProfileActionRow(props: {
 /**
  * Backing out and a failed update are different answers, and this used to give
  * the same one: `undefined` on cancel, `null` when the update failed. Two falsy
- * values a caller cannot tell apart, which is why both callers stopped trying.
+ * values a caller cannot tell apart.
  *
- * `cancelled` is the question the menu asks — whether to reopen — and `user` is
- * the one the profile view asks, so it can skip a refetch it already has the
- * answer to.
+ * Not a cue to skip reopening the menu — in this codebase a nested flow
+ * *replaces* its parent, so the caller restoring it afterwards is how the user
+ * gets back, on cancel exactly as on success.
  */
 type DisplayNameResult = { cancelled: true } | { cancelled: false; user: UserSchema.PublicUser | null }
 

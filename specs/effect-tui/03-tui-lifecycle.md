@@ -91,33 +91,38 @@ correction to what the inventory is _for_.
 In Solid, writing a signal after the owner is disposed is harmless — nothing reads it.
 So "every `createResource` / `onMount` that does not cancel" is not the defect list; it
 is 30 files of mostly nothing. The defect is **acting on the outside world after an
-await the user has walked away from**, and the reason that lands is one line in
-`ui/dialog.tsx`: `replace()` sets `store.stack` unconditionally. There is no
-empty-stack guard. A `replace` arriving after the user pressed `esc` **reopens the
-dialog they just left**.
+await the user has walked away from**.
 
-That is not hypothetical. `component/dialog-auth-manage.tsx` had three of them, and the
-shape is worth recognising:
+### But "reopening after an await" is the idiom here, not the bug
 
-```
-onSelect: async () => {
-  await updateDisplayName(dialog, sdk, …)   // resolves with a cancel signal
-  dialog.replace(() => <DialogAuthManage />) // …which the caller discards
-}
-```
+This was got wrong first, so it is written down. `ui/dialog.tsx`'s `replace()` sets
+`store.stack` unconditionally and escape runs `closeTop()`, which on a one-deep stack
+empties it. Reading only that far suggests every `await …; dialog.replace(…)` reopens a
+dialog the user escaped.
 
-`DialogPrompt.show` returns `null` on cancel, `updateDisplayName` returned on it,
-`updatePassword` returns `false` for every cancel (it retries bad input itself), and
-`DialogLogin.run` resolves `null`. **The cancellation was already being reported at
-every one of them.** The callers threw it away, so pressing `esc` at the prompt reopened
-the menu you were escaping from. Fixed by honouring the signal; `updateDisplayName` also
-had to grow a discriminated result, because it answered cancel with `undefined` and a
-failed update with `null` — two falsy values a caller cannot tell apart, which is
-presumably why neither caller tried.
+It does not, because **a nested flow replaces its parent rather than stacking on it**.
+`DialogPrompt.show` and `DialogConfirm.show` both call `dialog.replace`, so the parent is
+already gone before the user answers; the caller restoring it afterwards is how they get
+back. That is the app-wide idiom, on cancel exactly as on success —
+`dialog-auth-manage.tsx`'s `restoreProfile` is called unconditionally, and
+`dialog-skills.tsx`'s `install()` restores the results list explicitly on `!confirmed`.
+Three call sites were "fixed" to skip the reopen on cancel, which made them drop the user
+out of a flow that every neighbour returns them to. Reverted.
 
-`logout` in the same list is the counter-example and is deliberately left alone: it has
-no cancel path, so reopening is how the signed-out state gets shown. A rule applied
-uniformly here would have been wrong four times out of five.
+The distinction the audit actually needs:
+
+- **A modal await** — `DialogPrompt.show`, `DialogConfirm.show`. The user is sitting in
+  the dialog and can open nothing else, so their answer _is_ the continuation.
+  Restoring the parent is correct and cancelling is not special.
+- **A long async await** — a network call, `Bun.spawn`, an OAuth callback, a device-code
+  poll. The user can leave and open something else while it runs, and a `replace` landing
+  afterwards is what `util/lifecycle.ts` describes: a dialog shoved over whatever they
+  opened next. `dialog-skills.tsx:130` awaits `sdk.client.app.skill.create` and then
+  replaces, with no guard — that shape is the real target, and the helper for it already
+  exists.
+
+Which kind an await is cannot be seen from the `replace` that follows it, which is the
+whole reason this is a per-site reading exercise rather than a codemod.
 
 ### The candidate set, and why it is not a gate
 
