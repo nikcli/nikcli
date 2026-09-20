@@ -80,3 +80,60 @@ Inventory owners and classify each resource as owner-scoped or durable. Migrate 
 bootstrap/SDK and remaining dialogs. Keep helper interfaces small and preserve existing callers. Roll back a migrated
 adapter if necessary, but retain the new race regression tests and abort/generation safety requirements; never disable
 cleanup assertions to ship. Existing dirty worktree edits are not part of this documentation change.
+
+## Discipline Addendum — 2026-09-20
+
+The inventory this spec asks for was started, and the first thing it produced was a
+correction to what the inventory is _for_.
+
+### The failure is an external effect, not a stale write
+
+In Solid, writing a signal after the owner is disposed is harmless — nothing reads it.
+So "every `createResource` / `onMount` that does not cancel" is not the defect list; it
+is 30 files of mostly nothing. The defect is **acting on the outside world after an
+await the user has walked away from**, and the reason that lands is one line in
+`ui/dialog.tsx`: `replace()` sets `store.stack` unconditionally. There is no
+empty-stack guard. A `replace` arriving after the user pressed `esc` **reopens the
+dialog they just left**.
+
+That is not hypothetical. `component/dialog-auth-manage.tsx` had three of them, and the
+shape is worth recognising:
+
+```
+onSelect: async () => {
+  await updateDisplayName(dialog, sdk, …)   // resolves with a cancel signal
+  dialog.replace(() => <DialogAuthManage />) // …which the caller discards
+}
+```
+
+`DialogPrompt.show` returns `null` on cancel, `updateDisplayName` returned on it,
+`updatePassword` returns `false` for every cancel (it retries bad input itself), and
+`DialogLogin.run` resolves `null`. **The cancellation was already being reported at
+every one of them.** The callers threw it away, so pressing `esc` at the prompt reopened
+the menu you were escaping from. Fixed by honouring the signal; `updateDisplayName` also
+had to grow a discriminated result, because it answered cancel with `undefined` and a
+failed update with `null` — two falsy values a caller cannot tell apart, which is
+presumably why neither caller tried.
+
+`logout` in the same list is the counter-example and is deliberately left alone: it has
+no cancel path, so reopening is how the signed-out state gets shown. A rule applied
+uniformly here would have been wrong four times out of five.
+
+### The candidate set, and why it is not a gate
+
+`packages/tui/script/audit-late-side-effects.ts` reproduces the scan: 88 candidate sites,
+sorted so files with no cancellation helper come first. It is triage, not CI. The
+detector is indentation-based and cannot distinguish a call from a call _site_ —
+`onSelect: () => dialog.replace(…)` built after an await is safe, because the handler
+only runs while the component is alive, and it is indistinguishable from the bug at this
+level. Roughly one in five hits is real. A blocking gate would mean accepting that ratio
+or maintaining an allowlist longer than the findings, so it always exits 0 and prints a
+list for a human.
+
+### What is not verified
+
+`packages/tui` has **no test directory**. The package carrying every one of these sites
+has no unit-test surface at all, so the `dialog-auth-manage` fix is verified by reading
+the four cancel contracts and by `tsc`, and not by running it. Giving this package a test
+harness is EOT-20 work and is the precondition for auditing the other 87 sites with any
+confidence.
