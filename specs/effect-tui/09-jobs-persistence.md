@@ -88,3 +88,43 @@ Start with monitor or one background job family, characterize current limits and
 introduce bounded admission and measured query improvements. Do not combine this with a storage-engine replacement.
 Rollback scheduler/adapter changes while preserving durable records, terminal-state guards, and logs. Additive schema
 changes require a tested compatibility/downgrade plan; never roll back by deleting user data or replaying side effects.
+
+## Durable Recovery — 2026-09-20
+
+The release gate says _durable_ terminal states, and the word was doing work nothing
+checked. `isTerminal` and `canTransition` are pure functions with their own unit tests, and
+neither says anything about what is in the database after a crash.
+
+The state a crash actually leaves is a row that says `running`, owned by a process that is
+gone. Nothing times it out on its own; `reconcileInterrupted` is what turns it into a
+settled outcome, and until it runs the TUI shows a task that will never finish.
+`test/background/recovery.test.ts` drives that path against a real isolated database and
+**re-reads every assertion from the repository** rather than trusting a return value,
+because durability is the entire claim.
+
+Seven cases, of which three are the ones worth naming:
+
+- A live sibling's work is not stolen. One process sweeping another's heartbeating run
+  would settle a task that is still going — worse than the stuck row the sweep exists to
+  clear.
+- `ignore` is honoured, which is how the sweeping process keeps its own in-flight rows:
+  stale by wall clock, not abandoned.
+- `finalize` on a settled row does not land. `canTransition` is enforced at the write path,
+  and this is the half its unit test cannot reach — that the refusal reaches the database.
+
+Two details came out of making it fail on purpose.
+
+**The lease is guarded twice.** Deleting the `leaseExpired` check inside
+`reconcileInterrupted` changes nothing, because `markOrphaned` checks it again before
+settling. That is sound defence and it means the sweep's own check is not what the suite
+discriminates; breaking `leaseExpired` itself is what fails the live-run case. Worth
+knowing before someone deletes the "redundant" line and concludes the tests cover it.
+
+**The repositories return `Effect`, not a promise.** A repo call that is merely `await`ed
+resolves the Effect object itself, so every assertion reads `undefined` off it and every
+test fails identically regardless of the behaviour. The first run of this file failed that
+way in all five cases — an error that looks like a broken subject and is a broken harness.
+
+Each project in the suite is a real git repository, because the project id is derived from
+the root commit: two plain temp directories share the fallback id `global`, which would put
+every case's rows in one table and let a leak read as a pass.
