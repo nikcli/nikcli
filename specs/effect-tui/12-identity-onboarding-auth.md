@@ -131,7 +131,7 @@ Three things landed here, and the most useful of them is a negative result.
 
 ### 1. The account guard has no call site, and that is the finding
 
-`src/account/state.ts` holds the pure `decide()` and `src/account/guard.ts` the `requireAccount` / `requireAccountOrThrow` wrappers (commit `644a8f28`). `PRIVILEGED_FILES` in `script/check-account-required.ts` is empty, and it stays empty (commit `f1d8f7a6`). Every surface the guard was written for is account-optional **by design**, and listing it would convert working behaviour into 401s:
+`src/account/state.ts` holds the pure `decide()` and `src/account/guard.ts` the `requireAccount` / `requireAccountOrThrow` wrappers (commit `644a8f28`). `PRIVILEGED_FILES` in `script/check-account-required.ts` is empty, and it stays empty (commit `6d880fc3`). Every surface the guard was written for is account-optional **by design**, and listing it would convert working behaviour into 401s:
 
 - **sync** — `server/httpapi/sync.ts` identifies an unauthenticated local caller as `"operator"`, and `sync/sync-config.ts` reports `configured: false` with no account so remote sync simply does not run. Local-only sync works today.
 - **share** — `share/share-next.ts` POSTs to `s.nikcli.store/api/share` with no authorization header. The share service is anonymous.
@@ -143,7 +143,7 @@ The one surface that answers "who is signed in on this machine" — `/user/me` a
 
 ### 2. Verifier configuration is read at call time
 
-`Flag.NIKCLI_AUTH_{ISSUER,JWKS_URL,AUDIENCE,JWT_SECRET}` were `const`, capturing `process.env` when `@nikcli-ai/util/flag` was first imported — by whichever module in the process touched a flag first (commit `d8efc911` makes them functions). `flag.ts` already documented this hazard on `autoApprove` and `cacheRetention`; these four were missed.
+`Flag.NIKCLI_AUTH_{ISSUER,JWKS_URL,AUDIENCE,JWT_SECRET}` were `const`, capturing `process.env` when `@nikcli-ai/util/flag` was first imported — by whichever module in the process touched a flag first (commit `48344aa4` makes them functions). `flag.ts` already documented this hazard on `autoApprove` and `cacheRetention`; these four were missed.
 
 The symptom was not a config bug, it was eight tests that failed in a directory run and passed alone, for a year, with nothing wrong in either file: `test/server/local-account-session.test.ts` exports its own issuer and HS256 secret at the top of its own file, before importing anything, and still got the process defaults, so every token it signed verified as 401. **Any** file that boots the server machinery reproduces it and no file that does not ever will — which is the shape of a structural bug wearing a flake's clothes. `test/auth/identity-verifier-env.test.ts` guards the ordering that was broken (import first, set the variables after) and fails 6/6 against the constants.
 

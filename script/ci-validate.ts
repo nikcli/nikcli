@@ -101,6 +101,15 @@ const steps: ValidationStep[] = [
     timeout: 30_000,
   },
   {
+    name: "Spec commit-reference gate",
+    command: ["bun", "run", "script/check-spec-commit-refs.ts"],
+    cwd: "packages/nikcli",
+    // Non-blocking: it depends on the checkout having history, and a CI
+    // strategy change should not turn a documentation link into a red build.
+    critical: false,
+    timeout: 60_000,
+  },
+  {
     name: "Generated HTTP client drift",
     command: [
       "bash",

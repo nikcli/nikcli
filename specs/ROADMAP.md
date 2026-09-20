@@ -222,7 +222,7 @@ appears more than once.
 
 | Spec   | What landed                                                                                           | Commit                  |
 | ------ | ----------------------------------------------------------------------------------------------------- | ----------------------- |
-| EOT-01 | One probe-environment block shared by both probes; `loadavg1` added                                   | `5aa643dc8`             |
+| EOT-01 | One probe-environment block shared by both probes; `loadavg1` added                                   | `dc3cab7fd`             |
 | EOT-01 | Probe progress moved to stderr; `BASELINE` comparison with an opt-in regression gate                  | working tree            |
 | EOT-01 | `repro:startup-hang`: the intermittent never-paints startup, reproduced on demand                     | working tree            |
 | EOT-02 | `runService` requirement typing; `any` and the cast removed                                           | `3ec56934`              |
@@ -236,7 +236,7 @@ appears more than once.
 | EOT-05 | Replay equivalence verified: a snapshot reaches the same state as a cold journal                      | working tree            |
 | EOT-06 | Windowing math pinned by tests, including two properties                                              | `92dc72d2a`             |
 | EOT-06 | Windowing heights derived per turn from content instead of a flat constant                            | working tree            |
-| EOT-07 | Ctrl+C asks the renderer for focus instead of a source string and a missing DOM                       | `a0b21dffd`             |
+| EOT-07 | Ctrl+C asks the renderer for focus instead of a source string and a missing DOM                       | `2744425ad`             |
 | EOT-07 | Input precedence as an ordered table: modal > editable > route > application                          | working tree            |
 | EOT-08 | Import-cost probe; one dialog moved off the critical path against a measured delta                    | `a9725f1d7`             |
 | EOT-08 | Four more dialogs off the critical path: eager set 3344ms -> 1552-2003ms                              | working tree            |
@@ -261,21 +261,21 @@ appears more than once.
 | EOT-18 | Command-surface gate restored and repointed                                                           | `f5783a970`             |
 | EOT-18 | `cmd()` takes `bootstrap`/`teardown`; teardown runs in a finally without masking the handler          | working tree            |
 | EOT-19 | Per-device capabilities the bridge advertises; an unknown scope grants nothing                        | working tree            |
-| EOT-20 | Test layers made disjoint; barrier helpers; one flaky test migrated to a barrier                      | `3ec56934`, `c1d323308` |
+| EOT-20 | Test layers made disjoint; barrier helpers; one flaky test migrated to a barrier                      | `3ec56934`, `4035590e2` |
 | EOT-20 | `preserveTestEnv` discipline enforced: a module-scope `NIKCLI_*` write fails a test                   | working tree            |
 | EOT-01 | Lifecycle counters on the bridge; a cancel counted once, synchronously, and a finalizer-leak watchdog | `644a8f28`              |
 | EOT-02 | Bridge exits classified; two `WorkspaceRef`s on one directory torn down without interleaving          | `644a8f28`              |
 | EOT-04 | `BYTE_BUDGET` enforced **per frame**; a lifetime budget would evict every healthy long-lived reader   | `644a8f28`              |
 | EOT-10 | Open-payload gate in CI, keyed by declaration text so an unrelated edit above a site is not a failure | `644a8f28`              |
-| EOT-12 | Typed account state machine + guard; the empty privileged-route list is the finding, with evidence    | `644a8f28`, `f1d8f7a6`  |
-| EOT-12 | Verifier env read at call time: 8 "flaky" auth tests were `Flag` constants captured at first import   | `d8efc911`              |
+| EOT-12 | Typed account state machine + guard; the empty privileged-route list is the finding, with evidence    | `644a8f28`, `6d880fc3`  |
+| EOT-12 | Verifier env read at call time: 8 "flaky" auth tests were `Flag` constants captured at first import   | `48344aa4`              |
 | EOT-13 | Span-schema gate; bounded telemetry consumer; the brain span moved onto a runtime that has the layer  | `644a8f28`              |
 | EOT-14 | Plugin-v2 gate: manifest exports, the tags consumers catch on, and autoload as a hard opt-in          | `644a8f28`              |
 | EOT-16 | Workspace-isolation gate, including the bridge comment that records the open B31 sharing gap          | `644a8f28`              |
 | EOT-17 | Network egress accounted (45 modules) rather than choked through a layer nothing routes through       | `644a8f28`              |
-| EOT-19 | `/mobile/bootstrap` probes bounded and de-networked: 8s+ -> 950ms on the app's connect path           | `b2a3d55e`              |
-| EOT-20 | `withFixture` as the shared harness; both new gates driven by tests that make them fail               | `644a8f28`, `f1d8f7a6`  |
-| EOT-12 | Flag capture-at-import is a CI gate, not four fixes; the legacy-credential pair moves together        | `6234721c`              |
+| EOT-19 | `/mobile/bootstrap` probes bounded and de-networked: 8s+ -> 950ms on the app's connect path           | `d1e2f99e`              |
+| EOT-20 | `withFixture` as the shared harness; both new gates driven by tests that make them fail               | `644a8f28`, `6d880fc3`  |
+| EOT-12 | Flag capture-at-import is a CI gate, not four fixes; the legacy-credential pair moves together        | `ac52fff3`              |
 
 Every spec has been opened and every spec now has at least one landed slice,
 EOT-14 and EOT-19 included.
