@@ -4,7 +4,7 @@
   "description": "AI-powered development tool — a fork of OpenCode (https://github.com/anomalyco/opencode)",
   "private": false,
   "type": "module",
-  "version": "1.376.0",
+  "version": "1.377.0",
   "packageManager": "bun@1.4.2",
   "scripts": {
     "dev": "bun run --cwd packages/nikcli --conditions=browser src/index.ts",

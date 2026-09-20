@@ -3,6 +3,23 @@
 <!-- UNRELEASED:START -->
 <!-- UNRELEASED:END -->
 
+## v1.377.0 (September 2026)
+
+## Core
+
+- Close P0 — the baseline probe never returned, so no baseline existed (@nikomatt69)
+- Fold the duplicate test directory back into packages/nikcli/test/tui (@nikomatt69)
+
+**Thank you to 1 community contributor:**
+
+- @nikomatt69:
+  - docs(specs): record both wrong rounds of the EOT-03 audit, and drop the unused primitive
+  - docs(specs): point the EOT-03 row at its commit
+  - docs(specs): repoint the EOT-03 row after the v1.376.0 rebase
+  - test(tui): fold the duplicate test directory back into packages/nikcli/test/tui
+  - fix(perf): close P0 — the baseline probe never returned, so no baseline existed
+  - docs(specs): point the P0 row at its commit
+
 ## v1.376.0 (September 2026)
 
 ## Core
