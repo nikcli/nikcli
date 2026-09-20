@@ -275,7 +275,7 @@ appears more than once.
 | EOT-17 | Network egress accounted (45 modules) rather than choked through a layer nothing routes through       | `644a8f28`              |
 | EOT-19 | `/mobile/bootstrap` probes bounded and de-networked: 8s+ -> 950ms on the app's connect path           | `b2a3d55e`              |
 | EOT-20 | `withFixture` as the shared harness; both new gates driven by tests that make them fail               | `644a8f28`, `f1d8f7a6`  |
-| EOT-12 | Flag capture-at-import is a CI gate, not four fixes; the legacy-credential pair moves together        | `<pending>`             |
+| EOT-12 | Flag capture-at-import is a CI gate, not four fixes; the legacy-credential pair moves together        | `6234721c`              |
 
 Every spec has been opened and every spec now has at least one landed slice,
 EOT-14 and EOT-19 included.
