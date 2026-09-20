@@ -12,6 +12,33 @@
  * both close a dialog and cancel a session. That happens when two layers both
  * believe they are entitled to the same event, which is what an implicit
  * precedence produces.
+ *
+ *
+ * ## Why this is not wired yet — 2026-09-21
+ *
+ * It has no production call site, and an attempt to give it one found the
+ * reason rather than an oversight.
+ *
+ * There is no central dispatcher to wire it into: 48 files subscribe to
+ * `useKeyboard` directly and each decides for itself. The one place that truly
+ * *arbitrates* is `ui/dialog.tsx`'s Ctrl+C branch, which asks exactly this
+ * question — is a modal open (`store.stack.length > 0`), is an editable
+ * focused (`renderer.currentFocusedEditor !== null`) — and then resolves it
+ * **against the order below**: with both active, the focused editor gets the
+ * key, not the modal.
+ *
+ * That is not a bug in the dialog. Escape and Ctrl+C legitimately resolve in
+ * opposite directions at the same site: Escape must close the dialog even
+ * while a text field has focus, and Ctrl+C must reach the field. So a single
+ * flat order cannot be right for both, and expressing the dialog's rule
+ * through `ownerOf` means passing `modal: stack.length > 0 && !editable` — the
+ * same `if`, wearing a table.
+ *
+ * The table is therefore either **key-aware or wrong**. Before it is wired,
+ * that is the decision to make; `packages/nikcli/test/tui/input-precedence.test.ts`
+ * pins the mismatch so it cannot be wired wrongly in the meantime, and
+ * `dialog-ctrl-c.test.ts` already characterises the shipped arbitration, which
+ * is the precondition requirement 3 asks for before any refactor.
  */
 
 /** The layers that can claim an event, highest precedence first. */
