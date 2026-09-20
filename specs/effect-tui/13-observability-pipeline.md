@@ -109,3 +109,11 @@ extend to other groups. Verify each group's spans match the schema and redaction
 on the next group. Roll back a route group behind a per-group span toggle (default-on), never by disabling redaction or
 shrinking the live panel. Removal of the legacy inline logger is the last step and only after every route has the new
 span coverage. A rolled-back group keeps its redaction and metric coverage even if spans are temporarily disabled.
+
+## Discipline Addendum — 2026-09-20
+
+`script/check-observability-schema.ts` is in CI and `src/observability/telemetry-consumer.ts` is the reference consumer (commit `644a8f28`).
+
+1. **A span only exists if it runs on a runtime that has the layer.** `effect/runtime.ts:makeRuntime` merges `Observability.layer` into every base it builds, so `Effect.withSpan` reaches both the OTLP exporter and the live panel — but only for effects run through `AppRuntime` or `runtimeFor`. A bare `Effect.runPromise` uses Effect's default runtime, whose tracer discards the span silently: the allocation is paid and nothing is reported. The brain scheduler's per-tick span (`src/brain/scheduler.ts`) shipped on `Effect.runPromise` and reported nothing until it moved to `AppRuntime`. It remains the only `withSpan` in `src`, so the rule has no second example to learn from yet.
+2. **The schema gate is structural, and that is the point.** It asserts the spec's forbidden segments and required allowed attributes are present in `span-schema.ts`, and that `otlp.ts` still calls `sanitizeSpanAttributes` — the single redaction choke point. It reads source and imports nothing, so it costs no build and cannot be defeated by a refactor that keeps the code compiling.
+3. **The live-panel consumer throttles on the producer's clock.** `createTelemetryConsumer` coalesces on `frame.startTime`, not on arrival time. A span's start time is what the panel displays, and reading it makes the consumer a pure function of its input: the same frames coalesce the same way live or replayed from a capture, and no test has to control the wall clock. `push` is synchronous and O(1) so a producer in a tight loop cannot block the input thread — the invariant the bounded window exists to protect.

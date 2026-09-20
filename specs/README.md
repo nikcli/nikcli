@@ -159,11 +159,19 @@ before changing replay semantics.
 
 ## Open Payloads
 
-This is the continuation point for the open-payload policy referenced by `packages/nikcli/AGENTS.md`.
-It is not an audited allowlist of current endpoints. EOT-10 must inventory each intentional open payload with operation,
-schema location, owner, justification, and a runtime/consumer test. Only genuine opaque passthroughs, polymorphic event
+This is the policy referenced by `packages/nikcli/AGENTS.md`. Only genuine opaque passthroughs, polymorphic event
 payloads, SSE frames, or bodyless redirects qualify; an ordinary domain success object does not. Never introduce
 `Schema.Unknown` merely to make response encoding or generated-client validation pass.
+
+The inventory EOT-10 asked for now exists and is enforced: `packages/nikcli/specs/httpapi-open-payloads.json` carries
+each declaration with its owner, kind and justification, and `bun run check:open-payloads` (in `script/ci-validate.ts`)
+fails on a `Schema.Unknown` under `src/server/httpapi/` that is not listed. 49 sites, 41 entries as of 2026-09-20.
+
+Two properties of that file are load-bearing. It is keyed by **file plus the declaring line's text**, not by line
+number — a line number turns every unrelated edit above a listed site into a CI failure, and renumbering an allowlist
+is a diff that looks like review and contains none. And `Schema.Record(Schema.String, Schema.Unknown)` is tracked but
+is not a violation: the codegen emits `{ [k: string]: unknown }`, a typed record rather than an `any`. See the
+Discipline Addendum in `effect-tui/10-contracts-errors-security.md`.
 
 ## Observability Schema and Redaction Discipline
 

@@ -112,3 +112,13 @@ user-facing plugin (`brain` or `observability`), then sweep. Each migration is i
 selects v1 vs v2 loading; the legacy path is removed only when no v1 plugins remain. Roll back by flipping the per-plugin
 flag to v1; never delete a manifest or storage entry as part of a migration. Storage entries are additive; a v1 plugin
 that has not been migrated sees its data, a v2 plugin sees only its scoped store.
+
+## Discipline Addendum — 2026-09-20
+
+`script/check-plugin-v2.ts` is in CI (commit `644a8f28`). It pins three structural invariants without importing the plugin package, so it costs no build step:
+
+1. `packages/plugin/src/v2/manifest.ts` exports `parseManifest`, `hasManifest`, `Capability`, `ManifestSchema` and the three typed failures, and each failure still carries its `PluginV2*` tag. The tags are what consumers `catchTag` on, so a rename that keeps the code compiling would still break every handler.
+2. The tool registry never imports a config-dir tool without consulting `NIKCLI_ALLOW_PLUGIN_AUTOLOAD` or `tool.allow`. Autoload is a hard opt-in: the gate has to be read _before_ the import, because an import is already execution.
+3. `packages/nikcli/AGENTS.md` documents the same opt-in. A contract enforced only by a script is one a human reviewer cannot check, and the two drift in opposite directions.
+
+`test/plugin/v2-manifest.test.ts` and `test/plugin/autoload-safety.test.ts` cover the behaviour the gate can only assert structurally.

@@ -145,6 +145,21 @@ they codify the helpers and patterns that already exist so a code reviewer does 
    it registers no `beforeEach`/`afterEach`, which from inside a running case would attach hooks to the _following_
    cases and leave this one unguarded. Existing tests are not required to migrate; new tests are expected to.
 
+4. **"Passes alone, fails in the suite" is a claim to be bisected, not a flake to be retried.** A flaky test fails
+   _some_ runs of the same command. A test that fails deterministically under one command and passes under another is
+   reporting a real difference, and the difference is usually shared process state: `bun test` runs every file in one
+   module registry, so whichever file loads a module first decides what that module captured. Bisect it — halve the
+   file list, then bisect within the half, then run each candidate against the failing file. Two findings came out of
+   doing that here: eight `test/server/local-account-session.test.ts` failures that were `Flag` constants capturing
+   `process.env` at import (EOT-12), and one `mobile-pairing-listener` timeout that was an unbounded `npx` on a
+   request path (EOT-19). Neither was a test problem. Before concluding a failure is pre-existing, prove it: restore
+   the HEAD version of the files your change touched and re-run.
+5. **A gate with an empty list still needs a test that makes it fail.** An allowlist that has never been shown to bite
+   is indistinguishable from a check that does nothing. `check-open-payloads.ts` and `check-account-required.ts` both
+   take `--src` / `--dir` / `--allowlist` / `--privileged` overrides so their tests drive the real script against a
+   synthetic tree, in both directions. A test that re-declares the script's own regexes and asserts against the copies
+   passes whatever the script does.
+
 The lifecycle counters from EOT-01 (`packages/nikcli/src/effect/lifecycle-counters.ts`) are observable from any test via
 `snapshot()` so a test can assert `scope.completed === 1` or `runtime.bridge.failure === 0` after a behavior assertion
 without having to instrument the production code. Use this when the assertion would otherwise be a magic `sleep`.

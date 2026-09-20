@@ -91,3 +91,10 @@ Start with a single bounded service operation, characterize its Promise contract
 keeping the exported facade. Move account/session/tool operations only in independently testable slices. Remove legacy
 ambient fallbacks only after an exhaustive caller inventory and concurrent-instance tests show they are unused. Roll back
 the internal implementation behind the same facade; never add a second runtime or discard caller cancellation to recover.
+
+## Discipline Addendum — 2026-09-20
+
+`runPromiseWithLayer` and `runPromiseExitWithLayer` now record their outcomes (commit `644a8f28`), and `test/effect/multi-instance-teardown.test.ts` covers two `WorkspaceRef`s on one directory.
+
+1. **The two bridge entry points classify differently, and the asymmetry is real.** `runPromiseExitWithLayer` sees the `Exit`, so it separates `runtime.bridge.interrupted` from `runtime.bridge.failure` via `Cause.hasInterruptsOnly`. `runPromiseWithLayer` only sees a rejected promise and books every non-success as `runtime.bridge.failure`. Rewriting it on top of `runPromiseExit` and rethrowing `Cause.squash` would classify correctly and would also change the rejection value at roughly 165 call sites — a behaviour change disguised as instrumentation. The asymmetry stays until those call sites are the actual subject of a slice.
+2. **Instrumentation must not change what the bridge throws.** Both wrappers count and re-throw the original value untouched. A bridge whose failure mode depends on whether a counter was enabled is worse than no counter.

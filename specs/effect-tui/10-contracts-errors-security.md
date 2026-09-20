@@ -93,3 +93,12 @@ Characterize one producer-to-TUI flow, fix its boundary and explicit error handl
 then expand by domain. Maintain an inventory of intentional open payloads and existing compatibility names. Roll back
 internal adapters behind the same contract or retain additive fields; do not break old SDK consumers or relax security,
 validation, or CI client-drift checks to recover from a failed release.
+
+## Discipline Addendum — 2026-09-20
+
+`script/check-open-payloads.ts` is in CI (commit `644a8f28`), backed by `packages/nikcli/specs/httpapi-open-payloads.json`: 49 `Schema.Unknown` sites across `src/server/httpapi/`, 41 justified entries.
+
+1. **The allowlist is keyed by file plus the declaring line's text, never by line number.** A line number makes every unrelated edit above a listed site fail the gate, and the repair — renumbering the allowlist — is a diff that looks like review and contains none. The snippet is also what a reviewer needs to read next to the justification. `count` covers a file that declares the same shape more than once, so a _second_ copy of an already justified declaration is still a new open payload and still needs review.
+2. **`Schema.Record(Schema.String, Schema.Unknown)` is tracked but is not a violation.** The codegen emits `{ [k: string]: unknown }`, a typed record, not an `any`. It is listed so the policy stays explicit and CI does not block on it alone.
+3. **A missing entry fails; a stale entry warns.** An allowlisted declaration that has disappeared is a cleanup, not a breach, and failing CI for it teaches people to delete entries to get green.
+4. **The gate is driven by its own test.** `test/script/check-open-payloads.test.ts` runs the real script against a synthetic tree through `--dir` / `--allowlist`: unlisted fails, listed passes, a line shift still passes, a duplicate fails, a vanished entry warns without failing. An earlier version of that test re-declared the script's regexes and asserted against the copies, which passes whatever the script does.

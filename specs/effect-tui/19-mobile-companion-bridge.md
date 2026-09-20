@@ -121,3 +121,16 @@ teleport, then worktree. Each group flips a per-capability flag; the legacy HTTP
 directions are tested. Roll back by toggling the per-capability flag to the legacy handler; never delete the typed
 errors or the multi-device ordering. Per-device state is additive; never delete device records as part of a bridge
 refactor.
+
+## Discipline Addendum — 2026-09-20
+
+`GET /mobile/bootstrap` is on the app's connect path, and it was unbounded (commit `b2a3d55e`).
+
+`Expo.doctor` spawned `npx eas --version` with **no timeout at all** — the sibling expo probe got one through `exec`, this one was spawned directly — so the request stayed open for as long as npx wanted. And npx wanted a while: without `--no-install`, `npx <pkg> --version` fetches the package from the registry before answering, so a probe asking "is this installed" installs it and takes however long the network does. Measured here: 8s+ against a 950ms fix (`--no-install`, a 3s ceiling, and the three independent probes run concurrently instead of in sequence).
+
+Two rules for this bridge:
+
+1. **A capability probe is a local question and must be answered locally.** Anything on a connect path that can reach the network for an answer the filesystem already has is a hang waiting for a bad café. Actions the user explicitly asked for — `start`, `build`, `install`, `publish` — still fetch, because fetching is the point there.
+2. **Every spawn on a request path carries its own deadline.** `exec` has one; a hand-rolled `Bun.spawn` beside it does not, and the difference is invisible at the call site.
+
+`test/server/mobile-pairing-listener.test.ts` was failing its 5s budget on this for the authenticated request — the one that actually reaches the handler. It passed only when another file in the run had already warmed the probes, which is why it read as a flake for as long as it did.

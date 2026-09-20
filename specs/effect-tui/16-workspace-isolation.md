@@ -112,3 +112,12 @@ Start with one existing operation (e.g. workspace switch in the TUI) and tighten
 errors with concurrent test cases. Then add hot-switch cancellation coverage and the duplicate-detection identity
 check. Roll back by relaxing the scope check, not by deleting the typed errors or the per-workspace caches. Per-workspace
 cache eviction is additive; never delete shared keys as part of the scope tightening.
+
+## Discipline Addendum — 2026-09-20
+
+`script/check-workspace-isolation.ts` is in CI (commit `644a8f28`), with `test/workspace/isolation.test.ts` beside it. The gate pins four invariants by reading source:
+
+1. Workspace ids carry the `wrk_` prefix — the discriminator `projection.ts` dispatches on and the `WorktreeAdaptor` relies on.
+2. `WorkspaceRef` and `locallyWorkspace` stay exported from `effect/instance-ref.ts`, and `effect/instance-scope.ts` still pins a workspace through `locallyWorkspace` when `input.workspaceID` is present.
+3. The bridge comment still cites the open B31 gap. This one is unusual and deliberate: the comment records that two workspaces on one directory currently _share_ the instance scope's resources. A refactor that promotes the workspace to its own owning `Scope` changes what disposal releases, and the gate forces that refactor to update the note rather than leave a stale explanation next to changed behaviour.
+4. `workspace/index.ts` registers no SIGINT/SIGTERM handlers of its own — connection lifecycle owns them, and a second handler is how a shutdown ends up racing itself.

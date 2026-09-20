@@ -14,7 +14,7 @@
  * emitter, not ahead of it. `runtime.bridge.stale-result` was declared and
  * dropped again for that reason: a result arriving after its consumer is gone
  * is only observable where the consumer is, which is the TUI lifecycle work
- * in `specs/effect-tui/03-tui-async-lifecycle.md`, not this bridge.
+ * in `specs/effect-tui/03-tui-lifecycle.md`, not this bridge.
  */
 
 type CounterKey =

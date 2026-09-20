@@ -97,3 +97,14 @@ processes running. Do not interpret swallowed errors, empty arrays, or absent me
 First add measurement without changing runtime behavior, then freeze a baseline, then promote one budgeted slice at a time.
 Do not weaken existing churn limits when adding broader fixtures. Roll back intrusive production instrumentation if its
 cost exceeds budget, retain test-only probes and raw results, and keep existing observability export defaults unchanged.
+
+## Discipline Addendum — 2026-09-20
+
+Lifecycle counters landed (`packages/nikcli/src/effect/lifecycle-counters.ts`, commit `644a8f28`), wired into `InstanceScope` and the runtime bridge. Four rules came out of building them.
+
+1. **A counter with no emitter is anti-evidence.** It reads as "measured, none" when it means "never measured", and nothing in the type system says which. A key is therefore added together with the call site that increments it, never ahead of one. `runtime.bridge.stale-result` was declared and removed again on exactly this ground: a result arriving after its consumer is gone is only observable where the consumer is, which is the TUI lifecycle work in `03-tui-lifecycle.md`, not this bridge.
+2. **Count each outcome once, and count it where the caller can see it.** A cancellation passes through two places — the canceller, and the Exit that interrupting the inner fiber produces — so incrementing in both booked every cancel twice. Counting only at the Exit fixes the double count but moves the increment two promise hops later, and a caller that interrupts and then reads the counter sees nothing. The cancellation is therefore counted synchronously in the canceller, and the Exit handler skips what `cancelled` already recorded. `test/effect/lifecycle-counters.test.ts` asserts `toBe(1)`, not `toBeGreaterThanOrEqual(1)`, because only the exact count catches the regression.
+3. **`scope.failed` is not `scope.interrupted`.** A scope whose instance bootstrap threw never ran its effect; folding it into the interrupt bucket hides a broken instance inside a number that normally means "the user pressed Ctrl+C".
+4. **`scope.finalizer-leak` is a watchdog, not a guess.** `InstanceScope.with` promises that interrupting the caller waits for the inner fiber's finalizers. A finalizer that never returns breaks that promise with no other symptom in the process, so the canceller arms an unref'd `FINALIZER_GRACE_MS` timer and counts the leak if the Exit has not arrived. Unref'd deliberately: an outstanding leak must not itself keep Bun alive.
+
+Counters are module state. `bun test` shares one module registry across a run, so a test that reads them resets in `beforeEach`, not only in `afterEach` — otherwise it inherits whatever an earlier file in the run left behind.
