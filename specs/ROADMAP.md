@@ -286,7 +286,7 @@ appears more than once.
 | EOT-20 | `withFixture` as the shared harness; both new gates driven by tests that make them fail                          | `644a8f28`, `6d880fc3`  |
 | EOT-12 | Flag capture-at-import is a CI gate, not four fixes; the legacy-credential pair moves together                   | `ac52fff3`              |
 | EOT-20 | TUI tests already lived in `packages/nikcli/test/tui` (55 files); a duplicate directory removed, `adopt` covered | `995fff77ba`            |
-| EOT-01 | P0 closed: the probe never returned, so no baseline existed; artifact + gate now in CI                           | `<pending>`             |
+| EOT-01 | P0 closed: the probe never returned, so no baseline existed; artifact + gate now in CI                           | `7376aed1e1`            |
 | EOT-03 | `useAbortOnCleanup` cannot guard a dialog that opens dialogs — two reverted rounds, and why                      | `29735847d4fc`          |
 
 Every spec has been opened and every spec now has at least one landed slice,
