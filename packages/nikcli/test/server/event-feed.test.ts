@@ -262,7 +262,7 @@ describe("connection cost accounting", () => {
     const conn = fakeConnection()
     const connection = feed.attach(conn.controller)
 
-    expect(connection.cost).toEqual({ frames: 0, bytes: 0 })
+    expect(connection.cost).toEqual({ frames: 0, bytes: 0, coalesced: 0 })
 
     feed.broadcast({ type: "session.updated", properties: { id: "ses_1" } })
     const after = connection.cost
@@ -532,5 +532,97 @@ describe("no eviction is silent (EOT-04)", () => {
 
     expect(() => connection.local({ type: "server.heartbeat", properties: {} })).not.toThrow()
     expect(feed.size).toBe(0)
+  })
+})
+
+/**
+ * Delivery class at the admission cap.
+ *
+ * `specs/effect-tui/04-event-delivery.md` landed the registry deliberately
+ * ahead of the caps, on the argument that "a cap that does not know which
+ * events may be coalesced and which may not is a cap that drops a permission
+ * prompt to save a progress bar". Until 2026-09-21 the cap still did not know:
+ * `BusEvent.deliveryOf` had no production call site and every class evicted
+ * identically.
+ *
+ * These cases drive `Connection.offer` at its seam, with the class passed in,
+ * rather than broadcasting a type the registry knows. Both alternatives are
+ * worse and one of them was written first: asserting on `lsp.updated` really
+ * asserts that something imported `@/lsp` earlier in the run, and registering
+ * synthetic events here leaks them into the module-level registry — which
+ * broke `event-visibility.test.ts`, two files away, because
+ * `BusEvent.schemas()` refuses an event with no Effect Schema. The registry is
+ * process-global; a fixture that writes to it is not a fixture.
+ *
+ * `broadcast` is still covered below, for the one thing only it can show: that
+ * it consults the registry at all.
+ */
+describe("delivery class at the lag budget", () => {
+  /** A connection with no room left, so the very next frame is at the cap. */
+  const saturated = () => {
+    const feed = new EventFeed.Feed((event) => event)
+    const conn = fakeConnection(0)
+    const connection = feed.attach(conn.controller)
+    return { feed, conn, connection }
+  }
+
+  it("drops a replaceable snapshot frame and keeps the reader attached", () => {
+    const { conn, connection } = saturated()
+
+    connection.offer(new TextEncoder().encode("data: {}\n\n"), "snapshot")
+
+    expect(conn.closed).toBe(false)
+    expect(connection.cost.coalesced).toBe(1)
+    // Nothing was written, and no eviction reason was either — the frame is
+    // simply gone, which is what "replaceable" means.
+    expect(conn.frames).toEqual([])
+  })
+
+  it("still evicts on a decision, because a prompt is not replaceable", () => {
+    const { conn, connection } = saturated()
+
+    connection.offer(new TextEncoder().encode("data: {}\n\n"), "decision")
+
+    expect(conn.closed).toBe(true)
+    // And it says why, so the client refetches rather than reading a silent
+    // close as a network failure.
+    expect(conn.frames.join("")).toContain("SubscriberOverflowError")
+  })
+
+  it("still evicts on an ordered event, the conservative default", () => {
+    const { feed, conn } = saturated()
+
+    // Unclassified types default to `ordered`, so an event nobody has thought
+    // about is never treated as droppable.
+    feed.broadcast({ type: "some.event.nobody.declared", properties: {} })
+
+    expect(conn.closed).toBe(true)
+  })
+
+  it("bounds the coalescing, so a reader that never consumes is still evicted", () => {
+    // Dropping forever is not a bounded policy. Past COALESCE_BUDGET the
+    // reader is not behind on status, it is not reading at all.
+    const { conn, connection } = saturated()
+
+    for (let i = 0; i <= EventFeed.COALESCE_BUDGET; i++) {
+      connection.offer(new TextEncoder().encode("data: {}\n\n"), "snapshot")
+    }
+
+    expect(connection.cost.coalesced).toBe(EventFeed.COALESCE_BUDGET)
+    expect(conn.closed).toBe(true)
+    expect(conn.frames.join("")).toContain("SubscriberOverflowError")
+  })
+
+  it("leaves a healthy reader untouched whatever the class", () => {
+    // The guard must only ever fire at the cap: a connection with room takes
+    // every frame, snapshot included.
+    const feed = new EventFeed.Feed((event) => event)
+    const conn = fakeConnection()
+    const connection = feed.attach(conn.controller)
+
+    connection.offer(new TextEncoder().encode("data: {}\n\n"), "snapshot")
+
+    expect(conn.frames.length).toBe(1)
+    expect(connection.cost.coalesced).toBe(0)
   })
 })

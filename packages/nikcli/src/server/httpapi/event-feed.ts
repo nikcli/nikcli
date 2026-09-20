@@ -88,11 +88,25 @@ export namespace EventFeed {
    */
   export const BYTE_BUDGET = 8 * 1024 * 1024
 
+  /**
+   * How many `snapshot` frames one connection may have dropped before it is
+   * evicted anyway.
+   *
+   * A reader that is behind on replaceable status is not the reader the lag
+   * budget was written to catch, so dropping the frame and keeping the
+   * connection is the correct answer — but "drop forever" is not a bounded
+   * policy, and ROADMAP non-negotiable 4 requires one. Past this count the
+   * reader is genuinely not consuming and is evicted with the ordinary
+   * overflow reason.
+   */
+  export const COALESCE_BUDGET = 256
+
   /** A single SSE connection, its lag budget, and what it has cost so far. */
   export class Connection {
     private closed = false
     private written = 0
     private frames = 0
+    private coalesced = 0
 
     constructor(
       private readonly controller: ReadableStreamDefaultController<Uint8Array>,
@@ -126,7 +140,7 @@ export namespace EventFeed {
      * exist to hold the connection open and state why it is being dropped,
      * so they must never be what drops it.
      */
-    offer(encoded: Uint8Array): boolean {
+    offer(encoded: Uint8Array, delivery: BusEvent.Delivery = "ordered"): boolean {
       if (this.closed) return false
       // `desiredSize` is the queuing strategy's high-water mark minus what
       // the reader has not consumed, so it reaches zero exactly when the
@@ -134,6 +148,22 @@ export namespace EventFeed {
       // has closed or errored, which `write` handles.
       const desired = this.controller.desiredSize
       if (desired !== null && desired <= 0) {
+        // The delivery class decides whether being behind is fatal. A
+        // `snapshot` is replaceable by definition — status, progress, an lsp
+        // refresh — so the right answer is to drop this frame and keep the
+        // reader, who will be corrected by the next one. Evicting instead is
+        // the failure `specs/effect-tui/04-event-delivery.md` names: a cap
+        // that does not know which events may be coalesced "drops a permission
+        // prompt to save a progress bar".
+        //
+        // Every other class evicts exactly as before. `ordered` loses content,
+        // `decision` loses a prompt the user is waiting on, `terminal` loses a
+        // completion — none of those may be dropped quietly, and the eviction
+        // is how the client learns to refetch.
+        if (delivery === "snapshot" && this.coalesced < COALESCE_BUDGET) {
+          this.coalesced++
+          return true
+        }
         // The budget belongs to the stream's queuing strategy, not to this
         // object, so the message states the condition rather than a number
         // it cannot actually read back.
@@ -199,8 +229,8 @@ export namespace EventFeed {
      * broadcast traffic would under-report exactly the connections that are
      * being told something is wrong.
      */
-    get cost(): { frames: number; bytes: number } {
-      return { frames: this.frames, bytes: this.written }
+    get cost(): { frames: number; bytes: number; coalesced: number } {
+      return { frames: this.frames, bytes: this.written, coalesced: this.coalesced }
     }
 
     private write(encoded: Uint8Array): boolean {
@@ -274,7 +304,10 @@ export namespace EventFeed {
         })
         return
       }
-      for (const connection of this.connections) connection.offer(encoded)
+      // Resolved once per broadcast, not once per connection: the class is a
+      // property of the event, and the encode above is already shared.
+      const delivery = BusEvent.deliveryOf(this.typeOf(event))
+      for (const connection of this.connections) connection.offer(encoded, delivery)
     }
 
     closeAll() {
