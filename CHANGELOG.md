@@ -3,6 +3,42 @@
 <!-- UNRELEASED:START -->
 <!-- UNRELEASED:END -->
 
+## v1.378.0 (September 2026)
+
+## Core
+
+- Delete the Lifecycle wrapper no command was registered with (@nikomatt69)
+- The bridge booked every interruption as a failure (@nikomatt69)
+- Make "no silent loss" a property over every eviction path (@nikomatt69)
+- Cover the two bounding primitives, and stop work() dropping items (@nikomatt69)
+- Cover durable recovery against a real database (@nikomatt69)
+- Sweep every parameterless GET on a fresh install (@nikomatt69)
+- The OTLP exporter was shipping span attributes unredacted (@nikomatt69)
+- Close four redaction holes the EOT-13 fuzz gate found (@nikomatt69)
+
+**Thank you to 1 community contributor:**
+
+- @nikomatt69:
+  - fix(observability): close four redaction holes the EOT-13 fuzz gate found
+  - docs(specs): point the redaction-fuzz row at its commit
+  - docs(specs): repoint the redaction-fuzz row after the v1.377.0 rebase
+  - fix(observability): the OTLP exporter was shipping span attributes unredacted
+  - docs(specs): point the OTLP-smoke row at its commit
+  - test(server): sweep every parameterless GET on a fresh install
+  - docs(specs): point the fresh-install-sweep row at its commit
+  - test(background): cover durable recovery against a real database
+  - docs(specs): point the durable-recovery row at its commit
+  - fix(util): cover the two bounding primitives, and stop work() dropping items
+  - docs(specs): point the bounded-concurrency row at its commit
+  - test(server): make "no silent loss" a property over every eviction path
+  - docs(specs): point the no-silent-loss row at its commit
+  - fix(effect): the bridge booked every interruption as a failure
+  - docs(specs): point the bridge-outcomes row at its commit
+  - refactor(cli): delete the Lifecycle wrapper no command was registered with
+  - docs(specs): point the EOT-18 row at its commit
+  - test(sync): pin cross-process seq uniqueness, and document what it does not prove
+  - docs(specs): point the EOT-15 row at its commit
+
 ## v1.377.0 (September 2026)
 
 ## Core
