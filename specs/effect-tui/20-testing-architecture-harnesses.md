@@ -123,3 +123,28 @@ Phase by layer. Unit patterns land first (testEffect, schema assertions, fixture
 documentation/test-helper change; existing tests migrate incrementally. Roll back by removing the new helper, not by
 reverting the test that uses it. Tests are not weakened to satisfy new patterns; if a pattern is wrong, the pattern is
 fixed, not the test.
+
+## Discipline Addendum — 2026-09-18
+
+Three concrete rules pin what a Slice-1 EOT-20 delivery looks like in this codebase. They do not change the spec above;
+they codify the helpers and patterns that already exist so a code reviewer does not have to re-derive them every PR.
+
+1. **No `sleep` for racing.** When a test needs to coordinate with concurrent work, it uses the barrier helpers in
+   `packages/nikcli/test/helpers/barrier.ts` (`barrier(count)`, `deferred()`, `withTimeout`, `waitFor`). A test that
+   uses `await new Promise(r => setTimeout(r, N))` to wait for an event is a test that loses under CI load. The fix is
+   to subscribe to the event itself (`bus.on`, `fiber.addObserver`, a deferred resolve), not to wait longer.
+2. **Isolated database per test.** Tests that touch `nikcli.db` use `withIsolatedDatabase` (`test/helpers/sqlite.ts`) or
+   the new `withFixture` (`test/helpers/fixture.ts`). A test that mutates the shared database is a flake waiting to
+   happen. The sharded CI runner (`script/test-ci.ts`) uses `--isolate`, so this is not optional.
+3. **Shared fixture loader for new feature tests.** New tests under `test/{plugin,cli,mobile}/` default to
+   `withFixture` (`test/helpers/fixture.ts`). It composes `withIsolatedDatabase` + `preserveTestEnv` + `barrier`.
+   A case that declares a count — `withFixture({ barrier: 2 }, ...)` — is held to it: arrivals still pending when the
+   body returns fail the case, because a barrier that opened for fewer arrivals than the test declared opened for a
+   reason the test did not intend. The check is skipped when the body itself threw, so a real failure is never
+   replaced by a complaint about bookkeeping. Everything `withFixture` does happens inline, inside the calling case —
+   it registers no `beforeEach`/`afterEach`, which from inside a running case would attach hooks to the _following_
+   cases and leave this one unguarded. Existing tests are not required to migrate; new tests are expected to.
+
+The lifecycle counters from EOT-01 (`packages/nikcli/src/effect/lifecycle-counters.ts`) are observable from any test via
+`snapshot()` so a test can assert `scope.completed === 1` or `runtime.bridge.failure === 0` after a behavior assertion
+without having to instrument the production code. Use this when the assertion would otherwise be a magic `sleep`.

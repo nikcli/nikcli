@@ -201,12 +201,18 @@ describe("EventFeed", () => {
     const instance = fakeConnection()
     const instanceFeed = new EventFeed.Feed(identity)
     instanceFeed.attach(instance.controller).local({ type: "server.connected", properties: {} })
-    instanceFeed.broadcast({ type: "session.updated", properties: { id: "ses_1" } })
+    instanceFeed.broadcast({
+      type: "session.updated",
+      properties: { id: "ses_1" },
+    })
 
     const global = fakeConnection()
     const globalFeed = new EventFeed.Feed(wrapped)
     globalFeed.attach(global.controller).local({ type: "server.connected", properties: {} })
-    globalFeed.broadcast({ directory: "/tmp/p", payload: { type: "session.updated", properties: { id: "ses_1" } } })
+    globalFeed.broadcast({
+      directory: "/tmp/p",
+      payload: { type: "session.updated", properties: { id: "ses_1" } },
+    })
 
     // /event: unwrapped. The TUI reads `data.type` directly.
     expect(instance.data).toEqual([
@@ -217,7 +223,10 @@ describe("EventFeed", () => {
     // their own `{directory, payload}` envelope and pass through untouched.
     expect(global.data).toEqual([
       { payload: { type: "server.connected", properties: {} } },
-      { directory: "/tmp/p", payload: { type: "session.updated", properties: { id: "ses_1" } } },
+      {
+        directory: "/tmp/p",
+        payload: { type: "session.updated", properties: { id: "ses_1" } },
+      },
     ])
   })
 
@@ -277,5 +286,101 @@ describe("connection cost accounting", () => {
     expect(conn.frames.some((frame) => frame.includes("SubscriberOverflowError"))).toBe(true)
     expect(connection.cost.frames).toBe(conn.frames.length)
     expect(connection.cost.bytes).toBe(conn.frames.reduce((total, frame) => total + frame.length, 0))
+  })
+})
+
+/**
+ * EOT-04 byte-budget enforcement.
+ *
+ * `BYTE_BUDGET` caps a single broadcast frame. It deliberately does not cap
+ * what a connection is handed over its lifetime: `Connection.written` only
+ * grows, so spending it as a budget evicts healthy long-lived readers on a
+ * timer disguised as a limit.
+ */
+describe("EventFeed byte budget (EOT-04)", () => {
+  it("BYTE_BUDGET is the published ceiling", () => {
+    expect(EventFeed.BYTE_BUDGET).toBe(8 * 1024 * 1024)
+  })
+
+  it("a healthy reader is never evicted for what it has been sent over time", () => {
+    // The regression this guards: checking `written + frame > BYTE_BUDGET`
+    // rather than `frame > BYTE_BUDGET`. `written` is a lifetime total, so
+    // that form disconnects every session that has streamed eight megabytes
+    // of perfectly ordinary events — which a TUI session reaches well inside
+    // an hour — with an error blaming the client.
+    const feed = new EventFeed.Feed(identity)
+    const conn = fakeConnection(EventFeed.LAG_BUDGET)
+    const connection = feed.attach(conn.controller)
+
+    const megabyte = "x".repeat(1024 * 1024)
+    for (let i = 0; i < 12; i++) {
+      feed.broadcast({ type: "chunk", i, payload: megabyte })
+      conn.drain()
+    }
+
+    expect(connection.cost.bytes).toBeGreaterThan(EventFeed.BYTE_BUDGET)
+    expect(feed.size).toBe(1)
+    expect(conn.data.every((event) => event.type !== "server.error")).toBe(true)
+  })
+
+  it("a connection that stays under BYTE_BUDGET keeps receiving frames", () => {
+    const feed = new EventFeed.Feed(identity)
+    const conn = fakeConnection(EventFeed.LAG_BUDGET)
+    const connection = feed.attach(conn.controller)
+    // Keep the fake reader draining so the byte budget is the only thing
+    // that could possibly evict the connection.
+    for (let i = 0; i < 50; i++) {
+      feed.broadcast({ type: "t", i })
+      conn.drain()
+    }
+    // Observable: feed still holds the connection, no server.error frame.
+    expect(feed.size).toBe(1)
+    expect(conn.data.every((event) => event.type !== "server.error")).toBe(true)
+    expect(connection.cost.bytes).toBeLessThan(EventFeed.BYTE_BUDGET)
+  })
+
+  it("a single oversized broadcast evicts the connection with ByteBudgetExceededError", () => {
+    const feed = new EventFeed.Feed(identity)
+    const conn = fakeConnection(EventFeed.LAG_BUDGET)
+    feed.attach(conn.controller)
+
+    // Build a payload that, once framed, is larger than BYTE_BUDGET. The
+    // frame helper wraps it in `data: ...\n\n` so the framed byte count is
+    // a few bytes more than the payload itself.
+    const payload = "x".repeat(EventFeed.BYTE_BUDGET + 1024)
+    feed.broadcast({ type: "oversized", payload })
+
+    // The connection is evicted with the byte-budget reason, not the
+    // frame-count reason. `feed.size` drops to 0 because the connection
+    // was removed from the feed; the close-reason frame carries the typed
+    // error name.
+    expect(feed.size).toBe(0)
+    const last = conn.data.at(-1)
+    expect(last).toMatchObject({
+      type: "server.error",
+      properties: { name: "ByteBudgetExceededError" },
+    })
+    // And the offending frame did not get delivered to the connection —
+    // only the close-reason frame.
+    expect(conn.data.map((event) => event.type)).toEqual(["server.error"])
+    expect(feed.size).toBe(0)
+  })
+
+  it("local frames bypass the byte budget", () => {
+    const feed = new EventFeed.Feed(identity)
+    const conn = fakeConnection(1)
+    const connection = feed.attach(conn.controller)
+
+    // Local frames go out through `write` and never reach the budget check
+    // at all — the close reason has to survive an eviction it is announcing.
+    for (let i = 0; i < 5; i++) {
+      connection.local({ type: "server.heartbeat", properties: { i } })
+    }
+
+    // Observable: feed still holds the connection, no server.error frame.
+    expect(feed.size).toBe(1)
+    expect(conn.data.every((event) => event.type !== "server.error")).toBe(true)
+    expect(connection.cost.frames).toBe(5)
+    expect(connection.cost.bytes).toBeLessThan(1_000)
   })
 })

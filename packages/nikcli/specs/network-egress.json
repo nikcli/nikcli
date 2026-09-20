@@ -1,0 +1,218 @@
+{
+  "$schema": "internal",
+  "description": "Files that can reach the network. EOT-17 wants a single outbound chokepoint, but `fetch`/`WebSocket` are called directly from these modules and the only Effect `FetchHttpClient` layer is OTLP-only. What is enforceable today is accounting: every egress module is listed with a purpose, and a new one fails CI until a reviewer adds it. Regenerate the file list with `bun run script/check-network-egress.ts --report`. The detector that validates this file is the same one that produced it, so the two cannot drift.",
+  "policy": {
+    "scope": ["packages/nikcli/src", "packages/llm/src"],
+    "counts_toward_egress": [
+      "a bare `fetch(...)` call",
+      "`new WebSocket(...)`",
+      "`Bun.connect(...)`",
+      "`new EventSource(...)`",
+      "`http.request(...)` / `https.request(...)`"
+    ],
+    "does_not_count": [
+      "`Server.fetch(...)` — in-process loopback, never touches a socket",
+      "`function fetch(...)` / `async fetch(...)` declarations passed to an SDK as a transport",
+      "comment lines and type positions (`as typeof globalThis.fetch`)",
+      "`packages/llm/src` — outbound is already layer-based (Effect HttpClient), so it has no direct egress"
+    ],
+    "adding_a_file": "Add an entry with a `purpose` from the table below and a one-line note saying where it dials and why. A file that cannot justify a purpose is a file that should route through an existing seam instead."
+  },
+  "purposes": {
+    "auth": "OAuth/token exchange with an identity or provider issuer (nikcli auth, Codex, Copilot, xAI, MCP).",
+    "provider": "Model-provider catalog and API traffic — the agent's inference path.",
+    "connector": "Third-party service REST APIs reached through configured connectors (Figma, GitHub, Lovable, Slack).",
+    "install": "Downloading a binary or archive (LSP servers, auto-update) from a vendor or GitHub release.",
+    "tool": "Network work done on behalf of a tool call the user (or agent) explicitly requested.",
+    "share": "Publishing or fetching a share/artifact on the nikcli store.",
+    "telemetry": "Anonymous usage reporting (opt-out, never prompts or paths).",
+    "notify": "User-configured webhook delivery (todo notifications, plugin notify).",
+    "sync": "Hub-and-spoke session/workspace sync — the remote journal transport.",
+    "proxy": "Server-side forwarding to a remote workspace, companion or share target.",
+    "probe": "Health/readiness check against a URL supplied on the command line or in config.",
+    "session": "Fetching a remote instruction/document referenced by config."
+  },
+  "entries": [
+    {
+      "file": "packages/nikcli/src/account/index.ts",
+      "purpose": "auth",
+      "note": "Device-code start/poll and bearer refresh against the nikcli auth issuer."
+    },
+    {
+      "file": "packages/nikcli/src/analytics/share.ts",
+      "purpose": "telemetry",
+      "note": "Posts anonymous per-day model totals to the public stats endpoint."
+    },
+    {
+      "file": "packages/nikcli/src/artifact/index.ts",
+      "purpose": "share",
+      "note": "Uploads and downloads artifacts on the nikcli store."
+    },
+    {
+      "file": "packages/nikcli/src/auth/index.ts",
+      "purpose": "auth",
+      "note": "Provider OAuth token exchange and refresh."
+    },
+    {
+      "file": "packages/nikcli/src/cli/handlers/github/install.ts",
+      "purpose": "connector",
+      "note": "Probes the GitHub app installation after a CLI-driven install."
+    },
+    {
+      "file": "packages/nikcli/src/cli/handlers/import.ts",
+      "purpose": "session",
+      "note": "Imports a session or config from a user-supplied URL."
+    },
+    {
+      "file": "packages/nikcli/src/cli/handlers/mcp/debug.ts",
+      "purpose": "connector",
+      "note": "Probes a configured MCP server during `mcp debug`."
+    },
+    {
+      "file": "packages/nikcli/src/cli/handlers/run.ts",
+      "purpose": "probe",
+      "note": "Health/readiness probe for a URL passed to `nikcli run`."
+    },
+    {
+      "file": "packages/nikcli/src/cli/handlers/serve.ts",
+      "purpose": "probe",
+      "note": "Waits for the served instance to answer its health endpoint."
+    },
+    {
+      "file": "packages/nikcli/src/cli/handlers/teleport.ts",
+      "purpose": "sync",
+      "note": "Sends a session to a remote nikcli teleport server."
+    },
+    {
+      "file": "packages/nikcli/src/connectors/api/base.ts",
+      "purpose": "connector",
+      "note": "Shared request helper for every connector client."
+    },
+    { "file": "packages/nikcli/src/connectors/api/figma.ts", "purpose": "connector", "note": "Figma REST API." },
+    { "file": "packages/nikcli/src/connectors/api/github.ts", "purpose": "connector", "note": "GitHub REST API." },
+    { "file": "packages/nikcli/src/connectors/api/lovable.ts", "purpose": "connector", "note": "Lovable API." },
+    { "file": "packages/nikcli/src/connectors/api/slack.ts", "purpose": "connector", "note": "Slack Web API." },
+    {
+      "file": "packages/nikcli/src/installation/index.ts",
+      "purpose": "install",
+      "note": "Version check and auto-update download."
+    },
+    {
+      "file": "packages/nikcli/src/lsp/server.ts",
+      "purpose": "install",
+      "note": "Downloads LSP server archives from vendor/GitHub release URLs."
+    },
+    {
+      "file": "packages/nikcli/src/mcp/oauth-callback.ts",
+      "purpose": "auth",
+      "note": "Local OAuth callback listener plus a loopback probe of the callback port."
+    },
+    { "file": "packages/nikcli/src/plugin/codex.ts", "purpose": "auth", "note": "Codex OAuth token exchange." },
+    {
+      "file": "packages/nikcli/src/plugin/github-copilot/copilot.ts",
+      "purpose": "auth",
+      "note": "Copilot token exchange, including a pass-through fetch for non-OAuth requests."
+    },
+    {
+      "file": "packages/nikcli/src/plugin/github-copilot/models.ts",
+      "purpose": "auth",
+      "note": "Fetches the Copilot model list with the issued token."
+    },
+    {
+      "file": "packages/nikcli/src/plugin/index.ts",
+      "purpose": "notify",
+      "note": "Delivers plugin notify payloads to a user-configured webhook."
+    },
+    {
+      "file": "packages/nikcli/src/plugin/openai/ws.ts",
+      "purpose": "provider",
+      "note": "OpenAI realtime WebSocket transport."
+    },
+    {
+      "file": "packages/nikcli/src/plugin/xai.ts",
+      "purpose": "auth",
+      "note": "xAI OAuth discovery and token exchange."
+    },
+    {
+      "file": "packages/nikcli/src/provider/models-macro.ts",
+      "purpose": "provider",
+      "note": "Fetches the models.dev catalog at build/macro time."
+    },
+    {
+      "file": "packages/nikcli/src/provider/models.ts",
+      "purpose": "provider",
+      "note": "Fetches the models.dev catalog at runtime."
+    },
+    {
+      "file": "packages/nikcli/src/provider/provider.ts",
+      "purpose": "provider",
+      "note": "Provider API traffic on the inference path."
+    },
+    { "file": "packages/nikcli/src/server/companion.ts", "purpose": "proxy", "note": "Companion page/render fetch." },
+    {
+      "file": "packages/nikcli/src/server/mobile/helpers.ts",
+      "purpose": "proxy",
+      "note": "Mobile companion upstream calls."
+    },
+    {
+      "file": "packages/nikcli/src/server/mobile/teleport.ts",
+      "purpose": "proxy",
+      "note": "Mobile-initiated teleport to a remote server."
+    },
+    {
+      "file": "packages/nikcli/src/server/proxy.ts",
+      "purpose": "proxy",
+      "note": "Remote workspace HTTP + WebSocket proxy."
+    },
+    { "file": "packages/nikcli/src/server/public.ts", "purpose": "proxy", "note": "Public share/proxy fetch." },
+    {
+      "file": "packages/nikcli/src/server/server.ts",
+      "purpose": "proxy",
+      "note": "Server-side outbound used by the request pipeline."
+    },
+    { "file": "packages/nikcli/src/service/service.ts", "purpose": "probe", "note": "Service-registry health probe." },
+    {
+      "file": "packages/nikcli/src/session/instruction.ts",
+      "purpose": "session",
+      "note": "Fetches a remote instruction document referenced by config."
+    },
+    {
+      "file": "packages/nikcli/src/session/todo.ts",
+      "purpose": "notify",
+      "note": "Posts todo notifications to a user-configured webhook."
+    },
+    {
+      "file": "packages/nikcli/src/share/share-next.ts",
+      "purpose": "share",
+      "note": "Uploads a shared session to the share service."
+    },
+    {
+      "file": "packages/nikcli/src/sync/remote-client.ts",
+      "purpose": "sync",
+      "note": "Sync-hub EventSource subscription and catch-up fetch."
+    },
+    { "file": "packages/nikcli/src/tool/voice.ts", "purpose": "tool", "note": "Voice tool network calls." },
+    {
+      "file": "packages/nikcli/src/tool/webfetch.ts",
+      "purpose": "tool",
+      "note": "Fetches a URL the caller explicitly asked for."
+    },
+    {
+      "file": "packages/nikcli/src/tool/websearch/mcp.ts",
+      "purpose": "tool",
+      "note": "Websearch through a configured MCP provider."
+    },
+    { "file": "packages/nikcli/src/voice/transcribe.ts", "purpose": "tool", "note": "Transcription API calls." },
+    {
+      "file": "packages/nikcli/src/workspace/adaptors/index.ts",
+      "purpose": "sync",
+      "note": "Remote workspace adaptor calls."
+    },
+    { "file": "packages/nikcli/src/workspace/connection.ts", "purpose": "sync", "note": "Workspace sync SSE loop." },
+    {
+      "file": "packages/nikcli/src/workspace/index.ts",
+      "purpose": "sync",
+      "note": "Workspace remote create/restore operations."
+    }
+  ]
+}

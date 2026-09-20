@@ -1,8 +1,9 @@
 import { Instance } from "@/project/instance"
 import { Observability } from "@/observability"
 import { Log } from "@nikcli-ai/util/log"
-import { Cause, Effect, Layer, Logger, ManagedRuntime, Option } from "effect"
+import { Cause, Effect, Exit, Layer, Logger, ManagedRuntime, Option } from "effect"
 import { currentInstance, locallyInstance, type InstanceContext } from "./instance-ref"
+import { increment as lifecycleIncrement } from "./lifecycle-counters"
 
 export const sharedMemoMap = Effect.runSync(Layer.makeMemoMap)
 const runtimes = new WeakMap<Layer.Layer<any, any, never>, Map<string, ManagedRuntime.ManagedRuntime<any, any>>>()
@@ -77,14 +78,36 @@ export function runPromiseWithLayer<A, E, R extends ROut, ROut, LE>(
   layer: Layer.Layer<ROut, LE, never>,
   effect: Effect.Effect<A, E, R>,
 ): Promise<A> {
-  return runtimeFor(layer).runPromise(effect)
+  return runtimeFor(layer)
+    .runPromise(effect)
+    .then(
+      (value) => {
+        lifecycleIncrement("runtime.bridge.success")
+        return value
+      },
+      (error) => {
+        lifecycleIncrement("runtime.bridge.failure")
+        throw error
+      },
+    )
 }
 
 export function runPromiseExitWithLayer<A, E, R extends ROut, ROut, LE>(
   layer: Layer.Layer<ROut, LE, never>,
   effect: Effect.Effect<A, E, R>,
-): Promise<import("effect").Exit.Exit<A, E | LE>> {
-  return runtimeFor(layer).runPromiseExit(effect)
+): Promise<Exit.Exit<A, E | LE>> {
+  return runtimeFor(layer)
+    .runPromiseExit(effect)
+    .then((exit) => {
+      if (Exit.isFailure(exit) && Cause.hasInterruptsOnly(exit.cause)) {
+        lifecycleIncrement("runtime.bridge.interrupted")
+      } else if (Exit.isFailure(exit)) {
+        lifecycleIncrement("runtime.bridge.failure")
+      } else {
+        lifecycleIncrement("runtime.bridge.success")
+      }
+      return exit
+    })
 }
 
 export function withCurrentInstance<A, E, R>(effect: Effect.Effect<A, E, R>) {

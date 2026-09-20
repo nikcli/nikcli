@@ -68,13 +68,23 @@ export namespace EventFeed {
   export type CloseReason = { name: string; message: string }
 
   /**
-   * Candidate byte ceiling per connection, for P0 ratification.
+   * Byte ceiling for a **single** broadcast frame.
    *
-   * Not enforced. `specs/effect-tui/04-event-delivery.md` requires oversized
-   * producers to be inventoried before limits are switched on, because the
-   * alternative to an inventory is discovering which event was over the line
-   * by having it disconnect a user. `Connection.bytes` is the measurement that
-   * inventory is built from.
+   * Enforced per frame, deliberately not over the connection's lifetime.
+   * `Connection.written` is a lifetime total — it only ever grows — so
+   * spending it as a budget would evict every healthy long-lived reader the
+   * moment a session had streamed eight megabytes of ordinary events, which
+   * a TUI session reaches well inside an hour. That is the failure
+   * `specs/effect-tui/04-event-delivery.md` warns about: discovering where
+   * the line is by having it disconnect a user.
+   *
+   * Per frame the question is answerable without an inventory: one event
+   * larger than this is a producer bug, and forwarding it would put the same
+   * megabytes into the client. Backpressure from a reader that cannot keep
+   * up is a different failure with its own budget — see `LAG_BUDGET`.
+   *
+   * `Connection.cost.bytes` remains the measurement a lifetime or windowed
+   * budget would be ratified against, if one is ever wanted.
    */
   export const BYTE_BUDGET = 8 * 1024 * 1024
 
@@ -102,6 +112,19 @@ export namespace EventFeed {
     /**
      * Offer a broadcast frame. Returns false when the connection was evicted
      * rather than written to.
+     *
+     * Eviction has two triggers today, and they answer different questions:
+     *
+     *  - Frame lag: `desiredSize` reaches zero when the reader is
+     *    `LAG_BUDGET` frames behind. That is a reader who cannot keep up.
+     *    Evict with `SubscriberOverflowError`.
+     *  - Frame size: this one frame is larger than `BYTE_BUDGET`. That is a
+     *    producer bug, and it is the connection's reader who would pay for
+     *    it. Evict with `ByteBudgetExceededError`.
+     *
+     * Local frames (greeting, heartbeat, close reason) bypass both — they
+     * exist to hold the connection open and state why it is being dropped,
+     * so they must never be what drops it.
      */
     offer(encoded: Uint8Array): boolean {
       if (this.closed) return false
@@ -117,6 +140,16 @@ export namespace EventFeed {
         this.fail({
           name: "SubscriberOverflowError",
           message: "subscriber exceeded its lag budget",
+        })
+        return false
+      }
+      // Checked before the write, so the oversized frame is never handed to
+      // the reader: it is dropped, and the close reason `fail` writes in its
+      // place goes out past this check (see `fail`).
+      if (encoded.byteLength > BYTE_BUDGET) {
+        this.fail({
+          name: "ByteBudgetExceededError",
+          message: `frame of ${encoded.byteLength} bytes exceeds the ${BYTE_BUDGET} byte frame budget`,
         })
         return false
       }

@@ -12,11 +12,21 @@ import { Effect, Schema } from "effect"
 import { type DeepMutable, zod, zodObject } from "@nikcli-ai/util/effect-zod"
 import { runPromiseWithLayer, withCurrentInstance } from "@/effect"
 import { BackgroundRunRepo } from "./repo"
+import { LOOP_RUN_LEASE_MS } from "@/loop/schema"
 
 export namespace BackgroundRun {
   const log = Log.create({ service: "background.run" })
   const OWNER_ID = `${process.pid}-${Date.now()}`
-  export const LEASE_TIMEOUT_MS = 15_000
+  /**
+   * EOT-09 lease source of truth.
+   *
+   * Loops and missions both lease an in-flight run to a process via the same
+   * predicate. The single canonical value lives in `@/loop/schema` as
+   * `LOOP_RUN_LEASE_MS`; BackgroundRun re-exports it so a future drift
+   * cannot orphan one side and not the other. `Mission` already imports
+   * `LOOP_RUN_LEASE_MS` directly per its own schema docblock.
+   */
+  export const LEASE_TIMEOUT_MS = LOOP_RUN_LEASE_MS
   type Metadata = { [key: string]: unknown }
 
   const StatusSchema = Schema.Literals(["running", "complete", "error", "timeout", "cancelled", "orphaned"])
@@ -436,7 +446,9 @@ ${result}
   // project invalidated the cache of all of them. Every caller below already
   // stands in an instance scope: each is preceded by a repo call keyed on
   // `projectID()`.
-  const listCache = Instance.state(() => ({ value: undefined as { records: Record[]; expiresAt: number } | undefined }))
+  const listCache = Instance.state(() => ({
+    value: undefined as { records: Record[]; expiresAt: number } | undefined,
+  }))
   const LIST_CACHE_TTL_MS = 2_000
 
   async function listAll(): Promise<Record[]> {

@@ -1,0 +1,314 @@
+{
+  "$schema": "internal",
+  "description": "Intentional `Schema.Unknown` and `Schema.Array(Schema.Unknown)` payloads in the HttpApi contract. Each entry is justified per `specs/effect-tui/10-contracts-errors-security.md` and the open-payload policy at `packages/nikcli/AGENTS.md`. New entries require a docblock on the producer, an EOT-10 owner, and a runtime/consumer test. The CI script `script/check-open-payloads.ts` fails if a `Schema.Unknown` appears in `src/server/httpapi/` that is not listed here. Entries are keyed by file plus the declaring line's text, never by line number: a line number turns every unrelated edit above a listed site into a CI failure, and re-numbering an allowlist is not review. `count` is the number of identical declarations in that file (omitted when it is 1).",
+  "policy": {
+    "qualifies": [
+      "genuine opaque passthroughs (third-party APIs, mobile/host capability surfaces)",
+      "polymorphic event-sourced entries (sync events, journal events)",
+      "SSE stream frames",
+      "bodyless redirects and websocket upgrades",
+      "discriminated-envelope `properties` where the runtime check on `type` selects a concrete schema",
+      "typed `Record<string, unknown>` metadata / data / options fields (encodes as `{ [k: string]: unknown }`, not as `any`)"
+    ],
+    "disqualifies": [
+      "ordinary domain success objects",
+      "any payload the service defines in zod/effect-schema that should be reused"
+    ]
+  },
+  "entries": [
+    {
+      "file": "src/server/httpapi/app.ts",
+      "snippet": "extra: Schema.optional(Schema.Record(Schema.String, Schema.Unknown)).annotate({",
+      "owner": "app",
+      "kind": "typed-record",
+      "justification": "AppLogInput.extra is `Record<string, unknown>` \u2014 arbitrary per-call metadata attached to a log entry."
+    },
+    {
+      "file": "src/server/httpapi/config.ts",
+      "snippet": "Schema.Record(Schema.String, Schema.Unknown),",
+      "owner": "config",
+      "kind": "typed-record",
+      "justification": "Config field \u2014 provider-specific typed map; the schema is `Record<string, unknown>`."
+    },
+    {
+      "file": "src/server/httpapi/config.ts",
+      "snippet": "data: Schema.Record(Schema.String, Schema.Unknown),",
+      "owner": "config",
+      "kind": "typed-record",
+      "justification": "ConfigDataResponse.data is `Record<string, unknown>` \u2014 the full config document."
+    },
+    {
+      "file": "src/server/httpapi/config.ts",
+      "snippet": "options: Schema.Record(Schema.String, Schema.Unknown),",
+      "owner": "config",
+      "kind": "typed-record",
+      "justification": "ConfigProviderInfo.options is `Record<string, unknown>` \u2014 per-provider configuration map."
+    },
+    {
+      "file": "src/server/httpapi/connectors.ts",
+      "snippet": "data: Schema.Record(Schema.String, Schema.Unknown),",
+      "owner": "connectors",
+      "kind": "typed-record",
+      "justification": "ConnectorAuth data is `Record<string, unknown>` \u2014 opaque per-connector auth state."
+    },
+    {
+      "file": "src/server/httpapi/contract-extra.ts",
+      "snippet": "config: Schema.Unknown.annotate({",
+      "owner": "auth",
+      "kind": "opaque-passthrough",
+      "justification": "AuthGroup config is the provider-specific OAuth config; per-provider typed variants would force a parallel schema."
+    },
+    {
+      "file": "src/server/httpapi/contract-extra.ts",
+      "snippet": "const AccountSuccess = Schema.Unknown.annotate({",
+      "owner": "account",
+      "kind": "polymorphic-payload",
+      "justification": "AccountSuccess is the OAuth/account result; shape varies by provider (PKCE, passkey, device-code)."
+    },
+    {
+      "file": "src/server/httpapi/contract-extra.ts",
+      "snippet": "const JournalEvent = Schema.Unknown.annotate({",
+      "owner": "share",
+      "kind": "polymorphic-event",
+      "justification": "JournalEvent is the share journal envelope; the consumer replays it on the share target."
+    },
+    {
+      "file": "src/server/httpapi/contract-extra.ts",
+      "snippet": "payload: Schema.Record(Schema.String, Schema.Unknown),",
+      "owner": "mcp",
+      "kind": "typed-record",
+      "justification": "MCP update payload is `Record<string, unknown>` \u2014 the per-server update body, structurally typed by the MCP layer."
+    },
+    {
+      "file": "src/server/httpapi/contract-extra.ts",
+      "snippet": "success: Schema.Unknown.annotate({ description: \"WebSocket upgrade\" }),",
+      "owner": "pty",
+      "kind": "websocket-upgrade",
+      "justification": "Pty connect upgrade \u2014 no body."
+    },
+    {
+      "file": "src/server/httpapi/discord.ts",
+      "snippet": "data: Schema.Record(Schema.String, Schema.Unknown),",
+      "owner": "discord",
+      "kind": "typed-record",
+      "justification": "DiscordSetupOutput.data is `Record<string, unknown>` \u2014 opaque Discord API response data."
+    },
+    {
+      "file": "src/server/httpapi/experimental.ts",
+      "snippet": "parameters: Schema.Unknown,",
+      "owner": "experimental",
+      "kind": "opaque-passthrough",
+      "justification": "Experimental worktree.parameters is the per-tool input schema; tool registry is the source of truth."
+    },
+    {
+      "file": "src/server/httpapi/loop.ts",
+      "snippet": "data: Schema.Record(Schema.String, Schema.Unknown),",
+      "count": 2,
+      "owner": "loop",
+      "kind": "typed-record",
+      "justification": "Loop data field \u2014 opaque loop run data."
+    },
+    {
+      "file": "src/server/httpapi/mission.ts",
+      "snippet": "data: Schema.Record(Schema.String, Schema.Unknown),",
+      "count": 2,
+      "owner": "mission",
+      "kind": "typed-record",
+      "justification": "Mission data field \u2014 opaque mission metadata."
+    },
+    {
+      "file": "src/server/httpapi/mobile.ts",
+      "snippet": "sessions: Schema.optional(Schema.Array(Schema.Unknown)),",
+      "owner": "mobile",
+      "kind": "opaque-passthrough",
+      "justification": "host.browser capability surface \u2014 per-session opaque capability record from the host layer."
+    },
+    {
+      "file": "src/server/httpapi/mobile.ts",
+      "snippet": "success: HttpApiSchema.StreamSse({ data: Schema.Unknown }),",
+      "count": 2,
+      "owner": "mobile",
+      "kind": "sse-stream",
+      "justification": "Mobile session event stream."
+    },
+    {
+      "file": "src/server/httpapi/mobile.ts",
+      "snippet": "success: Schema.Array(Schema.Unknown),",
+      "owner": "mobile",
+      "kind": "opaque-passthrough",
+      "justification": "mobile.github.repos returns the upstream GitHub REST repo object. Restating the third-party schema is exactly the drift the exception is for."
+    },
+    {
+      "file": "src/server/httpapi/mobile.ts",
+      "snippet": "success: Schema.Unknown.annotate({ description: \"WebSocket upgrade\" }),",
+      "owner": "mobile",
+      "kind": "websocket-upgrade",
+      "justification": "WebSocket upgrade response carries no body."
+    },
+    {
+      "file": "src/server/httpapi/permission.ts",
+      "snippet": "metadata: Schema.Record(Schema.String, Schema.Unknown),",
+      "owner": "permission",
+      "kind": "typed-record",
+      "justification": "PermissionRequest.metadata is `Record<string, unknown>` \u2014 tool/agent-provided context."
+    },
+    {
+      "file": "src/server/httpapi/pty.ts",
+      "snippet": "data: Schema.Record(Schema.String, Schema.Unknown),",
+      "count": 2,
+      "owner": "pty",
+      "kind": "typed-record",
+      "justification": "Pty data field \u2014 opaque per-Pty state."
+    },
+    {
+      "file": "src/server/httpapi/session.ts",
+      "snippet": "const SessionV2EntryList = Schema.Array(Schema.Unknown).annotate({",
+      "owner": "session",
+      "kind": "polymorphic-event",
+      "justification": "SessionV2EntryList \u2014 entries persist first, V1 is derived; the entry shape is event-sourced."
+    },
+    {
+      "file": "src/server/httpapi/session.ts",
+      "snippet": "const SessionV2EventList = Schema.Array(Schema.Unknown).annotate({",
+      "owner": "session",
+      "kind": "polymorphic-event",
+      "justification": "SessionV2EventList \u2014 same polymorphic-event rationale."
+    },
+    {
+      "file": "src/server/httpapi/session.ts",
+      "snippet": "const SessionV2State = Schema.Unknown.annotate({",
+      "owner": "session",
+      "kind": "polymorphic-state",
+      "justification": "SessionV2State \u2014 runtime state machine is open-ended; client renders it via projector."
+    },
+    {
+      "file": "src/server/httpapi/session.ts",
+      "snippet": "data: Schema.Record(Schema.String, Schema.Unknown),",
+      "count": 3,
+      "owner": "session",
+      "kind": "typed-record",
+      "justification": "SessionNotFoundError.data \u2014 error envelope, `Record<string, unknown>`."
+    },
+    {
+      "file": "src/server/httpapi/session.ts",
+      "snippet": "github: Schema.optionalKey(Schema.Unknown),",
+      "owner": "session",
+      "kind": "polymorphic-payload",
+      "justification": "SessionPart.github is the GitHub payload attached to a part; shape varies by event type."
+    },
+    {
+      "file": "src/server/httpapi/session.ts",
+      "snippet": "parts: Schema.optionalKey(Schema.Array(Schema.Unknown)),",
+      "owner": "session",
+      "kind": "polymorphic-payload",
+      "justification": "Message.parts is a heterogeneous part array; each part has its own schema and the consumer projects per `_tag`."
+    },
+    {
+      "file": "src/server/httpapi/session.ts",
+      "snippet": "permission: Schema.optionalKey(Schema.Array(Schema.Unknown)),",
+      "owner": "session",
+      "kind": "polymorphic-payload",
+      "justification": "SessionPart.permissions is the runtime-collected permission set for a part; the producer (`src/permission/next.ts`) is typed but the consumer (renderer) projects dynamically."
+    },
+    {
+      "file": "src/server/httpapi/sync.ts",
+      "snippet": "data: Schema.Unknown,",
+      "owner": "sync",
+      "kind": "polymorphic-event",
+      "justification": "SyncEventRecord.data is event-sourced; the consumer projects each `type` via the registered projector (`src/sync/sync-event.ts`). Restating every payload schema in the contract would double the maintenance cost without adding runtime safety."
+    },
+    {
+      "file": "src/server/httpapi/sync.ts",
+      "snippet": "dataPreview: Schema.Unknown,",
+      "owner": "sync",
+      "kind": "polymorphic-event",
+      "justification": "StatsEvent is the raw stats payload; same polymorphic-event rationale."
+    },
+    {
+      "file": "src/server/httpapi/sync.ts",
+      "snippet": "events: Schema.Array(Schema.Unknown),",
+      "owner": "sync",
+      "kind": "polymorphic-event",
+      "justification": "OutboxResponse.events is the event payload array \u2014 same rationale as SyncEventRecord.data."
+    },
+    {
+      "file": "src/server/httpapi/sync.ts",
+      "snippet": "state: Schema.Unknown,",
+      "owner": "sync",
+      "kind": "polymorphic-state",
+      "justification": "SnapshotResponse.state is the per-aggregate replay snapshot; aggregates vary by id prefix and the projector is the source of truth."
+    },
+    {
+      "file": "src/server/httpapi/sync.ts",
+      "snippet": "success: HttpApiSchema.StreamSse({ data: Schema.Unknown }),",
+      "owner": "sync",
+      "kind": "sse-stream",
+      "justification": "Sync SSE stream frame \u2014 heterogeneous envelopes."
+    },
+    {
+      "file": "src/server/httpapi/top-level.ts",
+      "snippet": "options: Schema.Record(Schema.String, Schema.Unknown),",
+      "owner": "command",
+      "kind": "typed-record",
+      "justification": "Top-level command options is `Record<string, unknown>` \u2014 opaque per-command option map."
+    },
+    {
+      "file": "src/server/httpapi/top-level.ts",
+      "snippet": "template: Schema.Unknown,",
+      "owner": "command",
+      "kind": "polymorphic-payload",
+      "justification": "Command template body is shell-evaluated by the runtime; the server does not interpret it."
+    },
+    {
+      "file": "src/server/httpapi/tui.ts",
+      "snippet": "[Schema.Record(Schema.String, Schema.Unknown)],",
+      "owner": "tui",
+      "kind": "typed-record",
+      "justification": "TuiConfigInfo rest entries \u2014 `Record<string, unknown>` for additional TUI config keys not in the core schema."
+    },
+    {
+      "file": "src/server/httpapi/tui.ts",
+      "snippet": "body: Schema.Unknown,",
+      "count": 2,
+      "owner": "tui",
+      "kind": "opaque-passthrough",
+      "justification": "TuiRequest.body is relayed verbatim to the terminal; the server never interprets it."
+    },
+    {
+      "file": "src/server/httpapi/tui.ts",
+      "snippet": "data: Schema.Record(Schema.String, Schema.Unknown),",
+      "owner": "tui",
+      "kind": "typed-record",
+      "justification": "TuiNotFoundError.data \u2014 error envelope, `Record<string, unknown>`."
+    },
+    {
+      "file": "src/server/httpapi/tui.ts",
+      "snippet": "data: Schema.Unknown,",
+      "owner": "tui",
+      "kind": "opaque-passthrough",
+      "justification": "TuiValidationError.data is opaque \u2014 the original request body that failed validation."
+    },
+    {
+      "file": "src/server/httpapi/tui.ts",
+      "snippet": "error: Schema.Unknown,",
+      "owner": "tui",
+      "kind": "opaque-passthrough",
+      "justification": "TuiValidationError.error is the underlying validation failure message."
+    },
+    {
+      "file": "src/server/httpapi/tui.ts",
+      "snippet": "properties: Schema.Unknown,",
+      "owner": "tui",
+      "kind": "discriminated-envelope",
+      "justification": "TuiPublishInput.properties \u2014 the runtime check on `type` decides which `TuiEventPayload` to parse against (see tui.ts:51-57 docblock)."
+    },
+    {
+      "file": "src/server/httpapi/workspace.ts",
+      "snippet": "events: Schema.Array(Schema.Unknown),",
+      "count": 2,
+      "owner": "workspace",
+      "kind": "polymorphic-event",
+      "justification": "WorkspaceRestore.events \u2014 the workspace's pending sync events, projected on restore."
+    }
+  ]
+}

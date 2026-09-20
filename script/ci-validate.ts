@@ -59,6 +59,42 @@ const steps: ValidationStep[] = [
     timeout: 30_000,
   },
   {
+    name: "Open-payload allowlist gate",
+    command: ["bun", "run", "script/check-open-payloads.ts"],
+    cwd: "packages/nikcli",
+    timeout: 30_000,
+  },
+  {
+    name: "Account-required guard gate",
+    command: ["bun", "run", "script/check-account-required.ts"],
+    cwd: "packages/nikcli",
+    timeout: 30_000,
+  },
+  {
+    name: "Observability schema gate",
+    command: ["bun", "run", "script/check-observability-schema.ts"],
+    cwd: "packages/nikcli",
+    timeout: 30_000,
+  },
+  {
+    name: "Plugin v2 contract gate",
+    command: ["bun", "run", "script/check-plugin-v2.ts"],
+    cwd: "packages/nikcli",
+    timeout: 30_000,
+  },
+  {
+    name: "Workspace isolation gate",
+    command: ["bun", "run", "script/check-workspace-isolation.ts"],
+    cwd: "packages/nikcli",
+    timeout: 30_000,
+  },
+  {
+    name: "Network egress accounting gate",
+    command: ["bun", "run", "script/check-network-egress.ts"],
+    cwd: "packages/nikcli",
+    timeout: 30_000,
+  },
+  {
     name: "Generated HTTP client drift",
     command: [
       "bash",
