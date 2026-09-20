@@ -85,10 +85,27 @@ export namespace Flag {
     : undefined
   export const NIKCLI_SERVER_TAILSCALE_AUTH = truthy("NIKCLI_SERVER_TAILSCALE_AUTH")
   export const NIKCLI_SERVER_TAILSCALE_USERS = process.env["NIKCLI_SERVER_TAILSCALE_USERS"]
-  export const NIKCLI_AUTH_ISSUER = process.env["NIKCLI_AUTH_ISSUER"]
-  export const NIKCLI_AUTH_JWKS_URL = process.env["NIKCLI_AUTH_JWKS_URL"]
-  export const NIKCLI_AUTH_AUDIENCE = process.env["NIKCLI_AUTH_AUDIENCE"] ?? "nikcli-api"
-  export const NIKCLI_AUTH_JWT_SECRET = process.env["NIKCLI_AUTH_JWT_SECRET"]
+  /**
+   * Identity-plane verifier inputs, read on every access for the same reason
+   * as `autoApprove`: the value can be set after this module is first
+   * imported. Captured as constants, the first importer decided them for the
+   * whole process — which under `bun test` is whichever file happened to load
+   * a server module first, so a test that exports its own issuer and HS256
+   * secret before importing anything still got the defaults, and every token
+   * it signed verified as 401.
+   */
+  export function authIssuer() {
+    return process.env["NIKCLI_AUTH_ISSUER"]
+  }
+  export function authJwksUrl() {
+    return process.env["NIKCLI_AUTH_JWKS_URL"]
+  }
+  export function authAudience() {
+    return process.env["NIKCLI_AUTH_AUDIENCE"] ?? "nikcli-api"
+  }
+  export function authJwtSecret() {
+    return process.env["NIKCLI_AUTH_JWT_SECRET"]
+  }
   export const NIKCLI_REQUIRE_OAUTH = truthy("NIKCLI_REQUIRE_OAUTH")
   export const NIKCLI_LEGACY_LOGIN = truthy("NIKCLI_LEGACY_LOGIN")
 
