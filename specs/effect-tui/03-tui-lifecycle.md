@@ -83,80 +83,84 @@ cleanup assertions to ship. Existing dirty worktree edits are not part of this d
 
 ## Discipline Addendum — 2026-09-20
 
-The inventory this spec asks for was started, and the first thing it produced was a
-correction to what the inventory is _for_.
+Two rounds of this audit produced wrong fixes before producing a usable rule. Both
+failures are recorded, because each one is a conclusion the source supports right up
+until you run it.
 
 ### The failure is an external effect, not a stale write
 
-In Solid, writing a signal after the owner is disposed is harmless — nothing reads it.
-So "every `createResource` / `onMount` that does not cancel" is not the defect list; it
-is 30 files of mostly nothing. The defect is **acting on the outside world after an
-await the user has walked away from**.
+In Solid, writing a signal after the owner is disposed is harmless — nothing reads it. So
+"every `createResource` / `onMount` that does not cancel" is not the defect list; it is 30
+files of mostly nothing. The defect is acting on the outside world after an await the user
+has walked away from.
 
-### But "reopening after an await" is the idiom here, not the bug
+### Round one: reopening after an await is the idiom, not the bug
 
-This was got wrong first, so it is written down. `ui/dialog.tsx`'s `replace()` sets
-`store.stack` unconditionally and escape runs `closeTop()`, which on a one-deep stack
-empties it. Reading only that far suggests every `await …; dialog.replace(…)` reopens a
-dialog the user escaped.
+`ui/dialog.tsx`'s `replace()` sets `store.stack` unconditionally and escape runs
+`closeTop()`, which on a one-deep stack empties it. Read that far and every
+`await …; dialog.replace(…)` looks like it reopens a dialog the user escaped.
 
 It does not, because **a nested flow replaces its parent rather than stacking on it**.
 `DialogPrompt.show` and `DialogConfirm.show` both call `dialog.replace`, so the parent is
 already gone before the user answers; the caller restoring it afterwards is how they get
-back. That is the app-wide idiom, on cancel exactly as on success —
-`dialog-auth-manage.tsx`'s `restoreProfile` is called unconditionally, and
-`dialog-skills.tsx`'s `install()` restores the results list explicitly on `!confirmed`.
-Three call sites were "fixed" to skip the reopen on cancel, which made them drop the user
-out of a flow that every neighbour returns them to. Reverted.
+back — on cancel exactly as on success. Three call sites were changed to skip the reopen
+on cancel, which dropped the user out of a flow every neighbour returns them to. Reverted.
 
-The distinction the audit actually needs:
+### Round two: `useAbortOnCleanup` cannot be used by a dialog that opens dialogs
 
-- **A modal await** — `DialogPrompt.show`, `DialogConfirm.show`. The user is sitting in
-  the dialog and can open nothing else, so their answer _is_ the continuation.
-  Restoring the parent is correct and cancelling is not special.
-- **A long async await** — a network call, `Bun.spawn`, an OAuth callback, a device-code
-  poll. The user can leave and open something else while it runs, and a `replace` landing
-  afterwards is what `util/lifecycle.ts` describes: a dialog shoved over whatever they
-  opened next. `dialog-skills.tsx:130` awaits `sdk.client.app.skill.create` and then
-  replaces, with no guard — that shape is the real target, and the helper for it already
-  exists.
+The rule that replaced it — guard the _long-async_ awaits (network, spawn, OAuth) and
+leave the _modal_ ones alone — is right about which awaits matter and wrong about the
+mechanism, and the same sentence contains the proof. **Modal means the sub-dialog replaced
+this component**, so by the time the long-async call after it returns, this component's
+owner was disposed long ago. Not because the user left: as part of the flow working.
 
-Which kind an await is cannot be seen from the `replace` that follows it, which is the
-whole reason this is a per-site reading exercise rather than a codemod.
+That shipped, and the symptom was immediate in a running TUI. Picking a provider opened
+"Select auth method"; selecting an entry there did nothing at all, because
+`createDialogProviderOptions` checked `alive.disposed()` after `provider.oauth.authorize`
+and it was always true. Every guard in the batch had the same shape and all of them are
+reverted.
+
+**`useAbortOnCleanup` is for a leaf dialog** — one that awaits without opening anything,
+like `dialog-provider`'s `AutoMethod` and `CodeMethod`, which have used it correctly all
+along. A component that chains dialogs has no owner left to ask.
+
+### What the right primitive looks like, and what blocks it
+
+The question a chaining caller needs answered is not "is my owner alive" but **"is the
+stack as I left it"**. That is observable: every mutation in `ui/dialog.tsx` — `replace`,
+`clear`, `closeTop`, the non-interactive escape path — could bump a counter the caller
+captures before an await and compares after. Unchanged means nobody moved; changed means
+the user escaped or opened something else, and the effect should be dropped. It is also
+the only signal available to the nine plugin entry points and four ctx-bag helpers that
+have no Solid owner at all, and `api.ui.dialog` exposes nothing of the kind (`depth`
+cannot serve: a replace leaves the depth identical).
+
+It was written and then dropped rather than committed. `init()` in `ui/dialog.tsx` is not
+exported and calls `useRenderer()`, so the dialog host cannot be constructed in a test —
+the primitive would have landed with no consumer and no way to fail. **Making the dialog
+host reachable from `packages/tui/test/` is the precondition**, and it is the next thing
+worth doing here, ahead of any further site-by-site work.
+
+### What is kept from all of this
+
+`packages/tui/test/` and its lifecycle tests, which is the harness the package never had;
+`script/audit-late-side-effects.ts`, which reproduces the candidate scan; and one fix that
+never involved an owner — `component/prompt/index.tsx` spawned the microphone after
+`detectVoiceRecorder` resolved with no way to notice the hold-to-talk key had been
+released, so `stopVoiceRecording` found nothing to stop and the spawn happened anyway. A
+plain flag, because that is a press that ended, not a component that unmounted.
 
 ### The candidate set, and why it is not a gate
 
-`packages/tui/script/audit-late-side-effects.ts` reproduces the scan: 88 candidate sites,
-sorted so files with no cancellation helper come first. It is triage, not CI. The
-detector is indentation-based and cannot distinguish a call from a call _site_ —
-`onSelect: () => dialog.replace(…)` built after an await is safe, because the handler
-only runs while the component is alive, and it is indistinguishable from the bug at this
-level. Roughly one in five hits is real. A blocking gate would mean accepting that ratio
-or maintaining an allowlist longer than the findings, so it always exits 0 and prints a
-list for a human.
+`packages/tui/script/audit-late-side-effects.ts` reports 88 candidate sites, sorted so
+files with no cancellation helper come first. It is triage. The detector is
+indentation-based and cannot distinguish a call from a call _site_ —
+`onSelect: () => dialog.replace(…)` built after an await is safe and looks identical — and
+it misses a real site behind one level of indirection, as it did for `clearProfile`
+followed by a local `reopen()`. `app.tsx` is the clearest illustration: all eight of its
+hits are handler definitions or an `onCleanup` body, and its one genuinely async site
+already guards itself with `dialog.stack.length === 0`, an idiom the detector does not
+recognise and the correct one for "open fresh only if nothing else is up".
 
-### The harness that was missing
-
-`packages/tui` had **no test directory at all**, which is why an audit of 88 sites could
-not be carried out with confidence: there was nowhere to put the evidence. `test/` now
-exists, `bun test` is wired into `script/ci-validate.ts`, and the first file covers
-`util/lifecycle.ts` — the primitive the rest of the audit builds on.
-
-No renderer is involved, and that is what makes it cheap: `createRoot` supplies a real
-Solid owner and a `dispose` that runs `onCleanup`, which is precisely the lifecycle these
-helpers hook. A dialog being dismissed is this, with a renderer attached. Ten tests, under
-100ms, so adding it to the validation run does not re-create the full-suite problem
-ROADMAP's non-negotiables warn about.
-
-They were checked against the bugs their docblocks describe, not just run: making `adopt`
-return early instead of releasing fails the two resource cases, and collapsing the
-generation counter to a boolean fails three more. A lifecycle test that cannot fail is the
-same nothing as a counter with no emitter.
-
-### What is still not verified
-
-The `dialog-auth-manage` fix itself is verified by reading the four cancel contracts and
-by `tsc`, **not by running the TUI**. The remaining 87 candidate sites each need the same
-per-site reading — what the awaited call returns on cancel, and whether the effect after it
-is a call or a call site. The harness is the precondition for that work, not a substitute
-for it.
+A blocking gate would mean accepting that ratio or maintaining an allowlist longer than
+the findings, so it always exits 0 and prints a list for a human.

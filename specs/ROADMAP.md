@@ -276,9 +276,8 @@ appears more than once.
 | EOT-19 | `/mobile/bootstrap` probes bounded and de-networked: 8s+ -> 950ms on the app's connect path           | `d1e2f99e`              |
 | EOT-20 | `withFixture` as the shared harness; both new gates driven by tests that make them fail               | `644a8f28`, `6d880fc3`  |
 | EOT-12 | Flag capture-at-import is a CI gate, not four fixes; the legacy-credential pair moves together        | `ac52fff3`              |
-| EOT-03 | Modal vs long-async awaits: reopening the parent is the idiom, not the bug (a reverted fix)           | `0a8cccc7fb`            |
-| EOT-03 | Late-effect inventory completed: 88 -> 46, every remainder accounted for by category                  | `5b2e0eb148`            |
 | EOT-20 | `packages/tui` gets a test directory and a CI step; the lifecycle primitive covered first             | `995fff77ba`            |
+| EOT-03 | `useAbortOnCleanup` cannot guard a dialog that opens dialogs — two reverted rounds, and why           | `<pending>`             |
 
 Every spec has been opened and every spec now has at least one landed slice,
 EOT-14 and EOT-19 included.
