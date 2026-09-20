@@ -297,8 +297,8 @@ appears more than once.
 | EOT-18 | `Lifecycle<T>` had zero registered commands; the guarantee lives in `cli/bootstrap.ts`                           | `1377a04033`                                            |
 | EOT-15 | Cross-process seq uniqueness pinned; SSE documented as _not_ a replay protocol                                   | `430b6472f4`                                            |
 | —      | `check:spec-paths`: 22 cited files did not resolve; the rot that produced four stale claims                      | `628f69111d`                                            |
-| EOT-03 | The replace-not-push contract pinned; the dialog host was testable after all                                     | `<pending>`                                             |
-| EOT-20 | A test literal containing an `import` statement was rewritten by the transform                                   | `<pending2>`                                            |
+| EOT-03 | The replace-not-push contract pinned; the dialog host was testable after all                                     | `d0e9b0032d`                                            |
+| EOT-20 | A test literal containing an `import` statement was rewritten by the transform                                   | `d0e9b0032d`                                            |
 | EOT-03 | `useAbortOnCleanup` cannot guard a dialog that opens dialogs — two reverted rounds, and why                      | `29735847d4fc`                                          |
 
 Every spec has been opened and every spec now has at least one landed slice,
