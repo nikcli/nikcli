@@ -14,6 +14,7 @@ import { Keybind } from "@tui/util/keybind"
 import { Locale } from "@nikcli-ai/util/locale"
 import { bunUtils } from "@nikcli-ai/util/bun-utils"
 import { randomBytes } from "crypto"
+import { useAbortOnCleanup } from "@tui/util/lifecycle"
 
 type WizardStep = "starter" | "name" | "prompt" | "model" | "schedule" | "api" | "review"
 type ScheduleChoice = "" | "@hourly" | "0 */6 * * *" | "@daily" | "@weekly" | "__custom__"
@@ -192,6 +193,9 @@ function apiCurl(token: string) {
 }
 
 function DialogRoutineCreate(props: { onDone: () => void }) {
+  // `routine.create` is a round trip; the dialog it opens after must not land
+  // on someone who has left.
+  const alive = useAbortOnCleanup()
   const dialog = useDialog()
   const toast = useToast()
   const sdk = useSDK()
@@ -380,6 +384,7 @@ function DialogRoutineCreate(props: { onDone: () => void }) {
         ...(chosen ? { model: chosen } : {}),
       })
       const routine = assertData<MobileRoutine>(result, "Failed to create routine")
+      if (alive.disposed()) return
       toast.show({ message: `Routine created: ${routine.name}`, variant: "success" })
       props.onDone()
       dialog.replace(() => <DialogRoutineActions routine={routine} onDone={props.onDone} />)

@@ -14,6 +14,7 @@ import { useTheme } from "../context/theme"
 import { DialogWorkspaceCreate, DialogWorkspaceScope, workspaceScopeDirectory } from "./dialog-workspace-create"
 import type { WorkspaceScope } from "./dialog-workspace-create"
 import { useProject } from "../context/project"
+import { useAbortOnCleanup } from "@tui/util/lifecycle"
 
 export { DialogWorkspaceCreate } from "./dialog-workspace-create"
 
@@ -106,6 +107,9 @@ export async function openWorkspace(input: {
 }
 
 export function DialogWorkspaceList() {
+  // The list probe and the remove call are both round trips with a dialog or a
+  // navigation behind them.
+  const alive = useAbortOnCleanup()
   const dialog = useDialog()
   const route = useRoute()
   const sync = useSync()
@@ -226,6 +230,7 @@ export function DialogWorkspaceList() {
 
     const client = scoped(workspaceID)
     const listed = await client.session.list({ roots: true, limit: 1 }).catch(() => undefined)
+    if (alive.disposed()) return
     if (listed?.data?.length) {
       dialog.replace(() => <DialogSessionList workspaceID={workspaceID} directory={ownerDirectory()} />)
       return
@@ -385,6 +390,7 @@ export function DialogWorkspaceList() {
             const result = await scoped()
               .experimental.workspace.remove({ id: option.value })
               .catch(() => undefined)
+            if (alive.disposed()) return
             setToDelete(undefined)
             if (result?.error) {
               setRemoving(undefined)

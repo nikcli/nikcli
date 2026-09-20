@@ -19,6 +19,7 @@ import { ttsRegistry, type TTSVoice } from "@nikcli-ai/util/tts/provider"
 import { DialogPrompt } from "@tui/ui/dialog-prompt"
 import path from "path"
 import fs from "fs/promises"
+import { useAbortOnCleanup } from "@tui/util/lifecycle"
 
 // Register TTS providers in the registry so we can enumerate them in the
 // onboarding wizard. The dedicated speak dialog does the same on import, but
@@ -912,6 +913,8 @@ const STEP_CONTINUE_LABELS = [
 ]
 
 function OnboardingWizard(props: { onComplete: () => void }) {
+  // The voice pick below persists over the wire before opening a nested dialog.
+  const alive = useAbortOnCleanup()
   const { theme } = useTheme()
   const scrollAcceleration = useScrollAcceleration()
   const dialog = useDialog()
@@ -1204,7 +1207,7 @@ function OnboardingWizard(props: { onComplete: () => void }) {
       const voice = row.voice
       void (async () => {
         const ok = await persistSpeak(row.providerId, voice.id, voice.name)
-        if (!ok) return
+        if (!ok || alive.disposed()) return
         if (row.providerId === "elevenlabs") {
           // After picking an ElevenLabs voice, prompt for the key in a nested
           // dialog. The key is optional (env or file may already provide one).

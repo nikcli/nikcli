@@ -6,12 +6,16 @@ import { useRoute } from "@tui/context/route"
 import { Clipboard } from "@tui/util/clipboard"
 import type { PromptInfo } from "@tui/component/prompt/history"
 import { useLanguage } from "@tui/context/language"
+import { useAbortOnCleanup } from "@tui/util/lifecycle"
 
 export function DialogMessage(props: {
   messageID: string
   sessionID: string
   setPrompt?: (prompt: PromptInfo) => void
 }) {
+  // `session.fork` is a round trip; navigating after it must not move a user
+  // who has already gone somewhere else.
+  const alive = useAbortOnCleanup()
   const sync = useSync()
   const sdk = useSDK()
   const message = createMemo(() => sync.data.message[props.sessionID]?.find((x) => x.id === props.messageID))
@@ -82,6 +86,7 @@ export function DialogMessage(props: {
               sessionID: props.sessionID,
               messageID: props.messageID,
             })
+            if (alive.disposed()) return
             const initialPrompt = (() => {
               const msg = message()
               if (!msg) return undefined

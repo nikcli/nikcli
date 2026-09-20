@@ -9,6 +9,7 @@ import { useKeybind } from "../context/keybind"
 import { Identifier } from "@nikcli-ai/util/id"
 import { DialogWorkspaceCreate } from "./dialog-workspace-create"
 import { DialogWorkspaceFileChanges } from "./dialog-workspace-file-changes"
+import { useAbortOnCleanup } from "@tui/util/lifecycle"
 
 function moveReminderText(directory: string) {
   return `<system-reminder>The user has changed the current working directory to "${directory}". This is still the same project but at a possibly new location; take this into account when working with any files from now on.</system-reminder>`
@@ -18,6 +19,8 @@ function moveReminderText(directory: string) {
  * Move the current session to another workspace, or detach it back to the local project.
  */
 export function DialogSessionWarp(props: { sessionID: string }) {
+  // Both spans below are round trips the user can leave during.
+  const alive = useAbortOnCleanup()
   const dialog = useDialog()
   const route = useRoute()
   const sync = useSync()
@@ -152,6 +155,7 @@ export function DialogSessionWarp(props: { sessionID: string }) {
           })
           .catch(() => undefined)
       }
+      if (alive.disposed()) return
       toast.show({
         message: workspaceID ? "Moved to selected environment" : "Moved to main checkout",
         variant: "info",

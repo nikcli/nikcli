@@ -5,6 +5,7 @@ import { useDialog } from "@tui/ui/dialog"
 import { useToast } from "../ui/toast"
 import { DialogPrompt } from "../ui/dialog-prompt"
 import { DialogSelect, type DialogSelectOption } from "@tui/ui/dialog-select"
+import { useAbortOnCleanup } from "@tui/util/lifecycle"
 import { entries } from "remeda"
 
 type ConfigCategory = "agent" | "provider" | "mcp" | "connectors" | "permission" | "formatter" | "lsp" | "command"
@@ -110,6 +111,8 @@ function ConfigCategoryList() {
 }
 
 function ConfigCategoryDetail(props: { category: ConfigCategory }) {
+  // Both writes below are round trips; the prompts feeding them are modal.
+  const alive = useAbortOnCleanup()
   const sync = useSync()
   const sdk = useSDK()
   const dialog = useDialog()
@@ -152,6 +155,7 @@ function ConfigCategoryDetail(props: { category: ConfigCategory }) {
         } as any,
       })
 
+      if (alive.disposed()) return
       toast.show({ message: `Updated ${props.category}.${key}`, variant: "success" })
       dialog.replace(() => <ConfigCategoryDetail category={props.category} />)
     } catch (error: any) {
@@ -192,6 +196,7 @@ function ConfigCategoryDetail(props: { category: ConfigCategory }) {
         } as any,
       })
 
+      if (alive.disposed()) return
       toast.show({ message: `Added ${props.category}.${key}`, variant: "success" })
       dialog.replace(() => <ConfigCategoryDetail category={props.category} />)
     } catch (error: any) {
