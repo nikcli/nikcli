@@ -45,21 +45,36 @@ const REDACT_KEYS = new Set([
   "credentials",
 ])
 
+/**
+ * These match without a leading `\b` on purpose.
+ *
+ * A word boundary before the prefix requires the preceding character to be a
+ * non-word one, so a credential concatenated straight onto other text —
+ * `...somethingnku_AAAA…` — was not redacted at all. Fuzzing the sanitizer
+ * found it; a 200-character value ending in a token came back with the token
+ * intact.
+ *
+ * Dropping the anchor costs nothing here because every one of these formats is
+ * *prefixed*: `sk-`, `ghp_`, `xoxb-`, `nku_`, `eyJ`. The prefix is the signal
+ * the boundary was standing in for, and nobody writes `xnku_` in prose. This is
+ * the opposite trade from `BEARER_RE`, which needs its anchor precisely because
+ * "Bearer" is an ordinary English word.
+ */
 const REDACT_PATTERNS: RegExp[] = [
   // OpenAI / Anthropic style API keys
-  /\bsk-[A-Za-z0-9_-]{16,}\b/g,
+  /sk-[A-Za-z0-9_-]{16,}/g,
   // GitHub PATs (classic and fine-grained)
-  /\bghp_[A-Za-z0-9]{20,}\b/g,
-  /\bghs_[A-Za-z0-9]{20,}\b/g,
-  /\bgithub_pat_[A-Za-z0-9_]{20,}\b/g,
+  /ghp_[A-Za-z0-9]{20,}/g,
+  /ghs_[A-Za-z0-9]{20,}/g,
+  /github_pat_[A-Za-z0-9_]{20,}/g,
   // Slack tokens
-  /\bxox[abprs]-[A-Za-z0-9-]{10,}\b/g,
+  /xox[abprs]-[A-Za-z0-9-]{10,}/g,
   // JWT shape (three dot-separated base64url segments)
-  /\beyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\b/g,
+  /eyJ[A-Za-z0-9_-]+\.eyJ[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+/g,
   // nikcli account tokens. `UserDB` mints these as `nku_` + 32 random bytes of
   // base64url (`src/user/users.ts`), so the redactor has to know the one
   // credential format this product issues itself.
-  /\bnku_[A-Za-z0-9_-]{16,}\b/g,
+  /nku_[A-Za-z0-9_-]{16,}/g,
 ]
 
 /**
@@ -83,6 +98,19 @@ const BEARER_RE = /\b(bearer\s+)((?=[A-Za-z0-9._~+/-]{8,})[A-Za-z]*[0-9._~+/-][A
 
 const URL_CREDENTIAL_RE =
   /([?&])(token|code|access_token|refresh_token|api_key|apikey|state|session|password|secret)=([^&\s#]+)/gi
+
+/**
+ * Credentials in a URL's userinfo, `scheme://user:pass@host`.
+ *
+ * `URL_CREDENTIAL_RE` above covers the query string only, so a connection
+ * string — `postgres://user:pw@host/db`, a git remote with a token in it —
+ * travelled verbatim into spans and logs. The spec's forbidden-dimension list
+ * names "URLs with credentials" explicitly; this is the half that was missing.
+ *
+ * The username is kept and only the secret replaced: `postgres://user@host` is
+ * still useful for telling two connections apart.
+ */
+const URL_USERINFO_RE = /([a-z][a-z0-9+.-]*:\/\/[^/\s:@]+):[^/\s@]*@/gi
 
 const MAX_DEPTH = 4
 const MAX_LEAF = 4096
@@ -154,6 +182,7 @@ export function redactString(input: string): string {
   // URL query credentials first, so the resulting "key=…" becomes
   // "key=[REDACTED]" instead of triggering the generic pattern below.
   out = out.replace(URL_CREDENTIAL_RE, (_match, prefix, key) => `${prefix}${key}=${REDACTED}`)
+  out = out.replace(URL_USERINFO_RE, (_match, upToUser) => `${upToUser}:${REDACTED}@`)
   out = out.replace(BEARER_RE, (_match, prefix) => `${prefix}${REDACTED}`)
   for (const pattern of REDACT_PATTERNS) {
     out = out.replace(pattern, REDACTED)

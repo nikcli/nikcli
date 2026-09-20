@@ -117,3 +117,41 @@ span coverage. A rolled-back group keeps its redaction and metric coverage even 
 1. **A span only exists if it runs on a runtime that has the layer.** `effect/runtime.ts:makeRuntime` merges `Observability.layer` into every base it builds, so `Effect.withSpan` reaches both the OTLP exporter and the live panel — but only for effects run through `AppRuntime` or `runtimeFor`. A bare `Effect.runPromise` uses Effect's default runtime, whose tracer discards the span silently: the allocation is paid and nothing is reported. The brain scheduler's per-tick span (`src/brain/scheduler.ts`) shipped on `Effect.runPromise` and reported nothing until it moved to `AppRuntime`. It remains the only `withSpan` in `src`, so the rule has no second example to learn from yet.
 2. **The schema gate is structural, and that is the point.** It asserts the spec's forbidden segments and required allowed attributes are present in `span-schema.ts`, and that `otlp.ts` still calls `sanitizeSpanAttributes` — the single redaction choke point. It reads source and imports nothing, so it costs no build and cannot be defeated by a refactor that keeps the code compiling.
 3. **The live-panel consumer throttles on the producer's clock.** `createTelemetryConsumer` coalesces on `frame.startTime`, not on arrival time. A span's start time is what the panel displays, and reading it makes the consumer a pure function of its input: the same frames coalesce the same way live or replayed from a capture, and no test has to control the wall clock. `push` is synchronous and O(1) so a producer in a tight loop cannot block the input thread — the invariant the bounded window exists to protect.
+
+## Redaction Fuzz — 2026-09-20
+
+The release gate asks for redaction fuzz. It did not exist, and writing it found four holes
+in the choke point — three on the key side, one on the value side. None of them needed a
+clever input; all four are spellings a normal contributor would produce.
+
+1. **camelCase keys walked past the entire forbidden list.** `splitKeySegments` split on
+   `[._\-/]` only, so `authToken` was one unrecognised segment `authtoken`. So were
+   `sessionPassword`, `bearerToken` and `accessToken`. camelCase is this codebase's dominant
+   convention, which made it the _likeliest_ spelling for a new attribute rather than an
+   exotic one. `apiKey` was blocked only by the coincidence that `apikey` is itself a listed
+   segment.
+2. **Separators outside the character class.** `auth:token`, `auth token` and `auth|token`
+   were each a single segment for the same reason.
+3. **A URL's userinfo was not redacted.** `URL_CREDENTIAL_RE` covered the query string, so
+   `?token=…` was handled while `postgres://user:hunter2@host/db` — and any git remote
+   carrying a token — travelled verbatim into spans and logs. The forbidden-dimension list
+   in `README.md` names "URLs with credentials" explicitly; this was the half that was
+   missing.
+4. **A credential glued to a word character escaped every pattern.** The token shapes were
+   anchored with a leading `\b`, which requires a non-word character before the prefix, so
+   a value ending `…somethingnku_AAAA` came back intact. The anchors are gone from the
+   prefixed formats: `sk-`, `ghp_`, `xoxb-`, `nku_`, `eyJ` are each their own signal and
+   nobody writes `xnku_` in prose. `BEARER_RE` keeps its anchor for the opposite reason —
+   "Bearer" is an ordinary English word, and a rule that only measured length redacted the
+   next word in "Bearer authentication failed".
+
+`test/observability/redaction-fuzz.test.ts` enumerates the spellings rather than random
+bytes, because spelling is where the holes were: 13 forbidden words × 5 prefixes × 12
+spellings on the key side, and 9 credential shapes each wrapped in three contexts on the
+value side.
+
+Two of its cases exist to stop the obvious over-correction. A sanitizer that drops
+everything passes a "nothing escaped" test and is useless, so the allowed schema is asserted
+to survive; and whole-word matching is asserted to leave `tokenizer.name` and `queue.depth`
+alone. Redaction happening _before_ truncation is pinned too — slicing to the budget first
+would put the first 200 characters of a credential on screen and in the export.

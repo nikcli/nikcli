@@ -88,10 +88,28 @@ const FORBIDDEN_SEGMENTS: ReadonlySet<string> = new Set([
 const MAX_ATTRIBUTES = 32
 const MAX_VALUE_CHARS = 200
 
+/**
+ * Break an attribute key into the words the forbidden list is written in.
+ *
+ * Two things this has to survive, both found by fuzzing the sanitizer rather
+ * than by reading it:
+ *
+ *  - **camelCase.** Splitting only on punctuation made `userToken` a single
+ *    segment, `usertoken`, which is in no list — so `authToken`,
+ *    `sessionPassword`, `bearerToken` and `accessToken` all walked past the
+ *    whole forbidden set. camelCase is the dominant convention in this
+ *    codebase, which made it the likeliest spelling rather than an exotic one.
+ *  - **separators outside the original class.** `auth:token`, `auth token` and
+ *    `auth|token` were each one segment for the same reason.
+ *
+ * Splitting on a case boundary before lowercasing is what catches the first;
+ * the wider character class catches the second.
+ */
 export function splitKeySegments(key: string): string[] {
   return key
+    .replace(/([a-z0-9])([A-Z])/g, "$1 $2")
     .toLowerCase()
-    .split(/[._\-/]+/)
+    .split(/[._\-/:|\s]+/)
     .filter((part) => part.length > 0)
 }
 
