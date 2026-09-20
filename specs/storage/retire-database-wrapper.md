@@ -10,7 +10,8 @@
 
 ## The Adapter Was Never Needed — 2026-09-15
 
-This spec was written as a consumer of [effect-sqlite-package.md](./effect-sqlite-package.md), on the
+This spec was written as a consumer of `specs/storage/effect-sqlite-package.md` — the Effect Drizzle
+adapter proposal, retired 2026-09-21 — on the
 assumption that yieldable queries require Drizzle's Effect driver. Measured, they do not: taking
 Effect at the repository boundary costs 0.5µs a query, where swapping the driver costs 9µs, and both
 deliver the same thing — a failure in the signature, an executor passed in, a body that composes in
@@ -188,8 +189,8 @@ effect logged rather than propagated, and `behavior: "immediate"`. The fence tes
 and were written before the refactor.
 
 `SyncEvent.run` depends on transaction composability and on
-`behavior: "immediate"` for sequencing correctness — see
-[effect-sqlite-package.md](./effect-sqlite-package.md) — so whatever replaces `pending` must keep
+`behavior: "immediate"` for sequencing correctness — see "The Two Semantics The Wrapper Must
+Preserve" above — so whatever replaces `pending` must keep
 post-commit effects draining after the **outermost** commit, never on rollback, and never while the
 write lock is held.
 
@@ -202,7 +203,9 @@ from inside the transaction so there is no timing race.
 
 ## Group 2: Analytics
 
-**Status: not started.**
+**Status: landed 2026-09-15**, by the second of the two options below: `syncNative` is gone and raw
+SQL goes through `Database.rawSql(<named site>)`, two code call sites. The six `defaultLayer`
+references were never part of the removal — see "What Stays".
 
 `analytics/rollup.ts` and `analytics/data.ts` already provide `Database.defaultLayer` explicitly (6
 references), which is the target pattern. `analytics/analytics.ts` and `analytics/share.ts` reach
@@ -214,7 +217,8 @@ general-purpose escape hatch open for two callers.
 
 ## Group 3: Domain Repositories
 
-**Status: not started. Largest group.**
+**Status: landed 2026-09-15.** Largest group. Nine repositories converted; the executor is a
+parameter without a global default, so nothing here can reach the process-global handle.
 
 The `*repo.ts` / `*.sql.ts` pairs: `session/{repo,message-repo,todo-repo,diff-repo,goal-repo,
 instruction-repo,pending}.ts`, `session/v2/*`, `loop/repo.ts`, `mission/repo.ts`, `monitor/repo.ts`,
@@ -230,7 +234,10 @@ other than the executor type.
 
 ## Group 4: Sync And Workspace
 
-**Status: not started.**
+**Status: landed 2026-09-15.** The modules here whose public surface is async — `MobileAuth`,
+`Outbox`, `SyncStorage`, `UserDB`'s `create`/`updateUser` — keep returning Promises and put the
+Effect boundary at the statement rather than at the function. That is the shape, not an unfinished
+conversion.
 
 `sync/{index,outbox,remote-sync,snapshot,migrate-from-workspace}.ts`, `workspace/db.ts`,
 `server/httpapi/sync.ts`, `share/{repo,share-next}.ts`, `user/users.ts`, `account/db.ts`,
@@ -255,15 +262,18 @@ appear here only because they still import the namespace.
 ## Sequencing
 
 1. ~~Group 1 (two call sites, one file) — removes the ambient transaction context.~~ **Done.**
-2. Group 2 (analytics) — decides the raw-SQL question while it is still two callers. **Next.**
-3. Land [effect-sqlite-package.md](./effect-sqlite-package.md) steps 1–5, so there is an Effect-native
-   executor for groups 3 and 4 to move onto.
-4. Group 3, one domain per change, each with its existing repository tests green.
-5. Group 4.
-6. Add the gate, then delete the synchronous exports.
+2. ~~Group 2 (analytics) — decides the raw-SQL question while it is still two callers.~~ **Done**, via
+   the named accessor.
+3. ~~Group 3, one domain per change, each with its existing repository tests green.~~ **Done.**
+4. ~~Group 4.~~ **Done.**
+5. Add the gate, then delete the synchronous exports. **This is what is left.** `syncDb` is already
+   gated at zero for `src` by `wrapper-inventory.test.ts`; deleting the export itself needs the test
+   and tooling callers moved first, which is why it did not land with group 4.
 
-Do not start group 3 before step 3. Moving 27 files onto a target that does not exist yet means
-moving them twice.
+An earlier revision of this list had a step between groups 2 and 3: land the Effect Drizzle adapter,
+so groups 3 and 4 had an Effect-native executor to move onto. That step is gone, and its absence is
+the finding — the groups landed on the synchronous driver, which is what "The Adapter Was Never
+Needed" above measures.
 
 ## Risks
 

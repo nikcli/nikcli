@@ -117,8 +117,7 @@ decisions that are not part of that program. They are not EOT specs and carry th
 | [Project, directory binding, and copies](project.md)                            | How one server serves many projects and worktrees: directory-bound instances, project identity, git-worktree copies. |
 | [TUI package extraction](tui-package.md)                                        | The completed move of the terminal application into `packages/tui`.                                                  |
 | [Retire `src/storage/storage.ts`](storage/remove-json-storage.md)               | The completed retirement of the JSON key-value store.                                                                |
-| [Effect Drizzle SQLite adapter](storage/effect-sqlite-package.md)               | **Proposed.** Vendor the Drizzle Effect SQLite adapter, then port `src/database/database.ts` onto it.                |
-| [Retire the synchronous `Database` wrapper](storage/retire-database-wrapper.md) | **Proposed.** 92 references across 39 files, grouped and sequenced; invariants and count now gated.                  |
+| [Retire the synchronous `Database` wrapper](storage/retire-database-wrapper.md) | **Groups 1-4 landed.** `Database.syncDb()` has no callers in `src`; what remains is deleting the export.            |
 | [V2 specifications](v2/README.md)                                               | The v2 contracts, decisions, and working documents, with their own status rule.                                      |
 
 ## Existing Plans and Compatibility

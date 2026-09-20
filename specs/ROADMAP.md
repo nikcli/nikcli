@@ -399,10 +399,12 @@ performance samples with the implementing PR.
 
 Do not adopt a new global state framework, a browser virtualizer, Effect SQL, Effect AI/CLI, distributed actors, or an
 OpenTUI fork merely because the APIs exist. Reconsider only with a measured bottleneck, a compatibility case, and a
-separate decision. [storage/effect-sqlite-package.md](storage/effect-sqlite-package.md) proposes exactly this adoption
-and is therefore **blocked by this clause**: it needs the measured bottleneck and the separate decision before its first
-PR, and non-negotiable decision 3 forbids an alternate database layer standing beside the current one. The retirement it
-was written to unblock ([storage/retire-database-wrapper.md](storage/retire-database-wrapper.md)) does not depend on it
-for group 1 or group 2, which is why those run first. Renderer worker/thread defaults, authentication policy, plugin trust, telemetry export defaults,
+separate decision. Effect SQL had a spec proposing exactly this adoption — `specs/storage/effect-sqlite-package.md`,
+**retired 2026-09-21** — and three separate things closed it rather than one: upstream published
+`drizzle-orm/effect-sqlite-bun`, so the vendoring it described is moot; the measurement it was waiting for came back the
+other way, with Effect at the repository boundary costing 0.5µs a query against the driver swap's 9µs; and the
+retirement it existed to unblock ([storage/retire-database-wrapper.md](storage/retire-database-wrapper.md)) finished
+groups 1-4 without it. Non-negotiable decision 3 still forbids an alternate database layer standing beside the current
+one, so a future proposal starts from that clause, not from the retired document. Renderer worker/thread defaults, authentication policy, plugin trust, telemetry export defaults,
 and CLI headless posture are not changed by this roadmap. No new mandatory external infrastructure or paid service
 is required.

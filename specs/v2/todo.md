@@ -97,18 +97,20 @@ Neither should be done for symmetry with upstream. Both need a named consumer fi
 
 ## Storage
 
-[../storage/effect-sqlite-package.md](../storage/effect-sqlite-package.md) proposes vendoring the
-Drizzle Effect SQLite adapter. Nothing is implemented. The first PR is deliberately boring: the
-package plus an adapter test suite against a toy schema, with `packages/nikcli` untouched.
+**Closed.** `specs/storage/effect-sqlite-package.md` proposed vendoring the Drizzle Effect SQLite
+adapter, and was **retired 2026-09-21** without a line of it being written. Three things closed it
+independently: upstream published `drizzle-orm/effect-sqlite-bun`; the measurement it was waiting for
+came back the other way (Effect at the repository boundary, 0.5µs a query, against 9µs to swap the
+driver); and its consumer finished without it.
 
-[../storage/retire-database-wrapper.md](../storage/retire-database-wrapper.md) is its consumer: 92
-references to the synchronous `Database` surface across 39 files, grouped and sequenced. Group 1 is
-two call sites in one file and removes the ambient transaction context — it is worth doing before the
-adapter exists. Everything after it waits.
+That consumer, [../storage/retire-database-wrapper.md](../storage/retire-database-wrapper.md), has
+**landed groups 1-4** on the synchronous driver: `Database.syncDb()` has no callers in `src`, down
+from 32 across 28 modules. What is left there is deleting the export, once the test and tooling
+callers move.
 
-Both fences are now in place: `test/database/transaction-semantics.test.ts` pins the nested-join and
-post-commit-drain semantics that group 1 must preserve, and `test/database/wrapper-inventory.test.ts`
-holds the count at 92/39 as a ceiling. Lower the baseline in the same change that lands a group.
+Both fences hold: `test/database/transaction-semantics.test.ts` pins the nested-join and
+post-commit-drain semantics, and `test/database/wrapper-inventory.test.ts` gates `syncDb` at zero for
+`src` and holds the rest as a ceiling. Lower the baseline in the same change that lands a group.
 
 Two hardening items are independent of that work and should not block it:
 
