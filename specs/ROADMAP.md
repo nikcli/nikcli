@@ -295,6 +295,7 @@ appears more than once.
 | EOT-04 | No-silent-loss as a property over every eviction path; the three have different radius                           | `149d9745aa`                                            |
 | EOT-02 | The bridge cannot tell a defect from an interruption; counters said every one was a failure                      | `88c404b2ca`                                            |
 | EOT-18 | `Lifecycle<T>` had zero registered commands; the guarantee lives in `cli/bootstrap.ts`                           | `1377a04033`                                            |
+| EOT-15 | Cross-process seq uniqueness pinned; SSE documented as _not_ a replay protocol                                   | `<pending>`                                             |
 | EOT-03 | `useAbortOnCleanup` cannot guard a dialog that opens dialogs — two reverted rounds, and why                      | `29735847d4fc`                                          |
 
 Every spec has been opened and every spec now has at least one landed slice,

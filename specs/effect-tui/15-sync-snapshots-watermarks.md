@@ -111,3 +111,43 @@ Each phase flips a per-aggregate barrier flag; the legacy path stays until both 
 companion migrates after the server-side barrier is ratified. Roll back by toggling the per-aggregate flag to the legacy
 path; never delete per-aggregate cursors or stored snapshots. Schema changes are additive (new optional fields); a v1
 consumer can ignore a v2 snapshot's unknown fields without forcing a full re-bootstrap.
+
+## Ordering and the Replay Contract — 2026-09-20
+
+### Global SSE is not a replay protocol
+
+Stated here because the plan asked for it explicitly, and because the two look alike from
+the client's side. `/event` and `/global/event` carry **no sequence numbers**: a frame is a
+notification that something happened, not a numbered position in a log. A client that
+misses frames — evicted for lag, for an oversized producer, or by a network failure —
+cannot resume from where it was, and nothing in the feed lets it discover that it missed
+anything. It refetches, and the close reason
+(`specs/effect-tui/04-event-delivery.md`) is what tells it to.
+
+The sync journal is the replay protocol. It has per-aggregate `seq`, `detectSequenceGap`
+to find a hole, and snapshots to bound the replay. Reaching for `detectSequenceGap` on the
+SSE path would be reaching for a cursor that does not exist.
+
+### `seq` is the order; `origin` is not
+
+`reserveSeqAndAppend` assigns `seq` per aggregate, in the writer's database, inside one
+transaction. A device's `origin` and `origin_seq` are provenance and idempotency — two
+devices do not interleave their own counters into one stream, and a reader's order is the
+server's, not any device's.
+
+`test/sync/ordering.test.ts` pins the property: no duplicate `seq`, no holes,
+per-aggregate independence, and cursor reads in order — in-process under a 40-write burst,
+and across four contending processes, which is the production shape since the server runs
+one per workspace.
+
+**What it does not establish.** It pins the property, not the mechanism. Flipping the
+transaction to `deferred` was tried both ways and nothing failed: in-process because the
+drizzle driver is synchronous, so the read and the append cannot interleave at all, and
+across processes because SQLite's own locking and retry appear to close the window first.
+So the guarantee is more robust than the one line usually credited with it, a regression in
+it would still be caught here, and `BEGIN IMMEDIATE` should not be cited as _proven_
+load-bearing on the strength of this file.
+
+Why the property matters beyond ordering: `detectSequenceGap` reads consecutiveness as
+proof that nothing was deleted. Two appends colliding on one `seq` would leave the next
+reader's gap check quietly wrong — no hole to find, and an event gone.
