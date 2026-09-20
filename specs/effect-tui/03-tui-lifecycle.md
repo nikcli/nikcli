@@ -124,6 +124,24 @@ The distinction the audit actually needs:
 Which kind an await is cannot be seen from the `replace` that follows it, which is the
 whole reason this is a per-site reading exercise rather than a codemod.
 
+### First file audited under that rule
+
+`component/dialog-skills.tsx` had 13 flagged sites. Five were long-async and are now
+guarded with `useAbortOnCleanup`: the `skill.create` round trip, the `bun x skills add`
+spawn, the `skill.delete` round trip, and the `bun x skills` search — each checked
+**after** the await, because aborting is not synchronous with the continuation and a
+request that had already come back still resumes there. The install is deliberately left
+to finish rather than killed: a half-written skill install is worse than a completed one,
+and what must not happen is the dialog landing back over whatever the user opened.
+
+The remaining three are modal restores after a `DialogConfirm.show` and are correctly
+unguarded — plus one false positive, the `Bun.spawn` line itself, which is the intended
+consequence of confirming rather than a late effect.
+
+Repo-wide the candidate count went 88 → 78, and the shape of the ratio is now visible:
+roughly a third of a file's hits are real, a third are modal restores, and a third are the
+detector not knowing a call from a call site.
+
 ### The candidate set, and why it is not a gate
 
 `packages/tui/script/audit-late-side-effects.ts` reproduces the scan: 88 candidate sites,
