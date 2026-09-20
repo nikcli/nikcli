@@ -230,7 +230,7 @@ Nothing here is marked complete. Rows are in the order they landed, so a spec
 appears more than once.
 
 | Spec   | What landed                                                                                                      | Commit                                                  |
-| ------ | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | ------------ |
+| ------ | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | -------------- |
 | EOT-01 | One probe-environment block shared by both probes; `loadavg1` added                                              | `dc3cab7fd`                                             |
 | EOT-01 | Probe progress moved to stderr; `BASELINE` comparison with an opt-in regression gate                             | working tree                                            |
 | EOT-01 | `repro:startup-hang`: the intermittent never-paints startup, reproduced on demand                                | working tree                                            |
@@ -287,7 +287,7 @@ appears more than once.
 | EOT-12 | Flag capture-at-import is a CI gate, not four fixes; the legacy-credential pair moves together                   | `ac52fff3`                                              |
 | EOT-20 | TUI tests already lived in `packages/nikcli/test/tui` (55 files); a duplicate directory removed, `adopt` covered | `995fff77ba`                                            |
 | EOT-01 | P0 closed: the probe never returned, so no baseline existed; artifact + gate now in CI                           | `7376aed1e1`                                            |
-| EOT-13 | Redaction fuzz: camelCase keys, `:`/space/`                                                                      | ` separators, URL userinfo and glued tokens all escaped | `e8443b8206` |
+| EOT-13 | Redaction fuzz: camelCase keys, `:`/space/`                                                                      | ` separators, URL userinfo and glued tokens all escaped | `936ae2289a06` |
 | EOT-03 | `useAbortOnCleanup` cannot guard a dialog that opens dialogs — two reverted rounds, and why                      | `29735847d4fc`                                          |
 
 Every spec has been opened and every spec now has at least one landed slice,
