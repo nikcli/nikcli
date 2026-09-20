@@ -13,6 +13,7 @@ import { DialogAlert } from "@tui/ui/dialog-alert"
 import { DialogConfirm } from "@tui/ui/dialog-confirm"
 import { DialogPrompt } from "@tui/ui/dialog-prompt"
 import { DialogSelect, type DialogSelectOption } from "@tui/ui/dialog-select"
+import { useAbortOnCleanup } from "@tui/util/lifecycle"
 
 /**
  * `/profile` — the interactive editor for the personalization block every agent
@@ -117,6 +118,10 @@ export function DialogProfile() {
   const dialog = useDialog()
   const toast = useToast()
   const { theme } = useTheme()
+  // Every write below is a round trip the user can walk out of. The confirms
+  // and prompts are not — restoring this dialog after one of those is how they
+  // get back — so only the spans after a `patchProfile` / `clearProfile` check.
+  const alive = useAbortOnCleanup()
 
   const project = useProject()
   const sdk = useSDK()
@@ -139,10 +144,12 @@ export function DialogProfile() {
   async function apply(input: ProfileInput, message: string) {
     try {
       await patchProfile(sdk.client, input)
+      if (alive.disposed()) return
       toast.show({ message, variant: "success" })
       await refetch()
       await refetchPreview()
     } catch (error: any) {
+      if (alive.disposed()) return
       toast.show({ message: `Could not save: ${error?.message ?? error}`, variant: "error" })
     }
   }
@@ -213,6 +220,10 @@ export function DialogProfile() {
     )
     if (confirmed) {
       await clearProfile(sdk.client).catch(() => false)
+      // The reset is a round trip, and `reopen` after it is the late effect the
+      // detector misses — it is reached through a local name, not a literal
+      // `dialog.replace`.
+      if (alive.disposed()) return
       toast.show({ message: "Profile reset", variant: "success" })
     }
     reopen()
@@ -372,6 +383,7 @@ export function DialogProfile() {
 
 /** Add/remove editor for the plain string-list fields. */
 function DialogProfileList(props: { field: ListField }) {
+  const alive = useAbortOnCleanup()
   const dialog = useDialog()
   const toast = useToast()
   const { theme } = useTheme()
@@ -401,7 +413,10 @@ function DialogProfileList(props: { field: ListField }) {
           placeholder: meta.placeholder,
           description: () => <text fg={theme.foreground.muted}>{meta.hint}</text>,
         })
+        // The prompt is modal and its cancel is not special; the `write` after
+        // it is the round trip the user can leave during.
         if (result) await write([...values(), result.trim()])
+        if (alive.disposed()) return
         dialog.replace(() => <DialogProfileList field={props.field} />)
       },
     },
@@ -438,6 +453,7 @@ function TogglePicker(props: {
   onDone: (values: string[]) => Promise<void>
 }) {
   const dialog = useDialog()
+  const alive = useAbortOnCleanup()
   const [selected, setSelected] = createSignal<string[]>(props.initial())
   // `initial` resolves asynchronously; adopt it once, without clobbering edits.
   let adopted = props.initial().length > 0
@@ -467,6 +483,7 @@ function TogglePicker(props: {
         category: "Actions",
         onSelect: async () => {
           await props.onDone(chosen)
+          if (alive.disposed()) return
           dialog.replace(() => <DialogProfile />)
         },
       },
@@ -480,6 +497,7 @@ function TogglePicker(props: {
           if (result) {
             const value = result.trim()
             await props.onDone(chosen.includes(value) ? chosen : [...chosen, value])
+            if (alive.disposed()) return
           }
           dialog.replace(() => <DialogProfile />)
         },
@@ -563,6 +581,7 @@ function DialogProfileTools(props: { kind: "preferred" | "avoid" }) {
 }
 
 function DialogProfileVerbosity() {
+  const alive = useAbortOnCleanup()
   const dialog = useDialog()
   const sdk = useSDK()
   const toast = useToast()
@@ -609,6 +628,7 @@ function DialogProfileVerbosity() {
         }).catch((error: any) =>
           toast.show({ message: `Could not save: ${error?.message ?? error}`, variant: "error" }),
         )
+        if (alive.disposed()) return
         dialog.replace(() => <DialogProfile />)
       }}
     />

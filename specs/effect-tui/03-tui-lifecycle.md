@@ -138,9 +138,24 @@ The remaining three are modal restores after a `DialogConfirm.show` and are corr
 unguarded — plus one false positive, the `Bun.spawn` line itself, which is the intended
 consequence of confirming rather than a late effect.
 
-Repo-wide the candidate count went 88 → 78, and the shape of the ratio is now visible:
-roughly a third of a file's hits are real, a third are modal restores, and a third are the
-detector not knowing a call from a call site.
+### Second file, and both of the detector's blind spots
+
+`component/dialog-profile.tsx` had 11 flagged sites and is now clear. Five were real —
+`patchProfile` in `apply` and in the verbosity picker, `clearProfile` in the reset,
+`write` in the list editor, and the caller-supplied `onDone` in `TogglePicker` — each a
+round trip with a `replace` behind it.
+
+The other six were `onSelect: () => dialog.replace(…)` **handler definitions** built after
+an await. They are safe, and they also stopped being reported the moment a guard landed
+upstream of them in the same function, which is worth saying plainly: the count going down
+is not proof that eleven defects were fixed.
+
+The file also showed the opposite failure. `clearProfile` is followed by `reopen()` — a
+local name that happens to call `dialog.replace` — so the detector never flagged it. It
+**under**-reports through one level of indirection just as readily as it over-reports on
+handler definitions, which is the second reason it is triage rather than a gate.
+
+Repo-wide the candidate count went 88 → 67.
 
 ### The candidate set, and why it is not a gate
 
