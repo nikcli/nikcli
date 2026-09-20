@@ -6,23 +6,40 @@ import { runPromiseWithLayer } from "@/effect"
 /**
  * Server-side account-required guard.
  *
- * `specs/effect-tui/12-identity-onboarding-auth.md` says account creation
- * cannot be skipped. The TUI already enforced this in the UI; this guard
- * is what stops a malformed client from bypassing it on the wire. Handlers
- * that touch the signed-in account (sync, share, mobile companion) call
- * `requireAccount` and treat `deny` as a typed `AccountRequiredError`.
+ * `specs/effect-tui/12-identity-onboarding-auth.md` asks for a guard that
+ * stops a malformed client from skipping account creation on the wire. This
+ * is it: it gathers `Account.Service.active()` plus one token attempt, and
+ * every verdict comes from the pure `decide()` in `state.ts`, so the decision
+ * is testable without a service and cannot drift to a second place.
  *
- * The guard itself only gathers: `Account.Service.active()` plus one token
- * attempt. Every verdict comes from the pure `decide()` in `state.ts`, which
- * is the single source of truth for the state machine — so the decision can
- * be tested without a service, and there is no second place a rule can
- * drift to.
+ * **It has no call site, and that is the finding, not an omission.** Each
+ * surface the guard was meant for turned out to be account-optional by
+ * design, and switching it on would convert working behaviour into 401s:
  *
- * Not yet called from any handler. `script/check-account-required.ts` holds
- * the (currently empty) list of privileged routes that must adopt it; adding
- * a route there and not calling `requireAccount` from it fails CI. Wiring
- * the first routes is a deliberate step of its own, because a guard switched
- * on everywhere at once locks out every client that has not signed in yet.
+ *  - **sync** — `server/httpapi/sync.ts` identifies an unauthenticated local
+ *    caller as `"operator"`, and `sync/sync-config.ts` reports
+ *    `configured: false` with no account so remote sync simply does not run.
+ *    Requiring an account here would break local-only sync, which works.
+ *  - **share** — `share/share-next.ts` POSTs to `s.nikcli.store/api/share`
+ *    with no authorization header at all. The share service is anonymous.
+ *  - **mobile companion** — carries its own `nkm_` capability tokens
+ *    (`MobileAuth`), and teleport takes the *target* server's token in the
+ *    request body. Neither reads this machine's account.
+ *
+ * The one surface that does answer "who is signed in on this machine" —
+ * `/user/me` and `/account` — is served by `localAccountSession` in
+ * `server/identity-auth.ts`, which makes the same two calls but keeps a
+ * distinction `decide()` deliberately does not model: an issuer that
+ * *answered* that the refresh chain is over ends the session, while an
+ * issuer that could not be reached falls back to the held session. Folding
+ * it into `decide()` as it stands would collapse "couldn't ask" into
+ * "signed out" — which is the bug that had signed-in users meeting the
+ * sign-in dialog on every launch.
+ *
+ * So this stays available and tested, and a route adopts it when one
+ * genuinely cannot serve an unauthenticated caller. Adding a file to
+ * `PRIVILEGED_FILES` in `script/check-account-required.ts` without importing
+ * this module fails CI.
  */
 export function requireAccount(): Effect.Effect<
   Extract<AccountGuardResult, { kind: "allow" }>,

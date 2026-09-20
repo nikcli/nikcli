@@ -13,39 +13,66 @@
  * concern. Handlers that need an active account on this machine must use
  * `requireAccount` (or `requireAccountOrThrow`) from `@/account/guard`.
  *
- * Today the raw `/account/*` group is exempt (the user is unauthenticated
- * by definition in those flows — they are signing in). The check this
- * script enforces is: privileged groups (sync, share, mobile companion
- * session routes) must not silently bypass the guard.
+ * The raw `/account/*` group is exempt by definition — the caller is signing
+ * in, so demanding an existing session would make signing in impossible.
+ *
+ * `PRIVILEGED_FILES` is empty, and that is a finding rather than a backlog.
+ * Each surface the guard was written for turned out to be account-optional
+ * on purpose: sync identifies an unauthenticated local caller as `"operator"`
+ * and reports `configured: false` without an account, share POSTs to
+ * `s.nikcli.store` with no authorization header, and the mobile companion
+ * carries its own `nkm_` capability tokens. Listing any of them here would
+ * not harden a route; it would turn working behaviour into a 401. See the
+ * docblock on `src/account/guard.ts` for the evidence per surface.
  *
  * The script does two things:
  *
- * 1. Static check: every HttpApi handler module under `src/server/httpapi/`
- *    that contains a privileged route must also import `@/account/guard`.
- *    The allowlist is by file; today no file is privileged enough to need
- *    the guard, so the allowlist is empty and the script only checks the
- *    helpers compile.
+ * 1. Static check: every file in `PRIVILEGED_FILES` must import
+ *    `@/account/guard`. This is what makes the list load-bearing — a route
+ *    declared privileged and then served without the guard fails CI.
  *
- * 2. Wiring check: `src/account/guard.ts` must export `requireAccount`
- *    and `requireAccountOrThrow`. A test in `test/account/state.test.ts`
- *    exercises both.
+ * 2. Wiring check: `src/account/guard.ts` must export `requireAccount` and
+ *    `requireAccountOrThrow`. A test in `test/account/state.test.ts`
+ *    exercises both, so the guard cannot rot while it waits for a caller.
  *
- * As more groups adopt the guard, add their file path to `PRIVILEGED_FILES`
- * so the structural check becomes a real lint instead of a placeholder.
+ * Add a file here when a route genuinely cannot serve an unauthenticated
+ * caller — not to work through the list above.
  */
 
 import { existsSync } from "node:fs"
 import path from "node:path"
 import process from "node:process"
 
+function flag(name: string): string | undefined {
+  const prefix = `--${name}=`
+  const hit = process.argv.find((arg) => arg.startsWith(prefix))
+  return hit ? hit.slice(prefix.length) : undefined
+}
+
 const REPO_ROOT = path.resolve(import.meta.dirname, "..", "..", "..")
-const NIKCLI_SRC = path.join(REPO_ROOT, "packages", "nikcli", "src")
-const GUARD_FILE = path.join(NIKCLI_SRC, "account", "guard.ts")
-const STATE_FILE = path.join(NIKCLI_SRC, "account", "state.ts")
-const PRIVILEGED_FILES: string[] = [
-  // Populate as new endpoints adopt `requireAccount`. The structural check
-  // reads each file and asserts it imports `@/account/guard`.
+/** `--src` points the privileged-file check at a synthetic tree for this script's own test. */
+const NIKCLI_SRC = path.resolve(flag("src") ?? path.join(REPO_ROOT, "packages", "nikcli", "src"))
+const REAL_SRC = path.join(REPO_ROOT, "packages", "nikcli", "src")
+const GUARD_FILE = path.join(REAL_SRC, "account", "guard.ts")
+const STATE_FILE = path.join(REAL_SRC, "account", "state.ts")
+const DECLARED_PRIVILEGED_FILES: string[] = [
+  // Empty deliberately — see the header. Add a file only when its route
+  // cannot serve an unauthenticated caller; the check then asserts it
+  // imports `@/account/guard`.
 ]
+
+/**
+ * `--privileged=a.ts,b.ts` overrides the list so this script's own test can
+ * prove the check bites. An empty list that has never been shown to fail is
+ * indistinguishable from a check that does nothing.
+ */
+const override = flag("privileged")
+const PRIVILEGED_FILES: string[] = override
+  ? override
+      .split(",")
+      .map((entry) => entry.trim())
+      .filter(Boolean)
+  : DECLARED_PRIVILEGED_FILES
 
 function read(file: string): string {
   return require("node:fs").readFileSync(file, "utf8")

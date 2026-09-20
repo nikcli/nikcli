@@ -112,6 +112,11 @@ export function decide(input: {
  * The typed error the guard throws on `deny`. Handlers can `Effect.catchTag`
  * for `AccountRequired`; the wire shape carries `state` so the TUI can
  * route to the right onboarding step without re-deriving it.
+ *
+ * `state` only ever carries a denial state — `unsigned` or `expired`. The
+ * third member of `AccountState` belongs to the machine's vocabulary, not to
+ * this payload: an error that reported `authenticated` would be one the guard
+ * cannot construct.
  */
 export class AccountRequiredError extends Schema.TaggedError<AccountRequiredError>()("AccountRequired", {
   reason: AccountDenialReason,
