@@ -111,6 +111,16 @@ const steps: ValidationStep[] = [
     timeout: 30_000,
   },
   {
+    // Non-blocking for the same reason as the commit-reference gate: it is a
+    // documentation link, and a red build over one teaches people to ignore
+    // the colour.
+    name: "Spec file-reference gate",
+    command: ["bun", "run", "script/check-spec-paths.ts"],
+    cwd: "packages/nikcli",
+    critical: false,
+    timeout: 30_000,
+  },
+  {
     name: "Spec commit-reference gate",
     command: ["bun", "run", "script/check-spec-commit-refs.ts"],
     cwd: "packages/nikcli",

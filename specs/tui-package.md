@@ -244,7 +244,7 @@ Landed 2026-08-14. `packages/util` now depends on `effect` and `xdg-basedir`, wh
 
 Two things are deliberately left where they are:
 
-- **`id/id` (5).** `packages/util/src/identifier.ts` already exports a namespace called `Identifier`, and so does this one. They are two implementations of the same idea, not a collision of names — the nikcli one adds prefixes, zod and an Effect schema. Renaming the file would ship the duplicate rather than resolve it, so reconcile the two first.
+- **`id/id` (5).** `packages/util/src/id.ts` already exports a namespace called `Identifier`, and so does this one. They are two implementations of the same idea, not a collision of names — the nikcli one adds prefixes, zod and an Effect schema. Renaming the file would ship the duplicate rather than resolve it, so reconcile the two first.
 - **`util/runtime` (1).** It imports `./lazy`, and `packages/util/src/lazy.ts` is a _different_ module from `src/util/lazy.ts`. Moving the file would silently rebind it.
 
 Note for anyone repeating this kind of sweep: `src/permission/ruleset.ts` is not valid text to `grep`, which skips it in `-l` mode without saying so. Every repo-wide import rewrite must be verified by `bun run typecheck`, never by a clean `grep` alone.

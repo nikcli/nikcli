@@ -40,6 +40,7 @@
     "check:flag-capture": "bun run script/check-flag-capture.ts",
     "check:spec-commit-refs": "bun run script/check-spec-commit-refs.ts",
     "check:perf-baseline": "bun run script/check-perf-baseline.ts",
+    "check:spec-paths": "bun run script/check-spec-paths.ts",
     "dev": "bun run --conditions=browser ./src/index.ts",
     "clean": "echo 'Cleaning up...' && rm -rf node_modules dist",
     "docs": "echo 'Generating documentation...' && find src -name '*.ts' -exec echo 'Processing: {}' \\;",

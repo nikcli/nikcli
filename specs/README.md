@@ -209,3 +209,30 @@ EOT-17 owns the canonical permission/sandbox/policy boundary. The high-level rul
 - Network policy routes every outbound HTTP/WS/raw TCP through the runtime `HttpClient`; bypass is a defect.
 - Audit logs are redacted; prompts, secrets, file contents, and arbitrary request bodies are never recorded.
 - Headless mode fails closed unless every required decision is pre-resolved.
+
+## Keeping the Catalogue Honest
+
+Two gates guard the citations these documents are built on, because both die quietly and
+both read as evidence while dead.
+
+`check:spec-commit-refs` requires every commit hash cited in `specs/` to be an ancestor of
+HEAD. This repository rebases onto origin on every release, so a slice documented and
+pushed in two steps cites a hash that no longer exists on the branch by the time anyone
+reads it. Ancestry is the test, not existence: `git cat-file -e` still finds the orphaned
+commit until it is garbage-collected.
+
+`check:spec-paths` requires every source file cited in `specs/` to resolve. That rot has a
+single cause — a migration moves the file and the prose keeps the old path — and it is the
+most common defect this catalogue has produced. Four spec claims were found stale in one
+day by following their own paths: EOT-12 named surfaces that turn out not to require an
+account, EOT-17 named a chokepoint nothing routes through, EOT-18 pinned its requirement to
+a wrapper with no registered commands, and EOT-20 declared a package untested whose tests
+live one package over.
+
+Not every dead path is a defect, so it is an allowlist rather than an existence check, and
+each entry carries its reason: `historical` for a document naming what a completed
+migration removed, `absence` for a sentence whose point is that the path does _not_ exist,
+`placeholder` for an example. The fix for anything else is to repoint the citation.
+
+Both gates are non-blocking in `script/ci-validate.ts`. They guard documentation links, and
+a red build over one is a red build people learn to ignore.
