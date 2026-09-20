@@ -3,6 +3,38 @@
 <!-- UNRELEASED:START -->
 <!-- UNRELEASED:END -->
 
+## v1.376.0 (September 2026)
+
+## Core
+
+- Repoint five dead commit references, and gate them (@nikomatt69)
+- Make the flags tests set read at access, and gate the whole class (@nikomatt69)
+- Record the 2026-09-20 slices, and the three plan assumptions they broke (@nikomatt69)
+- Record why the guard has no call site, and make the gate bite (@nikomatt69)
+- Bound the expo probes on /mobile/bootstrap (@nikomatt69)
+- Read the identity verifier's env at call time, not at import (@nikomatt69)
+
+**Thank you to 1 community contributor:**
+
+- @nikomatt69:
+  - fix(auth): read the identity verifier's env at call time, not at import
+  - fix(mobile): bound the expo probes on /mobile/bootstrap
+  - docs(account): record why the guard has no call site, and make the gate bite
+  - docs(specs): record the 2026-09-20 slices, and the three plan assumptions they broke
+  - fix(util): make the flags tests set read at access, and gate the whole class
+  - docs(specs): point the flag-capture row at its commit
+  - fix(specs): repoint five dead commit references, and gate them
+  - fix(tui): stop three dialogs reopening the menu the user just escaped
+  - docs(specs): point the EOT-03 row at its commit
+  - test(tui): give packages/tui a test directory, starting with the lifecycle primitive
+  - docs(specs): point the TUI-harness row at its commit
+  - fix(tui): revert the dialog-cancel change — reopening the parent is the idiom
+  - fix(tui): guard the four long-async spans in dialog-skills
+  - fix(tui): guard the five profile write spans
+  - fix(tui): guard the long-async spans in eleven more dialogs
+  - fix(tui): finish the EOT-03 late-effect inventory
+  - docs(specs): point the completed-inventory row at its commit
+
 ## v1.375.0 (September 2026)
 
 ## Core
