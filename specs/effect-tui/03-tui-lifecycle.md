@@ -155,7 +155,54 @@ local name that happens to call `dialog.replace` — so the detector never flagg
 **under**-reports through one level of indirection just as readily as it over-reports on
 handler definitions, which is the second reason it is triage rather than a gate.
 
-Repo-wide the candidate count went 88 → 67.
+### The inventory, completed
+
+88 → 46. Every remaining site is accounted for, and none of them is an unfixed defect.
+
+**Guarded (21 sites, across 14 files).** Each a round trip or a spawn with an effect
+behind it: the config category writes, `routine.create`, the session-warp move, the
+workspace list probe and remove, the onboarding voice persist, both session forks,
+`logout` in auth-manage, `provider.oauth.authorize`, the session sync and the background
+abort in the session route, plus the five in `dialog-skills` and the five in
+`dialog-profile` recorded above.
+
+**Modal restores, correctly unguarded.** `DialogConfirm.show` in skills, the nested prompt
+flows in auth-manage, the auth-method picker in provider. The user is in the dialog and
+their answer is the continuation.
+
+**Handler definitions the detector cannot tell from calls (the largest group).**
+`app.tsx` is the clearest case: all eight of its hits are a JSX `onBeforeExit`, a keymap
+`run()`, an `onCleanup` body, and effects whose paired await lives in another function
+entirely. Its one genuinely async site already guards itself with
+`dialog.stack.length === 0` — a correct idiom the detector does not recognise, and the
+right one for "open fresh only if nothing else is up". Same story for `dialog-support`'s
+Ctrl+O, `dialog-settings/brain`'s `openModelPicker`, `dialog-routine`'s model row,
+`workspace-create`'s `onSelect`, and four of the six remaining in the session route.
+
+**Already guarded by their own mechanism.** `browser-surface` carries a `disposed` flag it
+checks itself; `plugin/runtime.ts` is not a component and its `dispose()` calls _are_ the
+intended action.
+
+**One real fix outside the dialog pattern.** `component/prompt/index.tsx` spawned the
+microphone after `detectVoiceRecorder` resolved, with no way to notice the hold-to-talk
+key had been released in between: `stopVoiceRecording` found no recorder yet and returned,
+and the spawn happened anyway — a recording process nobody started and nobody would stop.
+Now the stop marks the start as cancelled.
+
+### The one class left open, and why it is not a guard
+
+Nine sites are plugin entry points — `openManager(api)` in chatbot, connectors, computer,
+discord, island, brain. They are not Solid components: there is no owner, so `onCleanup`
+would never fire, and `api.ui.dialog` exposes only `replace`, `clear`, `setSize` and
+`size`. A plugin cannot ask whether anything of its own is still open.
+
+Four more are standalone helpers that take a context bag rather than living in a component
+(`workspace-create`'s session opener, `workspace-list`'s, `repo-actions-menu`,
+`util/editor`). Same shape, same reason.
+
+Closing these needs a cancellation token threaded through the plugin command invocation,
+or `stack` exposed on the plugin dialog facade — an API decision, not a guard insertion,
+and one that should be made deliberately rather than guessed at mid-audit.
 
 ### The candidate set, and why it is not a gate
 

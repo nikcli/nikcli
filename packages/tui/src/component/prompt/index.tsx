@@ -466,14 +466,25 @@ export function Prompt(props: PromptProps) {
   }
 
   let isStartingRecording = false
+  /**
+   * Set when a stop arrives while `startVoiceRecording` is still detecting.
+   *
+   * `detectVoiceRecorder` probes the filesystem for ffmpeg/sox, which is long
+   * enough to release a hold-to-talk key inside. `stopVoiceRecording` sees no
+   * recorder yet and returns, and the spawn then happens anyway — a microphone
+   * process nobody started and nobody is going to stop.
+   */
+  let voiceStartCancelled = false
   async function startVoiceRecording() {
     if (voiceStatus() !== "idle") return
     if (isStartingRecording) return
     isStartingRecording = true
+    voiceStartCancelled = false
 
     try {
       const filePath = path.join(os.tmpdir(), `nikcli-voice-${Date.now()}-${Math.random().toString(16).slice(2)}.wav`)
       const recorder = await detectVoiceRecorder(filePath)
+      if (voiceStartCancelled) return
 
       if (!recorder) {
         const msg =
@@ -535,6 +546,9 @@ export function Prompt(props: PromptProps) {
 
   async function stopVoiceRecording() {
     if (!voiceRecorder || !voiceAudioPath) {
+      // Nothing to stop *yet* — a start may still be detecting. Say so, so it
+      // does not spawn into a press that is already over.
+      voiceStartCancelled = true
       setVoiceStatus("idle")
       return
     }
