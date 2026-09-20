@@ -3,6 +3,17 @@
 <!-- UNRELEASED:START -->
 <!-- UNRELEASED:END -->
 
+## v1.375.0 (September 2026)
+
+## Core
+
+- Tier-1 slices — lifecycle counters, CI gates, test harness (@nikomatt69)
+
+**Thank you to 1 community contributor:**
+
+- @nikomatt69:
+  - feat(eot): tier-1 slices — lifecycle counters, CI gates, test harness
+
 ## v1.374.0 (September 2026)
 
 - No notable changes

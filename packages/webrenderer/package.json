@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@opentui/webrenderer",
-  "version": "1.374.0",
+  "version": "1.375.0",
   "private": true,
   "type": "module",
   "license": "MIT",
