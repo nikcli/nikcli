@@ -95,6 +95,12 @@ const steps: ValidationStep[] = [
     timeout: 30_000,
   },
   {
+    name: "Flag capture-at-import gate",
+    command: ["bun", "run", "script/check-flag-capture.ts"],
+    cwd: "packages/nikcli",
+    timeout: 30_000,
+  },
+  {
     name: "Generated HTTP client drift",
     command: [
       "bash",

@@ -65,7 +65,10 @@ export namespace Flag {
     const value = process.env["NIKCLI_REMOTE_AUTOSTART"]?.toLowerCase()
     return value !== "false" && value !== "0"
   })()
-  export const NIKCLI_DISABLE_MODELS_FETCH = truthy("NIKCLI_DISABLE_MODELS_FETCH")
+  /** Read on every access: tests set it at their own module scope, after this module is imported. */
+  export function disableModelsFetch() {
+    return truthy("NIKCLI_DISABLE_MODELS_FETCH")
+  }
   export const NIKCLI_DISABLE_CLAUDE_CODE = truthy("NIKCLI_DISABLE_CLAUDE_CODE")
   export const NIKCLI_DISABLE_CLAUDE_CODE_PROMPT =
     NIKCLI_DISABLE_CLAUDE_CODE || truthy("NIKCLI_DISABLE_CLAUDE_CODE_PROMPT")
@@ -106,8 +109,26 @@ export namespace Flag {
   export function authJwtSecret() {
     return process.env["NIKCLI_AUTH_JWT_SECRET"]
   }
-  export const NIKCLI_REQUIRE_OAUTH = truthy("NIKCLI_REQUIRE_OAUTH")
-  export const NIKCLI_LEGACY_LOGIN = truthy("NIKCLI_LEGACY_LOGIN")
+  /**
+   * The legacy-credential gate, read on every access.
+   *
+   * Together these two decide whether the server still accepts `nku_`
+   * sessions, Basic and Tailscale. Captured as constants they were fixed by
+   * whichever module in the process touched a flag first, which under
+   * `bun test` is not the file that set them — `test/server/unified-auth.fixture.ts`
+   * exports `NIKCLI_REQUIRE_OAUTH=1` at its own module scope and would still
+   * have run against the process default. A security test that passes because
+   * the gate it meant to close was never open is worse than one that fails.
+   *
+   * They move together on purpose: every call site reads both, and a pair
+   * where one side is live and the other is a snapshot can disagree.
+   */
+  export function requireOauth() {
+    return truthy("NIKCLI_REQUIRE_OAUTH")
+  }
+  export function legacyLogin() {
+    return truthy("NIKCLI_LEGACY_LOGIN")
+  }
 
   // OpenTelemetry (OTLP) — standard env vars. Setting an endpoint enables export.
   export const OTEL_EXPORTER_OTLP_ENDPOINT = process.env["OTEL_EXPORTER_OTLP_ENDPOINT"]
@@ -181,7 +202,10 @@ export namespace Flag {
   // Experimental
   export const NIKCLI_EXPERIMENTAL = truthy("NIKCLI_EXPERIMENTAL")
   export const NIKCLI_EXPERIMENTAL_FILEWATCHER = true
-  export const NIKCLI_EXPERIMENTAL_DISABLE_FILEWATCHER = truthy("NIKCLI_EXPERIMENTAL_DISABLE_FILEWATCHER")
+  /** Read on every access: tests set it at their own module scope, after this module is imported. */
+  export function disableFilewatcher() {
+    return truthy("NIKCLI_EXPERIMENTAL_DISABLE_FILEWATCHER")
+  }
   export const NIKCLI_EXPERIMENTAL_ICON_DISCOVERY = NIKCLI_EXPERIMENTAL || truthy("NIKCLI_EXPERIMENTAL_ICON_DISCOVERY")
   export const NIKCLI_EXPERIMENTAL_DISABLE_COPY_ON_SELECT = truthy("NIKCLI_EXPERIMENTAL_DISABLE_COPY_ON_SELECT")
   export const NIKCLI_ENABLE_EXA =

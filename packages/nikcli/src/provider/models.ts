@@ -560,7 +560,7 @@ export namespace ModelsDev {
   export type Provider = DeepMutable<Schema.Schema.Type<typeof ProviderSchema>>
 
   export async function get() {
-    if (!Flag.NIKCLI_DISABLE_MODELS_FETCH) {
+    if (!Flag.disableModelsFetch()) {
       refresh().catch((error) => {
         log.error("background models refresh failed", { error })
       })
@@ -568,7 +568,7 @@ export namespace ModelsDev {
     const file = Bun.file(filepath)
     const result = await file.json().catch(() => {})
     if (result) return patch(result as Record<string, Provider>)
-    if (typeof data === "function" && !Flag.NIKCLI_DISABLE_MODELS_FETCH) {
+    if (typeof data === "function" && !Flag.disableModelsFetch()) {
       try {
         const json = await data()
         return patch(JSON.parse(json) as Record<string, Provider>)
@@ -576,7 +576,7 @@ export namespace ModelsDev {
         log.error("Failed to load embedded models data", { error })
       }
     }
-    if (Flag.NIKCLI_DISABLE_MODELS_FETCH) return {}
+    if (Flag.disableModelsFetch()) return {}
     const url = Global.Path.modelsDevUrl
     const json = await fetch(`${url}/api.json`)
       .then((x) => (x.ok ? x.text() : "{}"))
@@ -594,7 +594,7 @@ export namespace ModelsDev {
   }
 
   export async function refresh() {
-    if (Flag.NIKCLI_DISABLE_MODELS_FETCH) return
+    if (Flag.disableModelsFetch()) return
     const file = Bun.file(filepath)
     log.info("refreshing", {
       file,

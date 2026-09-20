@@ -167,7 +167,7 @@ export namespace FileWatcher {
       )
 
       const init = Effect.fn("FileWatcher.init")(function* () {
-        if (Flag.NIKCLI_EXPERIMENTAL_DISABLE_FILEWATCHER) return
+        if (Flag.disableFilewatcher()) return
         yield* InstanceState.get(state)
       })
 

@@ -147,6 +147,28 @@ The one surface that answers "who is signed in on this machine" — `/user/me` a
 
 The symptom was not a config bug, it was eight tests that failed in a directory run and passed alone, for a year, with nothing wrong in either file: `test/server/local-account-session.test.ts` exports its own issuer and HS256 secret at the top of its own file, before importing anything, and still got the process defaults, so every token it signed verified as 401. **Any** file that boots the server machinery reproduces it and no file that does not ever will — which is the shape of a structural bug wearing a flake's clothes. `test/auth/identity-verifier-env.test.ts` guards the ordering that was broken (import first, set the variables after) and fails 6/6 against the constants.
 
-### 3. PKCE
+### 3. The capture class is now a CI gate, not four fixes
+
+Four more constants were in the same class, found by intersecting "captured as
+`export const` in `flag.ts`" with "assigned to `process.env` anywhere in the repo at
+runtime": `NIKCLI_DISABLE_MODELS_FETCH`, `NIKCLI_EXPERIMENTAL_DISABLE_FILEWATCHER`, and
+the legacy-credential pair `NIKCLI_REQUIRE_OAUTH` / `NIKCLI_LEGACY_LOGIN`.
+
+The pair is the one that matters. `test/server/unified-auth.fixture.ts` sets
+`NIKCLI_REQUIRE_OAUTH=1` at its own module scope, so its tests could have run against a
+gate that was never closed — **a security test that passes because the thing it meant to
+forbid was never forbidden**. They were converted together, because every call site reads
+both and a pair where one side is live and the other a snapshot can disagree. The auth
+suite stays green with the gate actually closing, which is the evidence that those tests
+were correct and not merely passing.
+
+`script/check-flag-capture.ts` now enforces the rule: a flag assigned at runtime anywhere
+in the repository must not be a captured constant. `flag.ts` had documented the hazard on
+`autoApprove` and `cacheRetention` since long before any of this, and documenting it did
+not stop six more from being added — which is the argument for a gate over a comment. Its
+`ALLOWLIST` is empty and each entry would need a reason, since a check whose escape hatch
+is adding a name is worth nothing.
+
+### 4. PKCE
 
 `test/auth/pkce-no-downgrade.test.ts` pins that the challenge method cannot fall back from S256 to plain.

@@ -187,10 +187,7 @@ export namespace Auth {
     const normalizedMethod = method.toUpperCase()
     if (normalizedMethod === "OPTIONS") return true
     if (pathname === "/user/status") return true
-    if (
-      (pathname === "/user/login" || pathname === "/user/register") &&
-      (!Flag.NIKCLI_REQUIRE_OAUTH || Flag.NIKCLI_LEGACY_LOGIN)
-    ) {
+    if ((pathname === "/user/login" || pathname === "/user/register") && (!Flag.requireOauth() || Flag.legacyLogin())) {
       return true
     }
     if (normalizedMethod === "GET" && pathname === "/global/health") return true
@@ -202,7 +199,7 @@ export namespace Auth {
   }
 
   function legacyUserTokenAllowed() {
-    return !Flag.NIKCLI_REQUIRE_OAUTH || Flag.NIKCLI_LEGACY_LOGIN
+    return !Flag.requireOauth() || Flag.legacyLogin()
   }
 
   /**
@@ -253,7 +250,7 @@ export namespace Auth {
       if (!isLocal(request) || !carriesIssuerClaim(bearer)) return unauthorized()
     }
 
-    if (options?.mobileAuthRequired || (Flag.NIKCLI_REQUIRE_OAUTH && !Flag.NIKCLI_LEGACY_LOGIN)) {
+    if (options?.mobileAuthRequired || (Flag.requireOauth() && !Flag.legacyLogin())) {
       return unauthorized()
     }
 

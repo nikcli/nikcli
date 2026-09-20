@@ -36,6 +36,7 @@
     "check:plugin-v2": "bun run script/check-plugin-v2.ts",
     "check:workspace-isolation": "bun run script/check-workspace-isolation.ts",
     "check:network-egress": "bun run script/check-network-egress.ts",
+    "check:flag-capture": "bun run script/check-flag-capture.ts",
     "dev": "bun run --conditions=browser ./src/index.ts",
     "clean": "echo 'Cleaning up...' && rm -rf node_modules dist",
     "docs": "echo 'Generating documentation...' && find src -name '*.ts' -exec echo 'Processing: {}' \\;",

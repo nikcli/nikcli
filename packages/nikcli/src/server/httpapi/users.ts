@@ -72,7 +72,7 @@ export namespace UsersHttp {
   }
 
   async function register(request: Request): Promise<Response> {
-    if (Flag.NIKCLI_REQUIRE_OAUTH && !Flag.NIKCLI_LEGACY_LOGIN) {
+    if (Flag.requireOauth() && !Flag.legacyLogin()) {
       return json({ error: "Password registration is disabled" }, 403)
     }
     const parsed = RegisterInput.safeParse(await readJson(request))
@@ -114,7 +114,7 @@ export namespace UsersHttp {
   }
 
   async function login(request: Request): Promise<Response> {
-    if (Flag.NIKCLI_REQUIRE_OAUTH && !Flag.NIKCLI_LEGACY_LOGIN) {
+    if (Flag.requireOauth() && !Flag.legacyLogin()) {
       return json({ error: "Password login is disabled" }, 403)
     }
     const parsed = LoginInput.safeParse(await readJson(request))
