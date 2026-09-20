@@ -17,7 +17,6 @@
   },
   "scripts": {
     "typecheck": "tsc --noEmit",
-    "test": "bun test",
     "start": "bun run ./bin/nikcli-tui.ts",
     "smoke:standalone": "bun run script/standalone-smoke.ts"
   },

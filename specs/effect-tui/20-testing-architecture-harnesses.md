@@ -160,6 +160,13 @@ they codify the helpers and patterns that already exist so a code reviewer does 
    synthetic tree, in both directions. A test that re-declares the script's own regexes and asserts against the copies
    passes whatever the script does.
 
+6. **TUI tests live in `packages/nikcli/test/tui/`, not in `packages/tui`.** 55 files, and the
+   evidence table in `ROADMAP.md` names that directory for TUI work. A second test directory was
+   created in `packages/tui` during the EOT-03 audit on the belief that none existed, duplicating
+   coverage that was already there; it has been removed. Before concluding a surface is untested,
+   grep for its tests by _subject_ rather than by the package you happen to be editing —
+   `packages/tui/src/util/lifecycle.ts` is tested two packages away.
+
 The lifecycle counters from EOT-01 (`packages/nikcli/src/effect/lifecycle-counters.ts`) are observable from any test via
 `snapshot()` so a test can assert `scope.completed === 1` or `runtime.bridge.failure === 0` after a behavior assertion
 without having to instrument the production code. Use this when the assertion would otherwise be a magic `sleep`.

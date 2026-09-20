@@ -141,9 +141,24 @@ the primitive would have landed with no consumer and no way to fail. **Making th
 host reachable from `packages/tui/test/` is the precondition**, and it is the next thing
 worth doing here, ahead of any further site-by-site work.
 
+### A third correction: the harness was never missing
+
+Round two was partly justified by "`packages/tui` has no test directory", which is true
+and misleading. The TUI's tests live in **`packages/nikcli/test/tui/`** — 55 files, which
+this roadmap's own evidence table names as the required location for TUI work — and two
+of them, `lifecycle-attempts.test.ts` and `dialog-lifecycle.test.ts`, already cover
+`useAbortOnCleanup` and `useAttempts` with the same `createRoot` owner pattern that was
+written again from scratch a package over. The second test directory has been removed and
+the one thing it held that was genuinely new, `adopt` coverage, folded into the existing
+file.
+
+`test/tui/tui-source.ts` is the part worth knowing about: seven tests there assert against
+the TUI _source text_ precisely because mounting a dialog drags in the whole app. That is
+the tool for pinning a dialog contract without a terminal, and it was available the whole
+time.
+
 ### What is kept from all of this
 
-`packages/tui/test/` and its lifecycle tests, which is the harness the package never had;
 `script/audit-late-side-effects.ts`, which reproduces the candidate scan; and one fix that
 never involved an owner — `component/prompt/index.tsx` spawned the microphone after
 `detectVoiceRecorder` resolved with no way to notice the hold-to-talk key had been

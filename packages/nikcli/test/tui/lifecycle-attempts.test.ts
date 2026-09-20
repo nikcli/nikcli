@@ -92,4 +92,54 @@ describe("useAttempts", () => {
     expect(value.disposed).toBe(false)
     dispose()
   })
+
+  /**
+   * `adopt` had no test and has no caller — it is referenced only by the
+   * example in its own docblock. Covered here because the thing it guards
+   * against is invisible when it goes wrong: `stale()` answers whether a
+   * *result* still matters, and an abort signal does not un-open a pty or
+   * un-spawn a process. Checking `stale()` and returning drops the only
+   * reference, and nothing closes it.
+   */
+  describe("adopt", () => {
+    it("hands the resource back while the attempt is current", () => {
+      const { value, dispose } = withOwner(() => useAttempts())
+      const attempt = value.start()
+      const released: string[] = []
+      expect(attempt.adopt("pty", (r) => released.push(r))).toBe("pty")
+      expect(released).toEqual([])
+      dispose()
+    })
+
+    it("releases a resource a superseded attempt acquired", () => {
+      const { value, dispose } = withOwner(() => useAttempts())
+      const attempt = value.start()
+      value.start()
+      const released: string[] = []
+      expect(attempt.adopt("pty", (r) => released.push(r))).toBeUndefined()
+      expect(released).toEqual(["pty"])
+      dispose()
+    })
+
+    it("releases a resource that arrived after the owner was gone", () => {
+      const { value, dispose } = withOwner(() => useAttempts())
+      const attempt = value.start()
+      dispose()
+      const released: string[] = []
+      expect(attempt.adopt("watcher", (r) => released.push(r))).toBeUndefined()
+      expect(released).toEqual(["watcher"])
+    })
+
+    it("swallows a release that throws rather than failing the flow that superseded it", () => {
+      const { value, dispose } = withOwner(() => useAttempts())
+      const attempt = value.start()
+      value.start()
+      expect(() =>
+        attempt.adopt("pty", () => {
+          throw new Error("kill failed")
+        }),
+      ).not.toThrow()
+      dispose()
+    })
+  })
 })

@@ -101,16 +101,6 @@ const steps: ValidationStep[] = [
     timeout: 30_000,
   },
   {
-    // Small on purpose. `packages/tui` had no tests at all until EOT-03 needed
-    // somewhere to put the evidence, and the rule from ROADMAP's
-    // non-negotiables still holds: this is a fast unit file, not a second
-    // full suite bolted onto the validation run.
-    name: "TUI unit tests",
-    command: ["bun", "test"],
-    cwd: "packages/tui",
-    timeout: 120_000,
-  },
-  {
     name: "Spec commit-reference gate",
     command: ["bun", "run", "script/check-spec-commit-refs.ts"],
     cwd: "packages/nikcli",
