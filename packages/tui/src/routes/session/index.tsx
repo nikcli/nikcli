@@ -78,7 +78,6 @@ import { compilePartialSpec } from "@tui/util/spec-stream"
 import { TuiImageList } from "@tui/component/tui-image"
 import { DialogSelect } from "../../ui/dialog-select"
 import { DialogBgAgents } from "./dialog-bg-agents"
-import { useAbortOnCleanup } from "@tui/util/lifecycle"
 import { features } from "@nikcli-ai/util/features"
 import { useLanguage } from "@tui/context/language"
 import { spacerHeights, visibleRange } from "./message-window"
@@ -112,9 +111,6 @@ import { moveSelection } from "@tui/ui/select-controller"
 addDefaultParsers(parsers.parsers)
 
 export function Session() {
-  // Route-level guard for the spans that end in a navigate: the session sync
-  // below and the abort in the background handler.
-  const alive = useAbortOnCleanup()
   const route = useRouteData("session")
   const { navigate } = useRoute()
   const sync = useSync()
@@ -311,7 +307,6 @@ export function Session() {
         if (scroll) scroll.scrollBy(100_000)
       })
       .catch(() => {
-        if (alive.disposed()) return
         toast.show({
           message: `Session not found: ${sessionID}`,
           variant: "error",
@@ -1300,7 +1295,6 @@ export function Session() {
           // If busy, kill the task (which also removes it from background)
           if (status !== "idle") {
             await sdk.client.session.abort({ sessionID: currentID }).catch(() => {})
-            if (alive.disposed()) return
           } else {
             // If idle, just remove from background tasks
             const job = sync.background.findBySession(currentID)

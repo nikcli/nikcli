@@ -7,12 +7,8 @@ import { useSDK } from "@tui/context/sdk"
 import { useRoute } from "@tui/context/route"
 import { useDialog } from "../../ui/dialog"
 import type { PromptInfo } from "@tui/component/prompt/history"
-import { useAbortOnCleanup } from "@tui/util/lifecycle"
 
 export function DialogForkFromTimeline(props: { sessionID: string; onMove: (messageID: string) => void }) {
-  // `session.fork` is a round trip; navigating after it must not move a user
-  // who has already gone somewhere else.
-  const alive = useAbortOnCleanup()
   const sync = useSync()
   const dialog = useDialog()
   const sdk = useSDK()
@@ -40,7 +36,6 @@ export function DialogForkFromTimeline(props: { sessionID: string; onMove: (mess
             sessionID: props.sessionID,
             messageID: message.id,
           })
-          if (alive.disposed()) return
           const parts = sync.data.part[message.id] ?? []
           const initialPrompt = parts.reduce(
             (agg, part) => {

@@ -473,6 +473,9 @@ export function Prompt(props: PromptProps) {
    * enough to release a hold-to-talk key inside. `stopVoiceRecording` sees no
    * recorder yet and returns, and the spawn then happens anyway — a microphone
    * process nobody started and nobody is going to stop.
+   *
+   * A plain flag, deliberately: this is not a disposed owner, it is a press
+   * that ended, and the component is still very much mounted.
    */
   let voiceStartCancelled = false
   async function startVoiceRecording() {

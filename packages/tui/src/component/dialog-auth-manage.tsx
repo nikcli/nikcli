@@ -11,7 +11,6 @@ import { useSDK } from "@tui/context/sdk"
 import { UserApi } from "@tui/util/user-api"
 import { UserSession } from "@nikcli-ai/util/user-session"
 import type { UserSchema } from "@nikcli-ai/util/user-schema"
-import { useAbortOnCleanup } from "@tui/util/lifecycle"
 import { useTheme } from "@tui/context/theme"
 import { DialogLogin } from "@tui/component/dialog-login"
 
@@ -21,10 +20,6 @@ type ProfileNotice = {
 }
 
 export function DialogAuthManage() {
-  // `logout` is a round trip (revoke, then clear). The prompt-driven items are
-  // modal and deliberately unguarded: restoring this menu after one is how the
-  // user gets back.
-  const alive = useAbortOnCleanup()
   const dialog = useDialog()
   const sdk = useSDK()
 
@@ -87,7 +82,6 @@ export function DialogAuthManage() {
           description: `Signed in as ${user.username}`,
           onSelect: async () => {
             await logout(sdk)
-            if (alive.disposed()) return
             dialog.replace(() => <DialogAuthManage />)
           },
         },
@@ -124,7 +118,6 @@ function showProfile(dialog: DialogContext, user: UserSchema.PublicUser, notice?
 }
 
 function DialogProfile(props: { user: UserSchema.PublicUser; notice?: ProfileNotice }) {
-  const alive = useAbortOnCleanup()
   const dialog = useDialog()
   const toast = useToast()
   const sdk = useSDK()
@@ -183,7 +176,6 @@ function DialogProfile(props: { user: UserSchema.PublicUser; notice?: ProfileNot
 
   const handleLogout = async () => {
     await logout(sdk)
-    if (alive.disposed()) return
     dialog.replace(() => <DialogAuthManage />)
   }
 

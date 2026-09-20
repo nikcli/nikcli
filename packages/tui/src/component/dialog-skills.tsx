@@ -9,7 +9,6 @@ import { skillCommandName } from "@nikcli-ai/util/skill-command"
 import { Global } from "@nikcli-ai/util/global"
 import { useToast } from "@tui/ui/toast"
 import { Keybind } from "@tui/util/keybind"
-import { useAbortOnCleanup } from "@tui/util/lifecycle"
 
 function detectSource(location: string) {
   const normalized = location.replaceAll("\\", "/")
@@ -97,11 +96,6 @@ function parseSkillshOutput(raw: string): SkillshResult[] {
 function DialogSkillCreate() {
   const dialog = useDialog()
   const sdk = useSDK()
-  // The create below is a network round trip, not a modal the user is sitting
-  // in: `esc` during it dismisses this dialog while the request is still out.
-  // Unlike a prompt's answer, its completion is not the user asking for
-  // anything, so the toast and the replace must not land after they left.
-  const alive = useAbortOnCleanup()
   const [busy, setBusy] = createSignal(false)
   const [step, setStep] = createSignal<"name" | "description" | "scope">("name")
   const [name, setName] = createSignal("")
@@ -132,14 +126,9 @@ function DialogSkillCreate() {
           description: description(),
           scope,
         })
-        // Checked after the await, not only before: aborting is not
-        // synchronous with the continuation, so a request that had already
-        // come back still resumes here.
-        if (alive.disposed()) return
         toast.show({ message: `Skill "${name()}" created`, variant: "success" })
         dialog.replace(() => <DialogSkills />)
       } catch (err: any) {
-        if (alive.disposed()) return
         setBusy(false)
         setStep("name")
         toast.show({ message: `Failed: ${err.message}`, variant: "error" })
@@ -186,10 +175,6 @@ function DialogSkillCreate() {
 function DialogSkillshResults(props: { results: SkillshResult[]; refetch: () => void }) {
   const dialog = useDialog()
   const toast = useToast()
-  // `bun x skills add` can run for a while and the user can leave during it.
-  // The confirm above is the opposite case — a modal they are sitting in — so
-  // only the span after the spawn is guarded.
-  const alive = useAbortOnCleanup()
 
   onMount(() => {
     dialog.setSize("xlarge")
@@ -225,11 +210,6 @@ function DialogSkillshResults(props: { results: SkillshResult[]; refetch: () => 
       const stderr = await new Response(proc.stderr).text()
       await proc.exited
 
-      // The install itself is left to finish — killing a half-written skill
-      // install is worse than completing it. What must not happen is putting a
-      // dialog back over whatever the user opened after walking away.
-      if (alive.disposed()) return
-
       if (proc.exitCode !== 0) {
         toast.show({ message: `Install failed: ${stderr.trim().slice(0, 100)}`, variant: "error" })
         dialog.replace(() => <DialogSkillshResults results={props.results} refetch={props.refetch} />)
@@ -240,7 +220,6 @@ function DialogSkillshResults(props: { results: SkillshResult[]; refetch: () => 
       props.refetch()
       dialog.replace(() => <DialogSkills />)
     } catch (err: any) {
-      if (alive.disposed()) return
       toast.show({ message: `Install failed: ${err.message}`, variant: "error" })
       dialog.replace(() => <DialogSkillshResults results={props.results} refetch={props.refetch} />)
     }
@@ -260,10 +239,6 @@ function DialogSkillshResults(props: { results: SkillshResult[]; refetch: () => 
 
 export function DialogSkills() {
   const dialog = useDialog()
-  // Guards the two long-running spans below — a delete round trip and the
-  // `bun x skills` search. The confirms are modal and deliberately unguarded:
-  // restoring this dialog after one is how the user gets back.
-  const alive = useAbortOnCleanup()
   const sdk = useSDK()
   const route = useRoute()
   const toast = useToast()
@@ -347,12 +322,10 @@ export function DialogSkills() {
     }
     try {
       await sdk.client.app.skill.delete({ name: option.skillName })
-      if (alive.disposed()) return
       toast.show({ message: `Deleted "${option.skillName}"`, variant: "success" })
       refetch()
       dialog.replace(() => <DialogSkills />)
     } catch (err: any) {
-      if (alive.disposed()) return
       toast.show({ message: `Failed: ${err.message}`, variant: "error" })
       dialog.replace(() => <DialogSkills />)
     }
@@ -385,8 +358,6 @@ export function DialogSkills() {
               const output = await new Response(proc.stdout).text()
               await proc.exited
 
-              if (alive.disposed()) return
-
               const results = parseSkillshOutput(output)
 
               if (results.length === 0) {
@@ -398,7 +369,6 @@ export function DialogSkills() {
               toast.show({ message: `Found ${results.length} skill(s)`, variant: "info" })
               dialog.replace(() => <DialogSkillshResults results={results} refetch={refetch} />)
             } catch (err: any) {
-              if (alive.disposed()) return
               toast.show({ message: `Search failed: ${err.message}`, variant: "error" })
               dialog.replace(() => <DialogSkills />)
             }

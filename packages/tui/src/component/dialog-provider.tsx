@@ -25,10 +25,6 @@ const PROVIDER_PRIORITY: Record<string, number> = {
 }
 
 export function createDialogProviderOptions() {
-  // Both callers invoke this from a component body, so `onCleanup` here binds
-  // to their owner. The method picker below is modal and stays unguarded; the
-  // `oauth.authorize` round trip after it does not.
-  const alive = useAbortOnCleanup()
   const sync = useSync()
   const dialog = useDialog()
   const sdk = useSDK()
@@ -85,7 +81,6 @@ export function createDialogProviderOptions() {
                 providerID: provider.id,
                 method: index,
               })
-              if (alive.disposed()) return
               if (result.data?.method === "code") {
                 dialog.replace(() => (
                   <CodeMethod
