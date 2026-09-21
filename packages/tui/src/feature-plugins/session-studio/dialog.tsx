@@ -32,6 +32,11 @@ const fields = [
     options: ["panel", "offset", "base"],
   },
   { key: "border", label: "Border", options: ["subtle", "accent", "none"] },
+  {
+    key: "emphasis",
+    label: "Text",
+    options: ["regular", "quiet", "strong"],
+  },
 ] as const
 
 export function SessionStudioDialog(props: { sessionID?: string }) {
@@ -190,6 +195,9 @@ export function SessionStudioEditor(props: {
                   </box>
                 )}
               </For>
+              <text fg={props.theme.foreground.muted} wrapMode="word">
+                Text sets weight and dimming. The typeface is your terminal's.
+              </text>
               <text fg={props.theme.foreground.muted}>
                 {inherit()
                   ? "Reset staged. Apply to save; cancel to discard."

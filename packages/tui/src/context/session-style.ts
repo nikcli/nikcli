@@ -23,6 +23,14 @@ export type SessionStyleRecipe = {
   userSurface: "panel" | "accent" | "base"
   promptSurface: "panel" | "offset" | "base"
   border: "subtle" | "accent" | "none"
+  /**
+   * How the words are set.
+   *
+   * The only part of "which font" a terminal yields: the typeface is the
+   * emulator's and nothing here can reach it, but weight and dimming are ours.
+   * `quiet` steps the transcript back, `strong` brings the titles forward.
+   */
+  emphasis: "regular" | "quiet" | "strong"
 }
 
 export type SessionStyleKV = {
@@ -38,6 +46,7 @@ export const DEFAULT_SESSION_STYLE: Readonly<SessionStyleRecipe> = Object.freeze
   userSurface: "panel",
   promptSurface: "offset",
   border: "subtle",
+  emphasis: "regular",
 })
 
 const globalKey = "session-studio.style.v1.global"
@@ -61,6 +70,7 @@ export function normalizeSessionStyle(input: unknown): SessionStyleRecipe {
     userSurface: value.userSurface === "accent" || value.userSurface === "base" ? value.userSurface : "panel",
     promptSurface: value.promptSurface === "panel" || value.promptSurface === "base" ? value.promptSurface : "offset",
     border: value.border === "accent" || value.border === "none" ? value.border : "subtle",
+    emphasis: value.emphasis === "quiet" || value.emphasis === "strong" ? value.emphasis : "regular",
   }
 }
 
@@ -119,7 +129,20 @@ export function recipeToPatches(input: SessionStyleRecipe): ComponentPatchMap {
   const { x, y } = spacing(recipe.density)
   const borderColor = recipe.border === "none" ? undefined : BORDER[recipe.border]
 
+  // `quiet` dims the body and its metadata; `strong` bolds what titles things.
+  // Both leave the assistant's prose alone — markdown carries its own emphasis,
+  // and dimming a rendered document fights the syntax colours inside it.
+  const emphasis =
+    recipe.emphasis === "quiet"
+      ? { body: { dim: true }, detail: { dim: true }, title: { bold: false } }
+      : recipe.emphasis === "strong"
+        ? { body: { bold: true }, detail: { dim: false }, title: { bold: true } }
+        : { body: { bold: false, dim: false }, detail: { dim: false }, title: { bold: true } }
+
   return {
+    "session.task-card": {
+      text: { title: emphasis.title, detail: emphasis.detail },
+    },
     "session.user-message": {
       box: {
         paddingTop: y,
@@ -133,6 +156,7 @@ export function recipeToPatches(input: SessionStyleRecipe): ComponentPatchMap {
         borderSides: recipe.border === "none" ? [] : ["left"],
       },
       colors: { background: SURFACE[recipe.userSurface] },
+      text: { body: emphasis.body, detail: emphasis.detail },
     },
     "session.prompt": {
       box: {

@@ -100,16 +100,39 @@ const BOX_KEYS = [
   "gap",
 ] as const satisfies readonly (keyof BoxStyle)[]
 
-/** What a component declares: its box, plus the palette keys it paints with. */
+/**
+ * How a component renders its words.
+ *
+ * The one part of "which font" a terminal actually yields: the typeface belongs
+ * to the emulator and nothing here can change it, but weight and dimming are
+ * the TUI's to choose, and they are what makes a transcript read as dense or as
+ * airy. Kept to the two that every terminal honours — italic and underline are
+ * widely ignored or substituted, so offering them would be offering a setting
+ * that does nothing on half the machines it runs on.
+ */
+export type TextStyle = {
+  readonly bold: boolean
+  readonly dim: boolean
+}
+
+const TEXT_KEYS = ["bold", "dim"] as const satisfies readonly (keyof TextStyle)[]
+
+/** What a component declares: its box, the palette keys it paints with, its words. */
 export type ComponentSpec = {
   readonly box: BoxStyle
   readonly colors: Readonly<Record<string, string>>
+  readonly text?: Readonly<Record<string, TextStyle>>
 }
 
 /** What a component receives: the same shape, with colors resolved to RGBA. */
 export type ComponentStyle<Spec extends ComponentSpec = ComponentSpec> = {
   readonly box: BoxStyle
   readonly colors: { readonly [Key in keyof Spec["colors"]]: RGBA }
+  readonly text: Readonly<Record<string, TextStyle>>
+}
+
+function text(input: Partial<TextStyle>): TextStyle {
+  return { bold: false, dim: false, ...input }
 }
 
 function box(input: Partial<BoxStyle>): BoxStyle {
@@ -160,6 +183,11 @@ export const COMPONENT_DEFAULTS = {
       /** The rule marking where the conversation was compacted. */
       compaction: "border.active",
     },
+    text: {
+      /** What you typed. Dimming it is the "quiet transcript" setting. */
+      body: text({}),
+      detail: text({}),
+    },
   },
   /**
    * `TextPart`. The body is `foreground.default`, not `markdown.text`: the
@@ -172,6 +200,10 @@ export const COMPONENT_DEFAULTS = {
       text: "foreground.default",
       /** Rules inside a rendered markdown table. */
       tableBorder: "border.subtle",
+    },
+    text: {
+      /** The assistant's prose. Markdown supplies its own emphasis inside it. */
+      body: text({}),
     },
   },
   /**
@@ -332,6 +364,11 @@ export const COMPONENT_DEFAULTS = {
       /** The trailing marker that says what a click will do. */
       marker: "foreground.subtle",
     },
+    text: {
+      /** Bold by default, which is how a delegation stands out from a tool row. */
+      title: text({ bold: true }),
+      detail: text({}),
+    },
   },
   /**
    * The rule under the prompt: a `▀` half-block tinted with the input's own
@@ -394,6 +431,7 @@ export const COMPONENT_IDS = Object.keys(COMPONENT_DEFAULTS) as ComponentId[]
 export type ComponentPatch = {
   readonly box?: Partial<Record<keyof BoxStyle, unknown>>
   readonly colors?: Readonly<Record<string, unknown>>
+  readonly text?: Readonly<Record<string, Partial<Record<keyof TextStyle, unknown>>>>
 }
 
 export type ComponentPatchMap = Readonly<Record<string, ComponentPatch>>
@@ -536,6 +574,41 @@ function mergeColors(
   return resolved
 }
 
+/**
+ * Merges text styles. Same rules as the colors above: a slot the component does
+ * not declare is dropped with a warning rather than carried, because a slot
+ * nobody reads is a setting that silently does nothing.
+ */
+function mergeText(
+  base: Readonly<Record<string, TextStyle>>,
+  patch: ComponentPatch["text"],
+  id: string,
+  warn: ComponentWarning[],
+): Record<string, TextStyle> {
+  const out: Record<string, TextStyle> = {}
+  for (const [slot, value] of Object.entries(base)) out[slot] = value
+  if (!patch) return out
+
+  for (const [slot, fields] of Object.entries(patch)) {
+    if (!(slot in out)) {
+      warn.push({ id, field: `text.${slot}`, reason: "unknown text slot for this component" })
+      continue
+    }
+    const next = { ...out[slot]! } as Record<string, boolean>
+    for (const key of TEXT_KEYS) {
+      if (!(key in fields)) continue
+      const flag = fields[key]
+      if (typeof flag !== "boolean") {
+        warn.push({ id, field: `text.${slot}.${key}`, reason: "expected true or false" })
+        continue
+      }
+      next[key] = flag
+    }
+    out[slot] = next as unknown as TextStyle
+  }
+  return out
+}
+
 export type ResolvedComponents = {
   readonly styles: { readonly [Id in ComponentId]: StyleOf<Id> }
   readonly warnings: readonly ComponentWarning[]
@@ -559,17 +632,20 @@ export function resolveComponents(resolve: ColorResolver, patches: readonly Comp
     const spec = COMPONENT_DEFAULTS[id] as ComponentSpec
     let boxStyle = spec.box
     let colorRefs: Record<string, unknown> = {}
+    let textStyle: Readonly<Record<string, TextStyle>> = spec.text ?? {}
 
     for (const map of patches) {
       const patch = map[id]
       if (!patch) continue
       boxStyle = mergeBox(boxStyle, patch.box, id, warnings)
       if (patch.colors) colorRefs = { ...colorRefs, ...patch.colors }
+      if (patch.text) textStyle = mergeText(textStyle, patch.text, id, warnings)
     }
 
     styles[id] = {
       box: boxStyle,
       colors: mergeColors(spec.colors, colorRefs, resolve, id, warnings),
+      text: textStyle,
     }
   }
 
@@ -659,8 +735,10 @@ export function readComponentPatches(value: unknown): ComponentPatchMap {
     const box = typeof entry.box === "object" && entry.box !== null ? (entry.box as ComponentPatch["box"]) : undefined
     const colors =
       typeof entry.colors === "object" && entry.colors !== null ? (entry.colors as ComponentPatch["colors"]) : undefined
-    if (!box && !colors) continue
-    out[id] = { box, colors }
+    const textPatch =
+      typeof entry.text === "object" && entry.text !== null ? (entry.text as ComponentPatch["text"]) : undefined
+    if (!box && !colors && !textPatch) continue
+    out[id] = { box, colors, text: textPatch }
   }
   return out
 }

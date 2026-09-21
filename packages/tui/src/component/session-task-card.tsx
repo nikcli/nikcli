@@ -137,7 +137,16 @@ export function SessionTaskCard(props: {
             short rather than reflowing the card back into a paragraph. */}
         <text wrapMode="none">
           <span style={{ fg: accent() }}>{chrome().glyph} </span>
-          <span style={{ fg: style().colors.title, attributes: TextAttributes.BOLD }}>{props.title}</span>
+          <span
+            style={{
+              fg: style().colors.title,
+              attributes:
+                (style().text.title?.bold ? TextAttributes.BOLD : 0) |
+                (style().text.title?.dim ? TextAttributes.DIM : 0),
+            }}
+          >
+            {props.title}
+          </span>
           <Show when={props.agent && props.agent !== props.title}>
             <span style={{ fg: style().colors.detail }}> · @{props.agent}</span>
           </Show>

@@ -9,8 +9,19 @@ import { DialogSettingsUI } from "./ui"
 import { DialogSettingsBrain } from "./brain"
 import { DialogSettingsDiagnostics } from "./diagnostics"
 import { DialogSettingsAudio } from "./audio"
+import { DialogSettingsKeybinds } from "./keybinds"
+import { DialogSettingsText } from "./text"
 
-export type SettingsCategory = "spinner" | "prompt" | "sidebar" | "ui" | "brain" | "diagnostics" | "audio"
+export type SettingsCategory =
+  | "spinner"
+  | "prompt"
+  | "sidebar"
+  | "ui"
+  | "text"
+  | "keybinds"
+  | "brain"
+  | "diagnostics"
+  | "audio"
 
 type SettingsSearchEntry = {
   title: string
@@ -24,6 +35,28 @@ type SettingsCategoryInfo = {
   group: string
   keywords: readonly string[]
   settings: readonly SettingsSearchEntry[]
+}
+
+export const TEXT_CATEGORY: SettingsCategoryInfo = {
+  title: "Text",
+  value: "text",
+  description: "Weight and dimming — the typeface is your terminal's",
+  group: "Appearance",
+  keywords: ["font", "typeface", "bold", "dim", "weight", "emphasis", "contrast"],
+  settings: [
+    { title: "Regular", keywords: ["default", "normal"] },
+    { title: "Quiet", keywords: ["dim", "muted", "subtle", "low contrast"] },
+    { title: "Strong", keywords: ["bold", "bright", "projector", "high contrast"] },
+  ],
+}
+
+export const KEYBINDS_CATEGORY: SettingsCategoryInfo = {
+  title: "Keybindings",
+  value: "keybinds",
+  description: "Every key the TUI answers to",
+  group: "Input",
+  keywords: ["keys", "shortcuts", "bindings", "hotkeys", "leader"],
+  settings: [{ title: "Browse keybindings", keywords: ["list", "reference", "what does this key do"] }],
 }
 
 export const SETTINGS_CATEGORIES: readonly SettingsCategoryInfo[] = [
@@ -119,6 +152,8 @@ export const SETTINGS_CATEGORIES: readonly SettingsCategoryInfo[] = [
       },
     ],
   },
+  TEXT_CATEGORY,
+  KEYBINDS_CATEGORY,
 ]
 
 export function openSettingsCategory(dialog: DialogContext, category: SettingsCategory) {
@@ -138,6 +173,10 @@ export function openSettingsCategory(dialog: DialogContext, category: SettingsCa
         return <DialogSettingsDiagnostics />
       case "audio":
         return <DialogSettingsAudio />
+      case "text":
+        return <DialogSettingsText />
+      case "keybinds":
+        return <DialogSettingsKeybinds />
     }
   }
   dialog.replace(content)

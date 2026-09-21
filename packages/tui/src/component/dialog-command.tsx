@@ -128,6 +128,14 @@ function init() {
       setSuspendCount((count) => count + (enabled ? -1 : 1))
     },
     suspended,
+    /**
+     * Every registered command, enabled or not.
+     *
+     * The palette shows what you can *run*; this is for asking a different
+     * question of the same knowledge — the keybinding sheet needs the ones with
+     * a binding, including any the palette hides.
+     */
+    all: entries,
     show() {
       dialog.replace(() => <DialogCommand options={visibleOptions()} suggestedOptions={suggestedOptions()} />)
     },
