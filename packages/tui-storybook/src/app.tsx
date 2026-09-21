@@ -12,7 +12,7 @@ import {
 } from "@tui/context/component-tokens"
 import { Harness } from "./harness"
 import { STORIES } from "./catalog"
-import { clearComponent, readOverrides, setBoxField, setCharset, writeOverrides } from "./overrides"
+import { clearComponent, readOverrides, setBoxField, writeOverrides } from "./overrides"
 
 /**
  * Three panes: the catalog, the component, and its tokens.
@@ -31,7 +31,6 @@ const NUMERIC = [
   "marginBottom",
   "gap",
 ] as const
-type NumericField = (typeof NUMERIC)[number]
 
 /** `borderCharset` sits after the numbers as one extra, cycled rather than stepped. */
 const FIELDS = [...NUMERIC, "borderCharset"] as const
@@ -74,15 +73,16 @@ function StorybookApp() {
     if (!id) return
     const name = field()
     if (name === "borderCharset") {
-      const current = (overrides()[id]?.box?.borderCharset as BorderCharset) ?? COMPONENT_DEFAULTS[id].box.borderCharset
+      const fallback = COMPONENT_DEFAULTS[id].box.borderCharset
+      const active = (overrides()[id]?.box?.borderCharset as BorderCharset) ?? fallback
       const next =
-        BORDER_CHARSETS[(BORDER_CHARSETS.indexOf(current) + delta + BORDER_CHARSETS.length) % BORDER_CHARSETS.length]!
-      setOverrides((current) => setCharset(current, id, next, COMPONENT_DEFAULTS[id].box.borderCharset))
+        BORDER_CHARSETS[(BORDER_CHARSETS.indexOf(active) + delta + BORDER_CHARSETS.length) % BORDER_CHARSETS.length]!
+      setOverrides((patches) => setBoxField(patches, id, "borderCharset", next, fallback))
       return
     }
     const fallback = themeDefault(id, name) as number
-    const current = (overrides()[id]?.box?.[name] as number) ?? fallback
-    setOverrides((patches) => setBoxField(patches, id, name as NumericField, current + delta, fallback))
+    const active = (overrides()[id]?.box?.[name] as number) ?? fallback
+    setOverrides((patches) => setBoxField(patches, id, name, active + delta, fallback))
   }
 
   useKeyboard((key) => {

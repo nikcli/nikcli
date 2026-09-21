@@ -17,7 +17,7 @@ import { TuiPluginRuntime } from "@tui/plugin"
 import { useLocal } from "@tui/context/local"
 import { useLanguage } from "@tui/context/language"
 import { useTheme } from "@tui/context/theme"
-import { BORDER_CHARSETS, borderCharsFor, EmptyBorder } from "@tui/component/border"
+import { BORDER_CHAR_TABLES, borderCharsFor, EmptyBorder } from "@tui/component/border"
 import { useSDK } from "@tui/context/sdk"
 import { useRoute } from "@tui/context/route"
 import { useSync } from "@tui/context/sync"
@@ -1853,7 +1853,7 @@ export function Prompt(props: PromptProps) {
             // A complete table is required here because this box overrides one
             // corner, so `"default"` — which means "pass no table" — falls back
             // to the split set the prompt has always drawn.
-            ...(borderCharsFor(style().box.borderCharset) ?? BORDER_CHARSETS.split),
+            ...(borderCharsFor(style().box.borderCharset) ?? BORDER_CHAR_TABLES.split),
             bottomLeft: "╹",
           }}
         >

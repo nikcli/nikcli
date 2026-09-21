@@ -114,8 +114,10 @@ export function Session() {
   const { theme, component } = useTheme()
   // Already merged: the theme layers the studio preset for the session in view
   // over the document and the user's `components.json`, so there is nothing to
-  // combine here and no second place a message's shape is decided.
-  const userStyle = createMemo(() => component("session.user-message"))
+  // combine here and no second place a message's shape is decided. A plain
+  // accessor rather than a memo, like every other style read — the caller that
+  // tracks it is the JSX attribute, and a memo here would only add a node.
+  const userStyle = () => component("session.user-message")
   const lang = useLanguage()
   const commandLabels = sessionCommandLabels(lang)
   const promptRef = usePromptRef()

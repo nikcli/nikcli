@@ -70,12 +70,17 @@ export const GlassBorderMinimal = {
 /**
  * Character tables a themed component may select by name.
  *
+ * Named for the tables, not the charsets: `component-tokens.ts` exports
+ * `BORDER_CHARSETS`, the list of names a theme may write. One is the vocabulary,
+ * the other is what the renderer is handed, and sharing an identifier between
+ * them made every import site a guess.
+ *
  * Themes name a charset; they never supply raw glyphs. A hand-written table can
  * be the wrong width — a double-width or combining character silently shifts
  * every column after it — and the damage shows up as a corrupted transcript far
  * from the theme that caused it. A closed set keeps that impossible.
  */
-export const BORDER_CHARSETS = {
+export const BORDER_CHAR_TABLES = {
   none: EmptyBorder,
   single: {
     topLeft: "┌",
@@ -128,7 +133,7 @@ export const BORDER_CHARSETS = {
  * reproduce them faithfully is not to pass a table at all — spelling out a
  * lookalike here would drift the first time they change.
  */
-export function borderCharsFor(charset: keyof typeof BORDER_CHARSETS | "default") {
+export function borderCharsFor(charset: keyof typeof BORDER_CHAR_TABLES | "default") {
   if (charset === "default") return undefined
-  return BORDER_CHARSETS[charset] ?? EmptyBorder
+  return BORDER_CHAR_TABLES[charset] ?? EmptyBorder
 }

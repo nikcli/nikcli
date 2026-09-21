@@ -1,5 +1,5 @@
 import path from "path"
-import type { BorderCharset, ComponentId, ComponentPatchMap } from "@tui/context/component-tokens"
+import type { BoxStyle, ComponentId, ComponentPatchMap } from "@tui/context/component-tokens"
 
 /**
  * Reads and writes the same `.nikcli/components.json` the TUI loads.
@@ -35,44 +35,33 @@ export async function writeOverrides(patches: ComponentPatchMap, directory = pro
   return target
 }
 
-type Numeric = "paddingTop" | "paddingBottom" | "paddingLeft" | "paddingRight" | "marginTop" | "marginBottom" | "gap"
+/** The box fields the inspector can edit: the spacings, plus the charset. */
+export type EditableField = Exclude<keyof BoxStyle, "borderSides">
 
 /**
- * Sets one numeric box field, returning a new map.
+ * Sets one box field, returning a new map.
  *
- * Merges rather than replaces, and drops a field that lands back on the value
- * it would have had anyway: an override file should only ever record real
+ * Merges rather than replaces, and drops a field that lands back on the value it
+ * would have had anyway: an override file should only ever record real
  * departures from the theme, otherwise it pins values the theme can no longer
- * move and it does so invisibly.
+ * move, and it does so invisibly. When nothing is left to record, the component
+ * leaves the file entirely.
+ *
+ * One function for the spacings and the charset because the difference between
+ * them is the type of the value, and nothing else — the merge, the prune and
+ * the empty-entry rule were duplicated verbatim.
  */
-export function setBoxField(
+export function setBoxField<Field extends EditableField>(
   patches: ComponentPatchMap,
   id: ComponentId,
-  field: Numeric,
-  value: number,
-  themeDefault: number,
+  field: Field,
+  value: BoxStyle[Field],
+  themeDefault: BoxStyle[Field],
 ): ComponentPatchMap {
   const previous = patches[id]
   const box: Record<string, unknown> = { ...previous?.box }
   if (value === themeDefault) delete box[field]
   else box[field] = value
-
-  const next: ComponentPatchMap = { ...patches }
-  if (Object.keys(box).length === 0 && !previous?.colors) delete (next as Record<string, unknown>)[id]
-  else (next as Record<string, unknown>)[id] = { ...previous, box }
-  return next
-}
-
-export function setCharset(
-  patches: ComponentPatchMap,
-  id: ComponentId,
-  value: BorderCharset,
-  themeDefault: BorderCharset,
-): ComponentPatchMap {
-  const previous = patches[id]
-  const box: Record<string, unknown> = { ...previous?.box }
-  if (value === themeDefault) delete box.borderCharset
-  else box.borderCharset = value
 
   const next: ComponentPatchMap = { ...patches }
   if (Object.keys(box).length === 0 && !previous?.colors) delete (next as Record<string, unknown>)[id]

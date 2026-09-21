@@ -180,16 +180,3 @@ export function sessionStyleKey(kv: Pick<SessionStyleKV, "get">, sessionID?: str
 export function patchesForKey(key: string): ComponentPatchMap | undefined {
   return key ? recipeToPatches(JSON.parse(key) as SessionStyleRecipe) : undefined
 }
-
-/**
- * The patch layer for one session, or nothing when no recipe applies.
- *
- * Prefer {@link sessionStyleKey} where the result feeds a memo: this allocates a
- * fresh map on every call, which is exactly the identity churn the key avoids.
- */
-export function sessionStylePatches(
-  kv: Pick<SessionStyleKV, "get">,
-  sessionID?: string,
-): ComponentPatchMap | undefined {
-  return patchesForKey(sessionStyleKey(kv, sessionID))
-}

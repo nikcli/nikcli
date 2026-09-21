@@ -16,7 +16,6 @@ import {
   patchesForKey,
   recipeToPatches,
   sessionStyleKey,
-  sessionStylePatches,
   writeSessionStyle,
   type SessionStyleKV,
 } from "@tui/context/session-style"
@@ -73,7 +72,7 @@ describe("session style recipes", () => {
     expect(hasSessionStyle(store)).toBe(false)
     expect(hasSessionStyle(store, "ses_1")).toBe(false)
     expect(readSessionStyle(store)).toEqual({ ...DEFAULT_SESSION_STYLE })
-    expect(sessionStylePatches(store, "ses_1")).toBeUndefined()
+    expect(patchesForKey(sessionStyleKey(store, "ses_1"))).toBeUndefined()
   })
 
   it("rejects unknown fields and versions instead of carrying them", () => {
@@ -265,6 +264,5 @@ describe("the preset key does not depend on which session is in view", () => {
     const recipe = { ...DEFAULT_SESSION_STYLE, density: "compact" as const, userSurface: "accent" as const }
     writeSessionStyle(store, "global", recipe)
     expect(patchesForKey(sessionStyleKey(store))).toEqual(recipeToPatches(recipe))
-    expect(sessionStylePatches(store)).toEqual(recipeToPatches(recipe))
   })
 })
