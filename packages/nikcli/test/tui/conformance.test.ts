@@ -41,6 +41,16 @@ const ALL = await sources()
  *
  * Named rather than silently scoped out, so the cost of keeping it is visible.
  */
+/**
+ * Flows where "back" is a step, not a screen.
+ *
+ * Sign-in walks username, then email, then password, and retries in place on
+ * failure. A `←` there would have to mean the previous *step*, which is a
+ * different feature with its own state to unwind — and pointing it at the root
+ * would throw away what the person had already typed.
+ */
+const WIZARDS = ["component/dialog-login.tsx"]
+
 const ACCEPTED = new Set(["component/dialog-onboarding.tsx — options", "component/dialog-onboarding.tsx — rows"])
 
 /**
@@ -194,6 +204,23 @@ describe("TUI component rules", () => {
       }
     }
     expect(offenders).toEqual([])
+  })
+
+  it("a dialog opened from a dialog offers the way back", () => {
+    // Dialogs here do not stack — `replace` sets a one-entry stack and a nested
+    // flow unmounts its parent, which `specs/effect-tui/03-tui-lifecycle.md`
+    // records as load-bearing. So the way back is the caller handing over a
+    // closure that reopens the parent, and the only thing stopping it from
+    // being universal was that nothing asked.
+    const offenders: string[] = []
+    for (const { file, text } of ALL) {
+      for (const match of text.matchAll(/DialogPrompt\.show\(dialog,[\s\S]{0,400}?\n {2,}\}\)/g)) {
+        if (!match[0]!.includes("back")) {
+          offenders.push(`${file} — ${match[0]!.slice(0, 56).replace(/\s+/g, " ")}`)
+        }
+      }
+    }
+    expect(offenders.filter((entry) => !WIZARDS.some((file) => entry.startsWith(file)))).toEqual([])
   })
 
   it("the accepted list is still accurate, so it cannot outlive its reason", () => {

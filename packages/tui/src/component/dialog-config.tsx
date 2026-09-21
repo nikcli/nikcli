@@ -130,6 +130,8 @@ function ConfigCategoryDetail(props: { category: ConfigCategory }) {
     const currentStr = typeof currentValue === "object" ? JSON.stringify(currentValue, null, 2) : String(currentValue)
 
     const result = await DialogPrompt.show(dialog, `Edit ${props.category}.${key}`, {
+      // The category screen these were opened from.
+      back: () => dialog.replace(() => <ConfigCategoryDetail category={props.category} />),
       placeholder: "Enter JSON value",
       value: currentStr,
     })
@@ -161,6 +163,8 @@ function ConfigCategoryDetail(props: { category: ConfigCategory }) {
 
   const handleAdd = async () => {
     const result = await DialogPrompt.show(dialog, `Add new ${props.category} key`, {
+      // The category screen these were opened from.
+      back: () => dialog.replace(() => <ConfigCategoryDetail category={props.category} />),
       placeholder: "Enter key name",
     })
 
@@ -170,6 +174,8 @@ function ConfigCategoryDetail(props: { category: ConfigCategory }) {
     if (!key) return
 
     const valueResult = await DialogPrompt.show(dialog, `Enter value for ${key}`, {
+      // The category screen these were opened from.
+      back: () => dialog.replace(() => <ConfigCategoryDetail category={props.category} />),
       placeholder: "Enter JSON value (or plain text)",
       value: "{}",
     })
@@ -238,6 +244,8 @@ export function DialogConfig() {
 
   const handleEditFull = async () => {
     const result = await DialogPrompt.show(dialog, "Edit Full Config", {
+      // The category list, which is what the editor sits on top of.
+      back: () => dialog.replace(() => <DialogConfig />),
       placeholder: "Enter JSON configuration",
       value: JSON.stringify(config(), null, 2),
     })

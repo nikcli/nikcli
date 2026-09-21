@@ -401,6 +401,8 @@ function DialogProfileList(props: { field: ListField }) {
       category: "Actions",
       onSelect: async () => {
         const result = await DialogPrompt.show(dialog, `Add to ${meta.title.toLowerCase()}`, {
+          // The list, not the profile root: this prompt was opened from here.
+          back: () => dialog.replace(() => <DialogProfileList field={props.field} />),
           placeholder: meta.placeholder,
           description: () => <text fg={theme.foreground.muted}>{meta.hint}</text>,
         })
