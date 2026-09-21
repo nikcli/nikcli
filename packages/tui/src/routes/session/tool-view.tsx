@@ -32,7 +32,7 @@ import { useSync } from "@tui/context/sync"
 import { useProject } from "@tui/context/project"
 import { SplitBorder } from "@tui/component/border"
 import { SessionTaskCard } from "@tui/component/session-task-card"
-import { DISCLOSURE, summaryLine } from "@tui/component/disclosure"
+import { DISCLOSURE, LESS, more, summaryLine } from "@tui/component/disclosure"
 import { Spinner } from "@tui/component/spinner"
 import { useTheme, selectedForeground, tint } from "@tui/context/theme"
 import { BoxRenderable, ScrollBoxRenderable, TextAttributes, RGBA } from "@opentui/core"
@@ -631,7 +631,7 @@ function Bash(props: ToolProps<BashShape>) {
                   is clickable; this says what is behind it. */}
               <text fg={theme.foreground.subtle} wrapMode="none">
                 {expanded() ? DISCLOSURE.open : DISCLOSURE.closed}{" "}
-                {expanded() ? "less" : `${lines().length - 10} more lines`}
+                {expanded() ? LESS : more(lines().length - 10, "lines")}
               </text>
             </Show>
           </box>
@@ -768,7 +768,7 @@ function ExecCode(props: ToolProps<any>) {
                 <Show when={hasDetail()}>
                   <text fg={theme.foreground.subtle} wrapMode="none">
                     {"  "}
-                    {DISCLOSURE.closed} {codeLines().length} lines
+                    {DISCLOSURE.closed} {more(codeLines().length, "lines")}
                     <Show when={outputLines().length > 1}>, {outputLines().length} of output</Show>
                   </text>
                 </Show>
@@ -792,7 +792,7 @@ function ExecCode(props: ToolProps<any>) {
               </Show>
               <text fg={theme.foreground.subtle} wrapMode="none">
                 {"  "}
-                {DISCLOSURE.open} less
+                {DISCLOSURE.open} {LESS}
               </text>
             </box>
           </Show>
@@ -1844,7 +1844,7 @@ function Task(props: ToolProps<any>) {
             }}
           >
             {"  "}
-            {statusOpen() ? DISCLOSURE.open : DISCLOSURE.closed} {statusOpen() ? "less" : `${hiddenStatus()} more`}
+            {statusOpen() ? DISCLOSURE.open : DISCLOSURE.closed} {statusOpen() ? LESS : more(hiddenStatus())}
           </text>
         </Show>
       </SessionTaskCard>
@@ -1941,7 +1941,7 @@ function Monitor(props: ToolProps<any>) {
               >
                 {"  "}
                 {monitorOpen() ? DISCLOSURE.open : DISCLOSURE.closed}{" "}
-                {monitorOpen() ? "less" : `${hiddenMonitorStatus()} more`}
+                {monitorOpen() ? LESS : more(hiddenMonitorStatus())}
               </text>
             </Show>
           </box>

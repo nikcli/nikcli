@@ -74,3 +74,22 @@ export function hiddenRows(text: string, columns: number): number {
   if (start < 0) return 0
   return Math.max(0, bodyRows(lines.slice(start).join("\n"), columns) - 1)
 }
+
+/**
+ * The word beside an open mark. One word, everywhere.
+ *
+ * It was "collapse" on a message and "less" on three tool views, which is two
+ * vocabularies for the one thing a reader does most often.
+ */
+export const LESS = "less"
+
+/**
+ * The label beside a closed mark: how much is behind it, and of what.
+ *
+ * `N more rows`, `N more lines`, or just `N more` where the unit is obvious
+ * from what is above it. A count with no noun reads as "three more of these",
+ * which is exactly right for a list and wrong for a body — hence the noun.
+ */
+export function more(count: number, noun?: string): string {
+  return noun ? `${count} more ${noun}` : `${count} more`
+}

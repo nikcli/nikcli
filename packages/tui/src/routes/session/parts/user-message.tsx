@@ -2,7 +2,7 @@ import { bodyColumns, type StyleOf } from "@tui/context/component-tokens"
 import { use } from "../session-context"
 import { Locale } from "@nikcli-ai/util/locale"
 import { borderCharsFor } from "@tui/component/border"
-import { DISCLOSURE, hiddenRows, summaryLine, worthCollapsing } from "@tui/component/disclosure"
+import { DISCLOSURE, hiddenRows, LESS, more, summaryLine, worthCollapsing } from "@tui/component/disclosure"
 import { TuiImageList } from "@tui/component/tui-image"
 import { useLocal } from "@tui/context/local"
 import { selectedForeground, useTheme } from "@tui/context/theme"
@@ -129,7 +129,7 @@ export function UserMessage(props: {
                             setExpanded(false)
                           }}
                         >
-                          {DISCLOSURE.open} collapse
+                          {DISCLOSURE.open} {LESS}
                         </text>
                       </Show>
                     </>
@@ -153,7 +153,7 @@ export function UserMessage(props: {
                       {summaryLine(value())}
                       <span style={{ fg: style().colors.detail }}>
                         {" "}
-                        {DISCLOSURE.closed} {hidden()} more rows
+                        {DISCLOSURE.closed} {more(hidden(), "rows")}
                       </span>
                     </text>
                   </box>

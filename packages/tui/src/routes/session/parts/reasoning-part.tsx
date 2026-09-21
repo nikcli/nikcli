@@ -2,11 +2,13 @@ import { liveMarkdown, splitLiveMarkdown, wrapDiagramsInFences } from "../diagra
 import { use } from "../session-context"
 import { Locale } from "@nikcli-ai/util/locale"
 import { borderCharsFor } from "@tui/component/border"
+import { DISCLOSURE, hiddenRows, LESS, more, worthCollapsing } from "@tui/component/disclosure"
+import { bodyColumns } from "@tui/context/component-tokens"
 import { Spinner } from "@tui/component/spinner"
 import { useTheme } from "@tui/context/theme"
 import { reasoningSummary } from "@tui/context/thinking"
 import { MessageMarkdown } from "@tui/feature-plugins/math/markdown"
-import { Match, Show, Switch, createMemo } from "solid-js"
+import { Match, Show, Switch, createMemo, createSignal } from "solid-js"
 import type { ViewEntry } from "../view"
 
 export function ReasoningPart(props: { last: boolean; streaming: boolean; entry: ViewEntry; sessionID: string }) {
@@ -48,6 +50,25 @@ export function ReasoningPart(props: { last: boolean; streaming: boolean; entry:
     if (end === undefined) return
     return Locale.duration(end - props.entry.timestamp)
   })
+
+  /**
+   * The last surface in the transcript that could run to forty rows uncollapsed.
+   *
+   * Two conditions, and both matter. It must be *finished*: while the model is
+   * thinking, watching it think is the entire reason `showThinking` is on, and
+   * folding that away would answer a question nobody asked. And it must be
+   * *tall*, by the same six-row measure as a message — a short thought read in
+   * passing costs less than the click to open it.
+   *
+   * `showThinking` keeps meaning what it says. On, a thought is shown; this only
+   * decides whether a finished one that nobody will read in full has to occupy
+   * the screen as though they would.
+   */
+  const [expanded, setExpanded] = createSignal(false)
+  const columns = createMemo(() => bodyColumns(style().box, ctx.width))
+  const collapsible = createMemo(() => done() && worthCollapsing(summary().body ?? "", columns()))
+  const collapsed = createMemo(() => collapsible() && !expanded())
+  const hidden = createMemo(() => hiddenRows(summary().body ?? "", columns()))
   return (
     <Show when={content() && ctx.showThinking()}>
       <box
@@ -60,7 +81,21 @@ export function ReasoningPart(props: { last: boolean; streaming: boolean; entry:
         borderColor={style().colors.border}
       >
         <ReasoningHeader done={done()} title={summary().title} duration={duration()} />
-        <Show when={summary().body}>
+        <Show when={collapsed()}>
+          {/* The header above is already the summary, so the fold costs the
+              reader nothing but the count of what it holds. */}
+          <text
+            fg={style().colors.body}
+            wrapMode="none"
+            onMouseUp={(event) => {
+              event.stopPropagation()
+              setExpanded(true)
+            }}
+          >
+            {DISCLOSURE.closed} {more(hidden(), "rows")}
+          </text>
+        </Show>
+        <Show when={summary().body && !collapsed()}>
           <box marginTop={1} flexDirection="column">
             <Show when={split().settled}>
               <MessageMarkdown
@@ -87,6 +122,18 @@ export function ReasoningPart(props: { last: boolean; streaming: boolean; entry:
               </box>
             </Show>
           </box>
+          <Show when={collapsible()}>
+            <text
+              fg={style().colors.body}
+              wrapMode="none"
+              onMouseUp={(event) => {
+                event.stopPropagation()
+                setExpanded(false)
+              }}
+            >
+              {DISCLOSURE.open} {LESS}
+            </text>
+          </Show>
         </Show>
       </box>
     </Show>
