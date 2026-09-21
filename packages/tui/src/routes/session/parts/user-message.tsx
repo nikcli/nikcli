@@ -1,4 +1,4 @@
-import type { StyleOf } from "@tui/context/component-tokens"
+import { bodyColumns, type StyleOf } from "@tui/context/component-tokens"
 import { use } from "../session-context"
 import { Locale } from "@nikcli-ai/util/locale"
 import { borderCharsFor } from "@tui/component/border"
@@ -60,13 +60,11 @@ export function UserMessage(props: {
    * about that message, though; it is about any body of that height, a pasted
    * file included.
    */
-  /** Columns the body actually wraps against, inside the message's own chrome. */
-  const bodyColumns = createMemo(() =>
-    Math.max(1, ctx.width - style().box.paddingLeft - style().box.paddingRight - style().box.borderSides.length),
-  )
-  const collapsible = createMemo(() => worthCollapsing(text() ?? "", bodyColumns()))
+  /** The same figure the height estimator uses, from the same function. */
+  const columns = createMemo(() => bodyColumns(style().box, ctx.width))
+  const collapsible = createMemo(() => worthCollapsing(text() ?? "", columns()))
   const collapsed = createMemo(() => collapsible() && !expanded())
-  const hidden = createMemo(() => hiddenRows(text() ?? "", bodyColumns()))
+  const hidden = createMemo(() => hiddenRows(text() ?? "", columns()))
   const queued = createMemo(() => props.pending && props.turn.messageID > props.pending)
   const color = createMemo(() => local.agent.color(props.turn.request?.agent ?? ""))
   const queuedFg = createMemo(() => selectedForeground(theme, color()))

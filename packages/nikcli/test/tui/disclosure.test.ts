@@ -7,6 +7,7 @@ import {
   summaryLine,
   worthCollapsing,
 } from "@tui/component/disclosure"
+import { bodyColumns, COMPONENT_DEFAULTS } from "@tui/context/component-tokens"
 import { tuiSource } from "./tui-source"
 
 /**
@@ -123,6 +124,49 @@ describe("marks answer the same event their surface does", () => {
     // least.
     for (const file of SURFACES) {
       expect(await tuiSource(file)).toContain("getSelectedText()")
+    }
+  })
+})
+
+/**
+ * The estimator and the renderer must agree about how wide a body is.
+ *
+ * They did not. One subtracted the left and right borders; the other subtracted
+ * `borderSides.length`, which counts the top and bottom ones too, though a
+ * border on the top costs a row and never a column. They also started from
+ * different widths — one from the scrollbox viewport, which falls back to the
+ * whole terminal and ignores the sidebar.
+ *
+ * When they disagree they disagree about whether a body collapses, and the
+ * virtualizer reserves a height nothing draws.
+ */
+describe("body width is one calculation", () => {
+  const style = COMPONENT_DEFAULTS["session.user-message"].box
+
+  it("takes columns for side borders and nothing for top or bottom", () => {
+    const sides = bodyColumns({ paddingLeft: 0, paddingRight: 0, borderSides: ["left", "right"] }, 100)
+    const caps = bodyColumns({ paddingLeft: 0, paddingRight: 0, borderSides: ["top", "bottom"] }, 100)
+    expect(sides).toBe(98)
+    expect(caps).toBe(100)
+  })
+
+  it("subtracts the message's own chrome", () => {
+    // Stock user message: two columns of left padding and one of left border.
+    expect(bodyColumns(style, 100)).toBe(100 - style.paddingLeft - style.paddingRight - 1)
+  })
+
+  it("never returns a width that would divide by zero", () => {
+    expect(bodyColumns(style, 0)).toBeGreaterThan(0)
+    expect(bodyColumns(style, 1)).toBeGreaterThan(0)
+    expect(bodyColumns(style, -50)).toBeGreaterThan(0)
+  })
+
+  it("is the only place either side computes it", async () => {
+    // A second formula is how the two drifted apart in the first place.
+    for (const file of ["routes/session/index.tsx", "routes/session/parts/user-message.tsx"]) {
+      const source = await tuiSource(file)
+      expect(source).toContain("bodyColumns(")
+      expect(source).not.toContain("borderSides.length")
     }
   })
 })

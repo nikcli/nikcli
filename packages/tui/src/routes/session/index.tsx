@@ -94,7 +94,7 @@ import {
   type Turn,
   type ViewEntry,
 } from "./view"
-import { chromeRows, type StyleOf } from "@tui/context/component-tokens"
+import { bodyColumns, chromeRows, type StyleOf } from "@tui/context/component-tokens"
 import { AssistantMessage, PendingUserMessage, UserMessage } from "./parts"
 import { formatInstructionDelta, visibleInstructionNotices } from "@nikcli-ai/util/instruction-delta"
 import { getScrollAcceleration, scrollChildIntoView } from "@tui/util/scroll"
@@ -214,17 +214,14 @@ export function Session() {
       // renders; an estimator still counting the stock 3 would mis-reserve and
       // the scroll offset would drift — which reads as a renderer bug, not a
       // theming one.
-      const box = userStyle().box
-      const userColumns = Math.max(
-        1,
-        columns -
-          box.paddingLeft -
-          box.paddingRight -
-          Number(box.borderSides.includes("left")) -
-          Number(box.borderSides.includes("right")),
-      )
+      // `contentWidth()`, the same number the message component reads as
+      // `ctx.width`. The scrollbox viewport above falls back to the whole
+      // terminal, which ignores the sidebar and is some thirty columns wide of
+      // what a message is actually given.
+      const userBox = userStyle().box
+      const userColumns = bodyColumns(userBox, contentWidth())
       const metrics = {
-        chromeRows: chromeRows(box),
+        chromeRows: chromeRows(userBox),
         entryRows: DEFAULT_TURN_HEIGHT_METRICS.entryRows,
       }
       const heights = all.map(

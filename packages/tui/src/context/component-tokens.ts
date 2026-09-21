@@ -592,6 +592,25 @@ export function chromeRows(style: Pick<BoxStyle, "paddingTop" | "paddingBottom" 
 }
 
 /**
+ * Columns a component's content actually has, inside its own chrome.
+ *
+ * Exists because two places computed it and disagreed. The height estimator
+ * subtracted the left and right borders; the message subtracted
+ * `borderSides.length`, which counts the top and bottom ones too — and a border
+ * on the top takes a row, never a column. They also started from different
+ * widths. When those two disagree the estimator and the renderer disagree about
+ * whether a body is tall enough to collapse, and the virtualizer reserves a
+ * height nothing draws: the exact drift the estimator exists to prevent.
+ */
+export function bodyColumns(
+  style: Pick<BoxStyle, "paddingLeft" | "paddingRight" | "borderSides">,
+  available: number,
+): number {
+  const sides = Number(style.borderSides.includes("left")) + Number(style.borderSides.includes("right"))
+  return Math.max(1, (Math.floor(available) || 1) - style.paddingLeft - style.paddingRight - sides)
+}
+
+/**
  * Rows the tab strip occupies, derived from its own style.
  *
  * One row of text plus its vertical padding, with the border counted separately

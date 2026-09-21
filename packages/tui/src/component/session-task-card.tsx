@@ -91,7 +91,16 @@ export function SessionTaskCard(props: {
     return value
   })
   const opens = createMemo(() => props.onClick !== undefined)
-  const open = createMemo(() => !opens() && expanded())
+  /**
+   * Expansion is sticky, and deliberately not conditioned on `opens()`.
+   *
+   * A subtask has no session to open until it starts, so the card begins
+   * expandable. Tying the detail to `!opens()` meant that the moment the task
+   * reported its session — an event with nothing to do with the reader — the
+   * description it was showing snapped shut under them. The flag decides what a
+   * click *does*; it has no business deciding what is already on screen.
+   */
+  const open = createMemo(() => expanded())
   const panel = createMemo(() => tint(theme.surface.panel, accent(), props.kind === "background" ? 0.1 : 0.08))
 
   return (
