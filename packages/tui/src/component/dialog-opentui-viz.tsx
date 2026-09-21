@@ -14,6 +14,7 @@ import {
   ErrorBoundary,
   useContext,
   type Component,
+  Index,
 } from "solid-js"
 import { Dynamic } from "solid-js/web"
 import { useDialog } from "@tui/ui/dialog"
@@ -1102,14 +1103,16 @@ function LineChartRenderer(props: { comp: Of<"line_chart"> }) {
       {/* Legend */}
       <Show when={showLegend()}>
         <box flexDirection="row" gap={2} flexWrap="wrap" marginTop={1}>
-          <For each={seriesSamples()}>
+          {/* Positional and rebuilt on every resample, so `Index` keeps the
+              legend rows mounted instead of replacing them. */}
+          <Index each={seriesSamples()}>
             {(s) => (
               <box flexDirection="row" gap={1}>
-                <text fg={resolveColor(theme, s.colorToken)}>{s.marker}</text>
-                <text fg={theme.foreground.default}>{s.name}</text>
+                <text fg={resolveColor(theme, s().colorToken)}>{s().marker}</text>
+                <text fg={theme.foreground.default}>{s().name}</text>
               </box>
             )}
-          </For>
+          </Index>
         </box>
       </Show>
     </box>

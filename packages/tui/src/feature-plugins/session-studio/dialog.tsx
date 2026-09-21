@@ -203,7 +203,7 @@ export function SessionStudioEditor(props: {
               <box backgroundColor={props.theme.surface.base} padding={1} gap={user().box.marginTop}>
                 <box
                   backgroundColor={user().colors.background}
-                  border={user().box.borderSides}
+                  border={[...user().box.borderSides]}
                   customBorderChars={borderCharsFor(user().box.borderCharset)}
                   // The real message paints this edge with the agent's color,
                   // which a static sample has no agent to ask for. The accent
@@ -222,7 +222,7 @@ export function SessionStudioEditor(props: {
                 </box>
                 <box
                   backgroundColor={prompt().colors.background}
-                  border={prompt().box.borderSides}
+                  border={[...prompt().box.borderSides]}
                   customBorderChars={borderCharsFor(prompt().box.borderCharset)}
                   borderColor={props.theme.accent.fg}
                   paddingLeft={prompt().box.paddingLeft}

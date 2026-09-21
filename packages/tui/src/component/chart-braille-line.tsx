@@ -1,5 +1,5 @@
 import { TextAttributes, RGBA } from "@opentui/core"
-import { createMemo, For, Show } from "solid-js"
+import { createMemo, For, Show, Index } from "solid-js"
 import { useTheme } from "../context/theme"
 import type { Theme } from "../context/theme"
 
@@ -1199,13 +1199,17 @@ export function VerticalBarChart(props: {
       <For each={Array.from({ length: height() })}>
         {(_, rowIdx) => (
           <box flexDirection="row" gap={0}>
-            <For each={cols()}>
+            {/* `Index`, not `For`: the memo rebuilds a column object per bar on
+                every data change, and `For` reconciles by reference — so a live
+                chart tore down and remounted every column each time it moved.
+                The list is positional, which is what `Index` is for. */}
+            <Index each={cols()}>
               {(c) => (
-                <text fg={c.color} wrapMode="none">
-                  {c.chars[rowIdx()] ?? " "}
+                <text fg={c().color} wrapMode="none">
+                  {c().chars[rowIdx()] ?? " "}
                 </text>
               )}
-            </For>
+            </Index>
           </box>
         )}
       </For>

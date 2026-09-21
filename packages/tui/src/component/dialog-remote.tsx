@@ -28,7 +28,15 @@ interface Device {
   connectedAt: Date
 }
 
-function TerminalView({ connection }: { connection: TerminalConnection }) {
+/**
+ * `props`, not `{ connection }`.
+ *
+ * Destructuring reads the prop once, at call time, and this one is handed
+ * `terminalConnection()!` — a signal. A reconnect replaces the connection and
+ * the view would go on reading, writing and closing the dead one, which is the
+ * failure that looks like the terminal simply stopping.
+ */
+function TerminalView(props: { connection: TerminalConnection }) {
   const [output, setOutput] = createSignal<string[]>([
     "Connected to NikCLI remote terminal",
     "Type 'q' to disconnect",
@@ -38,7 +46,7 @@ function TerminalView({ connection }: { connection: TerminalConnection }) {
 
   onMount(() => {
     const run = async () => {
-      for await (const chunk of connection.output) {
+      for await (const chunk of props.connection.output) {
         setOutput((prev) => [...prev, chunk])
       }
     }
@@ -47,13 +55,13 @@ function TerminalView({ connection }: { connection: TerminalConnection }) {
 
   const handleKey = (key: string) => {
     if (key === "\r") {
-      connection.write(input() + "\n")
+      props.connection.write(input() + "\n")
       setOutput((prev) => [...prev, `> ${input()}`])
       setInput("")
     } else if (key === "\x7f") {
       setInput((prev) => prev.slice(0, -1))
     } else if (key === "q") {
-      connection.close()
+      props.connection.close()
     } else if (key.length === 1) {
       setInput((prev) => prev + key)
     }
