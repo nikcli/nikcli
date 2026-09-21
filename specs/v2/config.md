@@ -1,9 +1,9 @@
 # V2 Config Review
 
-| Field   | Value                                                                                                                                                             |
-| ------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| Status  | **Proposed** — a decision ledger, not a contract. No field below has been renamed or removed yet                                                                  |
-| Scope   | `src/config/config.ts` (`Config.Info`), `src/config/paths.ts`, `src/config/tui-schema.ts`                                                                         |
+| Field   | Value                                                                                                                                                                                                                                                                                                                                                                                                                                                                 |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Status  | **Proposed** — a decision ledger, not a contract. No field below has been renamed or removed yet                                                                                                                                                                                                                                                                                                                                                                      |
+| Scope   | `src/config/config.ts` (`Config.Info`), `src/config/paths.ts`, `src/config/tui-schema.ts`                                                                                                                                                                                                                                                                                                                                                                             |
 | Missing | Nothing testable. The test this row asked for landed 2026-09-21 — `test/config/legacy-keys.test.ts` (pure mappings) and `test/config/legacy-keys-loader.test.ts` (the three that need a document on disk) cover **all six** mappings the loader performs today. This document stays `Proposed` because it is a ledger and **no field below has been renamed yet**, not because coverage is missing. It is promoted by executing a group, not by writing another test. |
 
 This document breaks nikcli's configuration schema into review groups. Work through one group at a
@@ -234,15 +234,15 @@ conflict, and asks that one be picked "before the first rename lands, not after 
 against the source, they are not in conflict. They answer different questions, and the ledger's
 renames only ever ask one of them.
 
-| Mechanism                       | Times used | What it is for                                       |
-| ------------------------------- | ---------- | ---------------------------------------------------- |
-| Accept both keys in the loader  | **6**      | a rename **within** the same document                |
-| Rewrite the file                | **1**      | moving fields into a **different** document          |
+| Mechanism                      | Times used | What it is for                              |
+| ------------------------------ | ---------- | ------------------------------------------- |
+| Accept both keys in the loader | **6**      | a rename **within** the same document       |
+| Rewrite the file               | **1**      | moving fields into a **different** document |
 
 The six: `autoshare` → `share`, `mode` → `agent`, top-level `tools` → `permission`, agent-level
 `tools` → `permission`, agent-level `maxSteps` → `steps`, and `enabled_providers` /
 `disabled_providers` → policy statements. The one: `migrateTuiConfig`, which moves `theme`,
-`keybinds` and `tui` into a sibling `tui.json` — a *different* published schema, which is precisely
+`keybinds` and `tui` into a sibling `tui.json` — a _different_ published schema, which is precisely
 what loader mapping cannot do.
 
 Every rename this ledger proposes (`plugin` → `plugins`, `agent` → `agents`, `permission` →
@@ -258,10 +258,10 @@ This is an argument, not a ratification: the decision belongs to whoever owns th
 The ledger's 68 fields split into three groups with incomparable risk, and running them as one pass
 is how a breaking change reaches users behind a cleanup.
 
-- **17 `remove` is two jobs, not one.** The fields with *no reader at all* — `logLevel`, `server`,
+- **17 `remove` is two jobs, not one.** The fields with _no reader at all_ — `logLevel`, `server`,
   `teleport`, verified 2026-09-21 as having zero readers in `src` and `packages/tui` — can leave the
   published schema without changing any behaviour, because nothing observes them. The fields that are
-  *read but superseded* — `theme`, `keybinds`, `tui`, already migrated into `tui.json` — must keep
+  _read but superseded_ — `theme`, `keybinds`, `tui`, already migrated into `tui.json` — must keep
   parsing so old documents still load; those get hidden from the published schema, not deleted from
   `Config.Info`.
 - **16 `redesign` is the part with the public contract.** One PR per group, with the mapping in the

@@ -3,6 +3,30 @@
 <!-- UNRELEASED:START -->
 <!-- UNRELEASED:END -->
 
+## v1.380.0 (September 2026)
+
+## Core
+
+- Repair two red checks the full suite found on live-main (@nikomatt69)
+- Record why the input precedence table cannot be wired as written (@nikomatt69)
+- Let the delivery class decide whether being behind is fatal (@nikomatt69)
+- Enforce per-device capabilities instead of only declaring them (@nikomatt69)
+- Unbreak run.ts and finish the headless extraction (@nikomatt69)
+- Pin the six legacy key mappings, and close a false dilemma (@nikomatt69)
+- Record native route coverage before converging the adapters (@nikomatt69)
+
+**Thank you to 1 community contributor:**
+
+- @nikomatt69:
+  - docs(specs): retire the Effect Drizzle SQLite adapter spec
+  - feat(llm): record native route coverage before converging the adapters
+  - test(config): pin the six legacy key mappings, and close a false dilemma
+  - fix(cli): unbreak run.ts and finish the headless extraction
+  - feat(mobile): enforce per-device capabilities instead of only declaring them
+  - feat(event-feed): let the delivery class decide whether being behind is fatal
+  - docs(eot-07): record why the input precedence table cannot be wired as written
+  - fix(test): repair two red checks the full suite found on live-main
+
 ## v1.379.0 (September 2026)
 
 ## Core

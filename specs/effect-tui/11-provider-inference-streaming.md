@@ -138,14 +138,14 @@ it cannot map, and no one is told which models took the AI SDK path because of i
 `session/llm/coverage.ts` keeps them. Six outcomes, each with exactly one call site in
 `session/llm.ts`:
 
-| Outcome           | Branch                                                              |
-| ----------------- | ------------------------------------------------------------------- |
-| `unmapped`        | `getModelRef` produced nothing                                      |
-| `disabled`        | flag off, `ModelRef` present — this turn *would* have gone native   |
-| `ineligible`      | flag on, pre-flight `status()` refused — a configuration verdict    |
-| `ineligible-late` | flag on, `streamRequestOnly` refused — a protocol verdict           |
-| `native`          | the native runtime streamed the turn                                |
-| `fallback`        | native threw mid-stream, the AI SDK finished                        |
+| Outcome           | Branch                                                            |
+| ----------------- | ----------------------------------------------------------------- |
+| `unmapped`        | `getModelRef` produced nothing                                    |
+| `disabled`        | flag off, `ModelRef` present — this turn _would_ have gone native |
+| `ineligible`      | flag on, pre-flight `status()` refused — a configuration verdict  |
+| `ineligible-late` | flag on, `streamRequestOnly` refused — a protocol verdict         |
+| `native`          | the native runtime streamed the turn                              |
+| `fallback`        | native threw mid-stream, the AI SDK finished                      |
 
 Three things about the shape, each a rule this catalogue has already paid for:
 
@@ -162,7 +162,7 @@ Three things about the shape, each a rule this catalogue has already paid for:
    counters. No session ids, prompts, tokens or paths.
 
 Nothing here changes production behaviour, and that is the argument for landing it before any part of
-the convergence: it is the only slice of this spec that can go in without a soak, because it *is* the
+the convergence: it is the only slice of this spec that can go in without a soak, because it _is_ the
 soak.
 
 `test/session/llm-coverage.test.ts` drives the counters and, in its second half, asserts that every

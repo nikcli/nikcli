@@ -32,8 +32,8 @@ upstream document verbatim.
 
 The review is written: [config.md](./config.md). The **migration mechanism** was recorded here as an
 open choice between two conflicting precedents. Counted against the source on 2026-09-21, they are
-not in conflict — loader mapping is used six times and always for a rename *within* one document,
-the file rewrite once and only to move fields into a *different* document. Every rename the ledger
+not in conflict — loader mapping is used six times and always for a rename _within_ one document,
+the file rewrite once and only to move fields into a _different_ document. Every rename the ledger
 proposes stays inside `nikcli.json`, so only the first applies. See "The Two Precedents Do Not
 Disagree" in [config.md](./config.md). What remains is ratifying that, which belongs to whoever owns
 the published schema; the paragraphs below are kept because they state the cost of each option.
