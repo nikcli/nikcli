@@ -17,8 +17,7 @@ import { TuiPluginRuntime } from "@tui/plugin"
 import { useLocal } from "@tui/context/local"
 import { useLanguage } from "@tui/context/language"
 import { useTheme } from "@tui/context/theme"
-import { hasSessionStyle, readSessionStyle, resolveSessionStyle } from "@tui/feature-plugins/session-studio/settings"
-import { EmptyBorder, SplitBorder } from "@tui/component/border"
+import { borderCharsFor, EmptyBorder } from "@tui/component/border"
 import { useSDK } from "@tui/context/sdk"
 import { useRoute } from "@tui/context/route"
 import { useSync } from "@tui/context/sync"
@@ -221,14 +220,10 @@ export function Prompt(props: PromptProps) {
   const command = useCommandDialog()
   const renderer = useRenderer()
   const dimensions = useTerminalDimensions()
-  const { theme, syntax } = useTheme()
+  const { theme, syntax, component } = useTheme()
   const kv = useKV()
-  const sessionStyle = createMemo(() =>
-    hasSessionStyle(kv, props.sessionID)
-      ? resolveSessionStyle(theme, readSessionStyle(kv, props.sessionID))
-      : undefined,
-  )
-  const promptBackground = createMemo(() => sessionStyle()?.prompt.backgroundColor ?? theme.surface.offset)
+  const style = createMemo(() => component("session.prompt"))
+  const promptBackground = createMemo(() => style().colors.background)
   const lang = useLanguage()
   const editor = useEditorContext()
   const activeSession = createMemo(() => (props.sessionID ? sync.session.get(props.sessionID) : undefined))
@@ -1851,18 +1846,18 @@ export function Prompt(props: PromptProps) {
       />
       <box ref={(r) => (anchor = r)} visible={props.visible !== false}>
         <box
-          border={sessionStyle()?.prompt.border === false ? [] : ["left"]}
+          border={style().box.borderSides}
           borderColor={highlight()}
           customBorderChars={{
-            ...SplitBorder.customBorderChars,
+            ...borderCharsFor(style().box.borderCharset),
             bottomLeft: "╹",
           }}
         >
           <box
-            paddingLeft={sessionStyle()?.prompt.paddingX ?? 2}
-            paddingRight={sessionStyle()?.prompt.paddingX ?? 2}
-            paddingTop={sessionStyle()?.prompt.paddingY ?? 1}
-            paddingBottom={sessionStyle()?.prompt.paddingY ?? 0}
+            paddingLeft={style().box.paddingLeft}
+            paddingRight={style().box.paddingRight}
+            paddingTop={style().box.paddingTop}
+            paddingBottom={style().box.paddingBottom}
             flexShrink={0}
             backgroundColor={promptBackground()}
             flexGrow={1}
@@ -2083,7 +2078,7 @@ export function Prompt(props: PromptProps) {
               cursorColor={theme.foreground.default}
               syntaxStyle={syntax()}
             />
-            <box flexDirection="row" flexShrink={0} paddingTop={sessionStyle()?.prompt.paddingY ?? 1} gap={1}>
+            <box flexDirection="row" flexShrink={0} paddingTop={style().box.paddingTop} gap={1}>
               <Show when={kv.get("show_agent", true)}>
                 <text fg={highlight()}>
                   {store.mode === "shell" ? lang.t("prompt.shell") : Locale.titlecase(local.agent.current().name)}{" "}
@@ -2125,32 +2120,37 @@ export function Prompt(props: PromptProps) {
             </box>
           </box>
         </box>
-        <box
-          height={1}
-          border={sessionStyle()?.prompt.border === false ? [] : ["left"]}
-          borderColor={highlight()}
-          customBorderChars={{
-            ...EmptyBorder,
-            vertical: promptBackground().a !== 0 ? "╹" : " ",
-          }}
-        >
+        {/*
+          The prompt's shadow: a half-block rule tinted with the input's own
+          background, so the box appears to sit above the transcript.
+
+          It renders only when there is a background to cast it. The transparent
+          case used to draw a row of spaces instead, which is not a subtler
+          shadow — it is a blank row under the prompt that no theme asked for and
+          nothing can remove. A shadow with nothing to cast is no shadow, so the
+          row goes rather than emptying.
+        */}
+        <Show when={promptBackground().a !== 0}>
           <box
             height={1}
-            border={["bottom"]}
-            borderColor={promptBackground()}
-            customBorderChars={
-              promptBackground().a !== 0
-                ? {
-                    ...EmptyBorder,
-                    horizontal: "▀",
-                  }
-                : {
-                    ...EmptyBorder,
-                    horizontal: " ",
-                  }
-            }
-          />
-        </box>
+            border={style().box.borderSides}
+            borderColor={highlight()}
+            customBorderChars={{
+              ...EmptyBorder,
+              vertical: "╹",
+            }}
+          >
+            <box
+              height={1}
+              border={["bottom"]}
+              borderColor={promptBackground()}
+              customBorderChars={{
+                ...EmptyBorder,
+                horizontal: "▀",
+              }}
+            />
+          </box>
+        </Show>
         <box flexDirection="row" justifyContent="space-between">
           <Show
             when={status().type !== "idle"}

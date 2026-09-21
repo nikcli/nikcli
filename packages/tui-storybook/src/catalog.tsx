@@ -89,11 +89,13 @@ export const STORIES: readonly Story[] = [
   {
     id: "synthetic",
     title: "Synthetic",
+    styleId: "session.synthetic-part",
     render: () => <SyntheticPart entry={FIXTURES.synthetic.body[0]!} />,
   },
   {
     id: "unknown",
     title: "Unknown entry · the backstop",
+    styleId: "session.unknown-part",
     render: () => <UnknownPart entry={FIXTURES.unknown.body[0]!} />,
   },
   {

@@ -12,6 +12,7 @@ import {
 } from "./theme-catalog"
 import { contrastFg, deriveSemanticTokens, tint, type SemanticTokens } from "./theme-tokens"
 import {
+  createComponentResolver,
   readComponentPatches,
   resolveComponents,
   type ComponentId,
@@ -19,6 +20,8 @@ import {
   type ResolvedComponents,
   type StyleOf,
 } from "./component-tokens"
+import { sessionStylePatches } from "./session-style"
+import { useRoute } from "./route"
 import { useKV } from "./kv"
 import { useRenderer } from "@opentui/solid"
 import { createStore, produce } from "solid-js/store"
@@ -270,6 +273,11 @@ export const {
   init: (props: { mode: "dark" | "light" }) => {
     const sync = useSync()
     const kv = useKV()
+    // `RouteProvider` sits above this one, so the session being looked at is
+    // readable here. That is what scopes a studio preset: the tab strip and the
+    // prompt live outside the session route but style the same session, and
+    // asking the route is the only answer all three agree on.
+    const route = useRoute()
     const [store, setStore] = createStore({
       themes: { ...DEFAULT_THEMES } as Record<string, ThemeJson>,
       mode: kv.get("theme_mode", props.mode),
@@ -423,13 +431,28 @@ export const {
      * streaming parts' render path free of any merge at all. It re-runs only
      * when the theme document, the mode, or the user's overrides change.
      */
-    const components = createMemo<ResolvedComponents>(() => {
+    const components = createMemo<ResolvedComponents>(() => resolve([]))
+
+    /**
+     * Resolves the catalog with extra patches layered on top of the live ones.
+     *
+     * Every caller goes through here, so there is exactly one merge order:
+     * the theme document, the user's `components.json`, the studio preset for
+     * the session in view, then whatever the caller adds. Later wins, and the
+     * preset is late on purpose — it is the most recent and most specific thing
+     * the user asked for, and it only names the fields it decides.
+     */
+    function resolve(extra: readonly ComponentPatchMap[]): ResolvedComponents {
       const document = store.themes[store.active] ?? store.themes.nikcli!
-      return resolveComponents(createColorResolver(document, store.mode), [
+      const sessionID = "sessionID" in route.data ? route.data.sessionID : undefined
+      const preset = sessionStylePatches(kv, sessionID)
+      return resolveComponents(createComponentResolver(values(), createColorResolver(document, store.mode)), [
         readComponentPatches(document.components),
         store.componentOverrides,
+        ...(preset ? [preset] : []),
+        ...extra,
       ])
-    })
+    }
 
     return {
       theme: new Proxy({} as Theme, {
@@ -466,6 +489,15 @@ export const {
       /** Every patch the active theme and the user's overrides got wrong. */
       componentWarnings() {
         return components().warnings
+      },
+      /**
+       * The same resolution with one more patch layer on top, for an editor
+       * previewing an unsaved change. It resolves through the live pipeline
+       * rather than a preview-only copy, so what the sample shows is what
+       * applying it produces.
+       */
+      previewComponents(patches: ComponentPatchMap): ResolvedComponents {
+        return resolve([patches])
       },
       mode() {
         return store.mode
@@ -1300,7 +1332,7 @@ export function createStandaloneTheme(input: {
 }) {
   const document = input.document as ThemeJson
   const resolved = resolveTheme(document, input.mode)
-  const components = resolveComponents(createColorResolver(document, input.mode), [
+  const components = resolveComponents(createComponentResolver(resolved, createColorResolver(document, input.mode)), [
     readComponentPatches(document.components),
     input.overrides ?? {},
   ])

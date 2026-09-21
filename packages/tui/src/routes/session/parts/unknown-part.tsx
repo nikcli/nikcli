@@ -1,4 +1,5 @@
 import { useTheme } from "@tui/context/theme"
+import { createMemo } from "solid-js"
 import type { ViewEntry } from "../view"
 
 /**
@@ -10,10 +11,11 @@ import type { ViewEntry } from "../view"
  * rather than as silence.
  */
 export function UnknownPart(props: { entry: ViewEntry }) {
-  const { theme } = useTheme()
+  const { component } = useTheme()
+  const style = createMemo(() => component("session.unknown-part"))
   return (
-    <box paddingLeft={3} marginTop={1} flexShrink={0}>
-      <text fg={theme.foreground.muted}>◌ {props.entry.type}</text>
+    <box paddingLeft={style().box.paddingLeft} marginTop={style().box.marginTop} flexShrink={0}>
+      <text fg={style().colors.text}>◌ {props.entry.type}</text>
     </box>
   )
 }

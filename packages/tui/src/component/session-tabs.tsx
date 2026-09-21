@@ -7,10 +7,10 @@ import { useRoute } from "@tui/context/route"
 import { useSync } from "@tui/context/sync"
 import { useSessionTabs, type SessionTabState } from "@tui/context/session-tabs"
 import { useTheme } from "@tui/context/theme"
-import { hasSessionStyle, readSessionStyle, resolveSessionStyle } from "@tui/feature-plugins/session-studio/settings"
+import { tabRows } from "@tui/context/component-tokens"
 import { useKeybind } from "@tui/context/keybind"
 import { Logo } from "@tui/component/logo"
-import { SplitBorder } from "@tui/component/border"
+import { borderCharsFor, SplitBorder } from "@tui/component/border"
 import { DialogSessionLink } from "@tui/component/dialog-session-link"
 import { sessionLinkOf } from "@tui/util/session-link"
 import { bunUtils } from "@nikcli-ai/util/bun-utils"
@@ -75,7 +75,7 @@ export function SessionTabs() {
   const sync = useSync()
   const kv = useKV()
   const dialog = useDialog()
-  const { theme } = useTheme()
+  const { theme, component } = useTheme()
   const dimensions = useTerminalDimensions()
   const tabs = useSessionTabs()
   const keybind = useKeybind()
@@ -85,14 +85,12 @@ export function SessionTabs() {
   }
 
   const activeID = tabs.active
-  const recipe = createMemo(() => (hasSessionStyle(kv, activeID()) ? readSessionStyle(kv, activeID()) : undefined))
-  const sessionStyle = createMemo(() => {
-    const value = recipe()
-    return value ? resolveSessionStyle(theme, value) : undefined
-  })
-  const compact = createMemo(() => recipe()?.density === "compact")
-  const contentHeight = createMemo(() => (compact() ? 2 : 3))
-  const tabPadding = createMemo(() => (compact() ? 0 : 1))
+  const style = createMemo(() => component("session.tabs"))
+  // Height is derived from the strip's own padding rather than chosen beside
+  // it, so a theme that tightens the strip cannot leave the row taller than
+  // what it holds — the gap that reads as a misaligned tab bar.
+  const contentHeight = createMemo(() => tabRows(style().box))
+  const bordered = createMemo(() => style().box.borderSides.length > 0)
   const byID = createMemo(() => new Map(tabs.list().map((tab) => [tab.id, tab])))
   const layout = createMemo(() => layoutSessionTabs(tabs.ids(), activeID(), dimensions().width))
 
@@ -124,21 +122,22 @@ export function SessionTabs() {
   return (
     <box
       flexShrink={0}
-      height={contentHeight() + (recipe()?.border === "none" ? 0 : 1)}
+      height={contentHeight() + (bordered() ? 1 : 0)}
       width="100%"
       flexDirection="row"
       alignItems="center"
-      backgroundColor={theme.surface.panel}
-      border={recipe()?.border === "none" ? [] : ["bottom"]}
-      borderColor={sessionStyle()?.borderColor ?? theme.border.subtle}
+      backgroundColor={style().colors.background}
+      border={style().box.borderSides}
+      customBorderChars={borderCharsFor(style().box.borderCharset)}
+      borderColor={style().colors.border}
       overflow="hidden"
     >
       <box
         width={9}
         height={contentHeight()}
         flexShrink={0}
-        paddingTop={tabPadding()}
-        paddingBottom={tabPadding()}
+        paddingTop={style().box.paddingTop}
+        paddingBottom={style().box.paddingBottom}
         paddingLeft={1}
         flexDirection="column"
       >
@@ -173,13 +172,13 @@ export function SessionTabs() {
                 flexShrink={0}
                 height={contentHeight()}
                 flexDirection="row"
-                paddingTop={tabPadding()}
-                paddingBottom={tabPadding()}
+                paddingTop={style().box.paddingTop}
+                paddingBottom={style().box.paddingBottom}
                 overflow="hidden"
                 onMouseDown={() => tabs.open(id)}
-                backgroundColor={selected() ? theme.surface.offset : undefined}
-                border={selected() && recipe()?.border !== "none" ? ["left"] : undefined}
-                borderColor={selected() ? (sessionStyle()?.borderColor ?? theme.accent.fg) : undefined}
+                backgroundColor={selected() ? style().colors.activeBackground : undefined}
+                border={selected() && bordered() ? ["left"] : undefined}
+                borderColor={selected() ? style().colors.activeBorder : undefined}
                 customBorderChars={selected() ? SplitBorder.customBorderChars : undefined}
               >
                 <text fg={marker().color} wrapMode="none">
@@ -238,8 +237,8 @@ export function SessionTabs() {
             width={6}
             height={contentHeight()}
             flexShrink={0}
-            paddingTop={tabPadding()}
-            paddingBottom={tabPadding()}
+            paddingTop={style().box.paddingTop}
+            paddingBottom={style().box.paddingBottom}
             flexDirection="column"
           >
             <text fg={theme.foreground.muted} attributes={TextAttributes.DIM} wrapMode="none">

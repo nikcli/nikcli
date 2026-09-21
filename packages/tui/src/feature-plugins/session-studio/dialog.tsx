@@ -6,13 +6,18 @@ import { useDialog } from "../../ui/dialog"
 import {
   DEFAULT_SESSION_STYLE,
   readSessionStyle,
-  resolveSessionStyle,
+  recipeToPatches,
   writeSessionStyle,
   type SessionStyleKV,
   type SessionStyleRecipe,
   type SessionStyleScope,
-  type SessionStyleTheme,
-} from "./settings"
+} from "../../context/session-style"
+import type { ComponentPatchMap, ResolvedComponents } from "../../context/component-tokens"
+import { borderCharsFor } from "../../component/border"
+import type { Theme } from "../../context/theme"
+
+/** The slice of the theme the dialog's own chrome paints with. */
+export type SessionStyleTheme = Pick<Theme, "surface" | "foreground" | "accent" | "border" | "status">
 
 const fields = [
   { key: "density", label: "Density", options: ["regular", "compact"] },
@@ -31,15 +36,25 @@ const fields = [
 
 export function SessionStudioDialog(props: { sessionID?: string }) {
   const kv = useKV()
-  const { theme } = useTheme()
+  const { theme, previewComponents } = useTheme()
   const dialog = useDialog()
   onMount(() => dialog.setSize("full"))
-  return <SessionStudioEditor kv={kv} theme={theme} sessionID={props.sessionID} onClose={() => dialog.clear()} />
+  return (
+    <SessionStudioEditor
+      kv={kv}
+      theme={theme}
+      preview={previewComponents}
+      sessionID={props.sessionID}
+      onClose={() => dialog.clear()}
+    />
+  )
 }
 
 export function SessionStudioEditor(props: {
   kv: SessionStyleKV & { readonly ready: boolean }
   theme: SessionStyleTheme
+  /** Resolves the catalog with the draft layered on, through the live pipeline. */
+  preview: (patches: ComponentPatchMap) => ResolvedComponents
   sessionID?: string
   onClose: () => void
 }) {
@@ -49,7 +64,17 @@ export function SessionStudioEditor(props: {
   const [selected, setSelected] = createSignal(0)
   const [inherit, setInherit] = createSignal(false)
   const [error, setError] = createSignal("")
-  const style = createMemo(() => resolveSessionStyle(props.theme, draft()))
+  /**
+   * The sample is rendered from the same resolution the session would get, not
+   * from a preview-only translation of the draft. A separate one would be a
+   * second implementation of the recipe and would disagree with the real thing
+   * exactly when it mattered — the first time a theme overrode one of these
+   * fields itself.
+   */
+  const styles = createMemo(() => props.preview(recipeToPatches(draft())).styles)
+  const user = createMemo(() => styles()["session.user-message"])
+  const assistant = createMemo(() => styles()["session.text-part"])
+  const prompt = createMemo(() => styles()["session.prompt"])
   const [initialized, setInitialized] = createSignal(kv.ready)
   createEffect(() => {
     if (initialized() || !kv.ready) return
@@ -175,36 +200,37 @@ export function SessionStudioEditor(props: {
               <text fg={props.theme.accent.fg}>
                 <b>Sample preview / current theme</b>
               </text>
-              <box backgroundColor={props.theme.surface.base} padding={1} gap={style().messageGap}>
+              <box backgroundColor={props.theme.surface.base} padding={1} gap={user().box.marginTop}>
                 <box
-                  backgroundColor={style().user.backgroundColor}
-                  border={style().user.border ? ["left"] : false}
-                  borderColor={style().borderColor}
-                  paddingLeft={style().user.paddingX}
-                  paddingRight={style().user.paddingX}
-                  paddingTop={style().user.paddingY}
-                  paddingBottom={style().user.paddingY}
+                  backgroundColor={user().colors.background}
+                  border={user().box.borderSides}
+                  customBorderChars={borderCharsFor(user().box.borderCharset)}
+                  // The real message paints this edge with the agent's color,
+                  // which a static sample has no agent to ask for. The accent
+                  // stands in for it; everything else here is the real value.
+                  borderColor={props.theme.accent.fg}
+                  paddingLeft={user().box.paddingLeft}
+                  paddingRight={user().box.paddingRight}
+                  paddingTop={user().box.paddingTop}
+                  paddingBottom={user().box.paddingBottom}
                 >
-                  <text fg={style().user.foreground}>You: Make this session easier to read.</text>
+                  <text fg={user().colors.text}>You: Make this session easier to read.</text>
                 </box>
-                <box
-                  paddingLeft={style().assistant.paddingX}
-                  paddingTop={style().assistant.paddingY}
-                  paddingBottom={style().assistant.paddingY}
-                >
-                  <text fg={style().assistant.foreground}>Assistant: Spacing and surfaces follow your theme.</text>
+                <box paddingLeft={assistant().box.paddingLeft} marginTop={assistant().box.marginTop}>
+                  <text fg={assistant().colors.text}>Assistant: Spacing and surfaces follow your theme.</text>
                   <text fg={props.theme.status.success.fg}>Sample tool result: 3 checks passed</text>
                 </box>
                 <box
-                  backgroundColor={style().prompt.backgroundColor}
-                  border={style().prompt.border ? ["left"] : false}
-                  borderColor={style().borderColor}
-                  paddingLeft={style().prompt.paddingX}
-                  paddingRight={style().prompt.paddingX}
-                  paddingTop={style().prompt.paddingY}
-                  paddingBottom={style().prompt.paddingY}
+                  backgroundColor={prompt().colors.background}
+                  border={prompt().box.borderSides}
+                  customBorderChars={borderCharsFor(prompt().box.borderCharset)}
+                  borderColor={props.theme.accent.fg}
+                  paddingLeft={prompt().box.paddingLeft}
+                  paddingRight={prompt().box.paddingRight}
+                  paddingTop={prompt().box.paddingTop}
+                  paddingBottom={prompt().box.paddingBottom}
                 >
-                  <text fg={style().prompt.foreground}>Ask a follow-up...</text>
+                  <text fg={props.theme.foreground.default}>Ask a follow-up...</text>
                 </box>
               </box>
               <text fg={props.theme.foreground.muted}>

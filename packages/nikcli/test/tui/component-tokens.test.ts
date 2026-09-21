@@ -20,6 +20,8 @@ const PALETTE: Record<string, RGBA> = {
   markdownText: RGBA.fromInts(230, 230, 230),
   warning: RGBA.fromInts(217, 161, 74),
   primary: RGBA.fromInts(111, 163, 255),
+  borderSubtle: RGBA.fromInts(58, 58, 58),
+  accent: RGBA.fromInts(111, 163, 255),
 }
 
 function resolve(ref: string): RGBA {
@@ -37,6 +39,26 @@ describe("resolveComponents", () => {
   it("reproduces the values the components hardcoded, with no patches", () => {
     const { styles, warnings } = resolveComponents(resolve, [])
     expect(warnings).toEqual([])
+
+    // The prompt and the tab strip joined the catalog when the studio stopped
+    // styling them behind it, so their defaults are asserted here for the same
+    // reason the message's are: the entry has to reproduce what the component
+    // used to hardcode, or adopting the layer is a visible change.
+    const prompt = styles["session.prompt"]
+    expect(prompt.box.paddingLeft).toBe(2)
+    expect(prompt.box.paddingRight).toBe(2)
+    expect(prompt.box.paddingTop).toBe(1)
+    expect(prompt.box.paddingBottom).toBe(0)
+    expect(prompt.box.borderSides).toEqual(["left"])
+    expect(prompt.colors.background).toEqual(PALETTE.backgroundElement!)
+
+    const tabs = styles["session.tabs"]
+    expect(tabs.box.paddingTop).toBe(1)
+    expect(tabs.box.paddingBottom).toBe(1)
+    expect(tabs.box.borderSides).toEqual(["bottom"])
+    expect(tabs.colors.background).toEqual(PALETTE.backgroundPanel!)
+    expect(tabs.colors.border).toEqual(PALETTE.borderSubtle!)
+    expect(tabs.colors.activeBorder).toEqual(PALETTE.accent!)
 
     const message = styles["session.user-message"]
     expect(message.box.paddingTop).toBe(1)

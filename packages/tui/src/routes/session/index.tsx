@@ -96,11 +96,6 @@ import {
 } from "./view"
 import { chromeRows, type StyleOf } from "@tui/context/component-tokens"
 import { AssistantMessage, PendingUserMessage, UserMessage } from "./parts"
-import {
-  hasSessionStyle,
-  readSessionStyle,
-  resolveUserComponentStyle,
-} from "@tui/feature-plugins/session-studio/settings"
 import { formatInstructionDelta, visibleInstructionNotices } from "@nikcli-ai/util/instruction-delta"
 import { getScrollAcceleration, scrollChildIntoView } from "@tui/util/scroll"
 
@@ -117,12 +112,10 @@ export function Session() {
   const kv = useKV()
   const server = useServer()
   const { theme, component } = useTheme()
-  const userStyle = createMemo(() => {
-    const base = component("session.user-message")
-    return hasSessionStyle(kv, route.sessionID)
-      ? resolveUserComponentStyle(base, theme, readSessionStyle(kv, route.sessionID))
-      : base
-  })
+  // Already merged: the theme layers the studio preset for the session in view
+  // over the document and the user's `components.json`, so there is nothing to
+  // combine here and no second place a message's shape is decided.
+  const userStyle = createMemo(() => component("session.user-message"))
   const lang = useLanguage()
   const commandLabels = sessionCommandLabels(lang)
   const promptRef = usePromptRef()

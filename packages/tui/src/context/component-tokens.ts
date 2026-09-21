@@ -1,4 +1,4 @@
-import type { RGBA } from "@opentui/core"
+import { RGBA } from "@opentui/core"
 
 /**
  * Structural theming for the components the session renders.
@@ -9,11 +9,19 @@ import type { RGBA } from "@opentui/core"
  *
  * Two rules keep this from becoming a second, drifting style system:
  *
- * 1. **Colors are references, never literals.** A component color names a key
- *    in the active theme (or its `defs`), resolved by the theme's own resolver.
- *    It is a pointer into the palette, so it cannot fall out of sync with it.
- *    A raw `#rrggbb` is accepted because the theme grammar accepts one, but a
- *    theme that uses them is opting out of its own palette, not extending it.
+ * 1. **Colors are references, never literals.** A component color names either
+ *    a semantic token by its dotted path (`surface.panel`, `accent.bg`) or a
+ *    key in the active theme document (or its `defs`), resolved by the theme's
+ *    own resolver. Either way it is a pointer into the palette, so it cannot
+ *    fall out of sync with it. A raw `#rrggbb` is accepted because the theme
+ *    grammar accepts one, but a theme that uses them is opting out of its own
+ *    palette, not extending it.
+ *
+ *    Both forms exist because neither covers the palette alone. Most document
+ *    keys reach the screen unchanged (`backgroundPanel` *is* `surface.panel`),
+ *    but some semantic tokens are derived and have no key at all — `accent.bg`
+ *    is a tint of two document colors, so a patch that wants the accent fill
+ *    can only name it by path.
  * 2. **Structure is a closed whitelist.** Only the fields below, only within
  *    the stated bounds. Passing arbitrary renderable props through would make
  *    every layout bug a theme bug and freeze each component's internal box
@@ -143,6 +151,64 @@ export const COMPONENT_DEFAULTS = {
     colors: {
       icon: "warning",
       text: "textMuted",
+    },
+  },
+  /** `SyntheticPart`. */
+  "session.synthetic-part": {
+    box: box({ paddingLeft: 3, marginTop: 1 }),
+    colors: {
+      text: "textMuted",
+    },
+  },
+  /**
+   * `UnknownPart`. It has an entry for the same reason it exists at all: a row
+   * standing in for something the renderer does not understand should be able
+   * to look like one, rather than being the single row a theme cannot touch.
+   */
+  "session.unknown-part": {
+    box: box({ paddingLeft: 3, marginTop: 1 }),
+    colors: {
+      text: "textMuted",
+    },
+  },
+  /**
+   * The prompt's input box (`component/prompt`).
+   *
+   * `paddingBottom` is 0 where the other three are not: the footer row below the
+   * textarea supplies that gap itself, and padding here would double it.
+   */
+  "session.prompt": {
+    box: box({
+      paddingTop: 1,
+      paddingBottom: 0,
+      paddingLeft: 2,
+      paddingRight: 2,
+      borderSides: ["left"],
+      borderCharset: "split",
+    }),
+    colors: {
+      background: "backgroundElement",
+    },
+  },
+  /**
+   * The session tab strip (`component/session-tabs`).
+   *
+   * Vertical padding here sets the strip's height through {@link tabRows}; the
+   * strip has no `marginTop`, because it is the top of the screen.
+   */
+  "session.tabs": {
+    box: box({
+      paddingTop: 1,
+      paddingBottom: 1,
+      borderSides: ["bottom"],
+      borderCharset: "single",
+    }),
+    colors: {
+      background: "backgroundPanel",
+      border: "borderSubtle",
+      /** The left edge of the selected tab, which is an accent, not a border. */
+      activeBorder: "accent",
+      activeBackground: "backgroundElement",
     },
   },
 } as const satisfies Record<string, ComponentSpec>
@@ -333,6 +399,45 @@ export function resolveComponents(resolve: ColorResolver, patches: readonly Comp
  */
 export function chromeRows(style: Pick<BoxStyle, "paddingTop" | "paddingBottom" | "marginTop" | "marginBottom">) {
   return style.paddingTop + style.paddingBottom + style.marginTop + style.marginBottom
+}
+
+/**
+ * Rows the tab strip occupies, derived from its own style.
+ *
+ * One row of text plus its vertical padding, with the border counted separately
+ * by the caller. The floor is 2 rather than 1 because the strip's right-hand
+ * chrome stacks two one-row buttons (`+ new` and close-all): at a single row the
+ * second one is clipped by `overflow: hidden` and the user loses an action with
+ * no way to tell it was ever there.
+ */
+export function tabRows(style: Pick<BoxStyle, "paddingTop" | "paddingBottom">) {
+  return Math.max(2, 1 + style.paddingTop + style.paddingBottom)
+}
+
+/**
+ * The resolver component colors are resolved through.
+ *
+ * Tries the dotted semantic path first, then hands anything else to the theme
+ * document's own resolver. Ordering matters only in that a document key can
+ * never contain a dot, so the two namespaces cannot collide.
+ *
+ * `semantic` is the resolved theme, structurally: typing it as `Theme` would
+ * make this module import `theme.tsx`, which imports this one.
+ */
+export function createComponentResolver(semantic: object, document: ColorResolver): ColorResolver {
+  return (ref) => {
+    if (!ref.includes(".")) return document(ref)
+    let node: unknown = semantic
+    for (const key of ref.split(".")) {
+      if (typeof node !== "object" || node === null) return document(ref)
+      node = (node as Record<string, unknown>)[key]
+    }
+    if (node instanceof RGBA) return node
+    // Not a color, or not there at all. Falling through to the document
+    // resolver means the failure is reported in one place, with one message,
+    // whichever namespace the author meant.
+    return document(ref)
+  }
 }
 
 /** Reads a `components` section off an untrusted document. Shape only. */
