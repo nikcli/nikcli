@@ -17,7 +17,7 @@ import { TuiPluginRuntime } from "@tui/plugin"
 import { useLocal } from "@tui/context/local"
 import { useLanguage } from "@tui/context/language"
 import { useTheme } from "@tui/context/theme"
-import { borderCharsFor, EmptyBorder } from "@tui/component/border"
+import { borderCharsFor } from "@tui/component/border"
 import { useSDK } from "@tui/context/sdk"
 import { useRoute } from "@tui/context/route"
 import { useSync } from "@tui/context/sync"
@@ -2121,36 +2121,16 @@ export function Prompt(props: PromptProps) {
           </box>
         </box>
         {/*
-          The prompt's shadow: a half-block rule tinted with the input's own
-          background, so the box appears to sit above the transcript.
+          No shadow row here, deliberately.
 
-          It renders only when there is a background to cast it. The transparent
-          case used to draw a row of spaces instead, which is not a subtler
-          shadow — it is a blank row under the prompt that no theme asked for and
-          nothing can remove. A shadow with nothing to cast is no shadow, so the
-          row goes rather than emptying.
+          There used to be one: a `▀` rule tinted with the input's own
+          background, meant to read as the prompt casting a shadow over the
+          transcript. It is painted in the panel color, so on a theme with an
+          opaque prompt it is not a shadow at all — it is one more row of panel
+          below the footer, indistinguishable from an empty line the user cannot
+          get rid of. The effect only ever worked against a contrasting
+          background, and it cost a row on every theme.
         */}
-        <Show when={promptBackground().a !== 0}>
-          <box
-            height={1}
-            border={style().box.borderSides}
-            borderColor={highlight()}
-            customBorderChars={{
-              ...EmptyBorder,
-              vertical: "╹",
-            }}
-          >
-            <box
-              height={1}
-              border={["bottom"]}
-              borderColor={promptBackground()}
-              customBorderChars={{
-                ...EmptyBorder,
-                horizontal: "▀",
-              }}
-            />
-          </box>
-        </Show>
         <box flexDirection="row" justifyContent="space-between">
           <Show
             when={status().type !== "idle"}
