@@ -41,7 +41,36 @@ export function summaryLine(text: string): string {
   return ""
 }
 
-/** Whether a body is long enough that hiding it serves the reader. */
-export function worthCollapsing(text: string): boolean {
-  return text.split("\n").length > DISCLOSURE_THRESHOLD
+/**
+ * Rows a body will occupy, counting the wrap.
+ *
+ * Counting newlines was not the same question. A pasted blob with no line
+ * breaks at all is one "line" and thirty rows on screen, and it was the one
+ * shape the rule let through — the shape most worth collapsing. Same arithmetic
+ * as `estimateTurnHeight`: hard breaks, then width.
+ */
+export function bodyRows(text: string, columns: number): number {
+  const width = Math.max(1, Math.floor(columns) || 1)
+  let rows = 0
+  for (const line of text.split("\n")) rows += Math.max(1, Math.ceil(line.length / width))
+  return rows
+}
+
+/** Whether a body is tall enough that hiding it serves the reader. */
+export function worthCollapsing(text: string, columns: number): boolean {
+  return bodyRows(text, columns) > DISCLOSURE_THRESHOLD
+}
+
+/**
+ * Rows hidden behind the mark.
+ *
+ * Measured from the summary line rather than from the top, because leading
+ * blanks are not something the reader is being offered — machine-written bodies
+ * usually start with some.
+ */
+export function hiddenRows(text: string, columns: number): number {
+  const lines = text.split("\n")
+  const start = lines.findIndex((line) => line.trim().length > 0)
+  if (start < 0) return 0
+  return Math.max(0, bodyRows(lines.slice(start).join("\n"), columns) - 1)
 }

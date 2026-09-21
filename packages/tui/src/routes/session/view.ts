@@ -1,3 +1,5 @@
+import { bodyRows, worthCollapsing } from "../../component/disclosure"
+
 /**
  * Turn model for the session view — the seam between the renderer and the
  * conversation data.
@@ -317,17 +319,26 @@ export function estimateTurnHeight(
   const columns = Math.max(1, Math.floor(width) || 1)
   let rows = metrics.chromeRows
 
-  for (const entry of turn.body) {
+  for (const [index, entry] of turn.body.entries()) {
     const text = typeof entry.text === "string" ? entry.text : undefined
     if (text === undefined) {
       rows += metrics.entryRows
       continue
     }
+    // A user body tall enough to collapse renders as one row until somebody
+    // expands it, and collapsed is the default. Counting it whole would have
+    // the virtualizer reserve thirty rows for a wake message that draws one.
+    //
+    // `body[0]` and no further, because that is precisely what `UserMessage`
+    // draws: a user turn is one entry to it, and anything after the first is
+    // already counted here without being rendered at all.
+    if (turn.role === "user" && index === 0 && worthCollapsing(text, columns)) {
+      rows += 1
+      continue
+    }
     // Every hard line break is a row, and each line wraps by width. An empty
     // line still occupies one.
-    for (const line of text.split("\n")) {
-      rows += Math.max(1, Math.ceil(line.length / columns))
-    }
+    rows += bodyRows(text, columns)
   }
 
   return rows

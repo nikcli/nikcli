@@ -2,11 +2,12 @@ import type { StyleOf } from "@tui/context/component-tokens"
 import { use } from "../session-context"
 import { Locale } from "@nikcli-ai/util/locale"
 import { borderCharsFor } from "@tui/component/border"
-import { DISCLOSURE, summaryLine, worthCollapsing } from "@tui/component/disclosure"
+import { DISCLOSURE, hiddenRows, summaryLine, worthCollapsing } from "@tui/component/disclosure"
 import { TuiImageList } from "@tui/component/tui-image"
 import { useLocal } from "@tui/context/local"
 import { selectedForeground, useTheme } from "@tui/context/theme"
 import { For, Show, createMemo, createSignal } from "solid-js"
+import { useRenderer } from "@opentui/solid"
 import type { Turn } from "../view"
 
 export type FileAttachment = {
@@ -47,6 +48,7 @@ export function UserMessage(props: {
   // parent's memo, so wrapping it bought nothing and cost a reactive node on
   // every message in the transcript.
   const style = () => props.style
+  const renderer = useRenderer()
   const [hover, setHover] = createSignal(false)
   const [expanded, setExpanded] = createSignal(false)
   /**
@@ -58,9 +60,13 @@ export function UserMessage(props: {
    * about that message, though; it is about any body of that height, a pasted
    * file included.
    */
-  const collapsible = createMemo(() => worthCollapsing(text() ?? ""))
+  /** Columns the body actually wraps against, inside the message's own chrome. */
+  const bodyColumns = createMemo(() =>
+    Math.max(1, ctx.width - style().box.paddingLeft - style().box.paddingRight - style().box.borderSides.length),
+  )
+  const collapsible = createMemo(() => worthCollapsing(text() ?? "", bodyColumns()))
   const collapsed = createMemo(() => collapsible() && !expanded())
-  const hiddenLines = createMemo(() => (text() ?? "").split("\n").length - 1)
+  const hidden = createMemo(() => hiddenRows(text() ?? "", bodyColumns()))
   const queued = createMemo(() => props.pending && props.turn.messageID > props.pending)
   const color = createMemo(() => local.agent.color(props.turn.request?.agent ?? ""))
   const queuedFg = createMemo(() => selectedForeground(theme, color()))
@@ -117,29 +123,53 @@ export function UserMessage(props: {
                             to fold the message away would make the transcript
                             unreadable exactly when someone is trying to read
                             it. */}
-                        <text fg={style().colors.detail} onMouseDown={() => setExpanded(false)}>
+                        <text
+                          fg={style().colors.detail}
+                          onMouseUp={(event) => {
+                            if (renderer.getSelection()?.getSelectedText()) return
+                            event.stopPropagation()
+                            setExpanded(false)
+                          }}
+                        >
                           {DISCLOSURE.open} collapse
                         </text>
                       </Show>
                     </>
                   }
                 >
-                  <text fg={style().colors.text} wrapMode="none" onMouseDown={() => setExpanded(true)}>
-                    {summaryLine(value())}
-                    <span style={{ fg: style().colors.detail }}>
-                      {" "}
-                      {DISCLOSURE.closed} {hiddenLines()} more lines
-                    </span>
-                  </text>
+                  {/* Clipped, not wrapped: a summary line longer than the
+                      message is wide would otherwise make the collapsed form
+                      taller than the thing it is standing in for. */}
+                  <box overflow="hidden" flexShrink={0}>
+                    <text
+                      fg={style().colors.text}
+                      wrapMode="none"
+                      onMouseUp={(event) => {
+                        // Releasing here after a drag is a selection ending on
+                        // the summary line, not a request to unfold it.
+                        if (renderer.getSelection()?.getSelectedText()) return
+                        event.stopPropagation()
+                        setExpanded(true)
+                      }}
+                    >
+                      {summaryLine(value())}
+                      <span style={{ fg: style().colors.detail }}>
+                        {" "}
+                        {DISCLOSURE.closed} {hidden()} more rows
+                      </span>
+                    </text>
+                  </box>
                 </Show>
               )}
             </Show>
-            <TuiImageList
-              text={text() ?? ""}
-              urls={imagePreviewUrls()}
-              maxColumns={imagePreviewColumns()}
-              maxRows={imagePreviewRows()}
-            />
+            <Show when={!collapsed()}>
+              <TuiImageList
+                text={text() ?? ""}
+                urls={imagePreviewUrls()}
+                maxColumns={imagePreviewColumns()}
+                maxRows={imagePreviewRows()}
+              />
+            </Show>
             <Show when={files().length}>
               <box flexDirection="row" paddingBottom={metadataVisible() ? 1 : 0} paddingTop={1} gap={1} flexWrap="wrap">
                 <For each={files()}>

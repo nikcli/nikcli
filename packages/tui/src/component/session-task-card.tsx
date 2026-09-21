@@ -1,4 +1,5 @@
 import { createMemo, createSignal, Show, type JSX } from "solid-js"
+import { useRenderer } from "@opentui/solid"
 import type { RGBA } from "@opentui/core"
 import { TextAttributes } from "@opentui/core"
 import { EmptyBorder } from "@tui/component/border"
@@ -71,6 +72,7 @@ export function SessionTaskCard(props: {
   children?: JSX.Element
 }) {
   const { theme, component } = useTheme()
+  const renderer = useRenderer()
   const style = () => component("session.task-card")
   const [expanded, setExpanded] = createSignal(false)
   const chrome = createMemo(() => sessionTaskChrome(props.kind))
@@ -107,6 +109,10 @@ export function SessionTaskCard(props: {
       paddingLeft={props.kind === "subtask" ? 1 : 0}
       flexShrink={0}
       onMouseUp={() => {
+        // A drag that ends here was somebody selecting the description, not
+        // asking to leave the session. Every other clickable surface in the
+        // transcript checks this; the card navigates, so it needed it most.
+        if (renderer.getSelection()?.getSelectedText()) return
         if (props.onClick) return props.onClick()
         setExpanded((value) => !value)
       }}

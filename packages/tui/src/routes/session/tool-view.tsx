@@ -12,7 +12,19 @@
  */
 import { FooterHint, FooterHintGroup } from "@tui/ui/footer-hints"
 import { useScrollAcceleration } from "@tui/util/scroll"
-import { createEffect, createMemo, createSignal, For, Match, on, onCleanup, onMount, Show, Switch } from "solid-js"
+import {
+  createEffect,
+  createMemo,
+  createSignal,
+  For,
+  Index,
+  Match,
+  on,
+  onCleanup,
+  onMount,
+  Show,
+  Switch,
+} from "solid-js"
 import { Dynamic } from "solid-js/web"
 import path from "path"
 import { useRoute } from "@tui/context/route"
@@ -1718,7 +1730,12 @@ function Task(props: ToolProps<any>) {
             : undefined
         }
       >
-        <For each={visibleStatus()}>
+        {/* `Index`, not `For`: the memo builds new line objects on every run, and
+            `For` reconciles by reference — so a task that is actually running
+            tore down and rebuilt its whole status list on every tool call.
+            Keyed by position, the rows stay mounted and only their text
+            changes, which is what a short positional list wants. */}
+        <Index each={visibleStatus()}>
           {(line) => (
             // One row each, clipped rather than wrapped: a long progress summary
             // used to reflow the card to three rows and push the next tool call
@@ -1727,22 +1744,25 @@ function Task(props: ToolProps<any>) {
               wrapMode="none"
               style={{
                 fg:
-                  line.tone === "error"
+                  line().tone === "error"
                     ? theme.status.error.fg
-                    : line.tone === "strong"
+                    : line().tone === "strong"
                       ? theme.foreground.default
                       : theme.foreground.muted,
               }}
             >
-              └ {line.text}
+              └ {line().text}
             </text>
           )}
-        </For>
+        </Index>
         <Show when={hiddenStatus() > 0}>
           <text
             wrapMode="none"
             style={{ fg: theme.foreground.subtle }}
-            onMouseDown={(event) => {
+            // `onMouseUp`, matching the card's own handler: stopping a
+            // mousedown does nothing to the mouseup that follows it, so this
+            // mark used to expand the list and then navigate away from it.
+            onMouseUp={(event) => {
               event.stopPropagation()
               setStatusOpen((value) => !value)
             }}
