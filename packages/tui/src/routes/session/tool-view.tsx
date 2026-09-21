@@ -20,6 +20,7 @@ import { useSync } from "@tui/context/sync"
 import { useProject } from "@tui/context/project"
 import { SplitBorder } from "@tui/component/border"
 import { SessionTaskCard } from "@tui/component/session-task-card"
+import { DISCLOSURE } from "@tui/component/disclosure"
 import { Spinner } from "@tui/component/spinner"
 import { useTheme, selectedForeground, tint } from "@tui/context/theme"
 import { BoxRenderable, ScrollBoxRenderable, TextAttributes, RGBA } from "@opentui/core"
@@ -1657,10 +1658,11 @@ function Task(props: ToolProps<any>) {
       if (value) lines.push({ text: value, tone })
     }
 
-    const summaryCount = meta().summary?.length
-    if (summaryCount) push(`${summaryCount} toolcalls`)
-    push(modelOverride())
-    if (kind() === "research") push(question())
+    // Ordered by what a reader needs first, because the first is all they get
+    // until they ask for the rest. What went wrong, then what it is doing now,
+    // then what it has produced — and only after that the bookkeeping, which
+    // answers a question nobody has while the task is still running.
+    push(error(), "error")
 
     const running = current()
     if (running) {
@@ -1668,18 +1670,34 @@ function Task(props: ToolProps<any>) {
       push(`${Locale.titlecase(running.tool)} ${title}`.trim(), running.state.status === "error" ? "error" : undefined)
     }
 
-    push(displaySummary(), "strong")
     if (isBackground()) push(childStatusLabel() || "starting background task")
     else push(childStatusLabel())
 
+    push(displaySummary(), "strong")
     const progress = backgroundJob()?.progressSummary
     if (progress && progress !== displaySummary()) push(progress)
-    if (isBackground() && rootDelegationID()) push(`job ${rootDelegationID()}`)
+    if (kind() === "research") push(question())
+
+    push(modelOverride())
+    const summaryCount = meta().summary?.length
+    if (summaryCount) push(`${summaryCount} toolcalls`)
     if (isBackground() && meta().reused) push("reused existing background research")
-    push(error(), "error")
+    if (isBackground() && rootDelegationID()) push(`job ${rootDelegationID()}`)
 
     return lines
   })
+
+  /**
+   * The status list follows the same disclosure rule as everything else: the
+   * line that matters, and a mark for the rest.
+   *
+   * Its own state rather than the card's, because the card's click is already
+   * spoken for — it opens the run, which is the better answer and the reason
+   * `→` is there. Two different things to reveal, two places to click.
+   */
+  const [statusOpen, setStatusOpen] = createSignal(false)
+  const visibleStatus = createMemo(() => (statusOpen() ? statusLines() : statusLines().slice(0, 1)))
+  const hiddenStatus = createMemo(() => Math.max(0, statusLines().length - 1))
 
   return (
     <box paddingLeft={3} flexShrink={0}>
@@ -1700,7 +1718,7 @@ function Task(props: ToolProps<any>) {
             : undefined
         }
       >
-        <For each={statusLines()}>
+        <For each={visibleStatus()}>
           {(line) => (
             // One row each, clipped rather than wrapped: a long progress summary
             // used to reflow the card to three rows and push the next tool call
@@ -1720,6 +1738,19 @@ function Task(props: ToolProps<any>) {
             </text>
           )}
         </For>
+        <Show when={hiddenStatus() > 0}>
+          <text
+            wrapMode="none"
+            style={{ fg: theme.foreground.subtle }}
+            onMouseDown={(event) => {
+              event.stopPropagation()
+              setStatusOpen((value) => !value)
+            }}
+          >
+            {"  "}
+            {statusOpen() ? DISCLOSURE.open : DISCLOSURE.closed} {statusOpen() ? "less" : `${hiddenStatus()} more`}
+          </text>
+        </Show>
       </SessionTaskCard>
     </box>
   )
