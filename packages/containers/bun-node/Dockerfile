@@ -1,4 +1,4 @@
-ARG REGISTRY=ghcr.io/nikomatt69
+ARG REGISTRY=ghcr.io/nikcli
 FROM ${REGISTRY}/build/base:24.04
 
 SHELL ["/bin/bash", "-lc"]

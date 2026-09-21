@@ -6,7 +6,7 @@ ADE and `packages/voice` are developed on the fork
 the fork's own and add to the repository-wide `CONTRIBUTING.md`; agents also
 follow [`AGENTS.md`](./AGENTS.md).
 
-Nothing here goes to the upstream repository (`nikomatt69/nikcli`): no pushes,
+Nothing here goes to the upstream repository (`nikcli/nikcli`): no pushes,
 no pull requests, no issues about ADE there.
 
 ## Where the work happens

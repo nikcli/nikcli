@@ -15,8 +15,8 @@ Images
 Build
 
 ```
-REGISTRY=ghcr.io/nikomatt69 TAG=24.04 bun ./packages/containers/script/build.ts
-REGISTRY=ghcr.io/nikomatt69 TAG=24.04 bun ./packages/containers/script/build.ts --push
+REGISTRY=ghcr.io/nikcli TAG=24.04 bun ./packages/containers/script/build.ts
+REGISTRY=ghcr.io/nikcli TAG=24.04 bun ./packages/containers/script/build.ts --push
 ```
 
 Workflow usage
@@ -26,7 +26,7 @@ jobs:
   build-cli:
     runs-on: ubuntu-latest
     container:
-      image: ghcr.io/nikomatt69/build/bun-node:24.04
+      image: ghcr.io/nikcli/build/bun-node:24.04
 ```
 
 Notes

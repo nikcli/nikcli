@@ -110,7 +110,7 @@ if (!Script.preview) {
     }
   }
 
-  const image = "ghcr.io/nikomatt69/nikcli"
+  const image = "ghcr.io/nikcli/nikcli"
   const platforms = "linux/amd64,linux/arm64"
   const tags = [`${image}:${Script.version}`, `${image}:latest`]
   const tagFlags = tags.flatMap((t) => ["-t", t])

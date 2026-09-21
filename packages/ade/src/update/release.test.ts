@@ -56,7 +56,7 @@ describe("newerRelease", () => {
 describe("isReleasePage", () => {
   test("accepts only release pages on the fork", () => {
     expect(isReleasePage("https://github.com/SandroHub013/nikcli/releases/tag/ade-v1.0.0")).toBe(true)
-    expect(isReleasePage("https://github.com/nikomatt69/nikcli/releases/tag/ade-v1.0.0")).toBe(false)
+    expect(isReleasePage("https://github.com/nikcli/nikcli/releases/tag/ade-v1.0.0")).toBe(false)
     expect(isReleasePage("https://evil.example/SandroHub013/nikcli/releases/")).toBe(false)
   })
 })

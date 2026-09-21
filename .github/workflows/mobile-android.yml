@@ -76,7 +76,7 @@ permissions:
 
 jobs:
   build:
-    if: github.repository == 'nikomatt69/nikcli'
+    if: github.repository == 'nikcli/nikcli'
     runs-on: ubuntu-latest
     timeout-minutes: 60
     defaults:
@@ -276,4 +276,4 @@ jobs:
         run: |
           set -euo pipefail
           find "$STAGE" -maxdepth 1 -type f \
-            -exec gh release upload "${{ inputs.tag }}" --clobber --repo nikomatt69/nikcli {} +
+            -exec gh release upload "${{ inputs.tag }}" --clobber --repo nikcli/nikcli {} +

@@ -1,4 +1,4 @@
-ARG REGISTRY=ghcr.io/nikomatt69
+ARG REGISTRY=ghcr.io/nikcli
 FROM ${REGISTRY}/build/rust:24.04
 
 ARG DEBIAN_FRONTEND=noninteractive

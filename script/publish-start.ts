@@ -77,7 +77,7 @@ if (!Script.preview) {
   // GITHUB_TOKEN env var from the workflow resolves to the GitHub App token value,
   // so we must use a separate env var name (GH_PUSH_TOKEN) to avoid the conflict.
   const pushToken = process.env.GH_PUSH_TOKEN || process.env.GITHUB_TOKEN || process.env.SST_GITHUB_TOKEN
-  await $`git remote set-url origin https://x-access-token:${pushToken}@github.com/nikomatt69/nikcli`
+  await $`git remote set-url origin https://x-access-token:${pushToken}@github.com/nikcli/nikcli`
   // Drop any unintended modifications to workflow/action YAML — GitHub blocks
   // GITHUB_TOKEN from pushing changes under .github/workflows/* by design.
   // If prettier/format steps touched them, restore from index to keep the release push clean.

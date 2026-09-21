@@ -68,7 +68,7 @@ jobs:
   draft:
     if: >-
       github.repository == 'SandroHub013/nikcli' ||
-      (github.repository == 'nikomatt69/nikcli' && inputs.attach_only)
+      (github.repository == 'nikcli/nikcli' && inputs.attach_only)
     runs-on: ubuntu-latest
     outputs:
       version: ${{ steps.version.outputs.version }}

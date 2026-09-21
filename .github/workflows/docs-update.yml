@@ -14,7 +14,7 @@ env:
 
 jobs:
   update-docs:
-    if: github.repository == 'nikomatt69/nikcli'
+    if: github.repository == 'nikcli/nikcli'
     runs-on: ubuntu-latest
     continue-on-error: true
     timeout-minutes: 20

@@ -89,7 +89,7 @@ permissions:
 
 jobs:
   build:
-    if: github.repository == 'nikomatt69/nikcli'
+    if: github.repository == 'nikcli/nikcli'
     runs-on: macos-15
     timeout-minutes: 90
     defaults:
@@ -296,7 +296,7 @@ jobs:
             echo "- **TrollStore / jailbroken device**: install the .ipa directly, no refresh needed."
             echo "- **Mac**: unzip the simulator build and run \`xcrun simctl install booted nikcli.app\`."
             echo
-            echo "\`packages/mobile/scripts/sideload.sh\` automates the download and verification; see [packages/mobile/README.md](https://github.com/nikomatt69/nikcli/blob/live-main/packages/mobile/README.md)."
+            echo "\`packages/mobile/scripts/sideload.sh\` automates the download and verification; see [packages/mobile/README.md](https://github.com/nikcli/nikcli/blob/live-main/packages/mobile/README.md)."
             if [ "$STRIP_EXTENSIONS" = "true" ]; then
               echo
               echo "Widgets and live activities are **not** included: they need the \`group.ai.nikcli.mobile\` App Group, which Apple does not grant to free Apple IDs."
@@ -320,4 +320,4 @@ jobs:
         run: |
           set -euo pipefail
           find "$STAGE" -maxdepth 1 -type f \
-            -exec gh release upload "${{ inputs.tag }}" --clobber --repo nikomatt69/nikcli {} +
+            -exec gh release upload "${{ inputs.tag }}" --clobber --repo nikcli/nikcli {} +

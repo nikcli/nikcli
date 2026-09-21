@@ -13,7 +13,7 @@ $ProgressPreference = "SilentlyContinue"
 
 $App = "nikcli"
 $AssetPrefix = "nikcli-ai"
-$Repo = "nikomatt69/nikcli"
+$Repo = "nikcli/nikcli"
 
 # Windows PowerShell 5.1 still defaults to TLS 1.0, which GitHub refuses.
 try {

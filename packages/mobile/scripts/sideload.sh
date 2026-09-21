@@ -23,7 +23,7 @@
 
 set -euo pipefail
 
-REPO="nikomatt69/nikcli"
+REPO="nikcli/nikcli"
 MODE="device"
 TAG=""
 KEEP_DIR=""

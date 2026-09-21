@@ -210,7 +210,7 @@ describe("ci-autofix.ts", () => {
       const result = await runScript(path.join(scriptsDir, "ci-autofix.ts"), [], {
         GITHUB_ACTOR: "github-actions[bot]",
         GITHUB_EVENT_NAME: "push",
-        GITHUB_REPOSITORY: "nikomatt69/nikcli",
+        GITHUB_REPOSITORY: "nikcli/nikcli",
         MINIMAX_API_KEY: "sk-test",
         GITHUB_SHA: "abc123",
         GITHUB_REF: "refs/heads/live-main",
@@ -227,7 +227,7 @@ describe("ci-autofix.ts", () => {
       const result = await runScript(path.join(scriptsDir, "ci-autofix.ts"), [], {
         GITHUB_ACTOR: "nikomatt69",
         GITHUB_EVENT_NAME: "push",
-        GITHUB_REPOSITORY: "nikomatt69/nikcli",
+        GITHUB_REPOSITORY: "nikcli/nikcli",
         MINIMAX_API_KEY: "sk-test",
         GITHUB_SHA: "abc123",
         GITHUB_REF: "refs/heads/live-main",
@@ -244,7 +244,7 @@ describe("ci-autofix.ts", () => {
       const result = await runScript(path.join(scriptsDir, "ci-autofix.ts"), [], {
         GITHUB_ACTOR: "nikomatt69",
         GITHUB_EVENT_NAME: "push",
-        GITHUB_REPOSITORY: "nikomatt69/nikcli",
+        GITHUB_REPOSITORY: "nikcli/nikcli",
         MINIMAX_API_KEY: "sk-test",
         GITHUB_SHA: "abc123",
         GITHUB_REF: "refs/heads/live-main",
@@ -261,7 +261,7 @@ describe("ci-autofix.ts", () => {
       const result = await runScript(path.join(scriptsDir, "ci-autofix.ts"), [], {
         GITHUB_ACTOR: "nikomatt69",
         GITHUB_EVENT_NAME: "push",
-        GITHUB_REPOSITORY: "nikomatt69/nikcli",
+        GITHUB_REPOSITORY: "nikcli/nikcli",
         MINIMAX_API_KEY: "sk-test",
         GITHUB_SHA: "abc123",
         GITHUB_REF: "refs/heads/live-main",
@@ -278,7 +278,7 @@ describe("ci-autofix.ts", () => {
       const result = await runScript(path.join(scriptsDir, "ci-autofix.ts"), [], {
         GITHUB_ACTOR: "nikomatt69",
         GITHUB_EVENT_NAME: "push",
-        GITHUB_REPOSITORY: "nikomatt69/nikcli",
+        GITHUB_REPOSITORY: "nikcli/nikcli",
         MINIMAX_API_KEY: "sk-test",
         GITHUB_SHA: "abc123",
         GITHUB_REF: "refs/heads/live-main",
@@ -295,7 +295,7 @@ describe("ci-autofix.ts", () => {
       const result = await runScript(path.join(scriptsDir, "ci-autofix.ts"), [], {
         GITHUB_ACTOR: "nikomatt69",
         GITHUB_EVENT_NAME: "push",
-        GITHUB_REPOSITORY: "nikomatt69/nikcli",
+        GITHUB_REPOSITORY: "nikcli/nikcli",
         GITHUB_SHA: "abc123",
         GITHUB_REF: "refs/heads/live-main",
         GITHUB_REF_NAME: "live-main",
@@ -387,7 +387,7 @@ describe("ci-report-failure.ts", () => {
   describe("execution - fails gracefully without GITHUB_TOKEN", () => {
     it("exits with code 1 when GITHUB_TOKEN is not set", async () => {
       const result = await runScript(path.join(scriptsDir, "ci-report-failure.ts"), [], {
-        GITHUB_REPOSITORY: "nikomatt69/nikcli",
+        GITHUB_REPOSITORY: "nikcli/nikcli",
         GITHUB_RUN_ID: "12345",
         GITHUB_EVENT_NAME: "push",
         GITHUB_SHA: "abc123",
@@ -433,7 +433,7 @@ describe("workflow YAML integration", () => {
     const content = await readRoot(".github/workflows/ci-pipeline.yml")
     expect(content).toContain("needs.validate.result == 'success'")
     expect(content).toContain("refs/heads/live-main")
-    expect(content).toContain("nikomatt69/nikcli")
+    expect(content).toContain("nikcli/nikcli")
   })
 
   it("autofix only runs on validation failure with trusted event source", async () => {

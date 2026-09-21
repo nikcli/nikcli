@@ -1,4 +1,4 @@
-ARG REGISTRY=ghcr.io/nikomatt69
+ARG REGISTRY=ghcr.io/nikcli
 FROM ${REGISTRY}/build/bun-node:24.04
 
 ARG RUST_TOOLCHAIN=stable

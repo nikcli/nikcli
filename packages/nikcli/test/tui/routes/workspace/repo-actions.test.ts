@@ -4,9 +4,9 @@ import type { RepoStatus } from "@tui/routes/workspace/repo-status"
 
 const CLEAN: RepoStatus = {
   directory: "/tmp/repo",
-  name: "nikomatt69/nikcli",
-  slug: "nikomatt69/nikcli",
-  remoteUrl: "git@github.com:nikomatt69/nikcli.git",
+  name: "nikcli/nikcli",
+  slug: "nikcli/nikcli",
+  remoteUrl: "git@github.com:nikcli/nikcli.git",
   branch: "live-main",
   detached: false,
   upstream: "origin/live-main",

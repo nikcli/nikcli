@@ -103,7 +103,7 @@
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/nikomatt69/nikcli"
+    "url": "https://github.com/nikcli/nikcli"
   },
   "license": "MIT",
   "prettier": {
