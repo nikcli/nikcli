@@ -49,6 +49,7 @@ describe("resolveComponents", () => {
     expect(prompt.box.paddingRight).toBe(2)
     expect(prompt.box.paddingTop).toBe(1)
     expect(prompt.box.paddingBottom).toBe(0)
+    expect(prompt.box.gap).toBe(1)
     expect(prompt.box.borderSides).toEqual(["left"])
     expect(prompt.colors.background).toEqual(PALETTE.backgroundElement!)
 

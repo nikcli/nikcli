@@ -66,7 +66,7 @@ export function UserMessage(props: {
       <Show when={text() || files().length > 0}>
         <box
           id={props.turn.messageID}
-          border={style().box.borderSides}
+          border={[...style().box.borderSides]}
           borderColor={color()}
           customBorderChars={borderCharsFor(style().box.borderCharset)}
           // The first turn keeps its margin collapsed whatever the theme says:

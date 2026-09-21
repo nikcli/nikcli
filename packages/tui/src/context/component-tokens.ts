@@ -67,10 +67,16 @@ export type BoxStyle = {
   readonly marginBottom: number
   readonly gap: number
   /**
-   * Mutable by necessity: the renderable's `border` prop takes a mutable array,
-   * and spreading a readonly one at the call site would hand the renderable a
-   * fresh identity on every render. Built once per resolution, then treated as
-   * frozen by everything downstream.
+   * Mutable because the renderable's `border` prop takes a mutable array. Built
+   * once per resolution and treated as frozen here.
+   *
+   * Call sites copy it. One array per resolution means one array shared by every
+   * renderable reading that entry — every user message in the transcript holds
+   * the same instance — and `Box` keeps the reference it is handed. Before this
+   * layer each of those was its own literal, so copying is what keeps the
+   * renderables independent the way they already were. The copy is made inside
+   * a JSX attribute effect, which re-runs only when the style changes, not per
+   * frame.
    */
   readonly borderSides: BorderSide[]
   readonly borderCharset: BorderCharset
@@ -196,6 +202,11 @@ export const COMPONENT_DEFAULTS = {
       paddingBottom: 0,
       paddingLeft: 2,
       paddingRight: 2,
+      // The space between the input and the agent/model footer. Its own field,
+      // because the footer borrowing `paddingTop` tied two separate decisions
+      // together: they happen to both be 1, so nothing looked wrong, and a
+      // theme touching the box's top pad would have moved the footer with it.
+      gap: 1,
       borderSides: ["left"],
       borderCharset: "split",
     }),

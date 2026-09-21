@@ -55,7 +55,7 @@ export function ReasoningPart(props: { last: boolean; streaming: boolean; entry:
         paddingLeft={style().box.paddingLeft}
         marginTop={style().box.marginTop}
         flexDirection="column"
-        border={style().box.borderSides}
+        border={[...style().box.borderSides]}
         customBorderChars={borderCharsFor(style().box.borderCharset)}
         borderColor={style().colors.border}
       >

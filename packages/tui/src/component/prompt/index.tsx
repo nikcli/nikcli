@@ -1847,7 +1847,7 @@ export function Prompt(props: PromptProps) {
       />
       <box ref={(r) => (anchor = r)} visible={props.visible !== false}>
         <box
-          border={style().box.borderSides}
+          border={[...style().box.borderSides]}
           borderColor={highlight()}
           customBorderChars={{
             // A complete table is required here because this box overrides one
@@ -1861,7 +1861,11 @@ export function Prompt(props: PromptProps) {
             paddingLeft={style().box.paddingLeft}
             paddingRight={style().box.paddingRight}
             paddingTop={style().box.paddingTop}
-            paddingBottom={style().box.paddingBottom}
+            // Emitted only when the theme asks for one. At 1.380 this prop was
+            // absent, and "absent" and "zero" are the same to the layout engine
+            // only as long as nothing else sets the edge — not a difference
+            // worth betting the prompt's spacing on.
+            paddingBottom={style().box.paddingBottom || undefined}
             flexShrink={0}
             backgroundColor={promptBackground()}
             flexGrow={1}
@@ -2082,7 +2086,7 @@ export function Prompt(props: PromptProps) {
               cursorColor={theme.foreground.default}
               syntaxStyle={syntax()}
             />
-            <box flexDirection="row" flexShrink={0} paddingTop={style().box.paddingTop} gap={1}>
+            <box flexDirection="row" flexShrink={0} paddingTop={style().box.gap} gap={1}>
               <Show when={kv.get("show_agent", true)}>
                 <text fg={highlight()}>
                   {store.mode === "shell" ? lang.t("prompt.shell") : Locale.titlecase(local.agent.current().name)}{" "}
@@ -2133,7 +2137,10 @@ export function Prompt(props: PromptProps) {
         <Show when={shadow().box.borderSides.length > 0}>
           <box
             height={1}
-            border={style().box.borderSides}
+            // Its own array, not the prompt box's. Sharing one instance between
+            // two renderables is a different thing from reusing it across
+            // renders, and the renderable keeps the reference it is given.
+            border={["left"]}
             borderColor={highlight()}
             customBorderChars={{
               ...EmptyBorder,
@@ -2142,7 +2149,7 @@ export function Prompt(props: PromptProps) {
           >
             <box
               height={1}
-              border={shadow().box.borderSides}
+              border={[...shadow().box.borderSides]}
               borderColor={shadow().colors.fill}
               customBorderChars={{
                 ...EmptyBorder,

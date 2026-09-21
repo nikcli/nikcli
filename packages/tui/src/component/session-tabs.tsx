@@ -127,7 +127,7 @@ export function SessionTabs() {
       flexDirection="row"
       alignItems="center"
       backgroundColor={style().colors.background}
-      border={style().box.borderSides}
+      border={[...style().box.borderSides]}
       customBorderChars={borderCharsFor(style().box.borderCharset)}
       borderColor={style().colors.border}
       overflow="hidden"
