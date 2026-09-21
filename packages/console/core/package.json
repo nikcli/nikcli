@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@nikcli-ai/console-core",
-  "version": "1.381.0",
+  "version": "1.383.0",
   "private": true,
   "type": "module",
   "license": "MIT",

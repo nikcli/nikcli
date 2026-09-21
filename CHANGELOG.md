@@ -3,6 +3,37 @@
 <!-- UNRELEASED:START -->
 <!-- UNRELEASED:END -->
 
+## v1.383.0 (September 2026)
+
+## Core
+
+- Hold every component to the rules, and enforce them (@nikomatt69)
+- Measure the transcript against a real renderer, and correct a claim (@nikomatt69)
+- Three flows that were technically right and logically wrong (@nikomatt69)
+- Nine defects the deep review found, four of them mine from today (@nikomatt69)
+- One disclosure grammar for every session surface (@nikomatt69)
+- One row and one signal for a delegated run (@nikomatt69)
+- Tighten the surfaces the 1.380 work introduced (@nikomatt69)
+- Component colors resolve off the theme, not through its defs (@nikomatt69)
+- Close the last three deltas from 1.380 in the prompt (@nikomatt69)
+- Make the component catalog the no-op it claimed to be (@nikomatt69)
+
+**Thank you to 1 community contributor:**
+
+- @nikomatt69:
+  - perf(tui): stop the component catalog depending on the route
+  - fix(tui): make the component catalog the no-op it claimed to be
+  - fix(tui): close the last three deltas from 1.380 in the prompt
+  - fix(tui): component colors resolve off the theme, not through its defs
+  - refactor(tui): tighten the surfaces the 1.380 work introduced
+  - feat(tui): one row and one signal for a delegated run
+  - feat(tui): one disclosure grammar for every session surface
+  - refactor(tui): the task's status list follows the disclosure rule too
+  - fix(tui): nine defects the deep review found, four of them mine from today
+  - fix(tui): three flows that were technically right and logically wrong
+  - test(tui): measure the transcript against a real renderer, and correct a claim
+  - fix(tui): hold every component to the rules, and enforce them
+
 ## v1.381.0 (September 2026)
 
 ## Core

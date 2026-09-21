@@ -1,8 +1,8 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
-  "version": "1.381.0",
+  "version": "1.383.0",
   "name": "nikcli-ai",
-  "description": "AI coding agent with TUI, server, connectors and mobile companion \u2014 a fork of OpenCode (https://github.com/anomalyco/opencode)",
+  "description": "AI coding agent with TUI, server, connectors and mobile companion — a fork of OpenCode (https://github.com/anomalyco/opencode)",
   "type": "module",
   "license": "MIT",
   "private": false,
