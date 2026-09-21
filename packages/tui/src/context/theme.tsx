@@ -20,7 +20,7 @@ import {
   type ResolvedComponents,
   type StyleOf,
 } from "./component-tokens"
-import { hasSessionStyle, readSessionStyle, recipeToPatches, type SessionStyleRecipe } from "./session-style"
+import { patchesForKey, sessionStyleKey } from "./session-style"
 import { useRoute } from "./route"
 import { useKV } from "./kv"
 import { useRenderer } from "@opentui/solid"
@@ -446,16 +446,11 @@ export const {
      * string before and after a navigation, so this memo does not notify and
      * the catalog is never rebuilt.
      */
-    const presetKey = createMemo(() => {
-      const sessionID = "sessionID" in route.data ? route.data.sessionID : undefined
-      if (!hasSessionStyle(kv, sessionID)) return ""
-      return JSON.stringify(readSessionStyle(kv, sessionID))
-    })
+    const presetKey = createMemo(() =>
+      sessionStyleKey(kv, "sessionID" in route.data ? route.data.sessionID : undefined),
+    )
 
-    const preset = createMemo<ComponentPatchMap | undefined>(() => {
-      const key = presetKey()
-      return key ? recipeToPatches(JSON.parse(key) as SessionStyleRecipe) : undefined
-    })
+    const preset = createMemo<ComponentPatchMap | undefined>(() => patchesForKey(presetKey()))
 
     const components = createMemo<ResolvedComponents>(() => resolve([]))
 

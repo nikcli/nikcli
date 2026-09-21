@@ -17,11 +17,19 @@ import { RGBA } from "@opentui/core"
  *    grammar accepts one, but a theme that uses them is opting out of its own
  *    palette, not extending it.
  *
- *    Both forms exist because neither covers the palette alone. Most document
- *    keys reach the screen unchanged (`backgroundPanel` *is* `surface.panel`),
- *    but some semantic tokens are derived and have no key at all — `accent.bg`
- *    is a tint of two document colors, so a patch that wants the accent fill
- *    can only name it by path.
+ *    Both forms exist, and the catalog's own defaults use the path form
+ *    exclusively. A flat key is resolved by the theme document's grammar, which
+ *    consults `defs` *before* the theme's own colors — and several built-in
+ *    themes define a `def` sharing a name with a theme key. `monokai` declares
+ *    `backgroundPanel` in both places with different values, so the default
+ *    `"backgroundPanel"` painted the user message with the wrong one on seven
+ *    built-in themes. A semantic path reads the resolved theme directly and
+ *    cannot be shadowed.
+ *
+ *    Some semantic tokens are derived and have no key at all — `accent.bg` is a
+ *    tint of two document colors — so the path form is also the only way to
+ *    name those. The flat form stays for theme authors patching with the
+ *    vocabulary their document already speaks.
  * 2. **Structure is a closed whitelist.** Only the fields below, only within
  *    the stated bounds. Passing arbitrary renderable props through would make
  *    every layout bug a theme bug and freeze each component's internal box
@@ -136,9 +144,9 @@ export const COMPONENT_DEFAULTS = {
       borderCharset: "split",
     }),
     colors: {
-      background: "backgroundPanel",
-      backgroundHover: "backgroundElement",
-      text: "text",
+      background: "surface.panel",
+      backgroundHover: "surface.offset",
+      text: "foreground.default",
     },
   },
   /**
@@ -149,7 +157,7 @@ export const COMPONENT_DEFAULTS = {
   "session.text-part": {
     box: box({ paddingLeft: 3, marginTop: 1 }),
     colors: {
-      text: "text",
+      text: "foreground.default",
     },
   },
   /**
@@ -160,23 +168,23 @@ export const COMPONENT_DEFAULTS = {
   "session.reasoning-part": {
     box: box({ paddingLeft: 2, marginTop: 1, borderSides: ["left"], borderCharset: "split" }),
     colors: {
-      heading: "warning",
-      border: "backgroundElement",
+      heading: "status.warning.fg",
+      border: "surface.offset",
     },
   },
   /** `RetryPart`. */
   "session.retry-part": {
     box: box({ paddingLeft: 3, marginTop: 1 }),
     colors: {
-      icon: "warning",
-      text: "textMuted",
+      icon: "status.warning.fg",
+      text: "foreground.muted",
     },
   },
   /** `SyntheticPart`. */
   "session.synthetic-part": {
     box: box({ paddingLeft: 3, marginTop: 1 }),
     colors: {
-      text: "textMuted",
+      text: "foreground.muted",
     },
   },
   /**
@@ -187,7 +195,7 @@ export const COMPONENT_DEFAULTS = {
   "session.unknown-part": {
     box: box({ paddingLeft: 3, marginTop: 1 }),
     colors: {
-      text: "textMuted",
+      text: "foreground.muted",
     },
   },
   /**
@@ -211,7 +219,7 @@ export const COMPONENT_DEFAULTS = {
       borderCharset: "split",
     }),
     colors: {
-      background: "backgroundElement",
+      background: "surface.offset",
     },
   },
   /**
@@ -226,7 +234,7 @@ export const COMPONENT_DEFAULTS = {
   "session.prompt-shadow": {
     box: box({ borderSides: ["bottom"], borderCharset: "none" }),
     colors: {
-      fill: "backgroundElement",
+      fill: "surface.offset",
     },
   },
   /**
@@ -245,8 +253,8 @@ export const COMPONENT_DEFAULTS = {
       borderCharset: "default",
     }),
     colors: {
-      background: "backgroundPanel",
-      border: "borderSubtle",
+      background: "surface.panel",
+      border: "border.subtle",
       /**
        * The left edge of the selected tab.
        *
@@ -256,8 +264,8 @@ export const COMPONENT_DEFAULTS = {
        * resolves to — so naming it here would have silently recolored the
        * selected tab on every theme.
        */
-      activeBorder: "primary",
-      activeBackground: "backgroundElement",
+      activeBorder: "accent.fg",
+      activeBackground: "surface.offset",
     },
   },
 } as const satisfies Record<string, ComponentSpec>

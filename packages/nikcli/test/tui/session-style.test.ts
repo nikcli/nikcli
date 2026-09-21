@@ -13,7 +13,9 @@ import {
   hasSessionStyle,
   normalizeSessionStyle,
   readSessionStyle,
+  patchesForKey,
   recipeToPatches,
+  sessionStyleKey,
   sessionStylePatches,
   writeSessionStyle,
   type SessionStyleKV,
@@ -51,8 +53,10 @@ const PALETTE: Record<string, RGBA> = {
 /** The derived tokens a recipe reaches by path. */
 const SEMANTIC = {
   surface: { base: rgb(7, 7, 7), panel: rgb(18, 18, 18), offset: rgb(36, 36, 36) },
+  foreground: { default: rgb(230, 230, 230), muted: rgb(154, 154, 154) },
   accent: { fg: rgb(111, 163, 255), bg: rgb(40, 60, 90), border: rgb(90, 140, 220) },
   border: { subtle: rgb(58, 58, 58), active: rgb(111, 163, 255) },
+  status: { warning: { fg: rgb(217, 161, 74) } },
 }
 
 const resolver = createComponentResolver(SEMANTIC, (ref) => {
@@ -207,5 +211,60 @@ describe("component color references", () => {
   it("hands an unknown path to the document resolver, so one typo reports once", () => {
     expect(() => resolver("accent.invented")).toThrow("unknown accent.invented")
     expect(() => resolver("surface.nope.deeper")).toThrow("unknown surface.nope.deeper")
+  })
+})
+
+/**
+ * The regression this file exists to prevent, pinned as a property.
+ *
+ * 1.380 keyed the theme's preset layer on the session id, which put the whole
+ * component catalog downstream of the route: every navigation rebuilt it, and
+ * since a rebuild allocates fresh style objects, every mounted part in the
+ * transcript reacted to an identity change that meant nothing. Message
+ * virtualization is off by default, so that is the entire session.
+ *
+ * Keyed by content instead, the question "did the preset change?" has an answer
+ * that does not mention the route. These assertions are that answer.
+ */
+describe("the preset key does not depend on which session is in view", () => {
+  it("is the same value for every session when nobody has saved a recipe", () => {
+    const store = kv()
+    const home = sessionStyleKey(store, undefined)
+    expect(sessionStyleKey(store, "ses_a")).toBe(home)
+    expect(sessionStyleKey(store, "ses_b")).toBe(home)
+    // Empty, so the theme skips the merge entirely rather than layering a map
+    // whose identity changes on every read.
+    expect(home).toBe("")
+    expect(patchesForKey(home)).toBeUndefined()
+  })
+
+  it("is stable across navigations once a global recipe exists", () => {
+    const store = kv()
+    writeSessionStyle(store, "global", { ...DEFAULT_SESSION_STYLE, density: "compact" })
+    const first = sessionStyleKey(store, "ses_a")
+    expect(sessionStyleKey(store, "ses_b")).toBe(first)
+    expect(first).not.toBe("")
+  })
+
+  it("changes only when the recipe that applies changes", () => {
+    const store = kv()
+    const plain = sessionStyleKey(store, "ses_a")
+
+    writeSessionStyle(store, { sessionID: "ses_a" }, { ...DEFAULT_SESSION_STYLE, border: "none" })
+    const overridden = sessionStyleKey(store, "ses_a")
+    expect(overridden).not.toBe(plain)
+    // A sibling session is untouched, so moving between them is not a change.
+    expect(sessionStyleKey(store, "ses_b")).toBe(plain)
+
+    writeSessionStyle(store, { sessionID: "ses_a" }, null)
+    expect(sessionStyleKey(store, "ses_a")).toBe(plain)
+  })
+
+  it("survives a round trip, so the key is the recipe and not a digest of it", () => {
+    const store = kv()
+    const recipe = { ...DEFAULT_SESSION_STYLE, density: "compact" as const, userSurface: "accent" as const }
+    writeSessionStyle(store, "global", recipe)
+    expect(patchesForKey(sessionStyleKey(store))).toEqual(recipeToPatches(recipe))
+    expect(sessionStylePatches(store)).toEqual(recipeToPatches(recipe))
   })
 })

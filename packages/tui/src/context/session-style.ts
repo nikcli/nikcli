@@ -159,15 +159,37 @@ export function recipeToPatches(input: SessionStyleRecipe): ComponentPatchMap {
 }
 
 /**
+ * The preset that applies to one session, as a value that compares by content.
+ *
+ * The theme keys its patch layer on this rather than on the session id, and the
+ * distinction is the whole point. Keyed by id, the component catalog depends on
+ * the route: every navigation rebuilds it, every rebuild allocates fresh style
+ * objects, and every mounted part reacts to an identity change that means
+ * nothing. That shipped in 1.380; this exists so it cannot come back.
+ *
+ * The empty string means "no preset anywhere" — the state of every session
+ * until somebody opens the studio — so on the default path two different
+ * sessions produce the same key and nothing downstream is invalidated.
+ */
+export function sessionStyleKey(kv: Pick<SessionStyleKV, "get">, sessionID?: string): string {
+  if (!hasSessionStyle(kv, sessionID)) return ""
+  return JSON.stringify(normalizeSessionStyle(readSessionStyle(kv, sessionID)))
+}
+
+/** The patch layer for a key from {@link sessionStyleKey}, or nothing when it is empty. */
+export function patchesForKey(key: string): ComponentPatchMap | undefined {
+  return key ? recipeToPatches(JSON.parse(key) as SessionStyleRecipe) : undefined
+}
+
+/**
  * The patch layer for one session, or nothing when no recipe applies.
  *
- * `undefined` rather than `{}` so the theme can skip the merge entirely on the
- * default path, which is every session until somebody opens the studio.
+ * Prefer {@link sessionStyleKey} where the result feeds a memo: this allocates a
+ * fresh map on every call, which is exactly the identity churn the key avoids.
  */
 export function sessionStylePatches(
   kv: Pick<SessionStyleKV, "get">,
   sessionID?: string,
 ): ComponentPatchMap | undefined {
-  if (!hasSessionStyle(kv, sessionID)) return undefined
-  return recipeToPatches(readSessionStyle(kv, sessionID))
+  return patchesForKey(sessionStyleKey(kv, sessionID))
 }

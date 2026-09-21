@@ -3,6 +3,7 @@ import { RGBA } from "@opentui/core"
 import {
   chromeRows,
   COMPONENT_DEFAULTS,
+  createComponentResolver,
   readComponentPatches,
   resolveComponents,
   type ComponentPatchMap,
@@ -24,12 +25,25 @@ const PALETTE: Record<string, RGBA> = {
   accent: RGBA.fromInts(111, 163, 255),
 }
 
-function resolve(ref: string): RGBA {
+/** The derived tokens the catalog's defaults name. */
+const SEMANTIC = {
+  surface: { base: RGBA.fromInts(7, 7, 7), panel: PALETTE.backgroundPanel!, offset: PALETTE.backgroundElement! },
+  foreground: { default: PALETTE.text!, muted: PALETTE.textMuted! },
+  accent: { fg: PALETTE.primary!, bg: RGBA.fromInts(40, 60, 90), border: RGBA.fromInts(90, 140, 220) },
+  border: { subtle: RGBA.fromInts(58, 58, 58) },
+  status: { warning: { fg: PALETTE.warning! } },
+}
+
+/**
+ * Stands in for the theme: semantic paths first, then the document's flat keys,
+ * which is the order the real resolver uses.
+ */
+const resolve = createComponentResolver(SEMANTIC, (ref: string): RGBA => {
   if (ref.startsWith("#")) return RGBA.fromHex(ref)
   const found = PALETTE[ref]
   if (!found) throw new Error(`Color reference "${ref}" not found in defs or theme`)
   return found
-}
+})
 
 function patches(map: Record<string, unknown>): ComponentPatchMap {
   return map as ComponentPatchMap
@@ -51,18 +65,18 @@ describe("resolveComponents", () => {
     expect(prompt.box.paddingBottom).toBe(0)
     expect(prompt.box.gap).toBe(1)
     expect(prompt.box.borderSides).toEqual(["left"])
-    expect(prompt.colors.background).toEqual(PALETTE.backgroundElement!)
+    expect(prompt.colors.background).toEqual(SEMANTIC.surface.offset)
 
     const tabs = styles["session.tabs"]
     expect(tabs.box.paddingTop).toBe(1)
     expect(tabs.box.paddingBottom).toBe(1)
     expect(tabs.box.borderSides).toEqual(["bottom"])
     expect(tabs.box.borderCharset).toBe("default")
-    expect(tabs.colors.background).toEqual(PALETTE.backgroundPanel!)
-    expect(tabs.colors.border).toEqual(PALETTE.borderSubtle!)
+    expect(tabs.colors.background).toEqual(SEMANTIC.surface.panel)
+    expect(tabs.colors.border).toEqual(SEMANTIC.border.subtle)
     // `primary`, because the strip painted this with `theme.accent.fg`, which
     // derives from `primary` and not from the flat `accent` key.
-    expect(tabs.colors.activeBorder).toEqual(PALETTE.primary!)
+    expect(tabs.colors.activeBorder).toEqual(SEMANTIC.accent.fg)
 
     const message = styles["session.user-message"]
     expect(message.box.paddingTop).toBe(1)
