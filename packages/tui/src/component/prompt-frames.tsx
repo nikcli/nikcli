@@ -6,12 +6,13 @@
 
 import { createMemo, createSignal, For, Show } from "solid-js"
 import { useTheme } from "@tui/context/theme"
+import { DISCLOSURE } from "@tui/component/disclosure"
 import { useSync } from "@tui/context/sync"
 import { useRoute } from "@tui/context/route"
 import { useSDK } from "@tui/context/sdk"
 import { useKV } from "@tui/context/kv"
 import { useCommandDialog } from "@tui/component/dialog-command"
-import { useTerminalDimensions } from "@opentui/solid"
+import { useRenderer, useTerminalDimensions } from "@opentui/solid"
 import { Spinner } from "./spinner"
 import { TextAttributes } from "@opentui/core"
 import { getMonitorsSorted, type MonitorInfo } from "../util/monitor-helpers"
@@ -92,6 +93,7 @@ export function PromptFrames(props: PromptFramesProps) {
   const kv = useKV()
   const command = useCommandDialog()
   const dimensions = useTerminalDimensions()
+  const renderer = useRenderer()
 
   const [jobsCollapsed, setJobsCollapsed] = createSignal(props.collapsed ?? false)
   const [monitorsCollapsed, setMonitorsCollapsed] = createSignal(props.collapsed ?? false)
@@ -187,16 +189,27 @@ export function PromptFrames(props: PromptFramesProps) {
       {/* Header */}
       <box flexDirection="row" justifyContent="space-between" marginBottom={1}>
         <box flexDirection="row" gap={2}>
-          <box onMouseUp={() => setJobsCollapsed(!jobsCollapsed())}>
-            <text fg={theme.foreground.default}>{jobsCollapsed() ? "▶ " : "▼ "}</text>
+          <box
+            onMouseUp={() => {
+              if (renderer.getSelection()?.getSelectedText()) return
+              setJobsCollapsed(!jobsCollapsed())
+            }}
+          >
+            {/* The transcript's marks, not this panel's own arrows. */}
+            <text fg={theme.foreground.default}>{jobsCollapsed() ? DISCLOSURE.closed : DISCLOSURE.open} </text>
             <text fg={theme.foreground.default} attributes={TextAttributes.BOLD}>
               Jobs
             </text>
             <text fg={theme.foreground.muted}>{` (${visibleJobs().length})`}</text>
           </box>
           <text fg={theme.foreground.muted}>·</text>
-          <box onMouseUp={() => setMonitorsCollapsed(!monitorsCollapsed())}>
-            <text fg={theme.foreground.default}>{monitorsCollapsed() ? "▶ " : "▼ "}</text>
+          <box
+            onMouseUp={() => {
+              if (renderer.getSelection()?.getSelectedText()) return
+              setMonitorsCollapsed(!monitorsCollapsed())
+            }}
+          >
+            <text fg={theme.foreground.default}>{monitorsCollapsed() ? DISCLOSURE.closed : DISCLOSURE.open} </text>
             <text fg={theme.foreground.default} attributes={TextAttributes.BOLD}>
               Monitors
             </text>

@@ -5,12 +5,13 @@
 
 import { createMemo, Show } from "solid-js"
 import { useTheme } from "@tui/context/theme"
+import { DISCLOSURE } from "@tui/component/disclosure"
 import { useKV } from "@tui/context/kv"
 import { getBackgroundDismissed } from "../util/background"
 import { type MonitorInfo } from "../util/monitor-helpers"
 import { Spinner } from "./spinner"
 import { useCommandDialog } from "./dialog-command"
-import { useTerminalDimensions } from "@opentui/solid"
+import { useRenderer, useTerminalDimensions } from "@opentui/solid"
 import { Locale } from "@nikcli-ai/util/locale"
 import { type JobItem } from "./prompt-frames"
 export type { JobItem }
@@ -70,6 +71,7 @@ export function PromptJobsInlineCompact(props: PromptJobsInlineProps) {
   const activeJobs = createMemo(() => props.jobs.filter((j) => isActiveStatus(j.status)))
   const activeMonitors = createMemo(() => props.monitors.filter((m) => m.status === "running"))
 
+  const renderer = useRenderer()
   const dismissed = createMemo(() => getBackgroundDismissed(kv, props.sessionID))
   const visibleJobs = createMemo(() => props.jobs.filter((job) => !dismissed().has(job.rootDelegationID)))
 
@@ -108,7 +110,19 @@ export function PromptJobsInlineCompact(props: PromptJobsInlineProps) {
 
   return (
     <Show when={hasAnyItems()}>
-      <box flexDirection="row" gap={1} alignItems="center" flexShrink={1} onMouseUp={openBgAgents}>
+      <box
+        flexDirection="row"
+        gap={1}
+        alignItems="center"
+        flexShrink={1}
+        onMouseUp={(event) => {
+          // A drag ending on the bar is a selection, not a request to open the
+          // background agents. Same guard every clickable transcript surface
+          // carries.
+          if (renderer.getSelection()?.getSelectedText()) return
+          openBgAgents(event)
+        }}
+      >
         <Show when={active()}>
           <Spinner />
         </Show>
@@ -135,11 +149,13 @@ export function PromptJobsInlineCompact(props: PromptJobsInlineProps) {
             </text>
           </Show>
         </Show>
-        <Show when={tight()}>
-          <text fg={theme.foreground.muted} wrapMode="none">
-            open
-          </text>
-        </Show>
+        {/* The mark, at every width. It used to be the word "open", and only
+            on narrow terminals — so the one place the bar said it was clickable
+            was the place with the least room to say it. A mark costs one
+            column. */}
+        <text fg={theme.foreground.subtle} wrapMode="none">
+          {DISCLOSURE.follow}
+        </text>
       </box>
     </Show>
   )

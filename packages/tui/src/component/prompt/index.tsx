@@ -2239,6 +2239,10 @@ export function Prompt(props: PromptProps) {
                       })
                     })
                     const handleMessageClick = () => {
+                      // The message is error text somebody may well want to
+                      // copy; a drag that ends on it is a selection, not a
+                      // request for the dialog.
+                      if (renderer.getSelection()?.getSelectedText()) return
                       const r = retry()
                       if (!r) return
                       if (isTruncated()) {
@@ -2355,6 +2359,7 @@ export function Prompt(props: PromptProps) {
 
                 <box
                   onMouseUp={() => {
+                    if (renderer.getSelection()?.getSelectedText()) return
                     dialog.replace(() => <DialogWebPreview />)
                   }}
                   backgroundColor={theme.accent.fg}

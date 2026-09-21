@@ -124,6 +124,26 @@ describe("TUI component rules", () => {
     expect(offenders).toEqual([])
   })
 
+  it("every clickable transcript surface checks the selection before acting", () => {
+    // A drag that ends on a row is somebody selecting text. Without the guard
+    // the release is read as a click: the task card navigated out of the
+    // session, the background bar opened a dialog. Found by hand three times,
+    // which is twice too many.
+    const offenders: string[] = []
+    for (const { file, text } of ALL) {
+      const transcript =
+        file.startsWith("routes/session/") ||
+        file.startsWith("component/prompt") ||
+        /^component\/(session|pending)-/.test(file)
+      if (!transcript) continue
+      // A handler that does something other than stop the event needs the guard.
+      if (!/onMouseUp=\{/.test(text)) continue
+      const acts = /onMouseUp=\{[^}]*(?:navigate|dialog\.|open[A-Z]|props\.onClick)/.test(text)
+      if (acts && !text.includes("getSelectedText()")) offenders.push(file)
+    }
+    expect(offenders).toEqual([])
+  })
+
   it("the accepted list is still accurate, so it cannot outlive its reason", () => {
     // An exemption nobody rechecks becomes a lie. This fails once the code it
     // names changes shape, which is when somebody should look again.
