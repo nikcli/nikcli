@@ -94,6 +94,11 @@ describe("component tokens equal the expressions they replaced", () => {
     },
     "session.synthetic-part": { text: (t) => t.foreground.muted },
     "session.unknown-part": { text: (t) => t.foreground.muted },
+    "session.task-card": {
+      title: (t) => t.foreground.default,
+      detail: (t) => t.foreground.muted,
+      marker: (t) => t.foreground.subtle,
+    },
     "session.prompt": { background: (t) => t.surface.offset },
     "session.prompt-shadow": { fill: (t) => t.surface.offset },
     "session.tabs": {

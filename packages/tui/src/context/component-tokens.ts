@@ -223,6 +223,28 @@ export const COMPONENT_DEFAULTS = {
     },
   },
   /**
+   * The card for a delegated run (`component/session-task-card`).
+   *
+   * No border charset: the card supplies the rail glyph itself, because that
+   * glyph is how a nested subtask and a parallel background job tell themselves
+   * apart, and that is a distinction the card owns rather than the theme.
+   */
+  "session.task-card": {
+    box: box({
+      marginTop: 1,
+      paddingLeft: 2,
+      paddingRight: 1,
+      borderSides: ["left"],
+      borderCharset: "none",
+    }),
+    colors: {
+      title: "foreground.default",
+      detail: "foreground.muted",
+      /** The trailing marker that says what a click will do. */
+      marker: "foreground.subtle",
+    },
+  },
+  /**
    * The rule under the prompt: a `▀` half-block tinted with the input's own
    * background, so the box reads as sitting above the transcript.
    *
@@ -258,11 +280,10 @@ export const COMPONENT_DEFAULTS = {
       /**
        * The left edge of the selected tab.
        *
-       * `primary`, not `accent`: the strip painted this with `theme.accent.fg`,
-       * and that semantic token derives from the document's `primary`. The flat
-       * `accent` key is a different color — it is what `theme.accent.alt`
-       * resolves to — so naming it here would have silently recolored the
-       * selected tab on every theme.
+       * `accent.fg` is the token the strip painted this with. Worth naming the
+       * trap: the flat `accent` key is a *different* color — it is what
+       * `accent.alt` resolves to — and using it here recolored the selected tab
+       * on every theme without failing anything.
        */
       activeBorder: "accent.fg",
       activeBackground: "surface.offset",
@@ -310,13 +331,29 @@ function clampSpacing(value: unknown): number | undefined {
   return Math.min(SPACING_MAX, Math.max(SPACING_MIN, Math.round(value)))
 }
 
-function readBorderSides(value: unknown): BorderSide[] | undefined {
+/**
+ * Reads a border-side list, reporting each entry it could not use.
+ *
+ * Reporting matters more here than anywhere else in this file: a mistyped side
+ * does not degrade the border, it *removes* it — `["lefy"]` reads as "no
+ * border at all" — and a border disappearing is indistinguishable from a theme
+ * that meant to remove it. Every other malformed field in this module is
+ * announced; this one used to be the exception.
+ */
+function readBorderSides(value: unknown, id: string, warn: ComponentWarning[]): BorderSide[] | undefined {
   if (!Array.isArray(value)) return undefined
   const sides: BorderSide[] = []
   for (const entry of value) {
-    if (typeof entry !== "string") continue
-    const side = entry as BorderSide
-    if (BORDER_SIDES.includes(side) && !sides.includes(side)) sides.push(side)
+    if (typeof entry === "string" && BORDER_SIDES.includes(entry as BorderSide)) {
+      const side = entry as BorderSide
+      if (!sides.includes(side)) sides.push(side)
+      continue
+    }
+    warn.push({
+      id,
+      field: "box.borderSides",
+      reason: `${JSON.stringify(entry)} is not one of ${BORDER_SIDES.join(", ")}`,
+    })
   }
   return sides
 }
@@ -332,16 +369,23 @@ function mergeBox(base: BoxStyle, patch: ComponentPatch["box"], id: string, warn
 
   for (const key of BOX_KEYS) {
     if (!(key in patch)) continue
-    const value = clampSpacing(patch[key])
+    const raw = patch[key]
+    const value = clampSpacing(raw)
     if (value === undefined) {
       warn.push({ id, field: `box.${key}`, reason: "expected a finite number" })
       continue
+    }
+    // Clamping keeps the session usable, but it also means the theme did not
+    // get what it asked for. Saying so is the difference between a degraded
+    // value and a silent one, which this module refuses everywhere else.
+    if (value !== raw) {
+      warn.push({ id, field: `box.${key}`, reason: `${raw} is outside ${SPACING_MIN}..${SPACING_MAX}, using ${value}` })
     }
     next[key] = value
   }
 
   if ("borderSides" in patch) {
-    const sides = readBorderSides(patch.borderSides)
+    const sides = readBorderSides(patch.borderSides, id, warn)
     if (sides === undefined) warn.push({ id, field: "box.borderSides", reason: "expected an array of sides" })
     else next.borderSides = sides
   }

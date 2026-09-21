@@ -13,11 +13,14 @@ import { partTypes } from "@tui/routes/session/parts/registry"
  * became invisible when the renderer moved onto entries.
  *
  * The absorbed half still reads source: `fromEntries` decides it inline and
- * there is nothing to import. The drawn half used to as well, for the stated
- * reason that importing the session route pulled in the whole TUI — no longer
- * true now that the table lives in `parts/registry.ts`, which imports the part
- * components and nothing else. So that half asks the registry itself, and a
+ * there is nothing to import. The drawn half asks the registry instead, so a
  * renderer registered at runtime counts exactly like a built-in one.
+ *
+ * That is not free — `parts/registry.ts` pulls in `tool-view.tsx` for the tool
+ * renderer, and that file reaches into the contexts — so this is a narrower
+ * graph than the session route, not a small one. The trade is deliberate:
+ * regexing a table out of source could not see a registration, and the whole
+ * point of the registry is that a plugin can make one.
  *
  * The union comes from the schema, so adding a type to `SessionEntry` and
  * forgetting the renderer fails here.

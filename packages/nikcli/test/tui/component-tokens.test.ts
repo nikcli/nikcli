@@ -28,7 +28,7 @@ const PALETTE: Record<string, RGBA> = {
 /** The derived tokens the catalog's defaults name. */
 const SEMANTIC = {
   surface: { base: RGBA.fromInts(7, 7, 7), panel: PALETTE.backgroundPanel!, offset: PALETTE.backgroundElement! },
-  foreground: { default: PALETTE.text!, muted: PALETTE.textMuted! },
+  foreground: { default: PALETTE.text!, muted: PALETTE.textMuted!, subtle: RGBA.fromInts(90, 90, 90) },
   accent: { fg: PALETTE.primary!, bg: RGBA.fromInts(40, 60, 90), border: RGBA.fromInts(90, 140, 220) },
   border: { subtle: RGBA.fromInts(58, 58, 58) },
   status: { warning: { fg: PALETTE.warning! } },
@@ -127,6 +127,30 @@ describe("resolveComponents", () => {
     expect(styles["session.user-message"].box.paddingLeft).toBe(0)
     expect(styles["session.user-message"].box.paddingTop).toBe(8)
     expect(styles["session.user-message"].box.gap).toBe(3)
+  })
+
+  it("says so when it clamps, because a clamped value is not the one the theme asked for", () => {
+    const { warnings } = resolveComponents(resolve, [
+      patches({ "session.user-message": { box: { paddingLeft: -5, paddingTop: 999 } } }),
+    ])
+    expect(warnings.map((warning) => warning.field).sort()).toEqual(["box.paddingLeft", "box.paddingTop"])
+    expect(warnings.every((warning) => warning.reason.includes("outside 0..8"))).toBe(true)
+  })
+
+  it("does not warn about a value that needed no clamping", () => {
+    const { warnings } = resolveComponents(resolve, [patches({ "session.user-message": { box: { paddingLeft: 4 } } })])
+    expect(warnings).toEqual([])
+  })
+
+  it("names each border side it could not use, since a bad one removes the border", () => {
+    // `["lefy"]` resolves to "no border at all", which is indistinguishable
+    // from a theme that meant to remove it. Silence here is the worst outcome.
+    const { styles, warnings } = resolveComponents(resolve, [
+      patches({ "session.user-message": { box: { borderSides: ["lefy", "top", 7] } } }),
+    ])
+    expect(styles["session.user-message"].box.borderSides).toEqual(["top"])
+    expect(warnings.filter((warning) => warning.field === "box.borderSides")).toHaveLength(2)
+    expect(warnings.some((warning) => warning.reason.includes('"lefy"'))).toBe(true)
   })
 
   it("warns and keeps the default for a non-numeric spacing value", () => {

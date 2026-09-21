@@ -1,8 +1,8 @@
-import { createMemo, Show, type JSX } from "solid-js"
+import { createMemo, createSignal, Show, type JSX } from "solid-js"
 import type { RGBA } from "@opentui/core"
 import { TextAttributes } from "@opentui/core"
 import { EmptyBorder } from "@tui/component/border"
-import { selectedForeground, tint, useTheme } from "@tui/context/theme"
+import { tint, useTheme } from "@tui/context/theme"
 
 /**
  * Visual language for the two kinds of delegated work in a session transcript.
@@ -39,11 +39,23 @@ export function sessionTaskChrome(kind: SessionTaskKind) {
 /**
  * In-session card for a delegated run.
  *
- * Nested subtasks sit inside the turn (solid rail, SUBTASK chip). Background
- * jobs sit beside it (dashed rail, BG chip, info tint) so they read as a
- * sidecar rather than another child of the same message. Everything the card
- * needs arrives as props — same rule as `pending-input-card.tsx` — so both
- * kinds can be drawn without an SDK.
+ * One row, and one signal for the one bit it has to convey. The rail (`┃` solid
+ * against `╎` dashed), the glyph and the tint all already say nested-or-
+ * parallel; an inverse-video SUBTASK chip beside them said it a fourth time, in
+ * the loudest register on the line, for nine columns. The card used to spend
+ * eight rows on a single delegation — three of padding, one for a description
+ * that fits inline, one for a sentence explaining the rail — and collapsing
+ * that onto one line while keeping the chip would have moved the noise rather
+ * than removed it.
+ *
+ * So the collapsed row reads like the tool rows it sits among: glyph, title,
+ * description, and a marker. The kind's *name* appears in the detail, where
+ * somebody who could not read the glyph goes looking.
+ *
+ * Every card answers a click, and the marker always says what the click does:
+ * `→` opens the run, `▸`/`▾` reveals the detail here. Which one depends on
+ * whether the caller knows a session to open — the tool view does, the
+ * transcript's own `subtask` entry carries no id to follow.
  */
 export function SessionTaskCard(props: {
   kind: SessionTaskKind
@@ -52,61 +64,74 @@ export function SessionTaskCard(props: {
   agent: string
   title: string
   description?: string
+  /** Opens the run. Given one, the card navigates instead of expanding. */
   onClick?: () => void
   children?: JSX.Element
 }) {
-  const { theme } = useTheme()
+  const { theme, component } = useTheme()
+  const style = () => component("session.task-card")
+  const [expanded, setExpanded] = createSignal(false)
   const chrome = createMemo(() => sessionTaskChrome(props.kind))
-  const badgeBg = createMemo(() => (props.kind === "background" ? theme.status.info.fg : props.color))
-  const badgeFg = createMemo(() => selectedForeground(theme, badgeBg()))
-  const railColor = createMemo(() => (props.kind === "background" ? theme.status.info.fg : props.color))
-  const panel = createMemo(() => {
-    const base = theme.surface.panel
-    if (props.kind === "background") return tint(base, theme.status.info.fg, 0.1)
-    return tint(base, props.color, 0.08)
-  })
+  const accent = createMemo(() => (props.kind === "background" ? theme.status.info.fg : props.color))
+  const description = createMemo(() => props.description?.trim() || undefined)
+  const opens = createMemo(() => props.onClick !== undefined)
+  const open = createMemo(() => !opens() && expanded())
+  const panel = createMemo(() => tint(theme.surface.panel, accent(), props.kind === "background" ? 0.1 : 0.08))
 
   return (
     <box
-      border={["left"]}
-      borderColor={railColor()}
+      border={[...style().box.borderSides]}
+      borderColor={accent()}
       customBorderChars={{
         ...EmptyBorder,
         vertical: chrome().rail,
       }}
-      marginTop={1}
+      marginTop={style().box.marginTop}
+      // The kind's own offsets, not the theme's: they place the card relative to
+      // the turn — inside it or beside it — which is the distinction itself.
       marginLeft={props.kind === "background" ? 1 : 0}
       paddingLeft={props.kind === "subtask" ? 1 : 0}
       flexShrink={0}
-      onMouseUp={() => props.onClick?.()}
+      onMouseUp={() => {
+        if (props.onClick) return props.onClick()
+        setExpanded((value) => !value)
+      }}
     >
-      <box paddingTop={1} paddingBottom={1} paddingLeft={2} paddingRight={1} backgroundColor={panel()} flexShrink={0}>
+      <box
+        paddingLeft={style().box.paddingLeft}
+        paddingRight={style().box.paddingRight}
+        backgroundColor={panel()}
+        flexShrink={0}
+        overflow="hidden"
+      >
+        {/* `wrapMode="none"` against the clip above: a long description is cut
+            short rather than reflowing the card back into a paragraph. */}
         <text wrapMode="none">
-          <span style={{ bg: badgeBg(), fg: badgeFg(), bold: true }}> {chrome().badge} </span>
-          <span style={{ fg: railColor() }}> {chrome().glyph} </span>
-          <span
-            style={{
-              fg: theme.foreground.default,
-              attributes: TextAttributes.BOLD,
-            }}
-          >
-            {props.title}
-          </span>
+          <span style={{ fg: accent() }}>{chrome().glyph} </span>
+          <span style={{ fg: style().colors.title, attributes: TextAttributes.BOLD }}>{props.title}</span>
           <Show when={props.agent && props.agent !== props.title}>
-            <span style={{ fg: theme.foreground.muted }}> · @{props.agent}</span>
+            <span style={{ fg: style().colors.detail }}> · @{props.agent}</span>
           </Show>
+          <Show when={description() && !open()}>
+            <span style={{ fg: style().colors.detail }}> — {description()}</span>
+          </Show>
+          <span style={{ fg: style().colors.marker }}>{opens() ? " →" : open() ? " ▾" : " ▸"}</span>
         </text>
-        <Show when={props.description}>
-          {(value) => (
-            <text fg={theme.foreground.muted} paddingTop={1}>
-              {value()}
-            </text>
-          )}
+        <Show when={open()}>
+          <Show when={description()}>
+            {(value) => (
+              <text fg={style().colors.detail} paddingTop={1}>
+                {value()}
+              </text>
+            )}
+          </Show>
+          {/* Where the kind says its name: below the fold, for the reader the
+              glyph did not reach. */}
+          <text fg={style().colors.marker}>
+            {chrome().badge} · {chrome().hint}
+          </text>
         </Show>
         {props.children}
-        <text fg={theme.foreground.muted} paddingTop={1}>
-          {chrome().hint}
-        </text>
       </box>
     </box>
   )
