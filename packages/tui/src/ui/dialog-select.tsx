@@ -15,6 +15,14 @@ import { moveSelection, reconcileSelection } from "./select-controller"
 import { FooterHint, FooterHintGroup } from "./footer-hints"
 
 export interface DialogSelectProps<T> {
+  /**
+   * Re-opens the dialog this one came from, drawing `←` beside `esc`.
+   *
+   * Dialogs here do not stack — a nested flow replaces its parent, which
+   * `specs/effect-tui/03-tui-lifecycle.md` records as load-bearing — so going
+   * back is the caller handing over a closure that opens the parent again.
+   */
+  back?: () => void
   title: string
   placeholder?: string
   options: DialogSelectOption<T>[]
@@ -275,7 +283,7 @@ export function DialogSelect<T>(props: DialogSelectProps<T>) {
   return (
     <box gap={1} paddingBottom={1}>
       <box paddingLeft={4} paddingRight={4}>
-        <DialogHeader title={props.title} />
+        <DialogHeader title={props.title} back={props.back} />
         <box paddingTop={1} paddingBottom={1}>
           <input
             onInput={(e) => {

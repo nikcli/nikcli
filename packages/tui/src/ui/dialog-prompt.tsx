@@ -16,6 +16,15 @@ export type DialogPromptProps = {
   allowEmpty?: boolean
   onConfirm?: (value: string) => void
   onCancel?: () => void
+  /**
+   * Re-opens the dialog this one was opened from, drawing `←` beside `esc`.
+   *
+   * Dialogs here do not stack — a nested flow replaces its parent, which
+   * `specs/effect-tui/03-tui-lifecycle.md` records as load-bearing — so going
+   * back is the caller handing over a closure that opens the parent again.
+   * Several callers already keep one; this is what makes it visible.
+   */
+  back?: () => void
 }
 
 export function DialogPrompt(props: DialogPromptProps) {
@@ -34,7 +43,7 @@ export function DialogPrompt(props: DialogPromptProps) {
 
   return (
     <box paddingLeft={2} paddingRight={2} gap={1}>
-      <DialogHeader title={props.title} muted={props.busy} hint={props.busy ? "" : "esc"} />
+      <DialogHeader title={props.title} muted={props.busy} hint={props.busy ? "" : "esc"} back={props.back} />
       <box gap={1}>
         {props.description?.()}
         <Show

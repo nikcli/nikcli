@@ -361,12 +361,27 @@ export function useDialog() {
  * a dialog that must not be dismissed from the header — a prompt mid-submit,
  * say — and the handler goes away with the text.
  */
+/**
+ * The mark for "there is a screen behind this one".
+ *
+ * Deliberately *not* wired to escape, and deliberately not a stack. Dialogs here
+ * do not nest: `replace` sets a one-entry stack and a nested flow unmounts its
+ * parent, which `specs/effect-tui/03-tui-lifecycle.md` records as load-bearing —
+ * every dialog's lifecycle guards assume it, and misreading it cost two reverts.
+ * Going back is therefore a dialog re-opening its parent, which several already
+ * do by hand; this only gives that the affordance it never had. `esc` keeps
+ * meaning "close", and `←` means "the screen I came from".
+ */
+export const DIALOG_BACK = "←"
+
 export function DialogHeader(props: {
   title: string
   subtitle?: string
   hint?: string
   muted?: boolean
   onClose?: () => void
+  /** Re-opens the dialog this one was opened from. Draws {@link DIALOG_BACK}. */
+  back?: () => void
 }) {
   const { theme } = useTheme()
   const dialog = useDialog()
@@ -381,12 +396,21 @@ export function DialogHeader(props: {
           <text fg={theme.foreground.muted}>{props.subtitle}</text>
         </Show>
       </box>
-      <text
-        fg={theme.foreground.muted}
-        onMouseUp={hint() ? () => (props.onClose ? props.onClose() : dialog.clear()) : undefined}
-      >
-        {hint()}
-      </text>
+      <box flexDirection="row" gap={1}>
+        <Show when={props.back}>
+          {(back) => (
+            <text fg={theme.foreground.muted} onMouseUp={() => back()()}>
+              {DIALOG_BACK}
+            </text>
+          )}
+        </Show>
+        <text
+          fg={theme.foreground.muted}
+          onMouseUp={hint() ? () => (props.onClose ? props.onClose() : dialog.clear()) : undefined}
+        >
+          {hint()}
+        </text>
+      </box>
     </box>
   )
 }
