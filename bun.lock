@@ -723,6 +723,7 @@
       "devDependencies": {
         "@babel/core": "7.29.7",
         "@nikcli-ai/script": "workspace:*",
+        "@nikcli-ai/tui-storybook": "workspace:*",
         "@octokit/webhooks-types": "7.6.1",
         "@oxlint/plugins": "1.79.0",
         "@parcel/watcher-darwin-arm64": "2.5.6",
