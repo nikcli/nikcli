@@ -32,7 +32,7 @@ import { useSync } from "@tui/context/sync"
 import { useProject } from "@tui/context/project"
 import { SplitBorder } from "@tui/component/border"
 import { SessionTaskCard } from "@tui/component/session-task-card"
-import { DISCLOSURE } from "@tui/component/disclosure"
+import { DISCLOSURE, summaryLine } from "@tui/component/disclosure"
 import { Spinner } from "@tui/component/spinner"
 import { useTheme, selectedForeground, tint } from "@tui/context/theme"
 import { BoxRenderable, ScrollBoxRenderable, TextAttributes, RGBA } from "@opentui/core"
@@ -990,9 +990,7 @@ function WebFetch(props: ToolProps<any>) {
               <text fg={theme.accent.fg} wrapMode="char" flexGrow={1}>
                 {url()}
               </text>
-              <text fg={theme.foreground.muted}>open preview</text>
             </box>
-            <text fg={theme.foreground.muted}>Click to view this {format()} page in Web Preview</text>
           </box>
         </BlockTool>
       </Match>
@@ -1084,8 +1082,8 @@ function OpenTUIViz(props: ToolProps<any>) {
               <text fg={theme.foreground.muted}>{String(spec()?.subtitle)}</text>
             </Show>
             <VizRenderer spec={spec()} />
-            <text fg={theme.foreground.muted}>
-              {count()} component{count() === 1 ? "" : "s"} · Click to expand in TUI
+            <text fg={theme.foreground.muted} wrapMode="none">
+              {count()} component{count() === 1 ? "" : "s"}
             </text>
           </box>
         </BlockTool>
@@ -1184,27 +1182,27 @@ function WebSearch(props: ToolProps<any>) {
           opens
           part={props.part}
         >
-          <box gap={0}>
-            <text fg={theme.foreground.muted}>
-              {results().length} previewable result
-              {results().length === 1 ? "" : "s"} found
-            </text>
-            <text fg={theme.accent.fg} wrapMode="char">
-              {results()[0]!.host}
-            </text>
-            <text fg={theme.foreground.muted}>
-              Click to {results().length === 1 ? "open the result" : "choose a result"} in Web Preview
+          {/* One row. The host is the result, the count is how many more there
+              are, and the title's `→` is the invitation — which used to be a
+              third row spelling out what the mark now says. */}
+          <box overflow="hidden">
+            <text wrapMode="none">
+              <span style={{ fg: theme.accent.fg }}>{results()[0]!.host}</span>
+              <Show when={results().length > 1}>
+                <span style={{ fg: theme.foreground.muted }}> · {results().length - 1} more</span>
+              </Show>
             </text>
           </box>
         </BlockTool>
       </Match>
       <Match when={output()}>
         <BlockTool title={`# Web search: ${input.query}`} accentColor={theme.accent.fg} part={props.part}>
-          <box gap={1}>
-            <text fg={theme.foreground.muted}>Search completed, but no previewable URLs were extracted.</text>
-            <text fg={theme.foreground.default} wrapMode="word">
-              {output().slice(0, 400)}
-              {output().length > 400 ? "..." : ""}
+          <box overflow="hidden">
+            {/* Clipped to a row rather than four hundred wrapped characters: a
+                search that found nothing to preview should not cost more of the
+                transcript than one that did. */}
+            <text fg={theme.foreground.muted} wrapMode="none">
+              no previewable URLs · {summaryLine(output())}
             </text>
           </box>
         </BlockTool>

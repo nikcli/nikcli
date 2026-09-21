@@ -99,6 +99,31 @@ describe("TUI component rules", () => {
     expect(offenders.filter((entry) => !ACCEPTED.has(entry))).toEqual([])
   })
 
+  it("no surface spells out in prose what the mark already says", () => {
+    // Six surfaces each invented their own sentence — "Click to expand",
+    // "Click to collapse", "follow logs", "view monitor output", "Click to view
+    // this page in Web Preview", "Click to expand in TUI" — and every one cost
+    // a row to say what `→` and `▸` say in a column. Two of them sat on the
+    // same card.
+    // Scoped to the transcript and its prompt, which is where the grammar
+    // applies. A dialog's menu description and a placeholder teaching the `/`
+    // key are different things: the first is a list convention, the second says
+    // something no mark can, which is which key to press.
+    const surfaces = ALL.filter(
+      ({ file }) =>
+        file.startsWith("routes/session/") || file.startsWith("component/prompt/") || /^component\/session-/.test(file),
+    )
+    expect(surfaces.length).toBeGreaterThan(10)
+
+    const offenders: string[] = []
+    for (const { file, text } of surfaces) {
+      for (const match of text.matchAll(/["'`][^"'`\n]*\b(?:Click to|click to)\b[^"'`\n]*["'`]/g)) {
+        offenders.push(`${file} — ${match[0]!.slice(0, 48)}`)
+      }
+    }
+    expect(offenders).toEqual([])
+  })
+
   it("the accepted list is still accurate, so it cannot outlive its reason", () => {
     // An exemption nobody rechecks becomes a lie. This fails once the code it
     // names changes shape, which is when somebody should look again.

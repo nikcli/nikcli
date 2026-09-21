@@ -18,6 +18,7 @@ import { useLocal } from "@tui/context/local"
 import { useLanguage } from "@tui/context/language"
 import { useTheme } from "@tui/context/theme"
 import { BORDER_CHAR_TABLES, borderCharsFor, EmptyBorder } from "@tui/component/border"
+import { DISCLOSURE } from "@tui/component/disclosure"
 import { useSDK } from "@tui/context/sdk"
 import { useRoute } from "@tui/context/route"
 import { useSync } from "@tui/context/sync"
@@ -2249,7 +2250,8 @@ export function Prompt(props: PromptProps) {
                       const r = retry()
                       if (!r) return ""
                       const baseMessage = message()
-                      const truncatedHint = isTruncated() ? " (click to expand)" : ""
+                      // The mark, like everywhere else in the transcript.
+                      const truncatedHint = isTruncated() ? ` ${DISCLOSURE.closed}` : ""
                       const duration = formatDuration(seconds())
                       const retryInfo = ` [retrying ${duration ? `in ${duration} ` : ""}attempt #${r.attempt}]`
                       return baseMessage + truncatedHint + retryInfo
