@@ -7,7 +7,7 @@ export const config = {
 
   // GitHub
   github: {
-    repoUrl: "https://github.com/nikomatt69/nikcli",
+    repoUrl: "https://github.com/nikcli/nikcli",
     starsFormatted: {
       compact: "95K",
       full: "95,000",

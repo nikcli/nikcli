@@ -209,7 +209,7 @@ describe("release automation", () => {
     expect(registriesScript).toContain("sha256")
 
     // Must reference the correct GitHub release URLs
-    expect(registriesScript).toContain("github.com/nikomatt69/nikcli/releases/download")
+    expect(registriesScript).toContain("github.com/nikcli/nikcli/releases/download")
 
     // Must cover all four platform combos
     expect(registriesScript).toContain("darwin-x64")
@@ -254,7 +254,7 @@ describe("ADE release integration", () => {
     expect(ade).toContain("needs.publish.result == 'success'")
     expect(ade).toContain("github.event_name == 'push'")
     expect(ade).toContain("github.ref == 'refs/heads/live-main'")
-    expect(ade).toContain("github.repository == 'nikomatt69/nikcli'")
+    expect(ade).toContain("github.repository == 'nikcli/nikcli'")
     expect(ade).toContain("uses: ./.github/workflows/ade-release.yml")
     expect(ade).toContain("tag: ${{ needs.publish.outputs.tag }}")
     expect(ade).toContain("attach_only: true")
@@ -274,8 +274,8 @@ describe("ADE release integration", () => {
     expect(ade).toContain("needs: [draft, checks]")
     expect(ade).toContain("uses: ./.github/workflows/ade-checks.yml")
     expect(ade).toContain("ref: ${{ inputs.tag || github.ref_name }}")
-    expect(ade).toContain("(github.repository == 'nikomatt69/nikcli' && inputs.attach_only)")
-    expect(checks).toContain("(github.repository == 'nikomatt69/nikcli' && inputs.ref != '')")
+    expect(ade).toContain("(github.repository == 'nikcli/nikcli' && inputs.attach_only)")
+    expect(checks).toContain("(github.repository == 'nikcli/nikcli' && inputs.ref != '')")
     expect(checks).toContain("ADE typecheck")
     expect(checks).toContain("ADE tests")
     expect(checks).toContain("Voice typecheck")
@@ -344,7 +344,7 @@ describe("CI pipeline", () => {
     expect(pipeline).toContain("needs: validate")
     expect(pipeline).toContain("needs.validate.result == 'success'")
     expect(pipeline).toContain("refs/heads/live-main")
-    expect(pipeline).toContain("nikomatt69/nikcli")
+    expect(pipeline).toContain("nikcli/nikcli")
     expect(pipeline).toContain("secrets: inherit")
     expect(pipeline).toContain("!startsWith(github.event.head_commit.message, 'release: v')")
     expect(pipeline).toContain("!startsWith(github.event.head_commit.message, 'chore: generate')")
@@ -429,7 +429,7 @@ describe("CI pipeline", () => {
     expect(script).toContain("chore: generate")
 
     // Must check repository trust
-    expect(script).toContain("nikomatt69/nikcli")
+    expect(script).toContain("nikcli/nikcli")
 
     // Must check for the provider key used by the default MiniMax model
     expect(script).toContain("MINIMAX_API_KEY")

@@ -127,7 +127,7 @@ EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=10s --start-period=45s --retries=3 \
     CMD curl -sf "http://127.0.0.1:${HEALTH_PORT:-3000}/health" || exit 1
 
-# Entrypoint clones the working repo (nikomatt69/nikcli) then starts the bot.
+# Entrypoint clones the working repo (nikcli/nikcli) then starts the bot.
 COPY packages/discord/docker-entrypoint.sh /usr/local/bin/docker-entrypoint.sh
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh
 

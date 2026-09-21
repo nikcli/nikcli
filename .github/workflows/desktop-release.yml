@@ -40,7 +40,7 @@ permissions:
 
 jobs:
   build:
-    if: github.repository == 'nikomatt69/nikcli'
+    if: github.repository == 'nikcli/nikcli'
     strategy:
       fail-fast: false
       matrix:
@@ -231,7 +231,7 @@ jobs:
             echo "no installers produced for ${{ matrix.target }} — nothing to upload"
           else
             find "$STAGE" -maxdepth 1 -type f \
-              -exec gh release upload "${{ inputs.tag }}" --clobber --repo nikomatt69/nikcli {} +
+              -exec gh release upload "${{ inputs.tag }}" --clobber --repo nikcli/nikcli {} +
           fi
 
       # Tauri updater: rename the (arch-agnostic) macOS bundle, publish it, and
@@ -266,7 +266,7 @@ jobs:
           cp "$SIG" "frag/${newbase}.sig"
           printf '{"key":"%s","file":"%s"}' "$KEY" "$newbase" > frag/meta.json
           # Publish the (renamed) updater bundle so latest.json can point at it.
-          gh release upload "${{ inputs.tag }}" "frag/$newbase" --clobber --repo nikomatt69/nikcli
+          gh release upload "${{ inputs.tag }}" "frag/$newbase" --clobber --repo nikcli/nikcli
 
       - name: Upload updater fragment artifact
         if: steps.build.outputs.updater == 'true'
@@ -279,7 +279,7 @@ jobs:
   # Assemble the Tauri latest.json manifest from the per-platform fragments.
   finalize-updater:
     needs: build
-    if: github.repository == 'nikomatt69/nikcli'
+    if: github.repository == 'nikcli/nikcli'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
@@ -299,6 +299,6 @@ jobs:
         run: bun run script/finalize-updater.ts
         env:
           UPDATER_FRAGMENTS_DIR: updater-fragments
-          GH_REPO: nikomatt69/nikcli
+          GH_REPO: nikcli/nikcli
           NIKCLI_VERSION: ${{ inputs.tag }}
           GH_TOKEN: ${{ secrets.SST_GITHUB_TOKEN }}

@@ -13,7 +13,7 @@ concurrency:
 
 jobs:
   deploy:
-    if: github.repository == 'nikomatt69/nikcli'
+    if: github.repository == 'nikcli/nikcli'
     runs-on: ubuntu-latest
     steps:
       - name: Checkout repository

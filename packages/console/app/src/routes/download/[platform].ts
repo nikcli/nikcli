@@ -21,7 +21,7 @@ export async function GET({ params: { platform } }: APIEvent) {
   const assetName = assetNames[platform]
   if (!assetName) return new Response("Not Found", { status: 404 })
 
-  const resp = await fetch(`https://github.com/nikomatt69/nikcli/releases/latest/download/${assetName}`, {
+  const resp = await fetch(`https://github.com/nikcli/nikcli/releases/latest/download/${assetName}`, {
     cf: {
       // in case gh releases has rate limits
       cacheTtl: 60 * 5,

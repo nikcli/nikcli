@@ -7,7 +7,7 @@ import { fileURLToPath } from "url"
 const rootDir = fileURLToPath(new URL("../../..", import.meta.url))
 process.chdir(rootDir)
 
-const reg = process.env.REGISTRY ?? "ghcr.io/nikomatt69"
+const reg = process.env.REGISTRY ?? "ghcr.io/nikcli"
 const tag = process.env.TAG ?? "24.04"
 const push = process.argv.includes("--push") || process.env.PUSH === "1"
 

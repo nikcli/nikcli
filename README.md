@@ -10,7 +10,7 @@ This fork is maintained by **nikomatt69**. On top of the OpenCode base, nikcli a
 
 - **Upstream project**: OpenCode — [github.com/anomalyco/opencode](https://github.com/anomalyco/opencode)
 - **Maintainer of this fork**: nikomatt69 — [GitHub](https://github.com/nikomatt69) · [X](https://x.com/nikomatt69)
-- **Release**: see [GitHub Releases](https://github.com/nikomatt69/nikcli/releases/latest) · Package manager: `bun@1.4.2`
+- **Release**: see [GitHub Releases](https://github.com/nikcli/nikcli/releases/latest) · Package manager: `bun@1.4.2`
 - **License**: MIT — see `LICENSE`, which retains the upstream OpenCode copyright.
 
 ---
@@ -684,7 +684,7 @@ Recognized env flags (see `flag/flag.ts`): `NIKCLI_SERVER_PASSWORD`, `NIKCLI_SER
 - **Web app**: [https://app.nikcli.store](https://app.nikcli.store)
 - **Slack bot**: [https://slack.nikcli.store](https://slack.nikcli.store)
 - **Upstream project (OpenCode)**: [https://github.com/anomalyco/opencode](https://github.com/anomalyco/opencode)
-- **This fork**: [https://github.com/nikomatt69/nikcli](https://github.com/nikomatt69/nikcli)
+- **This fork**: [https://github.com/nikcli/nikcli](https://github.com/nikcli/nikcli)
 - **Issue tracker & discussions**: GitHub repository.
 - **Internal specs** (in `specs/`): start at `specs/README.md` and `specs/ROADMAP.md` for the Effect/TUI architecture program.
 - **Changelog**: `CHANGELOG.md` (v1.5.0 — Effect Schema migration, Feb 2026 milestone).

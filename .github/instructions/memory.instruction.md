@@ -2,7 +2,7 @@
 
 **Last updated**: 2026-09-16
 **Default branch**: `live-main`
-**Repo**: `github.com/nikomatt69/nikcli` - fork of [OpenCode](https://github.com/anomalyco/opencode)
+**Repo**: `github.com/nikcli/nikcli` - fork of [OpenCode](https://github.com/anomalyco/opencode)
 
 Dependency versions and older module inventories below are historical notes from 2026-06-26, not a current manifest audit. Current repository AGENTS.md files take precedence.
 

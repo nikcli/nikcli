@@ -237,7 +237,7 @@ export default Runtime.handler(Commands.commands["github"].commands["install"], 
             persist-credentials: false
 
         - name: Run nikcli
-          uses: nikomatt69/nikcli/github@latest${envStr}
+          uses: nikcli/nikcli/github@latest${envStr}
           with:
             model: ${provider}/${model}`,
         )

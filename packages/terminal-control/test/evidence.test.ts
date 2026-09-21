@@ -140,13 +140,13 @@ describe("native evidence bundle", () => {
 
     const published = renderGitHubTuiEvidence({
       evidence: changed,
-      repository: "nikomatt69/nikcli",
+      repository: "nikcli/nikcli",
       revision: "abc123",
     })
     expect(published).toContain(
-      "https://raw.githubusercontent.com/nikomatt69/nikcli/abc123/artifacts/tui/video/preview.gif",
+      "https://raw.githubusercontent.com/nikcli/nikcli/abc123/artifacts/tui/video/preview.gif",
     )
-    expect(published).toContain("https://github.com/nikomatt69/nikcli/blob/abc123/artifacts/tui/video/demo.mp4?raw=1")
+    expect(published).toContain("https://github.com/nikcli/nikcli/blob/abc123/artifacts/tui/video/demo.mp4?raw=1")
     expect(published).toContain("recording.termctrl")
 
     const firstBody = mergeGitHubTuiEvidence("Existing PR description", published)

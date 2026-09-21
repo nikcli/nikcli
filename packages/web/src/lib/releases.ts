@@ -2,7 +2,7 @@
 // into user-facing download groups. New versions and freshly uploaded assets
 // appear automatically — no redeploy required.
 
-const REPO = "nikomatt69/nikcli"
+const REPO = "nikcli/nikcli"
 const API = `https://api.github.com/repos/${REPO}/releases`
 
 export type DownloadCategory = "desktop" | "ade" | "cli" | "mobile" | "other"
