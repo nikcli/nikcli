@@ -43,6 +43,44 @@ const ALL = await sources()
  */
 const ACCEPTED = new Set(["component/dialog-onboarding.tsx — options", "component/dialog-onboarding.tsx — rows"])
 
+/**
+ * Every `onMouseUp={...}` in a file, with its body, by matching braces.
+ *
+ * A regex cannot find the end of a handler; a counter can, and these bodies are
+ * small and well formed.
+ */
+function handlers(text: string): Array<{ line: number; body: string }> {
+  const out: Array<{ line: number; body: string }> = []
+  const marker = "onMouseUp={"
+  let at = text.indexOf(marker)
+  while (at !== -1) {
+    let depth = 0
+    let end = at + marker.length - 1
+    for (; end < text.length; end++) {
+      if (text[end] === "{") depth++
+      else if (text[end] === "}") {
+        depth--
+        if (depth === 0) break
+      }
+    }
+    out.push({ line: text.slice(0, at).split("\n").length, body: text.slice(at, end + 1) })
+    at = text.indexOf(marker, end)
+  }
+  return out
+}
+
+/** A handler that only calls a named function is guarded if that function is. */
+function guardedByCallee(text: string, body: string): boolean {
+  for (const match of body.matchAll(/\b([a-z]\w*)\(/g)) {
+    const name = match[1]!
+    const declaration = new RegExp(`(?:function|const)\\s+${name}\\b`).exec(text)
+    if (!declaration) continue
+    const after = text.slice(declaration.index, declaration.index + 500)
+    if (after.includes("getSelectedText()")) return true
+  }
+  return false
+}
+
 describe("TUI component rules", () => {
   it("scanned the tree, so an empty result means compliance and not a bad path", () => {
     expect(ALL.length).toBeGreaterThan(150)
@@ -127,8 +165,14 @@ describe("TUI component rules", () => {
   it("every clickable transcript surface checks the selection before acting", () => {
     // A drag that ends on a row is somebody selecting text. Without the guard
     // the release is read as a click: the task card navigated out of the
-    // session, the background bar opened a dialog. Found by hand three times,
-    // which is twice too many.
+    // session, the background bar opened a dialog, the retry message buried
+    // itself under an alert. Found by hand three times, which is twice too
+    // many.
+    //
+    // Per handler, not per file. The first version of this check passed a file
+    // as soon as *one* handler guarded — which is a rule that stops working
+    // precisely when a file grows a second handler, and every one of these
+    // files has several.
     const offenders: string[] = []
     for (const { file, text } of ALL) {
       const transcript =
@@ -136,10 +180,18 @@ describe("TUI component rules", () => {
         file.startsWith("component/prompt") ||
         /^component\/(session|pending)-/.test(file)
       if (!transcript) continue
-      // A handler that does something other than stop the event needs the guard.
-      if (!/onMouseUp=\{/.test(text)) continue
-      const acts = /onMouseUp=\{[^}]*(?:navigate|dialog\.|open[A-Z]|props\.onClick)/.test(text)
-      if (acts && !text.includes("getSelectedText()")) offenders.push(file)
+
+      for (const handler of handlers(text)) {
+        // Acting means leaving, or covering, what the reader was looking at.
+        // A handler that only sets local state is not in scope: `setExpanded`
+        // on a mark the reader aimed at is the click working as intended.
+        if (!/navigate\(|dialog\.(replace|show)|DialogAlert\.show|open[A-Z]\w*\(|props\.onClick/.test(handler.body)) {
+          continue
+        }
+        if (!handler.body.includes("getSelectedText()") && !guardedByCallee(text, handler.body)) {
+          offenders.push(`${file}:${handler.line} — ${handler.body.slice(0, 44).replace(/\s+/g, " ")}`)
+        }
+      }
     }
     expect(offenders).toEqual([])
   })

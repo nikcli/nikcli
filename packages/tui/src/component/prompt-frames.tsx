@@ -271,7 +271,10 @@ export function PromptFrames(props: PromptFramesProps) {
                   alignItems="center"
                   paddingTop={0.5}
                   paddingBottom={0.5}
-                  onMouseUp={() => openMonitorLog(monitor)}
+                  onMouseUp={() => {
+                    if (renderer.getSelection()?.getSelectedText()) return
+                    openMonitorLog(monitor)
+                  }}
                 >
                   <text fg={getStatusColor(monitor.status)}>{getStatusIcon(monitor.status)}</text>
                   <Show when={monitor.status === "running"}>
