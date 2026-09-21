@@ -11,6 +11,14 @@ import {
   loadBuiltInTheme,
 } from "./theme-catalog"
 import { contrastFg, deriveSemanticTokens, tint, type SemanticTokens } from "./theme-tokens"
+import {
+  readComponentPatches,
+  resolveComponents,
+  type ComponentId,
+  type ComponentPatchMap,
+  type ResolvedComponents,
+  type StyleOf,
+} from "./component-tokens"
 import { useKV } from "./kv"
 import { useRenderer } from "@opentui/solid"
 import { createStore, produce } from "solid-js/store"
@@ -94,6 +102,8 @@ type ColorValue = HexColor | RefName | Variant | RGBA
 type ThemeJson = {
   $schema?: string
   defs?: Record<string, HexColor | RefName>
+  /** Optional structural overrides; see `component-tokens.ts`. Shape-checked, not parsed. */
+  components?: unknown
   theme: Omit<Record<keyof ThemeColors, ColorValue>, "selectedListItemText" | "backgroundMenu"> & {
     selectedListItemText?: ColorValue
     backgroundMenu?: ColorValue
@@ -125,7 +135,19 @@ export const DEFAULT_THEMES: Record<string, ThemeJson> = {
   [FALLBACK_THEME_ID]: FALLBACK_THEME as ThemeJson,
 }
 
-function resolveTheme(theme: ThemeJson, mode: "dark" | "light"): Theme {
+/**
+ * Builds the color resolver for one theme document.
+ *
+ * Hoisted out of `resolveTheme` so component tokens resolve through the exact
+ * same grammar — `#rrggbb`, a key in `defs`, a reference to another theme key,
+ * a `{dark, light}` variant — instead of a second implementation that would
+ * drift from this one the first time the grammar grows.
+ *
+ * It throws on an unknown reference, which is right for a theme document: a
+ * typo there should fail loudly at load. Callers resolving hand-edited
+ * component patches catch that and fall back; see `component-tokens.ts`.
+ */
+function createColorResolver(theme: ThemeJson, mode: "dark" | "light"): (c: ColorValue) => RGBA {
   const defs = theme.defs ?? {}
   function resolveColor(c: ColorValue): RGBA {
     if (c instanceof RGBA) return c
@@ -147,6 +169,11 @@ function resolveTheme(theme: ThemeJson, mode: "dark" | "light"): Theme {
     }
     return resolveColor(c[mode])
   }
+  return resolveColor
+}
+
+function resolveTheme(theme: ThemeJson, mode: "dark" | "light"): Theme {
+  const resolveColor = createColorResolver(theme, mode)
 
   const resolved = Object.fromEntries(
     Object.entries(theme.theme)
@@ -234,7 +261,11 @@ function ansiToRgba(code: number): RGBA {
   return RGBA.fromInts(0, 0, 0)
 }
 
-export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
+export const {
+  use: useTheme,
+  provider: ThemeProvider,
+  context: ThemeContext,
+} = createSimpleContext({
   name: "Theme",
   init: (props: { mode: "dark" | "light" }) => {
     const sync = useSync()
@@ -244,6 +275,8 @@ export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
       mode: kv.get("theme_mode", props.mode),
       active: (sync.data.config.theme ?? kv.get("theme", FALLBACK_THEME_ID)) as string,
       ready: false,
+      /** `.nikcli/components.json`, merged over whatever the active theme declares. */
+      componentOverrides: {} as ComponentPatchMap,
     })
 
     function mergePluginThemeIntoStore(name: string, data: ThemeJson) {
@@ -301,6 +334,10 @@ export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
     async function reload() {
       resolveSystemTheme()
       const custom = await getCustomThemes().catch(() => ({}) as Record<string, ThemeJson>)
+      // Independent of the theme: a component override survives a theme switch,
+      // which is the point — it is the user's tweak, not the theme's opinion.
+      const overrides = await getComponentOverrides().catch(() => ({}) as ComponentPatchMap)
+      setStore("componentOverrides", overrides)
       const active = store.active
       let selected: ThemeJson | undefined
       if (active && active !== "system") {
@@ -378,6 +415,22 @@ export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
     const syntax = createMemo(() => generateSyntax(values()))
     const subtleSyntax = createMemo(() => generateSubtleSyntax(values()))
 
+    /**
+     * Component styles for the active theme.
+     *
+     * One memo for the whole catalog rather than one per component: resolution
+     * is a few dozen color lookups, and recomputing it as a unit keeps the
+     * streaming parts' render path free of any merge at all. It re-runs only
+     * when the theme document, the mode, or the user's overrides change.
+     */
+    const components = createMemo<ResolvedComponents>(() => {
+      const document = store.themes[store.active] ?? store.themes.nikcli!
+      return resolveComponents(createColorResolver(document, store.mode), [
+        readComponentPatches(document.components),
+        store.componentOverrides,
+      ])
+    })
+
     return {
       theme: new Proxy({} as Theme, {
         get(_target, prop) {
@@ -402,6 +455,18 @@ export const { use: useTheme, provider: ThemeProvider } = createSimpleContext({
       },
       syntax,
       subtleSyntax,
+      /**
+       * Resolved structural style for one component. Read it in the component
+       * body, not inside a per-row or per-token memo: the object identity is
+       * stable for as long as the theme is, so a plain read is already cheap.
+       */
+      component<Id extends ComponentId>(id: Id): StyleOf<Id> {
+        return components().styles[id]
+      },
+      /** Every patch the active theme and the user's overrides got wrong. */
+      componentWarnings() {
+        return components().warnings
+      },
       mode() {
         return store.mode
       },
@@ -447,6 +512,46 @@ async function getCustomThemes() {
     }
   }
   return result
+}
+
+/**
+ * Loads `components.json` from the global config and every `.nikcli` on the way
+ * up from the working directory.
+ *
+ * Ordering differs from `getCustomThemes` on purpose. `Filesystem.up` yields
+ * nearest-first, and a theme *name* collision is a naming accident where the
+ * winner barely matters. A component override is a deliberate narrowing — the
+ * repo refines the user's defaults, a sub-project refines the repo's — so the
+ * nearest file has to win. Hence the reverse: merge outermost first, let each
+ * closer directory overwrite, and the closest ends up on top.
+ */
+const COMPONENT_OVERRIDE_FILE = "components.json"
+async function getComponentOverrides(): Promise<ComponentPatchMap> {
+  const ancestors = await Array.fromAsync(
+    Filesystem.up({
+      targets: [".nikcli"],
+      start: process.cwd(),
+    }),
+  )
+  const directories = [Global.Path.config, ...ancestors.reverse()]
+
+  const merged: Record<string, { box?: Record<string, unknown>; colors?: Record<string, unknown> }> = {}
+  for (const dir of directories) {
+    const file = Bun.file(path.join(dir, COMPONENT_OVERRIDE_FILE))
+    // A missing file is the common case, not an error worth surfacing. A
+    // malformed one is skipped per-file so one bad override does not discard
+    // the valid ones above it in the chain.
+    const document = await file.json().catch(() => undefined)
+    if (document === undefined) continue
+    for (const [id, patch] of Object.entries(readComponentPatches(document))) {
+      const previous = merged[id]
+      merged[id] = {
+        box: { ...previous?.box, ...patch.box },
+        colors: { ...previous?.colors, ...patch.colors },
+      }
+    }
+  }
+  return merged as ComponentPatchMap
 }
 
 function generateSystem(colors: TerminalColors, mode: "dark" | "light"): ThemeJson {
@@ -1172,4 +1277,49 @@ function getSyntaxRules(theme: Theme) {
       },
     },
   ]
+}
+
+/**
+ * A theme value built from a document, with no Sync, KV or renderer behind it.
+ *
+ * `ThemeProvider` resolves the active theme from the server config, the user's
+ * `kv.json` and the terminal palette. That is right in the app and unusable
+ * anywhere a component is rendered against fixtures — a storybook, a snapshot
+ * test — where the point is to drive the theme, not discover it.
+ *
+ * It returns the same shape `useTheme()` does, from the same `resolveTheme` and
+ * `resolveComponents`, so a component rendered through it exercises the real
+ * resolution rather than a lookalike. Mutating operations are absent by design:
+ * there is no store to write back to, and a silent no-op `set()` would read as
+ * a bug in whatever called it.
+ */
+export function createStandaloneTheme(input: {
+  document: unknown
+  mode: "dark" | "light"
+  overrides?: ComponentPatchMap
+}) {
+  const document = input.document as ThemeJson
+  const resolved = resolveTheme(document, input.mode)
+  const components = resolveComponents(createColorResolver(document, input.mode), [
+    readComponentPatches(document.components),
+    input.overrides ?? {},
+  ])
+  const syntax = generateSyntax(resolved)
+  const subtleSyntax = generateSubtleSyntax(resolved)
+
+  return {
+    theme: resolved,
+    syntax: () => syntax,
+    subtleSyntax: () => subtleSyntax,
+    component<Id extends ComponentId>(id: Id): StyleOf<Id> {
+      return components.styles[id]
+    },
+    componentWarnings() {
+      return components.warnings
+    },
+    mode() {
+      return input.mode
+    },
+    ready: true,
+  }
 }

@@ -17,6 +17,7 @@ import { TuiPluginRuntime } from "@tui/plugin"
 import { useLocal } from "@tui/context/local"
 import { useLanguage } from "@tui/context/language"
 import { useTheme } from "@tui/context/theme"
+import { hasSessionStyle, readSessionStyle, resolveSessionStyle } from "@tui/feature-plugins/session-studio/settings"
 import { EmptyBorder, SplitBorder } from "@tui/component/border"
 import { useSDK } from "@tui/context/sdk"
 import { useRoute } from "@tui/context/route"
@@ -222,6 +223,12 @@ export function Prompt(props: PromptProps) {
   const dimensions = useTerminalDimensions()
   const { theme, syntax } = useTheme()
   const kv = useKV()
+  const sessionStyle = createMemo(() =>
+    hasSessionStyle(kv, props.sessionID)
+      ? resolveSessionStyle(theme, readSessionStyle(kv, props.sessionID))
+      : undefined,
+  )
+  const promptBackground = createMemo(() => sessionStyle()?.prompt.backgroundColor ?? theme.surface.offset)
   const lang = useLanguage()
   const editor = useEditorContext()
   const activeSession = createMemo(() => (props.sessionID ? sync.session.get(props.sessionID) : undefined))
@@ -1844,7 +1851,7 @@ export function Prompt(props: PromptProps) {
       />
       <box ref={(r) => (anchor = r)} visible={props.visible !== false}>
         <box
-          border={["left"]}
+          border={sessionStyle()?.prompt.border === false ? [] : ["left"]}
           borderColor={highlight()}
           customBorderChars={{
             ...SplitBorder.customBorderChars,
@@ -1852,11 +1859,12 @@ export function Prompt(props: PromptProps) {
           }}
         >
           <box
-            paddingLeft={2}
-            paddingRight={2}
-            paddingTop={1}
+            paddingLeft={sessionStyle()?.prompt.paddingX ?? 2}
+            paddingRight={sessionStyle()?.prompt.paddingX ?? 2}
+            paddingTop={sessionStyle()?.prompt.paddingY ?? 1}
+            paddingBottom={sessionStyle()?.prompt.paddingY ?? 0}
             flexShrink={0}
-            backgroundColor={theme.surface.offset}
+            backgroundColor={promptBackground()}
             flexGrow={1}
           >
             <textarea
@@ -2075,7 +2083,7 @@ export function Prompt(props: PromptProps) {
               cursorColor={theme.foreground.default}
               syntaxStyle={syntax()}
             />
-            <box flexDirection="row" flexShrink={0} paddingTop={1} gap={1}>
+            <box flexDirection="row" flexShrink={0} paddingTop={sessionStyle()?.prompt.paddingY ?? 1} gap={1}>
               <Show when={kv.get("show_agent", true)}>
                 <text fg={highlight()}>
                   {store.mode === "shell" ? lang.t("prompt.shell") : Locale.titlecase(local.agent.current().name)}{" "}
@@ -2119,19 +2127,19 @@ export function Prompt(props: PromptProps) {
         </box>
         <box
           height={1}
-          border={["left"]}
+          border={sessionStyle()?.prompt.border === false ? [] : ["left"]}
           borderColor={highlight()}
           customBorderChars={{
             ...EmptyBorder,
-            vertical: theme.surface.offset.a !== 0 ? "╹" : " ",
+            vertical: promptBackground().a !== 0 ? "╹" : " ",
           }}
         >
           <box
             height={1}
             border={["bottom"]}
-            borderColor={theme.surface.offset}
+            borderColor={promptBackground()}
             customBorderChars={
-              theme.surface.offset.a !== 0
+              promptBackground().a !== 0
                 ? {
                     ...EmptyBorder,
                     horizontal: "▀",

@@ -16,7 +16,11 @@ import { useArgs } from "./args"
 import { RGBA } from "@opentui/core"
 import { moveSelection } from "@tui/ui/select-controller"
 
-export const { use: useLocal, provider: LocalProvider } = createSimpleContext({
+export const {
+  use: useLocal,
+  provider: LocalProvider,
+  context: LocalContext,
+} = createSimpleContext({
   name: "Local",
   init: () => {
     const sync = useSync()

@@ -86,7 +86,11 @@ type MonitorSnapshot = {
   bytes?: number
 }
 
-export const { use: useSync, provider: SyncProvider } = createSimpleContext({
+export const {
+  use: useSync,
+  provider: SyncProvider,
+  context: SyncContext,
+} = createSimpleContext({
   name: "Sync",
   init: () => {
     const [store, setStore] = createStore<{

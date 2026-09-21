@@ -948,6 +948,25 @@
         "@opentui/solid": ">=0.5.11",
       },
     },
+    "packages/tui-storybook": {
+      "name": "@nikcli-ai/tui-storybook",
+      "version": "1.380.0",
+      "bin": {
+        "tui-storybook": "./src/index.ts",
+      },
+      "dependencies": {
+        "@nikcli-ai/tui": "workspace:*",
+        "@nikcli-ai/util": "workspace:*",
+        "@opentui/core": "0.5.11",
+        "@opentui/solid": "0.5.11",
+        "solid-js": "catalog:",
+      },
+      "devDependencies": {
+        "@tsconfig/bun": "1.0.9",
+        "@types/bun": "catalog:",
+        "typescript": "catalog:",
+      },
+    },
     "packages/ui": {
       "name": "@nikcli-ai/ui",
       "version": "1.380.0",
@@ -2139,6 +2158,8 @@
     "@nikcli-ai/tui-image": ["@nikcli-ai/tui-image@workspace:packages/tui-image"],
 
     "@nikcli-ai/tui-math": ["@nikcli-ai/tui-math@workspace:packages/tui-math"],
+
+    "@nikcli-ai/tui-storybook": ["@nikcli-ai/tui-storybook@workspace:packages/tui-storybook"],
 
     "@nikcli-ai/ui": ["@nikcli-ai/ui@workspace:packages/ui"],
 
@@ -6237,6 +6258,8 @@
     "@nikcli-ai/tui-image/typescript": ["typescript@5.8.2", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-aJn6wq13/afZp/jT9QZmwEjDqqvSGp1VT5GVg+f/t6/oVyrgXM6BY1h9BRh/O5p3PlUPAe+WuiEZOmb/49RqoQ=="],
 
     "@nikcli-ai/tui-math/typescript": ["typescript@5.8.2", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-aJn6wq13/afZp/jT9QZmwEjDqqvSGp1VT5GVg+f/t6/oVyrgXM6BY1h9BRh/O5p3PlUPAe+WuiEZOmb/49RqoQ=="],
+
+    "@nikcli-ai/tui-storybook/typescript": ["typescript@5.8.2", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-aJn6wq13/afZp/jT9QZmwEjDqqvSGp1VT5GVg+f/t6/oVyrgXM6BY1h9BRh/O5p3PlUPAe+WuiEZOmb/49RqoQ=="],
 
     "@nikcli-ai/ui/typescript": ["typescript@5.8.2", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-aJn6wq13/afZp/jT9QZmwEjDqqvSGp1VT5GVg+f/t6/oVyrgXM6BY1h9BRh/O5p3PlUPAe+WuiEZOmb/49RqoQ=="],
 

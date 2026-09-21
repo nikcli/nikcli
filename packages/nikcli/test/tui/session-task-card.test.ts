@@ -35,7 +35,7 @@ describe("session task chrome", () => {
 
 describe("session transcript uses the card, not a dialog", () => {
   it("SubtaskPart picks kind from entry.background and renders SessionTaskCard", async () => {
-    const text = stripComments(await tuiSource("routes/session/index.tsx"))
+    const text = stripComments(await tuiSource("routes/session/parts/subtask-part.tsx"))
     expect(text).toContain("function SubtaskPart")
     expect(text).toContain('kind={background() ? "background" : "subtask"}')
     expect(text).toContain("<SessionTaskCard")

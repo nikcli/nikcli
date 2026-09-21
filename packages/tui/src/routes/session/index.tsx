@@ -17,7 +17,7 @@ import path from "path"
 import { useRoute, useRouteData } from "@tui/context/route"
 import { useSync } from "@tui/context/sync"
 import { useProject } from "@tui/context/project"
-import { SplitBorder } from "@tui/component/border"
+import { borderCharsFor, SplitBorder } from "@tui/component/border"
 import { PendingInputCard } from "@tui/component/pending-input-card"
 import { SessionTaskCard } from "@tui/component/session-task-card"
 import { Spinner } from "@tui/component/spinner"
@@ -25,15 +25,7 @@ import { useTheme, selectedForeground } from "@tui/context/theme"
 import { ScrollBoxRenderable, addDefaultParsers, RGBA } from "@opentui/core"
 import { Prompt, type PromptRef } from "@tui/component/prompt"
 import { TuiPluginRuntime } from "@tui/plugin"
-import {
-  createNikcliClient,
-  type AssistantMessage,
-  type Part,
-  type UserMessage,
-  type TextPart,
-  type ReasoningPart,
-  type SessionPendingInput2,
-} from "@nikcli-ai/sdk/httpapi"
+import { createNikcliClient, type Part, type SessionPendingInput2 } from "@nikcli-ai/sdk/httpapi"
 import { useLocal } from "@tui/context/local"
 import { Locale } from "@nikcli-ai/util/locale"
 import { reasoningSummary } from "@tui/context/thinking"
@@ -94,17 +86,25 @@ import {
 import { friendlyErrorMessage, shareErrorMessage } from "../../util/error-message"
 import { Link } from "../../ui/link"
 import { context, use } from "./session-context"
-import { estimateTurnHeight, fromEntries, stabilize, type Turn, type ViewEntry } from "./view"
+import {
+  DEFAULT_TURN_HEIGHT_METRICS,
+  estimateTurnHeight,
+  fromEntries,
+  stabilize,
+  type Turn,
+  type ViewEntry,
+} from "./view"
+import { chromeRows, type StyleOf } from "@tui/context/component-tokens"
+import { AssistantMessage, PendingUserMessage, UserMessage } from "./parts"
+import {
+  hasSessionStyle,
+  readSessionStyle,
+  resolveUserComponentStyle,
+} from "@tui/feature-plugins/session-studio/settings"
 import { formatInstructionDelta, visibleInstructionNotices } from "@nikcli-ai/util/instruction-delta"
 import { getScrollAcceleration, scrollChildIntoView } from "@tui/util/scroll"
 
 /** The file fields the user-message badge row and image preview read. */
-type FileAttachment = {
-  readonly mime: string
-  readonly filename?: string
-  readonly url?: string
-  readonly source?: { readonly type?: string; readonly path?: string }
-}
 import { DialogMonitorLog, ExplorationSummary, ToolPartView } from "./tool-view"
 import { moveSelection } from "@tui/ui/select-controller"
 
@@ -116,7 +116,13 @@ export function Session() {
   const sync = useSync()
   const kv = useKV()
   const server = useServer()
-  const { theme } = useTheme()
+  const { theme, component } = useTheme()
+  const userStyle = createMemo(() => {
+    const base = component("session.user-message")
+    return hasSessionStyle(kv, route.sessionID)
+      ? resolveUserComponentStyle(base, theme, readSessionStyle(kv, route.sessionID))
+      : base
+  })
   const lang = useLanguage()
   const commandLabels = sessionCommandLabels(lang)
   const promptRef = usePromptRef()
@@ -208,7 +214,32 @@ export function Session() {
       // magnitude, so the offset drifted further the more the transcript mixed
       // the two. `specs/effect-tui/06-terminal-rendering.md`.
       const columns = Math.max(1, scroll?.viewport.width || dimensions().width || 80)
-      const heights = all.map((turn) => estimateTurnHeight(turn, columns) || MESSAGE_HEIGHT_FALLBACK)
+      // Chrome rows come from the *resolved* message style, not a constant. A
+      // theme that changes the message padding changes how tall every turn
+      // renders; an estimator still counting the stock 3 would mis-reserve and
+      // the scroll offset would drift — which reads as a renderer bug, not a
+      // theming one.
+      const box = userStyle().box
+      const userColumns = Math.max(
+        1,
+        columns -
+          box.paddingLeft -
+          box.paddingRight -
+          Number(box.borderSides.includes("left")) -
+          Number(box.borderSides.includes("right")),
+      )
+      const metrics = {
+        chromeRows: chromeRows(box),
+        entryRows: DEFAULT_TURN_HEIGHT_METRICS.entryRows,
+      }
+      const heights = all.map(
+        (turn) =>
+          estimateTurnHeight(
+            turn,
+            turn.role === "user" ? userColumns : columns,
+            turn.role === "user" ? metrics : DEFAULT_TURN_HEIGHT_METRICS,
+          ) || MESSAGE_HEIGHT_FALLBACK,
+      )
       const scrollTop = scrollPos()
       const vp = viewportH()
       // Sticky-bottom is owned by the scrollbox itself (stickyScroll=true,
@@ -1422,6 +1453,7 @@ export function Session() {
                     </Match>
                     <Match when={turn.role === "user"}>
                       <UserMessage
+                        style={userStyle()}
                         index={windowed().baseIndex + index()}
                         onMouseUp={() => {
                           if (renderer.getSelection()?.getSelectedText()) return
@@ -1516,661 +1548,5 @@ export function Session() {
         </Show>
       </box>
     </context.Provider>
-  )
-}
-
-/**
- * Session-route adapter for {@link PendingInputCard}.
- *
- * The card itself is presentational and lives in `component/pending-input-card.tsx` so fixtures can
- * render it; this resolves the parts and the agent colour that only the live session knows.
- */
-function PendingUserMessage(props: { pending: SessionPendingInput2 }) {
-  const local = useLocal()
-  const text = createMemo(() =>
-    props.pending.data.parts
-      .filter((part) => part.type === "text")
-      .map((part) => part.text)
-      .filter(Boolean)
-      .join("\n"),
-  )
-  const files = createMemo(() => props.pending.data.parts.filter((part) => part.type === "file"))
-  const color = createMemo(() => local.agent.color(props.pending.data.agent ?? ""))
-
-  return (
-    <PendingInputCard
-      id={props.pending.messageID}
-      color={color()}
-      text={text()}
-      files={files()}
-      delivery={props.pending.delivery === "queue" ? "queue" : "steer"}
-    />
-  )
-}
-
-const MIME_BADGE: Record<string, string> = {
-  "text/plain": "txt",
-  "image/png": "img",
-  "image/jpeg": "img",
-  "image/gif": "img",
-  "image/webp": "img",
-  "application/pdf": "pdf",
-  "application/x-directory": "dir",
-}
-
-function UserMessage(props: { turn: Turn; onMouseUp: () => void; index: number; pending?: string }) {
-  const ctx = use()
-  const local = useLocal()
-  /** A user turn is exactly one entry: its text plus what it carried. */
-  const entry = createMemo(() => props.turn.body[0])
-  const text = createMemo(() => {
-    const value = entry()?.text
-    return typeof value === "string" && value.length > 0 ? value : undefined
-  })
-  const files = createMemo(() => (entry()?.files ?? []) as FileAttachment[])
-  const { theme } = useTheme()
-  const [hover, setHover] = createSignal(false)
-  const queued = createMemo(() => props.pending && props.turn.messageID > props.pending)
-  const color = createMemo(() => local.agent.color(props.turn.request?.agent ?? ""))
-  const queuedFg = createMemo(() => selectedForeground(theme, color()))
-  const metadataVisible = createMemo(() => queued() || ctx.showTimestamps())
-  const imagePreviewColumns = createMemo(() => Math.max(24, Math.min(180, ctx.width - 8)))
-  const imagePreviewRows = createMemo(() => Math.max(4, Math.floor(ctx.height / 3)))
-  const imagePreviewUrls = createMemo(() =>
-    files()
-      .filter((file) => file.mime.startsWith("image/") && file.mime !== "image/svg+xml")
-      .flatMap((file) =>
-        file.url ? [file.url] : file.source?.type === "file" && file.source.path ? [file.source.path] : [],
-      ),
-  )
-
-  return (
-    <>
-      <Show when={text() || files().length > 0}>
-        <box
-          id={props.turn.messageID}
-          border={["left"]}
-          borderColor={color()}
-          customBorderChars={SplitBorder.customBorderChars}
-          marginTop={props.index === 0 ? 0 : 1}
-        >
-          <box
-            onMouseOver={() => {
-              setHover(true)
-            }}
-            onMouseOut={() => {
-              setHover(false)
-            }}
-            onMouseUp={props.onMouseUp}
-            paddingTop={1}
-            paddingBottom={1}
-            paddingLeft={2}
-            backgroundColor={hover() ? theme.surface.offset : theme.surface.panel}
-            flexShrink={0}
-          >
-            <Show when={text()}>{(value) => <text fg={theme.foreground.default}>{value()}</text>}</Show>
-            <TuiImageList
-              text={text() ?? ""}
-              urls={imagePreviewUrls()}
-              maxColumns={imagePreviewColumns()}
-              maxRows={imagePreviewRows()}
-            />
-            <Show when={files().length}>
-              <box flexDirection="row" paddingBottom={metadataVisible() ? 1 : 0} paddingTop={1} gap={1} flexWrap="wrap">
-                <For each={files()}>
-                  {(file) => {
-                    const bg = createMemo(() => {
-                      if (file.mime.startsWith("image/")) return theme.accent.alt
-                      if (file.mime === "application/pdf") return theme.accent.fg
-                      return theme.accent.secondary
-                    })
-                    return (
-                      <text fg={theme.foreground.default}>
-                        <span style={{ bg: bg(), fg: theme.surface.base }}> {MIME_BADGE[file.mime] ?? file.mime} </span>
-                        <span
-                          style={{
-                            bg: theme.surface.offset,
-                            fg: theme.foreground.muted,
-                          }}
-                        >
-                          {" "}
-                          {file.filename}{" "}
-                        </span>
-                      </text>
-                    )
-                  }}
-                </For>
-              </box>
-            </Show>
-            <Show
-              when={queued()}
-              fallback={
-                <Show when={ctx.showTimestamps()}>
-                  <text fg={theme.foreground.muted}>
-                    <span style={{ fg: theme.foreground.muted }}>
-                      {Locale.todayTimeOrDateTime(props.turn.createdAt)}
-                    </span>
-                  </text>
-                </Show>
-              }
-            >
-              <text fg={theme.foreground.muted}>
-                <span style={{ bg: color(), fg: queuedFg(), bold: true }}> QUEUED </span>
-              </text>
-            </Show>
-          </box>
-        </box>
-      </Show>
-      <Show when={props.turn.compacted}>
-        <box
-          marginTop={1}
-          border={["top"]}
-          title=" Compaction "
-          titleAlignment="center"
-          borderColor={theme.border.active}
-        />
-      </Show>
-    </>
-  )
-}
-
-function AssistantMessage(props: { turn: Turn; last: boolean; usage?: TurnUsage.Turn }) {
-  const ctx = use()
-  const local = useLocal()
-  const sync = useSync()
-  const { theme } = useTheme()
-
-  /**
-   * Parts, with finished runs of read-only tool calls folded into one row.
-   *
-   * A live run stays fully expanded on purpose: collapsing it would hide work in
-   * progress, and rebuilding the group row on every streamed delta would remount
-   * its children. Only a run that is over — something followed it, or the message
-   * finished — becomes a summary. With the flag off this is `props.parts`
-   * unchanged, so the default render path keeps its stable part identities.
-   */
-  const rows = createMemo<(ViewEntry | ExplorationGroup<ViewEntry>)[]>(() => {
-    if (!features(sync.data.config).tui.explorationGrouping) return props.turn.body
-    const blocked = new Set(
-      (sync.data.permission[props.turn.sessionID] ?? []).flatMap((request) =>
-        request.tool?.callID ? [request.tool.callID] : [],
-      ),
-    )
-    return (
-      groupParts as unknown as (
-        rows: readonly ViewEntry[],
-        options: { closed: boolean; isPending: (entry: ViewEntry) => boolean },
-      ) => ({ type: "part"; part: ViewEntry } | ExplorationGroup<ViewEntry>)[]
-    )(props.turn.body, {
-      closed: Boolean(props.turn.completedAt),
-      isPending: (part) => "callID" in part && typeof part.callID === "string" && blocked.has(part.callID),
-    }).flatMap<ViewEntry | ExplorationGroup<ViewEntry>>((row) =>
-      row.type === "part" ? [row.part] : row.completed ? [row] : row.parts,
-    )
-  })
-
-  const error = createMemo(() => props.turn.complete?.error as { name?: string } | undefined)
-
-  const final = createMemo(() => {
-    const finish = props.turn.complete?.finish
-    return finish && !["tool-calls", "unknown"].includes(finish)
-  })
-
-  // Live duration ticks once a second. Reading `entry.text` here would
-  // resubscribe this memo to every token and rewrite the footer 60 times a
-  // second — the agent/model titles share that line and flash against the
-  // wallpaper. Tok/s waits until the turn is sealed.
-  const [now, setNow] = createSignal(Date.now())
-  createEffect(() => {
-    if (!props.last || props.turn.completedAt) return
-    setNow(Date.now())
-    const timer = setInterval(() => setNow(Date.now()), 1000)
-    onCleanup(() => clearInterval(timer))
-  })
-
-  const stats = createMemo(() => {
-    // Counted from the prompt that caused the turn — which, in a turn list,
-    // is simply the turn before this one.
-    const created = props.turn.previousCreatedAt
-    if (!created) return null
-
-    const completedAt = props.turn.completedAt
-    const end = completedAt ?? (props.last ? now() : created)
-    const duration = Math.max(0, end - created)
-
-    if (!completedAt) {
-      return { duration, tps: 0 }
-    }
-
-    let text = ""
-    let streamStart: number | undefined
-    let streamEnd: number | undefined
-
-    for (const entry of props.turn.body) {
-      if (entry.type !== "text") continue
-      text += String(entry.text ?? "")
-      if (!entry.timestamp) continue
-      streamStart = streamStart === undefined ? entry.timestamp : Math.min(streamStart, entry.timestamp)
-      const finished = (entry.completed as number | undefined) ?? completedAt
-      streamEnd = streamEnd === undefined ? finished : Math.max(streamEnd, finished)
-    }
-
-    if (streamStart === undefined || streamEnd === undefined) {
-      return {
-        duration,
-        tps: 0,
-      }
-    }
-
-    const streamDuration = Math.max(0, streamEnd - streamStart)
-    const reported = props.turn.complete?.outputTokens ?? 0
-    const outputTokens = reported > 0 ? reported : Token.estimate(text)
-
-    return {
-      duration,
-      tps: streamDuration > 0 && outputTokens > 0 ? outputTokens / (streamDuration / 1000) : 0,
-    }
-  })
-
-  return (
-    <>
-      <For each={rows()}>
-        {(row) => {
-          if (row.type === "group") return <ExplorationSummary group={row as never} sessionID={props.turn.sessionID} />
-          const component = PART_MAPPING[row.type as keyof typeof PART_MAPPING]
-          const entry = row as ViewEntry
-          return (
-            <Show when={component} fallback={<UnknownPart entry={entry} />}>
-              <Dynamic
-                last={row === props.turn.body[props.turn.body.length - 1]}
-                // `last` means "bottom of the turn" and stays true forever once
-                // the turn is sealed. Whether the text is still *arriving* is a
-                // different question, and it is the one the renderers need — the
-                // same pair opencode reads (`part.time.completed`,
-                // `message.time.completed`).
-                streaming={entry.completed === undefined && props.turn.completedAt === undefined}
-                component={component}
-                entry={row as any}
-                sessionID={props.turn.sessionID}
-              />
-            </Show>
-          )
-        }}
-      </For>
-      <Show when={error() && error()!.name !== "MessageAbortedError"}>
-        <box
-          border={["left"]}
-          paddingTop={1}
-          paddingBottom={1}
-          paddingLeft={2}
-          marginTop={1}
-          backgroundColor={theme.surface.panel}
-          customBorderChars={SplitBorder.customBorderChars}
-          borderColor={theme.status.error.fg}
-        >
-          <text fg={theme.foreground.muted}>{friendlyErrorMessage(error())}</text>
-        </box>
-      </Show>
-      <Switch>
-        <Match when={props.last || final() || error()?.name === "MessageAbortedError"}>
-          <box paddingLeft={3} marginTop={1} flexDirection="row" flexShrink={0}>
-            <text>
-              <span
-                style={{
-                  fg:
-                    error()?.name === "MessageAbortedError"
-                      ? theme.foreground.muted
-                      : local.agent.color(props.turn.request?.agent ?? ""),
-                }}
-              >
-                ▣{" "}
-              </span>{" "}
-              <span style={{ fg: theme.foreground.default }}>{Locale.titlecase(props.turn.request?.mode ?? "")}</span>
-              <Show when={props.turn.request?.modelID}>
-                <span style={{ fg: theme.foreground.muted }}> · {props.turn.request?.modelID}</span>
-              </Show>
-            </text>
-            <Show when={stats()}>
-              {(value) => (
-                <text fg={theme.foreground.muted}>
-                  {" · "}
-                  {Locale.duration(value().duration)}
-                  <Show when={value().tps > 0}> · {value().tps.toFixed(0)} tok/s</Show>
-                </text>
-              )}
-            </Show>
-            <Show when={error()?.name === "MessageAbortedError"}>
-              <text fg={theme.foreground.muted}> · interrupted</text>
-            </Show>
-          </box>
-        </Match>
-      </Switch>
-      <Show when={props.usage}>{(usage) => <TurnTokens turn={usage()} />}</Show>
-    </>
-  )
-}
-
-/**
- * Per-turn token table. Off by default (`tui.turn_tokens`); the parent only
- * builds the data when it is on, so this renders nothing on the default path.
- */
-function TurnTokens(props: { turn: TurnUsage.Turn }) {
-  const { theme } = useTheme()
-  const num = (value: number) => value.toLocaleString()
-  const widths = createMemo(() => {
-    const steps = props.turn.steps
-    return {
-      step: Math.max("Step".length, ...steps.map((s) => s.finish.length)),
-      newTokens: Math.max("New".length, ...steps.map((s) => num(s.newTokens).length), num(props.turn.newTokens).length),
-      cached: Math.max("Cached".length, ...steps.map((s) => num(s.cached).length), num(props.turn.cached).length),
-      total: Math.max("Total".length, ...steps.map((s) => num(s.total).length), num(props.turn.total).length),
-    }
-  })
-  const row = (step: string, a: string, b: string, c: string) =>
-    `${step.padEnd(widths().step + 2)}${a.padStart(widths().newTokens)}  ${b.padStart(widths().cached)}  ${c.padStart(widths().total)}`
-
-  return (
-    <box paddingLeft={3} flexDirection="column">
-      <text fg={theme.foreground.muted}>{row("Step", "New", "Cached", "Total")}</text>
-      <For each={props.turn.steps}>
-        {(step) => (
-          <text fg={theme.foreground.muted}>
-            {row(step.finish, num(step.newTokens), num(step.cached), num(step.total))}
-            <Show when={step.cacheBust !== undefined}>
-              <span style={{ fg: theme.status.warning.fg }}> ⚠ cache bust −{num(step.cacheBust!)}</span>
-            </Show>
-          </text>
-        )}
-      </For>
-      <Show when={props.turn.steps.length > 1}>
-        <text fg={theme.foreground.muted}>
-          {row("turn", num(props.turn.newTokens), num(props.turn.cached), num(props.turn.total))}
-        </text>
-      </Show>
-    </box>
-  )
-}
-
-/**
- * Which entry types draw themselves, and how.
- *
- * `fromEntries` folds four of the ten entry types into the turn itself (`user`,
- * `start`, `complete`, `compaction`); everything else lands in `turn.body` and
- * is looked up here. Anything missing from this table used to render as
- * *nothing at all* — a retried request and a delegated sub-agent simply were
- * not in the transcript, which is a step back from what the v1 renderer showed.
- * `UnknownPart` is the backstop, so a new entry type is visible from the day it
- * ships rather than silently dropped.
- *
- * None of the rows below stream: they are written once and never change, so
- * they cost one renderable each and nothing per token.
- */
-const PART_MAPPING = {
-  text: TextPart,
-  tool: ToolPartView,
-  reasoning: ReasoningPart,
-  retry: RetryPart,
-  subtask: SubtaskPart,
-  synthetic: SyntheticPart,
-}
-
-/** A request that failed and was retried. Shows the attempt and why. */
-function RetryPart(props: { entry: ViewEntry }) {
-  const { theme } = useTheme()
-  const attempt = createMemo(() => {
-    const value = props.entry.attempt
-    return typeof value === "number" ? value : undefined
-  })
-  return (
-    <box paddingLeft={3} marginTop={1} flexShrink={0}>
-      <text>
-        <span style={{ fg: theme.status.warning.fg }}>⟳ </span>
-        <span style={{ fg: theme.foreground.muted }}>
-          {attempt() === undefined ? "Retrying" : `Retry ${attempt()}`}
-          {" · "}
-          {friendlyErrorMessage(props.entry.error)}
-        </span>
-      </text>
-    </box>
-  )
-}
-
-/**
- * A delegated sub-agent run.
- *
- * nikcli-specific — opencode has no equivalent entry — and the one row where
- * being invisible costs the most, because the work it stands for happened in
- * another session the reader cannot see from here.
- */
-function SubtaskPart(props: { entry: ViewEntry }) {
-  const local = useLocal()
-  const agent = createMemo(() => String(props.entry.agent ?? ""))
-  const description = createMemo(() => String(props.entry.description ?? "").trim())
-  const background = createMemo(() => props.entry.background === true)
-  const title = createMemo(() => Locale.titlecase(agent() || "task"))
-  return (
-    <box paddingLeft={3} flexShrink={0}>
-      <SessionTaskCard
-        kind={background() ? "background" : "subtask"}
-        color={local.agent.color(agent())}
-        agent={agent()}
-        title={title()}
-        description={description() || undefined}
-      />
-    </box>
-  )
-}
-
-/** An auto-generated message the engine injected into the conversation. */
-function SyntheticPart(props: { entry: ViewEntry }) {
-  const { theme } = useTheme()
-  const text = createMemo(() => String(props.entry.text ?? "").trim())
-  return (
-    <Show when={text()}>
-      <box paddingLeft={3} marginTop={1} flexShrink={0}>
-        <text fg={theme.foreground.muted}>{text()}</text>
-      </box>
-    </Show>
-  )
-}
-
-/**
- * The backstop for an entry type this table does not know.
- *
- * Deliberately dumb — a marker and the type name, no field guessing. Its job is
- * to make the gap visible in the transcript instead of hiding it, so the next
- * entry type added to `SessionEntry` shows up as an obviously unfinished row
- * rather than as silence.
- */
-function UnknownPart(props: { entry: ViewEntry }) {
-  const { theme } = useTheme()
-  return (
-    <box paddingLeft={3} marginTop={1} flexShrink={0}>
-      <text fg={theme.foreground.muted}>◌ {props.entry.type}</text>
-    </box>
-  )
-}
-
-function ReasoningPart(props: { last: boolean; streaming: boolean; entry: ViewEntry; sessionID: string }) {
-  const { theme, subtleSyntax } = useTheme()
-  const ctx = use()
-  const content = createMemo(() => {
-    // Filter out redacted reasoning chunks from OpenRouter
-    // OpenRouter sends encrypted reasoning data that appears as [REDACTED]
-    const raw = String(props.entry.text ?? "")
-      .replace("[REDACTED]", "")
-      // OpenAI Responses reasoning summaries separate sections with empty
-      // HTML comments (`<!-- -->`); they are markers, not content.
-      .replace(/<!--\s*-->/g, "")
-    return liveMarkdown(raw, props.streaming)
-  })
-  const summary = createMemo(() => reasoningSummary(content()))
-  const body = createMemo(() => {
-    const text = summary().body
-    if (!text) return ""
-    return props.streaming ? text : wrapDiagramsInFences(text)
-  })
-  const split = createMemo(() => (props.streaming ? splitLiveMarkdown(body()) : { settled: body(), live: "" }))
-  const tight = createMemo(() => ctx.width < 84)
-  const tableOptions = createMemo(() => ({
-    widthMode: "full" as const,
-    wrapMode: "word" as const,
-    cellPadding: tight() ? 0 : 1,
-    borders: true,
-    outerBorder: !tight(),
-    borderColor: theme.border.subtle,
-  }))
-  const done = createMemo(() => {
-    const end = props.entry.completed as number | undefined
-    return end !== undefined
-  })
-  const duration = createMemo(() => {
-    const end = props.entry.completed as number | undefined
-    if (end === undefined) return
-    return Locale.duration(end - props.entry.timestamp)
-  })
-  return (
-    <Show when={content() && ctx.showThinking()}>
-      <box
-        id={"text-" + props.entry.id}
-        paddingLeft={2}
-        marginTop={1}
-        flexDirection="column"
-        border={["left"]}
-        customBorderChars={SplitBorder.customBorderChars}
-        borderColor={theme.surface.offset}
-      >
-        <ReasoningHeader done={done()} title={summary().title} duration={duration()} />
-        <Show when={summary().body}>
-          <box marginTop={1} flexDirection="column">
-            <Show when={split().settled}>
-              <MessageMarkdown
-                streaming={false}
-                syntaxStyle={subtleSyntax()}
-                content={split().settled}
-                conceal={ctx.conceal()}
-                concealCode={false}
-                fg={theme.foreground.muted}
-                tableOptions={tableOptions()}
-              />
-            </Show>
-            <Show when={split().live}>
-              <box marginTop={split().settled ? 1 : 0} flexShrink={0}>
-                <MessageMarkdown
-                  streaming={props.streaming}
-                  syntaxStyle={subtleSyntax()}
-                  content={split().live}
-                  conceal={ctx.conceal()}
-                  concealCode={false}
-                  fg={theme.foreground.muted}
-                  tableOptions={tableOptions()}
-                />
-              </box>
-            </Show>
-          </box>
-        </Show>
-      </box>
-    </Show>
-  )
-}
-
-function ReasoningHeader(props: { done: boolean; title: string | null; duration?: string }) {
-  const { theme } = useTheme()
-  return (
-    <Switch>
-      <Match when={!props.done}>
-        <box flexDirection="row">
-          <Spinner color={theme.status.warning.fg}>{props.title ? "Thinking: " + props.title : "Thinking"}</Spinner>
-        </box>
-      </Match>
-      <Match when={props.done}>
-        <text fg={theme.status.warning.fg} wrapMode="none">
-          <span>Thought</span>
-          <Show when={props.title || props.duration}>
-            <span>: </span>
-          </Show>
-          <Show when={props.title}>
-            <span>{props.title}</span>
-          </Show>
-          <Show when={props.duration}>
-            <span>
-              {props.title ? " · " : ""}
-              {props.duration}
-            </span>
-          </Show>
-        </text>
-      </Match>
-    </Switch>
-  )
-}
-
-/**
- * A text part.
- *
- * While the text is still arriving this renders what opencode's `TextPart`
- * renders and nothing more: one `<markdown>`, without a trailing trim. The
- * extra passes below — fencing ASCII diagrams, pulling image URLs out of the
- * prose — each walk the *whole* message, so on a live part they cost O(n) per
- * token and O(n²) over the message. They also cannot be right yet: a
- * half-written line holds one box character and reads as prose, then reads as
- * a diagram a character later, and the block it belongs to is rebuilt each
- * time it changes its mind.
- *
- * So they wait for the text to settle. The message is scanned once, when it is
- * finished, instead of once per token while it is being read.
- */
-function TextPart(props: { last: boolean; streaming: boolean; entry: ViewEntry; sessionID: string }) {
-  const ctx = use()
-  const { theme, syntax } = useTheme()
-  const imagePreviewColumns = createMemo(() => Math.max(24, Math.min(180, ctx.width - 8)))
-  const imagePreviewRows = createMemo(() => Math.max(4, Math.floor(ctx.height / 3)))
-  const tight = createMemo(() => ctx.width < 84)
-  const text = createMemo(() => liveMarkdown(String(props.entry.text ?? ""), props.streaming))
-  const rendered = createMemo(() => (props.streaming ? text() : wrapDiagramsInFences(text())))
-  const split = createMemo(() => (props.streaming ? splitLiveMarkdown(rendered()) : { settled: rendered(), live: "" }))
-  const tableOptions = createMemo(() => ({
-    widthMode: "full" as const,
-    wrapMode: "word" as const,
-    cellPadding: tight() ? 0 : 1,
-    borders: true,
-    outerBorder: !tight(),
-    borderColor: theme.border.subtle,
-  }))
-
-  return (
-    <Show when={text()}>
-      <box id={"text-" + props.entry.id} paddingLeft={3} marginTop={1} flexShrink={0}>
-        {/* Finished blocks render as settled markdown so they are never
-            re-lexed and never re-highlighted; only the block still being
-            written streams. See `splitLiveMarkdown`. */}
-        <Show when={split().settled}>
-          <MessageMarkdown
-            streaming={false}
-            syntaxStyle={syntax()}
-            content={split().settled}
-            conceal={ctx.conceal()}
-            concealCode={false}
-            fg={theme.foreground.default}
-            tableOptions={tableOptions()}
-          />
-        </Show>
-        <Show when={split().live}>
-          <box marginTop={split().settled ? 1 : 0} flexShrink={0}>
-            <MessageMarkdown
-              streaming={props.streaming}
-              syntaxStyle={syntax()}
-              content={split().live}
-              conceal={ctx.conceal()}
-              concealCode={false}
-              fg={theme.foreground.default}
-              tableOptions={tableOptions()}
-            />
-          </box>
-        </Show>
-        <Show when={!props.streaming}>
-          <TuiImageList text={text()} maxColumns={imagePreviewColumns()} maxRows={imagePreviewRows()} />
-        </Show>
-      </box>
-    </Show>
   )
 }

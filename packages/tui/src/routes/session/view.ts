@@ -264,11 +264,31 @@ function sameBody(a: readonly ViewEntry[], b: readonly ViewEntry[]): boolean {
 // Height estimation
 // ============================================================================
 
-/** Chrome every turn pays: the header row, the footer row, and the gap after it. */
-const TURN_CHROME_ROWS = 3
-
 /** A tool call, a reasoning block, or any other non-text entry, collapsed. */
 const ENTRY_ROWS = 1
+
+/**
+ * Rows a turn spends on chrome rather than content.
+ *
+ * These used to be literals here, duplicating the paddings the message
+ * components hardcoded in `index.tsx`. That was safe only while both sides were
+ * literals. Now that a theme can restyle those boxes, the caller passes the
+ * figure derived from the *resolved* style (`chromeRows` in
+ * `context/component-tokens.ts`), and these serve as the default for callers
+ * that have no theme in hand — tests, and any pure-view use.
+ *
+ * The default is 3 because that is what the stock style resolves to:
+ * `paddingTop 1 + paddingBottom 1 + marginTop 1`.
+ */
+export type TurnHeightMetrics = {
+  readonly chromeRows: number
+  readonly entryRows: number
+}
+
+export const DEFAULT_TURN_HEIGHT_METRICS: TurnHeightMetrics = {
+  chromeRows: 3,
+  entryRows: ENTRY_ROWS,
+}
 
 /**
  * How tall a turn is likely to render, in rows, at a given width.
@@ -287,16 +307,20 @@ const ENTRY_ROWS = 1
  * Deliberately cheap: it runs for every turn on every scroll tick, so it counts
  * newlines and divides, and never touches a layout engine.
  */
-export function estimateTurnHeight(turn: Turn, width: number): number {
+export function estimateTurnHeight(
+  turn: Turn,
+  width: number,
+  metrics: TurnHeightMetrics = DEFAULT_TURN_HEIGHT_METRICS,
+): number {
   // A zero or negative width is a viewport that has not reported yet. Wrapping
   // against it would divide by zero and poison every offset after it.
   const columns = Math.max(1, Math.floor(width) || 1)
-  let rows = TURN_CHROME_ROWS
+  let rows = metrics.chromeRows
 
   for (const entry of turn.body) {
     const text = typeof entry.text === "string" ? entry.text : undefined
     if (text === undefined) {
-      rows += ENTRY_ROWS
+      rows += metrics.entryRows
       continue
     }
     // Every hard line break is a row, and each line wraps by width. An empty

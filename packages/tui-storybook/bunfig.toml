@@ -1,0 +1,10 @@
+# Solid's compile-time JSX transform, for running this package from source.
+#
+# Same reason `packages/tui` carries this line: `tsconfig.json`'s
+# `jsxImportSource` only picks the runtime factory, and without Solid's compiler
+# pass children are built eagerly, bottom-up — every component runs before the
+# one that wraps it, so `Harness` renders its children before it has provided a
+# single context. It also puts Solid on its client build; without it `bun run`
+# resolves `solid-js/dist/server.js`, where `createResource` throws
+# "getNextContextId cannot be used under non-hydrating context".
+preload = ["@opentui/solid/preload"]

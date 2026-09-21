@@ -1,0 +1,352 @@
+import type { RGBA } from "@opentui/core"
+
+/**
+ * Structural theming for the components the session renders.
+ *
+ * Colors were already themeable: every component reads `useTheme()`. Shape was
+ * not — paddings, margins and borders were literals at the call site, so a
+ * theme could recolor a message but never restyle one.
+ *
+ * Two rules keep this from becoming a second, drifting style system:
+ *
+ * 1. **Colors are references, never literals.** A component color names a key
+ *    in the active theme (or its `defs`), resolved by the theme's own resolver.
+ *    It is a pointer into the palette, so it cannot fall out of sync with it.
+ *    A raw `#rrggbb` is accepted because the theme grammar accepts one, but a
+ *    theme that uses them is opting out of its own palette, not extending it.
+ * 2. **Structure is a closed whitelist.** Only the fields below, only within
+ *    the stated bounds. Passing arbitrary renderable props through would make
+ *    every layout bug a theme bug and freeze each component's internal box
+ *    structure as public API.
+ */
+
+export type BorderSide = "top" | "right" | "bottom" | "left"
+
+/** Named border character sets. Maps to the host's `customBorderChars` tables. */
+export type BorderCharset = "none" | "single" | "rounded" | "double" | "heavy" | "split"
+
+const BORDER_SIDES: readonly BorderSide[] = ["top", "right", "bottom", "left"]
+/** Exported so an editor can offer the set rather than hardcode a second copy of it. */
+export const BORDER_CHARSETS: readonly BorderCharset[] = ["none", "single", "rounded", "double", "heavy", "split"]
+
+/**
+ * Spacing bounds. A negative pad is a renderer crash and a huge one is a blank
+ * screen the user cannot undo without editing JSON by hand, so both ends clamp
+ * rather than reject: a bad value degrades the component, never the session.
+ */
+const SPACING_MIN = 0
+const SPACING_MAX = 8
+
+export type BoxStyle = {
+  readonly paddingTop: number
+  readonly paddingBottom: number
+  readonly paddingLeft: number
+  readonly paddingRight: number
+  readonly marginTop: number
+  readonly marginBottom: number
+  readonly gap: number
+  /**
+   * Mutable by necessity: the renderable's `border` prop takes a mutable array,
+   * and spreading a readonly one at the call site would hand the renderable a
+   * fresh identity on every render. Built once per resolution, then treated as
+   * frozen by everything downstream.
+   */
+  readonly borderSides: BorderSide[]
+  readonly borderCharset: BorderCharset
+}
+
+const BOX_KEYS = [
+  "paddingTop",
+  "paddingBottom",
+  "paddingLeft",
+  "paddingRight",
+  "marginTop",
+  "marginBottom",
+  "gap",
+] as const satisfies readonly (keyof BoxStyle)[]
+
+/** What a component declares: its box, plus the palette keys it paints with. */
+export type ComponentSpec = {
+  readonly box: BoxStyle
+  readonly colors: Readonly<Record<string, string>>
+}
+
+/** What a component receives: the same shape, with colors resolved to RGBA. */
+export type ComponentStyle<Spec extends ComponentSpec = ComponentSpec> = {
+  readonly box: BoxStyle
+  readonly colors: { readonly [Key in keyof Spec["colors"]]: RGBA }
+}
+
+function box(input: Partial<BoxStyle>): BoxStyle {
+  return {
+    paddingTop: 0,
+    paddingBottom: 0,
+    paddingLeft: 0,
+    paddingRight: 0,
+    marginTop: 0,
+    marginBottom: 0,
+    gap: 0,
+    borderSides: [],
+    borderCharset: "none",
+    ...input,
+  }
+}
+
+/**
+ * The catalog. Every entry reproduces what its component hardcodes today, so
+ * adopting this layer is a no-op until a theme overrides something — the
+ * migration is verifiable by capturing a frame before and after.
+ */
+export const COMPONENT_DEFAULTS = {
+  /** `routes/session/parts/user-message.tsx` */
+  "session.user-message": {
+    box: box({
+      paddingTop: 1,
+      paddingBottom: 1,
+      paddingLeft: 2,
+      marginTop: 1,
+      borderSides: ["left"],
+      borderCharset: "split",
+    }),
+    colors: {
+      background: "backgroundPanel",
+      backgroundHover: "backgroundElement",
+      text: "text",
+    },
+  },
+  /**
+   * `TextPart`. The body is `foreground.default`, not `markdown.text`: the
+   * markdown tokens apply inside the rendered document, while this is the plain
+   * fallback the part paints when it is not rendering markdown.
+   */
+  "session.text-part": {
+    box: box({ paddingLeft: 3, marginTop: 1 }),
+    colors: {
+      text: "text",
+    },
+  },
+  /**
+   * `ReasoningPart`. Box only. Its body is colored by `subtleSyntax`, a whole
+   * derived palette rather than a slot, and exposing that as one overridable
+   * color would let a theme set a value the renderer then ignores.
+   */
+  "session.reasoning-part": {
+    box: box({ paddingLeft: 2, marginTop: 1, borderSides: ["left"], borderCharset: "split" }),
+    colors: {
+      heading: "warning",
+      border: "backgroundElement",
+    },
+  },
+  /** `RetryPart`. */
+  "session.retry-part": {
+    box: box({ paddingLeft: 3, marginTop: 1 }),
+    colors: {
+      icon: "warning",
+      text: "textMuted",
+    },
+  },
+} as const satisfies Record<string, ComponentSpec>
+
+export type ComponentId = keyof typeof COMPONENT_DEFAULTS
+
+export type StyleOf<Id extends ComponentId> = ComponentStyle<(typeof COMPONENT_DEFAULTS)[Id]>
+
+export const COMPONENT_IDS = Object.keys(COMPONENT_DEFAULTS) as ComponentId[]
+
+/**
+ * A patch as it appears in a theme document's `components` section or in a
+ * user's `components.json`. Every field is optional and untrusted: this is
+ * hand-edited JSON, so it is validated field by field rather than parsed.
+ */
+export type ComponentPatch = {
+  readonly box?: Partial<Record<keyof BoxStyle, unknown>>
+  readonly colors?: Readonly<Record<string, unknown>>
+}
+
+export type ComponentPatchMap = Readonly<Record<string, ComponentPatch>>
+
+/**
+ * Resolves one color reference, or reports why it could not.
+ *
+ * The theme's own resolver throws on an unknown reference — correct for a theme
+ * document, where a typo should surface loudly at load. It is wrong here: these
+ * patches arrive from files the user edits by hand, and one typo must not take
+ * the palette, and with it the whole TUI, down with it. So the resolver is
+ * passed in and its failure is caught by the caller below.
+ */
+export type ColorResolver = (ref: string) => RGBA
+
+export type ComponentWarning = {
+  readonly id: string
+  readonly field: string
+  readonly reason: string
+}
+
+function clampSpacing(value: unknown): number | undefined {
+  if (typeof value !== "number" || !Number.isFinite(value)) return undefined
+  return Math.min(SPACING_MAX, Math.max(SPACING_MIN, Math.round(value)))
+}
+
+function readBorderSides(value: unknown): BorderSide[] | undefined {
+  if (!Array.isArray(value)) return undefined
+  const sides: BorderSide[] = []
+  for (const entry of value) {
+    if (typeof entry !== "string") continue
+    const side = entry as BorderSide
+    if (BORDER_SIDES.includes(side) && !sides.includes(side)) sides.push(side)
+  }
+  return sides
+}
+
+function readCharset(value: unknown): BorderCharset | undefined {
+  if (typeof value !== "string") return undefined
+  return BORDER_CHARSETS.includes(value as BorderCharset) ? (value as BorderCharset) : undefined
+}
+
+function mergeBox(base: BoxStyle, patch: ComponentPatch["box"], id: string, warn: ComponentWarning[]): BoxStyle {
+  if (!patch) return base
+  const next: Record<string, unknown> = { ...base }
+
+  for (const key of BOX_KEYS) {
+    if (!(key in patch)) continue
+    const value = clampSpacing(patch[key])
+    if (value === undefined) {
+      warn.push({ id, field: `box.${key}`, reason: "expected a finite number" })
+      continue
+    }
+    next[key] = value
+  }
+
+  if ("borderSides" in patch) {
+    const sides = readBorderSides(patch.borderSides)
+    if (sides === undefined) warn.push({ id, field: "box.borderSides", reason: "expected an array of sides" })
+    else next.borderSides = sides
+  }
+
+  if ("borderCharset" in patch) {
+    const charset = readCharset(patch.borderCharset)
+    if (charset === undefined)
+      warn.push({ id, field: "box.borderCharset", reason: `expected one of ${BORDER_CHARSETS.join(", ")}` })
+    else next.borderCharset = charset
+  }
+
+  return next as BoxStyle
+}
+
+/**
+ * Merges color references, then resolves them.
+ *
+ * A patch may only override a slot the component declares. Adding an unknown
+ * slot is dropped with a warning rather than carried: a component reads its
+ * slots by name, so an invented one would silently do nothing, and a silent
+ * no-op is the worst outcome for someone editing a theme by hand.
+ */
+function mergeColors(
+  base: Readonly<Record<string, string>>,
+  patch: ComponentPatch["colors"],
+  resolve: ColorResolver,
+  id: string,
+  warn: ComponentWarning[],
+): Record<string, RGBA> {
+  const refs: Record<string, string> = { ...base }
+
+  if (patch) {
+    for (const [slot, value] of Object.entries(patch)) {
+      if (!(slot in base)) {
+        warn.push({ id, field: `colors.${slot}`, reason: "unknown color slot for this component" })
+        continue
+      }
+      if (typeof value !== "string" || value.length === 0) {
+        warn.push({ id, field: `colors.${slot}`, reason: "expected a color reference or #rrggbb" })
+        continue
+      }
+      refs[slot] = value
+    }
+  }
+
+  const resolved: Record<string, RGBA> = {}
+  for (const [slot, ref] of Object.entries(refs)) {
+    try {
+      resolved[slot] = resolve(ref)
+    } catch {
+      // The override named something the active theme does not define. Fall
+      // back to the component's own default, which the catalog guarantees is a
+      // key every theme carries. If even that fails the theme itself is broken,
+      // and letting it throw here is right — that is a load error, not a patch.
+      warn.push({ id, field: `colors.${slot}`, reason: `unresolved color reference "${ref}"` })
+      resolved[slot] = resolve(base[slot]!)
+    }
+  }
+  return resolved
+}
+
+export type ResolvedComponents = {
+  readonly styles: { readonly [Id in ComponentId]: StyleOf<Id> }
+  readonly warnings: readonly ComponentWarning[]
+}
+
+/**
+ * Builds every component style for one theme.
+ *
+ * Runs once per (theme, mode, overrides) change, never per frame and never per
+ * token: the session's streaming parts re-render on every delta, and a merge in
+ * that path is exactly the per-token cost this repo has paid for before.
+ *
+ * Patches apply in order, each overriding the last: the theme document first,
+ * then the user's `components.json`, then any plugin override.
+ */
+export function resolveComponents(resolve: ColorResolver, patches: readonly ComponentPatchMap[]): ResolvedComponents {
+  const warnings: ComponentWarning[] = []
+  const styles = {} as Record<ComponentId, ComponentStyle>
+
+  for (const id of COMPONENT_IDS) {
+    const spec = COMPONENT_DEFAULTS[id] as ComponentSpec
+    let boxStyle = spec.box
+    let colorRefs: Record<string, unknown> = {}
+
+    for (const map of patches) {
+      const patch = map[id]
+      if (!patch) continue
+      boxStyle = mergeBox(boxStyle, patch.box, id, warnings)
+      if (patch.colors) colorRefs = { ...colorRefs, ...patch.colors }
+    }
+
+    styles[id] = {
+      box: boxStyle,
+      colors: mergeColors(spec.colors, colorRefs, resolve, id, warnings),
+    }
+  }
+
+  return { styles: styles as ResolvedComponents["styles"], warnings }
+}
+
+/**
+ * Vertical rows a turn spends on chrome rather than content.
+ *
+ * `estimateTurnHeight` hardcoded this as 3 — the user message's own
+ * `paddingTop + paddingBottom + marginTop`, duplicated as a constant in another
+ * file. That duplication was harmless only while both were literals. The moment
+ * a theme can change the padding, the estimator starts lying, the virtualizer
+ * mis-reserves, and the scroll offset drifts — a bug that would read as a
+ * renderer fault, not a theming one. Deriving it from the same style closes
+ * that gap by construction.
+ */
+export function chromeRows(style: Pick<BoxStyle, "paddingTop" | "paddingBottom" | "marginTop" | "marginBottom">) {
+  return style.paddingTop + style.paddingBottom + style.marginTop + style.marginBottom
+}
+
+/** Reads a `components` section off an untrusted document. Shape only. */
+export function readComponentPatches(value: unknown): ComponentPatchMap {
+  if (typeof value !== "object" || value === null || Array.isArray(value)) return {}
+  const out: Record<string, ComponentPatch> = {}
+  for (const [id, patch] of Object.entries(value as Record<string, unknown>)) {
+    if (typeof patch !== "object" || patch === null || Array.isArray(patch)) continue
+    const entry = patch as Record<string, unknown>
+    const box = typeof entry.box === "object" && entry.box !== null ? (entry.box as ComponentPatch["box"]) : undefined
+    const colors =
+      typeof entry.colors === "object" && entry.colors !== null ? (entry.colors as ComponentPatch["colors"]) : undefined
+    if (!box && !colors) continue
+    out[id] = { box, colors }
+  }
+  return out
+}

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@nikcli-ai/tui-storybook",
+  "version": "1.380.0",
+  "private": true,
+  "type": "module",
+  "description": "Renders the TUI's own session components against fixtures, across every theme, with the component tokens editable live.",
+  "license": "MIT",
+  "bin": {
+    "tui-storybook": "./src/index.ts"
+  },
+  "exports": {
+    ".": "./src/index.ts",
+    "./*": "./src/*"
+  },
+  "scripts": {
+    "dev": "bun run src/index.ts",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "@nikcli-ai/tui": "workspace:*",
+    "@nikcli-ai/util": "workspace:*",
+    "@opentui/core": "0.5.11",
+    "@opentui/solid": "0.5.11",
+    "solid-js": "catalog:"
+  },
+  "devDependencies": {
+    "@tsconfig/bun": "1.0.9",
+    "@types/bun": "catalog:",
+    "typescript": "catalog:"
+  }
+}
