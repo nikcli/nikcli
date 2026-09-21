@@ -3,6 +3,17 @@
 <!-- UNRELEASED:START -->
 <!-- UNRELEASED:END -->
 
+## v1.381.0 (September 2026)
+
+## Core
+
+- Structural component theming, a part registry, and a storybook (@nikomatt69)
+
+**Thank you to 1 community contributor:**
+
+- @nikomatt69:
+  - feat(tui): structural component theming, a part registry, and a storybook
+
 ## v1.380.0 (September 2026)
 
 ## Core

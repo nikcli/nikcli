@@ -1,7 +1,7 @@
 {
   "name": "@nikcli-ai/nikcli-island",
   "private": true,
-  "version": "1.380.0",
+  "version": "1.381.0",
   "description": "NikcliIsland.app - a macOS Dynamic-Island-style notch status UI for nikcli sessions (Swift package, not part of the JS build graph)",
   "scripts": {
     "build": "./scripts/install.sh",

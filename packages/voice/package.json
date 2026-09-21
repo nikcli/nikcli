@@ -1,6 +1,6 @@
 {
   "name": "@nikcli-ai/voice",
-  "version": "1.380.0",
+  "version": "1.381.0",
   "description": "Voice control logical core for ADE in Italian",
   "type": "module",
   "exports": {

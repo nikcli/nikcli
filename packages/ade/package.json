@@ -1,6 +1,6 @@
 {
   "name": "@nikcli-ai/ade",
-  "version": "1.380.0",
+  "version": "1.381.0",
   "description": "Agent development environment: many live agent sessions, side by side.",
   "type": "module",
   "exports": {
