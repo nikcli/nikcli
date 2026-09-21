@@ -17,7 +17,7 @@ import { TuiPluginRuntime } from "@tui/plugin"
 import { useLocal } from "@tui/context/local"
 import { useLanguage } from "@tui/context/language"
 import { useTheme } from "@tui/context/theme"
-import { borderCharsFor } from "@tui/component/border"
+import { BORDER_CHARSETS, borderCharsFor, EmptyBorder } from "@tui/component/border"
 import { useSDK } from "@tui/context/sdk"
 import { useRoute } from "@tui/context/route"
 import { useSync } from "@tui/context/sync"
@@ -223,6 +223,7 @@ export function Prompt(props: PromptProps) {
   const { theme, syntax, component } = useTheme()
   const kv = useKV()
   const style = () => component("session.prompt")
+  const shadow = () => component("session.prompt-shadow")
   const promptBackground = createMemo(() => style().colors.background)
   const lang = useLanguage()
   const editor = useEditorContext()
@@ -1849,7 +1850,10 @@ export function Prompt(props: PromptProps) {
           border={style().box.borderSides}
           borderColor={highlight()}
           customBorderChars={{
-            ...borderCharsFor(style().box.borderCharset),
+            // A complete table is required here because this box overrides one
+            // corner, so `"default"` — which means "pass no table" — falls back
+            // to the split set the prompt has always drawn.
+            ...(borderCharsFor(style().box.borderCharset) ?? BORDER_CHARSETS.split),
             bottomLeft: "╹",
           }}
         >
@@ -2121,16 +2125,32 @@ export function Prompt(props: PromptProps) {
           </box>
         </box>
         {/*
-          No shadow row here, deliberately.
-
-          There used to be one: a `▀` rule tinted with the input's own
-          background, meant to read as the prompt casting a shadow over the
-          transcript. It is painted in the panel color, so on a theme with an
-          opaque prompt it is not a shadow at all — it is one more row of panel
-          below the footer, indistinguishable from an empty line the user cannot
-          get rid of. The effect only ever worked against a contrasting
-          background, and it cost a row on every theme.
+          The rule under the prompt, exactly as it has always drawn — the only
+          difference is that a theme can now take it away by giving
+          `session.prompt-shadow` an empty `borderSides`, instead of it being
+          one row no configuration could reach.
         */}
+        <Show when={shadow().box.borderSides.length > 0}>
+          <box
+            height={1}
+            border={style().box.borderSides}
+            borderColor={highlight()}
+            customBorderChars={{
+              ...EmptyBorder,
+              vertical: shadow().colors.fill.a !== 0 ? "╹" : " ",
+            }}
+          >
+            <box
+              height={1}
+              border={shadow().box.borderSides}
+              borderColor={shadow().colors.fill}
+              customBorderChars={{
+                ...EmptyBorder,
+                horizontal: shadow().colors.fill.a !== 0 ? "▀" : " ",
+              }}
+            />
+          </box>
+        </Show>
         <box flexDirection="row" justifyContent="space-between">
           <Show
             when={status().type !== "idle"}

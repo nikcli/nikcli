@@ -120,6 +120,15 @@ export const BORDER_CHARSETS = {
   split: SplitBorder.customBorderChars,
 } as const
 
-export function borderCharsFor(charset: keyof typeof BORDER_CHARSETS) {
+/**
+ * The table for a charset, or `undefined` for `"default"`.
+ *
+ * `undefined` is not a failure: it is how a component says "use the renderer's
+ * own border characters". Those live on the native side, so the only way to
+ * reproduce them faithfully is not to pass a table at all — spelling out a
+ * lookalike here would drift the first time they change.
+ */
+export function borderCharsFor(charset: keyof typeof BORDER_CHARSETS | "default") {
+  if (charset === "default") return undefined
   return BORDER_CHARSETS[charset] ?? EmptyBorder
 }

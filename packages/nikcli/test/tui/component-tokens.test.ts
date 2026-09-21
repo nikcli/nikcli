@@ -56,9 +56,12 @@ describe("resolveComponents", () => {
     expect(tabs.box.paddingTop).toBe(1)
     expect(tabs.box.paddingBottom).toBe(1)
     expect(tabs.box.borderSides).toEqual(["bottom"])
+    expect(tabs.box.borderCharset).toBe("default")
     expect(tabs.colors.background).toEqual(PALETTE.backgroundPanel!)
     expect(tabs.colors.border).toEqual(PALETTE.borderSubtle!)
-    expect(tabs.colors.activeBorder).toEqual(PALETTE.accent!)
+    // `primary`, because the strip painted this with `theme.accent.fg`, which
+    // derives from `primary` and not from the flat `accent` key.
+    expect(tabs.colors.activeBorder).toEqual(PALETTE.primary!)
 
     const message = styles["session.user-message"]
     expect(message.box.paddingTop).toBe(1)

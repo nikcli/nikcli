@@ -31,11 +31,24 @@ import { RGBA } from "@opentui/core"
 export type BorderSide = "top" | "right" | "bottom" | "left"
 
 /** Named border character sets. Maps to the host's `customBorderChars` tables. */
-export type BorderCharset = "none" | "single" | "rounded" | "double" | "heavy" | "split"
+/**
+ * `"default"` leaves the renderer's own table in place; every other name picks
+ * one of ours. It exists so a component whose border was never customised can
+ * join the catalog without its glyphs changing.
+ */
+export type BorderCharset = "default" | "none" | "single" | "rounded" | "double" | "heavy" | "split"
 
 const BORDER_SIDES: readonly BorderSide[] = ["top", "right", "bottom", "left"]
 /** Exported so an editor can offer the set rather than hardcode a second copy of it. */
-export const BORDER_CHARSETS: readonly BorderCharset[] = ["none", "single", "rounded", "double", "heavy", "split"]
+export const BORDER_CHARSETS: readonly BorderCharset[] = [
+  "default",
+  "none",
+  "single",
+  "rounded",
+  "double",
+  "heavy",
+  "split",
+]
 
 /**
  * Spacing bounds. A negative pad is a renderer crash and a huge one is a blank
@@ -191,6 +204,21 @@ export const COMPONENT_DEFAULTS = {
     },
   },
   /**
+   * The rule under the prompt: a `▀` half-block tinted with the input's own
+   * background, so the box reads as sitting above the transcript.
+   *
+   * It is its own entry rather than a flag on `session.prompt` because that is
+   * how the catalog says "optional": an empty `borderSides` removes the row
+   * entirely, and a theme that wants the prompt flush against the status line
+   * sets it to `[]`. The default is what the prompt has always drawn.
+   */
+  "session.prompt-shadow": {
+    box: box({ borderSides: ["bottom"], borderCharset: "none" }),
+    colors: {
+      fill: "backgroundElement",
+    },
+  },
+  /**
    * The session tab strip (`component/session-tabs`).
    *
    * Vertical padding here sets the strip's height through {@link tabRows}; the
@@ -201,13 +229,23 @@ export const COMPONENT_DEFAULTS = {
       paddingTop: 1,
       paddingBottom: 1,
       borderSides: ["bottom"],
-      borderCharset: "single",
+      // The strip never passed a table; keeping that is what makes adopting the
+      // catalog invisible here.
+      borderCharset: "default",
     }),
     colors: {
       background: "backgroundPanel",
       border: "borderSubtle",
-      /** The left edge of the selected tab, which is an accent, not a border. */
-      activeBorder: "accent",
+      /**
+       * The left edge of the selected tab.
+       *
+       * `primary`, not `accent`: the strip painted this with `theme.accent.fg`,
+       * and that semantic token derives from the document's `primary`. The flat
+       * `accent` key is a different color — it is what `theme.accent.alt`
+       * resolves to — so naming it here would have silently recolored the
+       * selected tab on every theme.
+       */
+      activeBorder: "primary",
       activeBackground: "backgroundElement",
     },
   },

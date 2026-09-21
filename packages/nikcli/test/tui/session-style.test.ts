@@ -42,6 +42,7 @@ const PALETTE: Record<string, RGBA> = {
   backgroundElement: rgb(36, 36, 36),
   borderSubtle: rgb(58, 58, 58),
   accent: rgb(111, 163, 255),
+  primary: rgb(111, 163, 255),
   text: rgb(230, 230, 230),
   textMuted: rgb(154, 154, 154),
   warning: rgb(217, 161, 74),
