@@ -3,6 +3,26 @@
 <!-- UNRELEASED:START -->
 <!-- UNRELEASED:END -->
 
+## v1.384.0 (September 2026)
+
+## Core
+
+- The keybindings sheet crashed on open, and nothing could have caught it (@nikomatt69)
+- Five dialogs drew their own title row; none do now (@nikomatt69)
+- Every dialog opened from a dialog offers the way back (@nikomatt69)
+- Check the selection guard per handler, and fix what that found (@nikomatt69)
+
+**Thank you to 1 community contributor:**
+
+- @nikomatt69:
+  - test(tui): check the selection guard per handler, and fix what that found
+  - refactor(tui): finish the disclosure grammar, and give it one vocabulary
+  - feat(tui): a way back in dialogs, without breaking the contract that forbids one
+  - feat(tui): every dialog opened from a dialog offers the way back
+  - refactor(tui): five dialogs drew their own title row; none do now
+  - feat(tui): keybindings and text sections in the settings hub
+  - fix(tui): the keybindings sheet crashed on open, and nothing could have caught it
+
 ## v1.383.0 (September 2026)
 
 ## Core
