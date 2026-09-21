@@ -130,20 +130,23 @@ export function AssistantMessage(props: { turn: Turn; last: boolean; usage?: Tur
             // claiming (or releasing) the entry type swaps the renderer in
             // place without rebuilding the transcript.
             <Show when={resolvePart(row.type)} fallback={<UnknownPart entry={entry} />}>
-              {(component) => (
-                <Dynamic
-                  last={row === props.turn.body[props.turn.body.length - 1]}
-                  // `last` means "bottom of the turn" and stays true forever once
-                  // the turn is sealed. Whether the text is still *arriving* is a
-                  // different question, and it is the one the renderers need — the
-                  // same pair opencode reads (`part.time.completed`,
-                  // `message.time.completed`).
-                  streaming={entry.completed === undefined && props.turn.completedAt === undefined}
-                  component={component()}
-                  entry={row as any}
-                  sessionID={props.turn.sessionID}
-                />
-              )}
+              <Dynamic
+                last={row === props.turn.body[props.turn.body.length - 1]}
+                // `last` means "bottom of the turn" and stays true forever once
+                // the turn is sealed. Whether the text is still *arriving* is a
+                // different question, and it is the one the renderers need — the
+                // same pair opencode reads (`part.time.completed`,
+                // `message.time.completed`).
+                streaming={entry.completed === undefined && props.turn.completedAt === undefined}
+                // Resolved again rather than through `Show`'s callback form:
+                // the callback wraps children in another memo, and this is a
+                // per-part row in a transcript that mounts every row by
+                // default. `Dynamic` tracks this read itself, so the plugin
+                // swap still works.
+                component={resolvePart(row.type)}
+                entry={row as any}
+                sessionID={props.turn.sessionID}
+              />
             </Show>
           )
         }}

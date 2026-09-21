@@ -222,7 +222,7 @@ export function Prompt(props: PromptProps) {
   const dimensions = useTerminalDimensions()
   const { theme, syntax, component } = useTheme()
   const kv = useKV()
-  const style = createMemo(() => component("session.prompt"))
+  const style = () => component("session.prompt")
   const promptBackground = createMemo(() => style().colors.background)
   const lang = useLanguage()
   const editor = useEditorContext()

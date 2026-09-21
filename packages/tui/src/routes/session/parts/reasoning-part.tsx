@@ -11,7 +11,7 @@ import type { ViewEntry } from "../view"
 
 export function ReasoningPart(props: { last: boolean; streaming: boolean; entry: ViewEntry; sessionID: string }) {
   const { theme, subtleSyntax, component } = useTheme()
-  const style = createMemo(() => component("session.reasoning-part"))
+  const style = () => component("session.reasoning-part")
   const ctx = use()
   const content = createMemo(() => {
     // Filter out redacted reasoning chunks from OpenRouter
@@ -95,7 +95,7 @@ export function ReasoningPart(props: { last: boolean; streaming: boolean; entry:
 
 export function ReasoningHeader(props: { done: boolean; title: string | null; duration?: string }) {
   const { theme, component } = useTheme()
-  const style = createMemo(() => component("session.reasoning-part"))
+  const style = () => component("session.reasoning-part")
   return (
     <Switch>
       <Match when={!props.done}>

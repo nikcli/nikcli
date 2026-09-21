@@ -12,7 +12,7 @@ import type { ViewEntry } from "../view"
  */
 export function UnknownPart(props: { entry: ViewEntry }) {
   const { component } = useTheme()
-  const style = createMemo(() => component("session.unknown-part"))
+  const style = () => component("session.unknown-part")
   return (
     <box paddingLeft={style().box.paddingLeft} marginTop={style().box.marginTop} flexShrink={0}>
       <text fg={style().colors.text}>◌ {props.entry.type}</text>

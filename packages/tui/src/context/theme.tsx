@@ -20,7 +20,7 @@ import {
   type ResolvedComponents,
   type StyleOf,
 } from "./component-tokens"
-import { sessionStylePatches } from "./session-style"
+import { hasSessionStyle, readSessionStyle, recipeToPatches, type SessionStyleRecipe } from "./session-style"
 import { useRoute } from "./route"
 import { useKV } from "./kv"
 import { useRenderer } from "@opentui/solid"
@@ -431,6 +431,32 @@ export const {
      * streaming parts' render path free of any merge at all. It re-runs only
      * when the theme document, the mode, or the user's overrides change.
      */
+    /**
+     * The studio preset for the session in view, as a stable key.
+     *
+     * A string, and separate from the resolution below, for one reason: the
+     * catalog must not depend on the route. Reading `route.data` inside the
+     * resolution subscribed it to every navigation, and since each run
+     * allocates fresh style objects, switching session or tab re-ran the JSX
+     * effects of every mounted part in the transcript — the whole thing, since
+     * message virtualization is off by default. Nothing about the styles had
+     * changed; only their identity had.
+     *
+     * Keyed by content, the common case (no recipe anywhere) is the empty
+     * string before and after a navigation, so this memo does not notify and
+     * the catalog is never rebuilt.
+     */
+    const presetKey = createMemo(() => {
+      const sessionID = "sessionID" in route.data ? route.data.sessionID : undefined
+      if (!hasSessionStyle(kv, sessionID)) return ""
+      return JSON.stringify(readSessionStyle(kv, sessionID))
+    })
+
+    const preset = createMemo<ComponentPatchMap | undefined>(() => {
+      const key = presetKey()
+      return key ? recipeToPatches(JSON.parse(key) as SessionStyleRecipe) : undefined
+    })
+
     const components = createMemo<ResolvedComponents>(() => resolve([]))
 
     /**
@@ -444,12 +470,11 @@ export const {
      */
     function resolve(extra: readonly ComponentPatchMap[]): ResolvedComponents {
       const document = store.themes[store.active] ?? store.themes.nikcli!
-      const sessionID = "sessionID" in route.data ? route.data.sessionID : undefined
-      const preset = sessionStylePatches(kv, sessionID)
+      const patches = preset()
       return resolveComponents(createComponentResolver(values(), createColorResolver(document, store.mode)), [
         readComponentPatches(document.components),
         store.componentOverrides,
-        ...(preset ? [preset] : []),
+        ...(patches ? [patches] : []),
         ...extra,
       ])
     }

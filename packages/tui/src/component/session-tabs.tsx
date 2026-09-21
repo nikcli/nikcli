@@ -85,7 +85,7 @@ export function SessionTabs() {
   }
 
   const activeID = tabs.active
-  const style = createMemo(() => component("session.tabs"))
+  const style = () => component("session.tabs")
   // Height is derived from the strip's own padding rather than chosen beside
   // it, so a theme that tightens the strip cannot leave the row taller than
   // what it holds — the gap that reads as a misaligned tab bar.

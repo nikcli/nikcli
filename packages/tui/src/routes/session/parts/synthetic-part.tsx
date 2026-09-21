@@ -5,7 +5,7 @@ import type { ViewEntry } from "../view"
 /** An auto-generated message the engine injected into the conversation. */
 export function SyntheticPart(props: { entry: ViewEntry }) {
   const { component } = useTheme()
-  const style = createMemo(() => component("session.synthetic-part"))
+  const style = () => component("session.synthetic-part")
   const text = createMemo(() => String(props.entry.text ?? "").trim())
   return (
     <Show when={text()}>

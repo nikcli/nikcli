@@ -42,7 +42,10 @@ export function UserMessage(props: {
   })
   const files = createMemo(() => (entry()?.files ?? []) as FileAttachment[])
   const { theme } = useTheme()
-  const style = createMemo(() => props.style)
+  // A plain accessor: `props.style` is already a tracked getter from the
+  // parent's memo, so wrapping it bought nothing and cost a reactive node on
+  // every message in the transcript.
+  const style = () => props.style
   const [hover, setHover] = createSignal(false)
   const queued = createMemo(() => props.pending && props.turn.messageID > props.pending)
   const color = createMemo(() => local.agent.color(props.turn.request?.agent ?? ""))
