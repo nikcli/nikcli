@@ -28,7 +28,7 @@ import type { ViewEntry } from "../view"
  */
 export function TextPart(props: { last: boolean; streaming: boolean; entry: ViewEntry; sessionID: string }) {
   const ctx = use()
-  const { theme, syntax, component } = useTheme()
+  const { syntax, component } = useTheme()
   const style = () => component("session.text-part")
   const imagePreviewColumns = createMemo(() => Math.max(24, Math.min(180, ctx.width - 8)))
   const imagePreviewRows = createMemo(() => Math.max(4, Math.floor(ctx.height / 3)))
@@ -42,7 +42,7 @@ export function TextPart(props: { last: boolean; streaming: boolean; entry: View
     cellPadding: tight() ? 0 : 1,
     borders: true,
     outerBorder: !tight(),
-    borderColor: theme.border.subtle,
+    borderColor: style().colors.tableBorder,
   }))
 
   return (

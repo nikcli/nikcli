@@ -3,6 +3,7 @@ import type { RGBA } from "@opentui/core"
 import { TextAttributes } from "@opentui/core"
 import { EmptyBorder } from "@tui/component/border"
 import { tint, useTheme } from "@tui/context/theme"
+import { DISCLOSURE } from "@tui/component/disclosure"
 
 /**
  * Visual language for the two kinds of delegated work in a session transcript.
@@ -52,10 +53,11 @@ export function sessionTaskChrome(kind: SessionTaskKind) {
  * description, and a marker. The kind's *name* appears in the detail, where
  * somebody who could not read the glyph goes looking.
  *
- * Every card answers a click, and the marker always says what the click does:
- * `→` opens the run, `▸`/`▾` reveals the detail here. Which one depends on
- * whether the caller knows a session to open — the tool view does, the
- * transcript's own `subtask` entry carries no id to follow.
+ * Every card answers a click, and the marker says what the click does, in the
+ * session's one disclosure grammar (`component/disclosure.ts`): `→` opens the
+ * run, `▸`/`▾` reveals the detail here. Which one depends on whether the caller
+ * knows a session to open — the tool view does, the transcript's own `subtask`
+ * entry carries no id to follow.
  */
 export function SessionTaskCard(props: {
   kind: SessionTaskKind
@@ -73,7 +75,19 @@ export function SessionTaskCard(props: {
   const [expanded, setExpanded] = createSignal(false)
   const chrome = createMemo(() => sessionTaskChrome(props.kind))
   const accent = createMemo(() => (props.kind === "background" ? theme.status.info.fg : props.color))
-  const description = createMemo(() => props.description?.trim() || undefined)
+  /**
+   * The description, unless it is the title again.
+   *
+   * The task tool derives both from the same field often enough that the
+   * collapsed row read `Explore TUI architecture · @explore — Explore TUI
+   * architecture`. Comparing case-insensitively because one of the two has
+   * usually been through `titlecase`.
+   */
+  const description = createMemo(() => {
+    const value = props.description?.trim()
+    if (!value || value.toLowerCase() === props.title.trim().toLowerCase()) return undefined
+    return value
+  })
   const opens = createMemo(() => props.onClick !== undefined)
   const open = createMemo(() => !opens() && expanded())
   const panel = createMemo(() => tint(theme.surface.panel, accent(), props.kind === "background" ? 0.1 : 0.08))
@@ -115,7 +129,10 @@ export function SessionTaskCard(props: {
           <Show when={description() && !open()}>
             <span style={{ fg: style().colors.detail }}> — {description()}</span>
           </Show>
-          <span style={{ fg: style().colors.marker }}>{opens() ? " →" : open() ? " ▾" : " ▸"}</span>
+          <span style={{ fg: style().colors.marker }}>
+            {" "}
+            {opens() ? DISCLOSURE.follow : open() ? DISCLOSURE.open : DISCLOSURE.closed}
+          </span>
         </text>
         <Show when={open()}>
           <Show when={description()}>

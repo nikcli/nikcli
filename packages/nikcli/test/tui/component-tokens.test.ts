@@ -29,9 +29,19 @@ const PALETTE: Record<string, RGBA> = {
 const SEMANTIC = {
   surface: { base: RGBA.fromInts(7, 7, 7), panel: PALETTE.backgroundPanel!, offset: PALETTE.backgroundElement! },
   foreground: { default: PALETTE.text!, muted: PALETTE.textMuted!, subtle: RGBA.fromInts(90, 90, 90) },
-  accent: { fg: PALETTE.primary!, bg: RGBA.fromInts(40, 60, 90), border: RGBA.fromInts(90, 140, 220) },
-  border: { subtle: RGBA.fromInts(58, 58, 58) },
-  status: { warning: { fg: PALETTE.warning! } },
+  accent: {
+    fg: PALETTE.primary!,
+    bg: RGBA.fromInts(40, 60, 90),
+    border: RGBA.fromInts(90, 140, 220),
+    alt: RGBA.fromInts(139, 180, 255),
+    secondary: RGBA.fromInts(180, 140, 255),
+  },
+  border: { subtle: RGBA.fromInts(58, 58, 58), active: PALETTE.primary! },
+  status: {
+    warning: { fg: PALETTE.warning! },
+    error: { fg: RGBA.fromInts(255, 80, 80) },
+    info: { fg: RGBA.fromInts(100, 180, 255) },
+  },
 }
 
 /**

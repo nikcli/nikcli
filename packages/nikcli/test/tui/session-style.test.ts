@@ -53,9 +53,19 @@ const PALETTE: Record<string, RGBA> = {
 const SEMANTIC = {
   surface: { base: rgb(7, 7, 7), panel: rgb(18, 18, 18), offset: rgb(36, 36, 36) },
   foreground: { default: rgb(230, 230, 230), muted: rgb(154, 154, 154), subtle: rgb(90, 90, 90) },
-  accent: { fg: rgb(111, 163, 255), bg: rgb(40, 60, 90), border: rgb(90, 140, 220) },
+  accent: {
+    fg: rgb(111, 163, 255),
+    bg: rgb(40, 60, 90),
+    border: rgb(90, 140, 220),
+    alt: rgb(139, 180, 255),
+    secondary: rgb(180, 140, 255),
+  },
   border: { subtle: rgb(58, 58, 58), active: rgb(111, 163, 255) },
-  status: { warning: { fg: rgb(217, 161, 74) } },
+  status: {
+    warning: { fg: rgb(217, 161, 74) },
+    error: { fg: rgb(255, 80, 80) },
+    info: { fg: rgb(100, 180, 255) },
+  },
 }
 
 const resolver = createComponentResolver(SEMANTIC, (ref) => {

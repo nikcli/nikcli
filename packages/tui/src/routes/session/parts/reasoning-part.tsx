@@ -10,7 +10,7 @@ import { Match, Show, Switch, createMemo } from "solid-js"
 import type { ViewEntry } from "../view"
 
 export function ReasoningPart(props: { last: boolean; streaming: boolean; entry: ViewEntry; sessionID: string }) {
-  const { theme, subtleSyntax, component } = useTheme()
+  const { subtleSyntax, component } = useTheme()
   const style = () => component("session.reasoning-part")
   const ctx = use()
   const content = createMemo(() => {
@@ -37,7 +37,7 @@ export function ReasoningPart(props: { last: boolean; streaming: boolean; entry:
     cellPadding: tight() ? 0 : 1,
     borders: true,
     outerBorder: !tight(),
-    borderColor: theme.border.subtle,
+    borderColor: style().colors.tableBorder,
   }))
   const done = createMemo(() => {
     const end = props.entry.completed as number | undefined
@@ -69,7 +69,7 @@ export function ReasoningPart(props: { last: boolean; streaming: boolean; entry:
                 content={split().settled}
                 conceal={ctx.conceal()}
                 concealCode={false}
-                fg={theme.foreground.muted}
+                fg={style().colors.body}
                 tableOptions={tableOptions()}
               />
             </Show>
@@ -81,7 +81,7 @@ export function ReasoningPart(props: { last: boolean; streaming: boolean; entry:
                   content={split().live}
                   conceal={ctx.conceal()}
                   concealCode={false}
-                  fg={theme.foreground.muted}
+                  fg={style().colors.body}
                   tableOptions={tableOptions()}
                 />
               </box>
@@ -94,13 +94,13 @@ export function ReasoningPart(props: { last: boolean; streaming: boolean; entry:
 }
 
 export function ReasoningHeader(props: { done: boolean; title: string | null; duration?: string }) {
-  const { theme, component } = useTheme()
+  const { component } = useTheme()
   const style = () => component("session.reasoning-part")
   return (
     <Switch>
       <Match when={!props.done}>
         <box flexDirection="row">
-          <Spinner color={theme.status.warning.fg}>{props.title ? "Thinking: " + props.title : "Thinking"}</Spinner>
+          <Spinner color={style().colors.heading}>{props.title ? "Thinking: " + props.title : "Thinking"}</Spinner>
         </box>
       </Match>
       <Match when={props.done}>

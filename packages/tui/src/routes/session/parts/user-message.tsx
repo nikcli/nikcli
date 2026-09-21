@@ -2,6 +2,7 @@ import type { StyleOf } from "@tui/context/component-tokens"
 import { use } from "../session-context"
 import { Locale } from "@nikcli-ai/util/locale"
 import { borderCharsFor } from "@tui/component/border"
+import { DISCLOSURE, summaryLine, worthCollapsing } from "@tui/component/disclosure"
 import { TuiImageList } from "@tui/component/tui-image"
 import { useLocal } from "@tui/context/local"
 import { selectedForeground, useTheme } from "@tui/context/theme"
@@ -47,6 +48,19 @@ export function UserMessage(props: {
   // every message in the transcript.
   const style = () => props.style
   const [hover, setHover] = createSignal(false)
+  const [expanded, setExpanded] = createSignal(false)
+  /**
+   * A body long enough that showing it whole costs more than it gives.
+   *
+   * The case that forced this: a background job finishing queues a wake message
+   * whose text is the job's entire result — thirty rows of machine output
+   * landing in the transcript as if the reader had typed it. The rule is not
+   * about that message, though; it is about any body of that height, a pasted
+   * file included.
+   */
+  const collapsible = createMemo(() => worthCollapsing(text() ?? ""))
+  const collapsed = createMemo(() => collapsible() && !expanded())
+  const hiddenLines = createMemo(() => (text() ?? "").split("\n").length - 1)
   const queued = createMemo(() => props.pending && props.turn.messageID > props.pending)
   const color = createMemo(() => local.agent.color(props.turn.request?.agent ?? ""))
   const queuedFg = createMemo(() => selectedForeground(theme, color()))
@@ -90,7 +104,36 @@ export function UserMessage(props: {
             backgroundColor={hover() ? style().colors.backgroundHover : style().colors.background}
             flexShrink={0}
           >
-            <Show when={text()}>{(value) => <text fg={style().colors.text}>{value()}</text>}</Show>
+            <Show when={text()}>
+              {(value) => (
+                <Show
+                  when={collapsed()}
+                  fallback={
+                    <>
+                      <text fg={style().colors.text}>{value()}</text>
+                      <Show when={collapsible()}>
+                        {/* The handler sits on the mark, never on the body: a
+                            click inside the text is a selection, and stealing it
+                            to fold the message away would make the transcript
+                            unreadable exactly when someone is trying to read
+                            it. */}
+                        <text fg={style().colors.detail} onMouseDown={() => setExpanded(false)}>
+                          {DISCLOSURE.open} collapse
+                        </text>
+                      </Show>
+                    </>
+                  }
+                >
+                  <text fg={style().colors.text} wrapMode="none" onMouseDown={() => setExpanded(true)}>
+                    {summaryLine(value())}
+                    <span style={{ fg: style().colors.detail }}>
+                      {" "}
+                      {DISCLOSURE.closed} {hiddenLines()} more lines
+                    </span>
+                  </text>
+                </Show>
+              )}
+            </Show>
             <TuiImageList
               text={text() ?? ""}
               urls={imagePreviewUrls()}
@@ -102,17 +145,20 @@ export function UserMessage(props: {
                 <For each={files()}>
                   {(file) => {
                     const bg = createMemo(() => {
-                      if (file.mime.startsWith("image/")) return theme.accent.alt
-                      if (file.mime === "application/pdf") return theme.accent.fg
-                      return theme.accent.secondary
+                      if (file.mime.startsWith("image/")) return style().colors.attachmentImage
+                      if (file.mime === "application/pdf") return style().colors.attachmentDocument
+                      return style().colors.attachmentOther
                     })
                     return (
-                      <text fg={theme.foreground.default}>
-                        <span style={{ bg: bg(), fg: theme.surface.base }}> {MIME_BADGE[file.mime] ?? file.mime} </span>
+                      <text fg={style().colors.text}>
+                        <span style={{ bg: bg(), fg: style().colors.attachmentText }}>
+                          {" "}
+                          {MIME_BADGE[file.mime] ?? file.mime}{" "}
+                        </span>
                         <span
                           style={{
-                            bg: theme.surface.offset,
-                            fg: theme.foreground.muted,
+                            bg: style().colors.attachmentLabel,
+                            fg: style().colors.detail,
                           }}
                         >
                           {" "}
@@ -128,15 +174,15 @@ export function UserMessage(props: {
               when={queued()}
               fallback={
                 <Show when={ctx.showTimestamps()}>
-                  <text fg={theme.foreground.muted}>
-                    <span style={{ fg: theme.foreground.muted }}>
+                  <text fg={style().colors.detail}>
+                    <span style={{ fg: style().colors.detail }}>
                       {Locale.todayTimeOrDateTime(props.turn.createdAt)}
                     </span>
                   </text>
                 </Show>
               }
             >
-              <text fg={theme.foreground.muted}>
+              <text fg={style().colors.detail}>
                 <span style={{ bg: color(), fg: queuedFg(), bold: true }}> QUEUED </span>
               </text>
             </Show>
@@ -149,7 +195,7 @@ export function UserMessage(props: {
           border={["top"]}
           title=" Compaction "
           titleAlignment="center"
-          borderColor={theme.border.active}
+          borderColor={style().colors.compaction}
         />
       </Show>
     </>

@@ -1,7 +1,7 @@
 import { describe, expect, it } from "bun:test"
 import { BUILT_IN_THEME_IDS, loadBuiltInTheme } from "@tui/context/theme-catalog"
 import { createStandaloneTheme } from "@tui/context/theme"
-import { chromeRows, COMPONENT_IDS } from "@tui/context/component-tokens"
+import { chromeRows, COMPONENT_DEFAULTS, COMPONENT_IDS } from "@tui/context/component-tokens"
 import type { RGBA } from "@opentui/core"
 import type { Theme } from "@tui/context/theme"
 
@@ -82,11 +82,42 @@ describe("component tokens equal the expressions they replaced", () => {
       background: (t) => t.surface.panel,
       backgroundHover: (t) => t.surface.offset,
       text: (t) => t.foreground.default,
+      detail: (t) => t.foreground.muted,
+      attachmentImage: (t) => t.accent.alt,
+      attachmentDocument: (t) => t.accent.fg,
+      attachmentOther: (t) => t.accent.secondary,
+      attachmentText: (t) => t.surface.base,
+      attachmentLabel: (t) => t.surface.offset,
+      compaction: (t) => t.border.active,
     },
-    "session.text-part": { text: (t) => t.foreground.default },
+    "session.text-part": {
+      text: (t) => t.foreground.default,
+      tableBorder: (t) => t.border.subtle,
+    },
     "session.reasoning-part": {
       heading: (t) => t.status.warning.fg,
       border: (t) => t.surface.offset,
+      body: (t) => t.foreground.muted,
+      tableBorder: (t) => t.border.subtle,
+    },
+    "session.subtask-part": {},
+    "session.assistant-footer": {
+      text: (t) => t.foreground.default,
+      detail: (t) => t.foreground.muted,
+    },
+    "session.error": {
+      background: (t) => t.surface.panel,
+      border: (t) => t.status.error.fg,
+      text: (t) => t.foreground.muted,
+    },
+    "session.turn-tokens": {
+      text: (t) => t.foreground.muted,
+      warning: (t) => t.status.warning.fg,
+    },
+    "session.pending-input": {
+      background: (t) => t.surface.panel,
+      text: (t) => t.foreground.default,
+      detail: (t) => t.foreground.muted,
     },
     "session.retry-part": {
       icon: (t) => t.status.warning.fg,
@@ -111,6 +142,18 @@ describe("component tokens equal the expressions they replaced", () => {
 
   it("names every component in the catalog, so a new entry cannot skip the check", () => {
     expect(Object.keys(EXPECTED).sort()).toEqual([...COMPONENT_IDS].sort())
+  })
+
+  it("names every slot of every component, so a new color cannot skip it either", () => {
+    // Listing the components was not enough: a slot added to an entry already
+    // in the table would have been checked by nothing.
+    const missing: string[] = []
+    for (const id of COMPONENT_IDS) {
+      for (const slot of Object.keys(COMPONENT_DEFAULTS[id].colors)) {
+        if (!(slot in EXPECTED[id]!)) missing.push(`${id}.${slot}`)
+      }
+    }
+    expect(missing).toEqual([])
   })
 
   for (const mode of MODES) {

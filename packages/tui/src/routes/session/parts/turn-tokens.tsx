@@ -7,7 +7,8 @@ import { For, Show, createMemo } from "solid-js"
  * builds the data when it is on, so this renders nothing on the default path.
  */
 export function TurnTokens(props: { turn: TurnUsage.Turn }) {
-  const { theme } = useTheme()
+  const { component } = useTheme()
+  const style = () => component("session.turn-tokens")
   const num = (value: number) => value.toLocaleString()
   const widths = createMemo(() => {
     const steps = props.turn.steps
@@ -22,20 +23,20 @@ export function TurnTokens(props: { turn: TurnUsage.Turn }) {
     `${step.padEnd(widths().step + 2)}${a.padStart(widths().newTokens)}  ${b.padStart(widths().cached)}  ${c.padStart(widths().total)}`
 
   return (
-    <box paddingLeft={3} flexDirection="column">
-      <text fg={theme.foreground.muted}>{row("Step", "New", "Cached", "Total")}</text>
+    <box paddingLeft={style().box.paddingLeft} flexDirection="column">
+      <text fg={style().colors.text}>{row("Step", "New", "Cached", "Total")}</text>
       <For each={props.turn.steps}>
         {(step) => (
-          <text fg={theme.foreground.muted}>
+          <text fg={style().colors.text}>
             {row(step.finish, num(step.newTokens), num(step.cached), num(step.total))}
             <Show when={step.cacheBust !== undefined}>
-              <span style={{ fg: theme.status.warning.fg }}> ⚠ cache bust −{num(step.cacheBust!)}</span>
+              <span style={{ fg: style().colors.warning }}> ⚠ cache bust −{num(step.cacheBust!)}</span>
             </Show>
           </text>
         )}
       </For>
       <Show when={props.turn.steps.length > 1}>
-        <text fg={theme.foreground.muted}>
+        <text fg={style().colors.text}>
           {row("turn", num(props.turn.newTokens), num(props.turn.cached), num(props.turn.total))}
         </text>
       </Show>

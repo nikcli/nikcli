@@ -1,6 +1,7 @@
 import { Locale } from "@nikcli-ai/util/locale"
 import { SessionTaskCard } from "@tui/component/session-task-card"
 import { useLocal } from "@tui/context/local"
+import { useTheme } from "@tui/context/theme"
 import { createMemo } from "solid-js"
 import type { ViewEntry } from "../view"
 
@@ -13,12 +14,14 @@ import type { ViewEntry } from "../view"
  */
 export function SubtaskPart(props: { entry: ViewEntry }) {
   const local = useLocal()
+  const { component } = useTheme()
+  const style = () => component("session.subtask-part")
   const agent = createMemo(() => String(props.entry.agent ?? ""))
   const description = createMemo(() => String(props.entry.description ?? "").trim())
   const background = createMemo(() => props.entry.background === true)
   const title = createMemo(() => Locale.titlecase(agent() || "task"))
   return (
-    <box paddingLeft={3} flexShrink={0}>
+    <box paddingLeft={style().box.paddingLeft} flexShrink={0}>
       <SessionTaskCard
         kind={background() ? "background" : "subtask"}
         color={local.agent.color(agent())}

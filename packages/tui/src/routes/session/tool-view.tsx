@@ -1637,6 +1637,50 @@ function Task(props: ToolProps<any>) {
 
   const error = createMemo(() => (props.part.state.status === "error" ? props.part.state.error : undefined))
 
+  /**
+   * What the card says under its title, in order, one row each.
+   *
+   * Eleven `<Show>` blocks before this, each with its own condition and its own
+   * copy of the same `└ muted text` row. The order they appeared in was the
+   * order they happened to be written, no reader could see the whole set, and
+   * every card paid for eleven conditional blocks to show two or three lines.
+   * A list states the priority, the row shape exists once, and the card
+   * rebuilds it only when the list changes.
+   *
+   * The "open nested session" line is gone: the card draws a `→` when it can be
+   * opened, so the sentence was the marker again in words.
+   */
+  const statusLines = createMemo(() => {
+    const lines: { text: string; tone?: "error" | "strong" }[] = []
+    const push = (text: string | undefined | false, tone?: "error" | "strong") => {
+      const value = typeof text === "string" ? text.trim() : ""
+      if (value) lines.push({ text: value, tone })
+    }
+
+    const summaryCount = meta().summary?.length
+    if (summaryCount) push(`${summaryCount} toolcalls`)
+    push(modelOverride())
+    if (kind() === "research") push(question())
+
+    const running = current()
+    if (running) {
+      const title = running.state.status === "completed" ? (running.state.title ?? "") : ""
+      push(`${Locale.titlecase(running.tool)} ${title}`.trim(), running.state.status === "error" ? "error" : undefined)
+    }
+
+    push(displaySummary(), "strong")
+    if (isBackground()) push(childStatusLabel() || "starting background task")
+    else push(childStatusLabel())
+
+    const progress = backgroundJob()?.progressSummary
+    if (progress && progress !== displaySummary()) push(progress)
+    if (isBackground() && rootDelegationID()) push(`job ${rootDelegationID()}`)
+    if (isBackground() && meta().reused) push("reused existing background research")
+    push(error(), "error")
+
+    return lines
+  })
+
   return (
     <box paddingLeft={3} flexShrink={0}>
       <SessionTaskCard
@@ -1656,54 +1700,26 @@ function Task(props: ToolProps<any>) {
             : undefined
         }
       >
-        <Show when={meta().summary?.length}>
-          <text style={{ fg: theme.foreground.muted }}>({meta().summary?.length} toolcalls)</text>
-        </Show>
-        <Show when={modelOverride()}>
-          <text style={{ fg: theme.foreground.muted }}>└ {modelOverride()}</text>
-        </Show>
-        <Show when={kind() === "research" && question()}>
-          <text style={{ fg: theme.foreground.muted }}>└ {question()}</text>
-        </Show>
-        <Show when={current()}>
-          <text
-            style={{
-              fg: current()!.state.status === "error" ? theme.status.error.fg : theme.foreground.muted,
-            }}
-          >
-            └ {Locale.titlecase(current()!.tool)}{" "}
-            {current()!.state.status === "completed" ? current()!.state.title : ""}
-          </text>
-        </Show>
-        <Show when={displaySummary()}>
-          <text style={{ fg: theme.foreground.default }}>└ {displaySummary()}</text>
-        </Show>
-        <Show when={isBackground()}>
-          <Show
-            when={childStatusLabel()}
-            fallback={<text style={{ fg: theme.foreground.muted }}>└ starting background task</text>}
-          >
-            <text style={{ fg: theme.foreground.muted }}>└ {childStatusLabel()}</text>
-          </Show>
-        </Show>
-        <Show when={!isBackground() && childStatusLabel()}>
-          <text style={{ fg: theme.foreground.muted }}>└ {childStatusLabel()}</text>
-        </Show>
-        <Show when={backgroundJob()?.progressSummary && backgroundJob()?.progressSummary !== displaySummary()}>
-          <text style={{ fg: theme.foreground.muted }}>└ {backgroundJob()!.progressSummary}</text>
-        </Show>
-        <Show when={rootDelegationID() && isBackground()}>
-          <text style={{ fg: theme.foreground.muted }}>└ job {rootDelegationID()}</text>
-        </Show>
-        <Show when={meta().reused && isBackground()}>
-          <text style={{ fg: theme.foreground.muted }}>└ reused existing background research</text>
-        </Show>
-        <Show when={error()}>
-          <text fg={theme.status.error.fg}>{error()}</text>
-        </Show>
-        <Show when={sessionID()}>
-          <text fg={theme.foreground.muted}>{isBackground() ? "open parallel session" : "open nested session"}</text>
-        </Show>
+        <For each={statusLines()}>
+          {(line) => (
+            // One row each, clipped rather than wrapped: a long progress summary
+            // used to reflow the card to three rows and push the next tool call
+            // off the screen.
+            <text
+              wrapMode="none"
+              style={{
+                fg:
+                  line.tone === "error"
+                    ? theme.status.error.fg
+                    : line.tone === "strong"
+                      ? theme.foreground.default
+                      : theme.foreground.muted,
+              }}
+            >
+              └ {line.text}
+            </text>
+          )}
+        </For>
       </SessionTaskCard>
     </box>
   )

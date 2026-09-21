@@ -1,6 +1,6 @@
 import { createMemo, For, Show } from "solid-js"
 import type { RGBA } from "@opentui/core"
-import { SplitBorder } from "@tui/component/border"
+import { borderCharsFor } from "@tui/component/border"
 import { selectedForeground, useTheme } from "@tui/context/theme"
 
 /**
@@ -27,19 +27,26 @@ export function PendingInputCard(props: {
   files: ReadonlyArray<PendingInputFile>
   delivery: "queue" | "steer"
 }) {
-  const { theme } = useTheme()
+  const { theme, component } = useTheme()
+  const style = () => component("session.pending-input")
   const badgeFg = createMemo(() => selectedForeground(theme, props.color))
 
   return (
     <box
       id={props.id}
-      border={["left"]}
+      border={[...style().box.borderSides]}
       borderColor={props.color}
-      customBorderChars={SplitBorder.customBorderChars}
-      marginTop={1}
+      customBorderChars={borderCharsFor(style().box.borderCharset)}
+      marginTop={style().box.marginTop}
     >
-      <box paddingTop={1} paddingBottom={1} paddingLeft={2} backgroundColor={theme.surface.panel} flexShrink={0}>
-        <Show when={props.text}>{(value) => <text fg={theme.foreground.default}>{value()}</text>}</Show>
+      <box
+        paddingTop={style().box.paddingTop}
+        paddingBottom={style().box.paddingBottom}
+        paddingLeft={style().box.paddingLeft}
+        backgroundColor={style().colors.background}
+        flexShrink={0}
+      >
+        <Show when={props.text}>{(value) => <text fg={style().colors.text}>{value()}</text>}</Show>
         <Show when={props.files.length > 0}>
           <box flexDirection="row" paddingTop={1} gap={1} flexWrap="wrap">
             <For each={props.files}>
@@ -55,7 +62,7 @@ export function PendingInputCard(props: {
             </For>
           </box>
         </Show>
-        <text fg={theme.foreground.muted}>
+        <text fg={style().colors.detail}>
           <Show
             when={props.delivery === "queue"}
             fallback={

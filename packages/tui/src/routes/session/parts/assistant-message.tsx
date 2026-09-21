@@ -9,7 +9,7 @@ import { TurnTokens } from "./turn-tokens"
 import { UnknownPart } from "./unknown-part"
 import { Locale } from "@nikcli-ai/util/locale"
 import { Token } from "@nikcli-ai/util/token"
-import { SplitBorder } from "@tui/component/border"
+import { borderCharsFor } from "@tui/component/border"
 import { useLocal } from "@tui/context/local"
 import { useSync } from "@tui/context/sync"
 import { useTheme } from "@tui/context/theme"
@@ -22,7 +22,9 @@ export function AssistantMessage(props: { turn: Turn; last: boolean; usage?: Tur
   const ctx = use()
   const local = useLocal()
   const sync = useSync()
-  const { theme } = useTheme()
+  const { theme, component } = useTheme()
+  const errorStyle = () => component("session.error")
+  const footer = () => component("session.assistant-footer")
 
   /**
    * Parts, with finished runs of read-only tool calls folded into one row.
@@ -153,40 +155,45 @@ export function AssistantMessage(props: { turn: Turn; last: boolean; usage?: Tur
       </For>
       <Show when={error() && error()!.name !== "MessageAbortedError"}>
         <box
-          border={["left"]}
-          paddingTop={1}
-          paddingBottom={1}
-          paddingLeft={2}
-          marginTop={1}
-          backgroundColor={theme.surface.panel}
-          customBorderChars={SplitBorder.customBorderChars}
-          borderColor={theme.status.error.fg}
+          border={[...errorStyle().box.borderSides]}
+          paddingTop={errorStyle().box.paddingTop}
+          paddingBottom={errorStyle().box.paddingBottom}
+          paddingLeft={errorStyle().box.paddingLeft}
+          marginTop={errorStyle().box.marginTop}
+          backgroundColor={errorStyle().colors.background}
+          customBorderChars={borderCharsFor(errorStyle().box.borderCharset)}
+          borderColor={errorStyle().colors.border}
         >
-          <text fg={theme.foreground.muted}>{friendlyErrorMessage(error())}</text>
+          <text fg={errorStyle().colors.text}>{friendlyErrorMessage(error())}</text>
         </box>
       </Show>
       <Switch>
         <Match when={props.last || final() || error()?.name === "MessageAbortedError"}>
-          <box paddingLeft={3} marginTop={1} flexDirection="row" flexShrink={0}>
+          <box
+            paddingLeft={footer().box.paddingLeft}
+            marginTop={footer().box.marginTop}
+            flexDirection="row"
+            flexShrink={0}
+          >
             <text>
               <span
                 style={{
                   fg:
                     error()?.name === "MessageAbortedError"
-                      ? theme.foreground.muted
+                      ? footer().colors.detail
                       : local.agent.color(props.turn.request?.agent ?? ""),
                 }}
               >
                 ▣{" "}
               </span>{" "}
-              <span style={{ fg: theme.foreground.default }}>{Locale.titlecase(props.turn.request?.mode ?? "")}</span>
+              <span style={{ fg: footer().colors.text }}>{Locale.titlecase(props.turn.request?.mode ?? "")}</span>
               <Show when={props.turn.request?.modelID}>
-                <span style={{ fg: theme.foreground.muted }}> · {props.turn.request?.modelID}</span>
+                <span style={{ fg: footer().colors.detail }}> · {props.turn.request?.modelID}</span>
               </Show>
             </text>
             <Show when={stats()}>
               {(value) => (
-                <text fg={theme.foreground.muted}>
+                <text fg={footer().colors.detail}>
                   {" · "}
                   {Locale.duration(value().duration)}
                   <Show when={value().tps > 0}> · {value().tps.toFixed(0)} tok/s</Show>
@@ -194,7 +201,7 @@ export function AssistantMessage(props: { turn: Turn; last: boolean; usage?: Tur
               )}
             </Show>
             <Show when={error()?.name === "MessageAbortedError"}>
-              <text fg={theme.foreground.muted}> · interrupted</text>
+              <text fg={footer().colors.detail}> · interrupted</text>
             </Show>
           </box>
         </Match>

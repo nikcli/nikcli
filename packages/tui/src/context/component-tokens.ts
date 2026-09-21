@@ -147,6 +147,18 @@ export const COMPONENT_DEFAULTS = {
       background: "surface.panel",
       backgroundHover: "surface.offset",
       text: "foreground.default",
+      /** Timestamp, and the filename beside an attachment badge. */
+      detail: "foreground.muted",
+      /** Attachment badges, tinted by what the file is. */
+      attachmentImage: "accent.alt",
+      attachmentDocument: "accent.fg",
+      attachmentOther: "accent.secondary",
+      /** Text on a badge, which sits on one of the three tints above. */
+      attachmentText: "surface.base",
+      /** The filename chip beside the badge. */
+      attachmentLabel: "surface.offset",
+      /** The rule marking where the conversation was compacted. */
+      compaction: "border.active",
     },
   },
   /**
@@ -158,18 +170,27 @@ export const COMPONENT_DEFAULTS = {
     box: box({ paddingLeft: 3, marginTop: 1 }),
     colors: {
       text: "foreground.default",
+      /** Rules inside a rendered markdown table. */
+      tableBorder: "border.subtle",
     },
   },
   /**
-   * `ReasoningPart`. Box only. Its body is colored by `subtleSyntax`, a whole
-   * derived palette rather than a slot, and exposing that as one overridable
-   * color would let a theme set a value the renderer then ignores.
+   * `ReasoningPart`.
+   *
+   * The *syntax* inside the rendered markdown comes from `subtleSyntax`, a whole
+   * derived palette rather than a slot: exposing that as one overridable color
+   * would let a theme set a value the renderer then ignores. `body` is the
+   * fallback the part passes for prose that carries no syntax token, which is
+   * an ordinary color and belongs here.
    */
   "session.reasoning-part": {
     box: box({ paddingLeft: 2, marginTop: 1, borderSides: ["left"], borderCharset: "split" }),
     colors: {
       heading: "status.warning.fg",
       border: "surface.offset",
+      body: "foreground.muted",
+      /** Rules inside a rendered markdown table. */
+      tableBorder: "border.subtle",
     },
   },
   /** `RetryPart`. */
@@ -220,6 +241,74 @@ export const COMPONENT_DEFAULTS = {
     }),
     colors: {
       background: "surface.offset",
+    },
+  },
+  /**
+   * `SubtaskPart`'s wrapper, which positions the card in the turn.
+   *
+   * Separate from `session.task-card` because they answer different questions:
+   * this is the transcript's left gutter, the same 3 every other row sits at,
+   * while the card decides how a delegation looks wherever it is placed. The
+   * tool view places the same card at its own offset.
+   */
+  "session.subtask-part": {
+    box: box({ paddingLeft: 3 }),
+    colors: {},
+  },
+  /**
+   * The footer under an assistant turn: agent, model, duration, tok/s.
+   *
+   * The glyph takes the agent's color, which is per-turn and not a theme
+   * decision, so it is not a slot here.
+   */
+  "session.assistant-footer": {
+    box: box({ paddingLeft: 3, marginTop: 1 }),
+    colors: {
+      text: "foreground.default",
+      detail: "foreground.muted",
+    },
+  },
+  /** The error panel under a failed turn. */
+  "session.error": {
+    box: box({
+      paddingTop: 1,
+      paddingBottom: 1,
+      paddingLeft: 2,
+      marginTop: 1,
+      borderSides: ["left"],
+      borderCharset: "split",
+    }),
+    colors: {
+      background: "surface.panel",
+      border: "status.error.fg",
+      text: "foreground.muted",
+    },
+  },
+  /** The per-turn token table. Off unless `tui.turn_tokens` is on. */
+  "session.turn-tokens": {
+    box: box({ paddingLeft: 3 }),
+    colors: {
+      text: "foreground.muted",
+      warning: "status.warning.fg",
+    },
+  },
+  /**
+   * The card for input queued behind the running turn
+   * (`component/pending-input-card`). Its rail takes the agent's color.
+   */
+  "session.pending-input": {
+    box: box({
+      paddingTop: 1,
+      paddingBottom: 1,
+      paddingLeft: 2,
+      marginTop: 1,
+      borderSides: ["left"],
+      borderCharset: "split",
+    }),
+    colors: {
+      background: "surface.panel",
+      text: "foreground.default",
+      detail: "foreground.muted",
     },
   },
   /**
