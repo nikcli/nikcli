@@ -9,7 +9,7 @@ import {
   supportsKittyUnicodePlaceholders,
   type LiveCapabilities,
 } from "@nikcli-ai/tui-image"
-import { useDialog } from "@tui/ui/dialog"
+import { DialogHeader, useDialog } from "@tui/ui/dialog"
 import { useTheme } from "@tui/context/theme"
 import {
   BrowserSurface,
@@ -604,12 +604,7 @@ export function DialogWebPreview(props: DialogWebPreviewProps) {
 
   return (
     <box paddingLeft={2} paddingRight={2} gap={1}>
-      <box flexDirection="row" justifyContent="space-between" flexShrink={0}>
-        <text fg={theme.accent.fg} attributes={TextAttributes.BOLD}>
-          ⊕ Web Preview
-        </text>
-        <text fg={theme.foreground.muted}>esc</text>
-      </box>
+      <DialogHeader title="⊕ Web Preview" />
 
       <box flexDirection="row" gap={1} alignItems="center" flexShrink={0}>
         <text

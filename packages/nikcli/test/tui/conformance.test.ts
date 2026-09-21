@@ -223,6 +223,15 @@ describe("TUI component rules", () => {
     expect(offenders.filter((entry) => !WIZARDS.some((file) => entry.startsWith(file)))).toEqual([])
   })
 
+  it("no dialog draws its own title row", () => {
+    // Five did, each the same shape: a bold title, and a muted "esc" that was
+    // text and nothing else. A header that *reads* "esc" takes the affordance
+    // away from anyone driving with a mouse — which is what `DialogHeader`
+    // exists to prevent, and says so in its own comment.
+    const offenders = ALL.filter(({ text }) => />esc<\/text>/.test(text)).map(({ file }) => file)
+    expect(offenders).toEqual([])
+  })
+
   it("the accepted list is still accurate, so it cannot outlive its reason", () => {
     // An exemption nobody rechecks becomes a lie. This fails once the code it
     // names changes shape, which is when somebody should look again.

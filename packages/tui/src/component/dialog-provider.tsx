@@ -2,7 +2,7 @@ import { createMemo, createSignal, onMount, Show } from "solid-js"
 import { useSync } from "@tui/context/sync"
 import { map, pipe, sortBy } from "remeda"
 import { DialogSelect } from "@tui/ui/dialog-select"
-import { useDialog } from "@tui/ui/dialog"
+import { DialogHeader, useDialog } from "@tui/ui/dialog"
 import { useSDK } from "../context/sdk"
 import { DialogPrompt } from "../ui/dialog-prompt"
 import { Link } from "../ui/link"
@@ -365,12 +365,7 @@ function AutoMethod(props: AutoMethodProps) {
 
   return (
     <box paddingLeft={2} paddingRight={2} gap={1} paddingBottom={1}>
-      <box flexDirection="row" justifyContent="space-between">
-        <text attributes={TextAttributes.BOLD} fg={theme.foreground.default}>
-          {props.title}
-        </text>
-        <text fg={theme.foreground.muted}>esc</text>
-      </box>
+      <DialogHeader title={props.title} />
       <box gap={1}>
         <Link href={props.authorization.url} fg={theme.accent.fg} />
         <text fg={theme.foreground.muted}>{props.authorization.instructions}</text>

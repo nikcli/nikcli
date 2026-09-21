@@ -3,7 +3,7 @@ import { TextAttributes } from "@opentui/core"
 import { Clipboard } from "@tui/util/clipboard"
 import { createMemo, createResource, For, onMount, Show } from "solid-js"
 import { DialogSelect, type DialogSelectOption } from "@tui/ui/dialog-select"
-import { useDialog, type DialogContext } from "@tui/ui/dialog"
+import { DialogHeader, useDialog, type DialogContext } from "@tui/ui/dialog"
 import { DialogPrompt } from "@tui/ui/dialog-prompt"
 import { useToast } from "@tui/ui/toast"
 import { DialogProvider } from "./dialog-provider"
@@ -248,12 +248,7 @@ function DialogProfile(props: { user: UserSchema.PublicUser; notice?: ProfileNot
 
   return (
     <box gap={1} paddingBottom={1}>
-      <box flexDirection="row" justifyContent="space-between">
-        <text attributes={TextAttributes.BOLD} fg={theme.foreground.default}>
-          Profile
-        </text>
-        <text fg={theme.foreground.muted}>esc</text>
-      </box>
+      <DialogHeader title="Profile" />
 
       <box
         backgroundColor={theme.surface.offset}

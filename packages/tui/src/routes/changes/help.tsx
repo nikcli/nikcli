@@ -2,7 +2,7 @@ import { For } from "solid-js"
 import { TextAttributes } from "@opentui/core"
 import { useKeyboard } from "@opentui/solid"
 import { useTheme } from "@tui/context/theme"
-import { useDialog } from "@tui/ui/dialog"
+import { DialogHeader, useDialog } from "@tui/ui/dialog"
 
 type Section = {
   title: string
@@ -59,12 +59,7 @@ export function ChangesHelp() {
 
   return (
     <box paddingLeft={2} paddingRight={2} gap={1}>
-      <box flexDirection="row" justifyContent="space-between">
-        <text attributes={TextAttributes.BOLD} fg={theme.foreground.default}>
-          Changes — keybindings
-        </text>
-        <text fg={theme.foreground.muted}>esc</text>
-      </box>
+      <DialogHeader title="Changes — keybindings" />
       <For each={SECTIONS}>
         {(section) => (
           <box gap={0}>
