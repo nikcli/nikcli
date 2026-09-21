@@ -232,6 +232,43 @@ describe("TUI component rules", () => {
     expect(offenders).toEqual([])
   })
 
+  it("no dialog reaches for a context that lives below the dialog layer", async () => {
+    // A dialog is rendered inside `DialogProvider`'s own subtree, not inside
+    // its `children`, so it sees only what sits *above* the provider. Calling
+    // one of the hooks below it throws at the moment the dialog opens, which no
+    // typecheck and no test that does not mount it will catch — the keybindings
+    // sheet shipped this way and crashed on first open.
+    const app = await Bun.file(path.join(ROOT, "app.tsx")).text()
+    const order = [...app.matchAll(/<([A-Z]\w*Provider)\b/g)].map((match) => match[1]!)
+    const dialogAt = order.indexOf("DialogProvider")
+    expect(dialogAt).toBeGreaterThan(0)
+
+    // The hooks belonging to providers mounted below it. Named rather than
+    // derived, because a provider's name does not tell you its hook's — but the
+    // position check above fails if the layering ever changes.
+    const BELOW: Record<string, string> = {
+      CommandProvider: "useCommandDialog",
+      FrecencyProvider: "useFrecency",
+      PromptHistoryProvider: "usePromptHistory",
+      PromptRefProvider: "usePromptRef",
+      SessionTabsProvider: "useSessionTabs",
+    }
+    for (const [provider, hook] of Object.entries(BELOW)) {
+      expect(order.indexOf(provider)).toBeGreaterThan(dialogAt)
+      void hook
+    }
+
+    const offenders: string[] = []
+    for (const { file, text } of ALL) {
+      // The file that *defines* a hook is not a dialog using it.
+      if (!/(^|\/)dialog-/.test(file) || file === "component/dialog-command.tsx") continue
+      for (const hook of Object.values(BELOW)) {
+        if (new RegExp(`\\b${hook}\\(`).test(text)) offenders.push(`${file} — ${hook}`)
+      }
+    }
+    expect(offenders).toEqual([])
+  })
+
   it("the accepted list is still accurate, so it cannot outlive its reason", () => {
     // An exemption nobody rechecks becomes a lie. This fails once the code it
     // names changes shape, which is when somebody should look again.

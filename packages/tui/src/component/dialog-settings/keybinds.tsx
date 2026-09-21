@@ -1,5 +1,5 @@
 import { createMemo } from "solid-js"
-import { useCommandDialog, type CommandOption } from "../dialog-command"
+import { allCommands, type CommandOption } from "../dialog-command"
 import { useKeybind } from "@tui/context/keybind"
 import { useSync } from "@tui/context/sync"
 import { DialogSelect, type DialogSelectOption } from "@tui/ui/dialog-select"
@@ -23,13 +23,11 @@ import { DialogSettings } from "./index"
  */
 export function DialogSettingsKeybinds() {
   const dialog = useDialog()
-  const command = useCommandDialog()
   const keybind = useKeybind()
   const sync = useSync()
 
   const options = createMemo((): DialogSelectOption<string>[] => {
-    const bound = command
-      .all()
+    const bound = allCommands()
       .filter((option: CommandOption) => option.keybind)
       .map((option: CommandOption) => ({
         title: String(option.title),
