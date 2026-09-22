@@ -3,6 +3,18 @@
 <!-- UNRELEASED:START -->
 <!-- UNRELEASED:END -->
 
+## v1.389.0 (September 2026)
+
+## Core
+
+- Harden the background service lifecycle and require its password (@nikomatt69)
+
+**Thank you to 1 community contributor:**
+
+- @nikomatt69:
+  - fix(service): harden the background service lifecycle and require its password
+  - feat(session): add reconnect handling to maintain transcript during disconnections
+
 ## v1.388.0 (September 2026)
 
 ## Core
