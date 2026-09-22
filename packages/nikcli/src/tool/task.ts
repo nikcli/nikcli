@@ -13,6 +13,7 @@ import { Config } from "../config/config"
 import { Provider } from "../provider/provider"
 import { PermissionNext } from "@/permission/next"
 import { Delegation } from "@/delegation/manager"
+import { BackgroundRun } from "@/background/run"
 import { Instance } from "../project/instance"
 import { Log } from "@nikcli-ai/util/log"
 import { Effect } from "effect"
@@ -720,6 +721,90 @@ async function runBackgroundDelegation(params: {
   } finally {
     unsubProgress()
   }
+}
+
+/**
+ * What a resumed subagent is told. It keeps its own session, so everything it
+ * already did is still in context: the instruction it needs is "carry on", not
+ * the original task restated.
+ */
+const RESUME_PROMPT =
+  "Your previous run was interrupted before it finished. Review what you already did in this session, then continue from where you stopped — do not start the task over. When the work is done, report the result."
+
+/** The model the run was actually using, which its own session already records. */
+async function resolveResumeModel(sessionID: string, agent: Agent.Info) {
+  const summary = await BackgroundRun.summarizeSession(sessionID).catch(() => undefined)
+  const assistant = summary?.assistant
+  if (assistant) return { modelID: assistant.modelID, providerID: assistant.providerID }
+  if (agent.model) return { modelID: agent.model.modelID, providerID: agent.model.providerID }
+  return undefined
+}
+
+/**
+ * Restarts a delegation that stopped without an answer, reusing its session so
+ * the agent resumes instead of repeating itself. False means the run cannot be
+ * resumed: wrong status, attempts exhausted, or the session is gone.
+ */
+export async function resumeBackgroundDelegation(delegationID: string): Promise<boolean> {
+  const record = await Delegation.getDurable(delegationID).catch(() => undefined)
+  const sessionID = record?.sessionID
+  if (!record || !sessionID) return false
+  if (!BackgroundRun.isResumable(record.status)) return false
+
+  const agent = await agentGet(record.agent).catch(() => undefined)
+  if (!agent) return false
+
+  const session = await runSession(
+    Effect.gen(function* () {
+      const service = yield* Session.Service
+      return yield* service.get(sessionID)
+    }),
+  ).catch(() => undefined)
+  if (!session) return false
+
+  const model = await resolveResumeModel(sessionID, agent)
+  if (!model) return false
+
+  // Reopened last: every step above can fail, and a run left `running` with
+  // nobody driving it is worse than one still marked with how it died.
+  const reopened = await BackgroundRun.reopen(delegationID).catch(() => undefined)
+  if (!reopened) return false
+  Delegation.reattach(reopened)
+
+  const config = await configGet()
+  log.info("resuming delegation", {
+    delegationID,
+    agent: agent.name,
+    attempt: reopened.resumeCount,
+  })
+  await runBackgroundDelegation({
+    session,
+    prompt: RESUME_PROMPT,
+    agentName: agent.name,
+    model,
+    hasTaskPermission: agent.permission.some((rule) => rule.permission === "task"),
+    primaryTools: config.experimental?.primary_tools,
+    delegationID,
+  })
+  return true
+}
+
+/**
+ * Restarts at startup what a crash left behind. The runs are launched, not
+ * awaited, and take the same semaphore as any other background agent, so a
+ * machine that just came back up is not asked to run all of them at once.
+ */
+export async function resumeInterruptedDelegations(): Promise<number> {
+  const candidates = await BackgroundRun.listAutoResumable().catch(() => [])
+  for (const record of candidates) {
+    void resumeBackgroundDelegation(record.id).catch((error) => {
+      log.warn("failed to resume interrupted delegation", {
+        delegationID: record.id,
+        error: String(error),
+      })
+    })
+  }
+  return candidates.length
 }
 
 function subscribeDelegationProgress(sessionID: string, delegationID: string) {

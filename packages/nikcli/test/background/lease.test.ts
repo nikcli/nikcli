@@ -36,7 +36,7 @@ const running = (overrides: Partial<Bg.Record> = {}): Bg.Record => ({
 describe("EOT-09 BackgroundRun lease source of truth", () => {
   it("BackgroundRun.LEASE_TIMEOUT_MS is the same value as LOOP_RUN_LEASE_MS", () => {
     expect(BackgroundRun.LEASE_TIMEOUT_MS).toBe(LOOP_RUN_LEASE_MS)
-    expect(BackgroundRun.LEASE_TIMEOUT_MS).toBe(15_000)
+    expect(BackgroundRun.LEASE_TIMEOUT_MS).toBe(30_000)
   })
 
   it("leaseExpired: non-running status is never expired", () => {
@@ -55,6 +55,18 @@ describe("EOT-09 BackgroundRun lease source of truth", () => {
 
   it("leaseExpired: running record past the timeout is expired", () => {
     expect(BackgroundRun.leaseExpired(running({ heartbeatAt: Date.now() - LOOP_RUN_LEASE_MS - 1 }))).toBe(true)
+  })
+
+  it("leaseExpired: a run this process owns stays alive however stale its heartbeat", () => {
+    // The heartbeat interval is wall-clock scheduling, so CPU load, a blocked
+    // event loop or a suspended machine can starve it past the lease while the
+    // delegation is still producing output. Expiring on that reading orphans
+    // live work; the owner being this very process is the stronger signal.
+    expect(
+      BackgroundRun.leaseExpired(
+        running({ ownerID: BackgroundRun.OWNER_ID, heartbeatAt: Date.now() - LOOP_RUN_LEASE_MS * 10 }),
+      ),
+    ).toBe(false)
   })
 
   it("canTransition: terminal statuses reject further transitions", () => {

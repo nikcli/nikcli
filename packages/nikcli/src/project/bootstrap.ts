@@ -169,6 +169,16 @@ export async function InstanceBootstrap(instance: InstanceContext) {
     Log.Default.warn("session v2 projector init failed", { error })
   }
   await Delegation.init()
+  // `init` has just settled the previous process's in-flight runs as orphaned,
+  // so this is where they can be picked back up. Imported lazily: the task tool
+  // reaches back into this module's import graph.
+  try {
+    const { resumeInterruptedDelegations } = await import("../tool/task")
+    const resumed = await resumeInterruptedDelegations()
+    if (resumed > 0) Log.Default.info("resuming interrupted delegations", { count: resumed })
+  } catch (error) {
+    Log.Default.warn("failed to resume interrupted delegations on startup", { error })
+  }
   await Monitor.reconcile().catch((error) => {
     Log.Default.warn("failed to reconcile monitors on startup", { error })
   })

@@ -276,6 +276,7 @@ export const PublicClientCompat = {
   "session.background2.cancel": ["result", "session.backgroundCancel"],
   "session.background2.inspect": ["result", "session.backgroundInspect"],
   "session.background2.read": ["result", "session.backgroundRead"],
+  "session.background2.resume": ["result", "session.backgroundResume"],
   "session.children": ["result", "session.children"],
   "session.command": ["result", "session.command"],
   "session.context": ["result", "session.contextBreakdown"],

@@ -45,8 +45,12 @@ export const HISTORY_LIMIT = 50
 /**
  * How long a `running` LoopRun can stay untouched before `restore()` declares it
  * orphaned. Mirrors `BackgroundRun.LEASE_TIMEOUT_MS` (`src/background/run.ts`).
+ *
+ * Owners refresh at a third of this, so the value is really "how many missed
+ * heartbeats mean death". At 15s that was three, which a loaded machine or a
+ * slow provider call spends without being in any trouble.
  */
-export const LOOP_RUN_LEASE_MS = 15_000
+export const LOOP_RUN_LEASE_MS = 30_000
 
 /**
  * Upper bound for interval triggers. Prevents adversarial or accidental

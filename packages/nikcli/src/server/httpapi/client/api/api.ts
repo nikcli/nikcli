@@ -2257,32 +2257,42 @@ export type SessionBackgroundCancelOperation<E = never> = (
   input: Endpoint23_35Input,
 ) => Effect.Effect<Endpoint23_35Output, E>
 
-type Endpoint23_36Request = Parameters<RawClient["session"]["monitor"]>[0]
+type Endpoint23_36Request = Parameters<RawClient["session"]["backgroundResume"]>[0]
 export type Endpoint23_36Input = {
   readonly sessionID: Endpoint23_36Request["params"]["sessionID"]
-  readonly monitorID: Endpoint23_36Request["params"]["monitorID"]
+  readonly delegationID: Endpoint23_36Request["params"]["delegationID"]
 }
-export type Endpoint23_36Output = EffectValue<ReturnType<RawClient["session"]["monitor"]>>
-export type SessionMonitorOperation<E = never> = (input: Endpoint23_36Input) => Effect.Effect<Endpoint23_36Output, E>
+export type Endpoint23_36Output = EffectValue<ReturnType<RawClient["session"]["backgroundResume"]>>
+export type SessionBackgroundResumeOperation<E = never> = (
+  input: Endpoint23_36Input,
+) => Effect.Effect<Endpoint23_36Output, E>
 
-type Endpoint23_37Request = Parameters<RawClient["session"]["monitorLog"]>[0]
+type Endpoint23_37Request = Parameters<RawClient["session"]["monitor"]>[0]
 export type Endpoint23_37Input = {
   readonly sessionID: Endpoint23_37Request["params"]["sessionID"]
   readonly monitorID: Endpoint23_37Request["params"]["monitorID"]
-  readonly lines?: Endpoint23_37Request["query"]["lines"]
 }
-export type Endpoint23_37Output = EffectValue<ReturnType<RawClient["session"]["monitorLog"]>>
-export type SessionMonitorLogOperation<E = never> = (input: Endpoint23_37Input) => Effect.Effect<Endpoint23_37Output, E>
+export type Endpoint23_37Output = EffectValue<ReturnType<RawClient["session"]["monitor"]>>
+export type SessionMonitorOperation<E = never> = (input: Endpoint23_37Input) => Effect.Effect<Endpoint23_37Output, E>
 
-type Endpoint23_38Request = Parameters<RawClient["session"]["monitorCancel"]>[0]
+type Endpoint23_38Request = Parameters<RawClient["session"]["monitorLog"]>[0]
 export type Endpoint23_38Input = {
   readonly sessionID: Endpoint23_38Request["params"]["sessionID"]
   readonly monitorID: Endpoint23_38Request["params"]["monitorID"]
+  readonly lines?: Endpoint23_38Request["query"]["lines"]
 }
-export type Endpoint23_38Output = EffectValue<ReturnType<RawClient["session"]["monitorCancel"]>>
+export type Endpoint23_38Output = EffectValue<ReturnType<RawClient["session"]["monitorLog"]>>
+export type SessionMonitorLogOperation<E = never> = (input: Endpoint23_38Input) => Effect.Effect<Endpoint23_38Output, E>
+
+type Endpoint23_39Request = Parameters<RawClient["session"]["monitorCancel"]>[0]
+export type Endpoint23_39Input = {
+  readonly sessionID: Endpoint23_39Request["params"]["sessionID"]
+  readonly monitorID: Endpoint23_39Request["params"]["monitorID"]
+}
+export type Endpoint23_39Output = EffectValue<ReturnType<RawClient["session"]["monitorCancel"]>>
 export type SessionMonitorCancelOperation<E = never> = (
-  input: Endpoint23_38Input,
-) => Effect.Effect<Endpoint23_38Output, E>
+  input: Endpoint23_39Input,
+) => Effect.Effect<Endpoint23_39Output, E>
 
 export interface SessionApi<E = never> {
   readonly list: SessionListOperation<E>
@@ -2321,6 +2331,7 @@ export interface SessionApi<E = never> {
   readonly backgroundInspect: SessionBackgroundInspectOperation<E>
   readonly backgroundRead: SessionBackgroundReadOperation<E>
   readonly backgroundCancel: SessionBackgroundCancelOperation<E>
+  readonly backgroundResume: SessionBackgroundResumeOperation<E>
   readonly monitor: SessionMonitorOperation<E>
   readonly monitorLog: SessionMonitorLogOperation<E>
   readonly monitorCancel: SessionMonitorCancelOperation<E>

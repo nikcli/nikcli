@@ -64,6 +64,9 @@ type Overrides = Partial<{
   status: Status
   ownerID: string | undefined
   heartbeatAt: number | undefined
+  sessionID: string | undefined
+  completedAt: number | undefined
+  resumeCount: number
 }>
 
 function record(id: string, over: Overrides = {}) {
@@ -135,6 +138,20 @@ describe("background run recovery (EOT-09)", () => {
     })
   })
 
+  it("leaves our own run alone when its heartbeat interval was starved", async () => {
+    // The reported failure: under load or after the machine suspends, the 5s
+    // heartbeat misses its window and the 15s sweep settles a delegation that
+    // is still running in this process.
+    await project(`self${counter}`, async () => {
+      const projectId = Instance.project.id
+      await put(projectId, "bg_self", { ownerID: BackgroundRun.OWNER_ID, heartbeatAt: STALE() })
+
+      await BackgroundRun.reconcileInterrupted()
+
+      expect(await statusOf(projectId, "bg_self")).toBe("running")
+    })
+  })
+
   it("treats a running row with no owner at all as abandoned", async () => {
     // Written before the owner was recorded, which is the window a crash
     // during startup leaves behind.
@@ -184,6 +201,68 @@ describe("background run recovery (EOT-09)", () => {
       await BackgroundRun.finalize("bg_final", "error", "second outcome", "should not land")
 
       expect(await statusOf(projectId, "bg_final")).toBe("complete")
+    })
+  })
+
+  it("reopen puts an orphaned run back under this process's lease", async () => {
+    await project(`reopen${counter}`, async () => {
+      const projectId = Instance.project.id
+      await put(projectId, "bg_reopen", { status: "orphaned", completedAt: Date.now() })
+
+      const reopened = await BackgroundRun.reopen("bg_reopen")
+
+      expect(reopened?.status).toBe("running")
+      expect(reopened?.ownerID).toBe(BackgroundRun.OWNER_ID)
+      expect(reopened?.resumeCount).toBe(1)
+      expect(await statusOf(projectId, "bg_reopen")).toBe("running")
+    })
+  })
+
+  it("reopen refuses a run that finished or that the user stopped", async () => {
+    // Restarting these would replace an outcome the run actually reached.
+    await project(`noreopen${counter}`, async () => {
+      const projectId = Instance.project.id
+      await put(projectId, "bg_complete", { status: "complete" })
+      await put(projectId, "bg_cancelled", { status: "cancelled" })
+
+      expect(await BackgroundRun.reopen("bg_complete")).toBeUndefined()
+      expect(await BackgroundRun.reopen("bg_cancelled")).toBeUndefined()
+      expect(await statusOf(projectId, "bg_complete")).toBe("complete")
+      expect(await statusOf(projectId, "bg_cancelled")).toBe("cancelled")
+    })
+  })
+
+  it("reopen stops at the attempt cap, so a crash loop cannot restart forever", async () => {
+    await project(`cap${counter}`, async () => {
+      const projectId = Instance.project.id
+      await put(projectId, "bg_cap", {
+        status: "orphaned",
+        resumeCount: BackgroundRun.MAX_RESUME_ATTEMPTS,
+      })
+
+      expect(await BackgroundRun.reopen("bg_cap")).toBeUndefined()
+      expect(await statusOf(projectId, "bg_cap")).toBe("orphaned")
+    })
+  })
+
+  it("only crash-killed, recent, unexhausted runs are restarted unattended", async () => {
+    // Everything excluded here is a run the user should decide about: a failure
+    // to retry, work old enough to be forgotten, or one already retried to death.
+    await project(`auto${counter}`, async () => {
+      const projectId = Instance.project.id
+      const recent = { status: "orphaned" as Status, sessionID: "ses_x", completedAt: Date.now() }
+      await put(projectId, "bg_auto", recent)
+      await put(projectId, "bg_failed", { ...recent, status: "error" })
+      await put(projectId, "bg_nosession", { ...recent, sessionID: undefined })
+      await put(projectId, "bg_old", {
+        ...recent,
+        completedAt: Date.now() - BackgroundRun.RESUME_WINDOW_MS - 1_000,
+      })
+      await put(projectId, "bg_exhausted", { ...recent, resumeCount: BackgroundRun.MAX_RESUME_ATTEMPTS })
+
+      const ids = (await BackgroundRun.listAutoResumable()).map((r) => r.id)
+
+      expect(ids).toEqual(["bg_auto"])
     })
   })
 

@@ -608,6 +608,19 @@ export namespace Delegation {
     return record
   }
 
+  /**
+   * Re-arms the in-process machinery for a reopened run. Without it a resumed
+   * delegation has no heartbeat and no stall watchdog, so the next sweep would
+   * settle the very work we just restarted.
+   */
+  export function reattach(record: Record): void {
+    const entry = current()
+    entry.activeDelegations.set(record.id, record)
+    if (record.sessionID) entry.sessionToDelegation.set(record.sessionID, record.id)
+    setWatchdog(record.id, resolvePolicy(record.source, undefined))
+    setHeartbeat(record.id)
+  }
+
   export function setSessionID(delegationID: string, sessionID: string): void {
     const entry = current()
     const record = entry.activeDelegations.get(delegationID)
@@ -886,6 +899,19 @@ export namespace Delegation {
     const records = await BackgroundRun.listForJob(jobID)
     if (!records.some((record) => hasAccess(record, sessionID))) return false
     return cancelJob(jobID)
+  }
+
+  /**
+   * Restarts a single delegation the calling session can see. Unlike cancel,
+   * this does not widen to the job tree: resuming one interrupted run is a
+   * clear request, resuming a whole tree is not.
+   */
+  export async function resumeJobForSession(sessionID: string, delegationID: string): Promise<boolean> {
+    const record = await BackgroundRun.get(delegationID).catch(() => undefined)
+    if (!record || !hasAccess(record, sessionID)) return false
+    // Lazy: the task tool imports this module, so a static import closes the cycle.
+    const { resumeBackgroundDelegation } = await import("@/tool/task")
+    return resumeBackgroundDelegation(delegationID)
   }
 
   export async function collectResults(parentSessionID: string): Promise<SynthesisItem[]> {

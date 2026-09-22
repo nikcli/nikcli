@@ -649,6 +649,12 @@ export namespace SessionHttpApi {
       }).annotate(OpenApi.Identifier, "session.background.cancel"),
     )
     .add(
+      HttpApiEndpoint.post("backgroundResume", "/:sessionID/background/:delegationID/resume", {
+        params: DelegationPath,
+        success: Schema.Boolean,
+      }).annotate(OpenApi.Identifier, "session.background.resume"),
+    )
+    .add(
       HttpApiEndpoint.get("monitor", "/:sessionID/monitor/:monitorID", {
         params: MonitorPath,
         success: MonitorOutput,
@@ -1125,6 +1131,8 @@ export namespace SessionHttpApi {
       ),
     backgroundCancel: ({ params }: { params: typeof DelegationPath.Type }) =>
       Effect.promise(() => Delegation.cancelJobForSession(params.sessionID, params.delegationID)).pipe(Effect.orDie),
+    backgroundResume: ({ params }: { params: typeof DelegationPath.Type }) =>
+      Effect.promise(() => Delegation.resumeJobForSession(params.sessionID, params.delegationID)).pipe(Effect.orDie),
     monitor: ({ params }: { params: typeof MonitorPath.Type }) =>
       Effect.gen(function* () {
         // `Monitor.get` rejects with `SessionNotFoundError` for a missing
@@ -1193,6 +1201,7 @@ export namespace SessionHttpApi {
       .handle("backgroundInspect", (request) => handlers.backgroundInspect(request))
       .handle("backgroundRead", (request) => handlers.backgroundRead(request))
       .handle("backgroundCancel", (request) => handlers.backgroundCancel(request))
+      .handle("backgroundResume", (request) => handlers.backgroundResume(request))
       .handle("monitor", (request) => handlers.monitor(request))
       .handle("monitorLog", (request) => handlers.monitorLog(request))
       .handle("monitorCancel", (request) => handlers.monitorCancel(request)),

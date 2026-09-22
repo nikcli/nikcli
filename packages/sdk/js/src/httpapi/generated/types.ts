@@ -8654,6 +8654,13 @@ export type SessionBackgroundCancelInput = {
 
 export type SessionBackgroundCancelOutput = boolean
 
+export type SessionBackgroundResumeInput = {
+  readonly sessionID: { readonly sessionID: string; readonly delegationID: string }["sessionID"]
+  readonly delegationID: { readonly sessionID: string; readonly delegationID: string }["delegationID"]
+}
+
+export type SessionBackgroundResumeOutput = boolean
+
 export type SessionMonitorInput = {
   readonly sessionID: { readonly sessionID: string; readonly monitorID: string }["sessionID"]
   readonly monitorID: { readonly sessionID: string; readonly monitorID: string }["monitorID"]

@@ -364,6 +364,7 @@ export const makeCompat = (raw: Raw, helpers: CompatHelpers) => {
         cancel: result(raw["session"]["backgroundCancel"]),
         inspect: result(raw["session"]["backgroundInspect"]),
         read: result(raw["session"]["backgroundRead"]),
+        resume: result(raw["session"]["backgroundResume"]),
       },
       children: result(raw["session"]["children"]),
       command: result(raw["session"]["command"]),

@@ -27,7 +27,7 @@ import type { JsonValue } from "@/util/json"
 export const HISTORY_LIMIT = 100
 
 /** Mirrors `LOOP_RUN_LEASE_MS`: how long a `running` exec can stay untouched before `restore()` orphans it. */
-export const MISSION_EXEC_LEASE_MS = 15_000
+export const MISSION_EXEC_LEASE_MS = 30_000
 
 /** Per-feature-run wall-clock cap. A hung feature can never hold the single-flight slot forever. */
 export const DEFAULT_FEATURE_TIMEOUT_MS = 60 * 60_000
