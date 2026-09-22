@@ -88,7 +88,7 @@ async function fetchReleases(): Promise<Release[]> {
   const per = 100
 
   while (true) {
-    const url = `https://api.github.com/repos/nikomatt69/nikcli/releases?page=${page}&per_page=${per}`
+    const url = `https://api.github.com/repos/nikcli/nikcli/releases?page=${page}&per_page=${per}`
 
     const response = await fetch(url)
     if (!response.ok) {
@@ -213,7 +213,7 @@ async function save(githubTotal: number, npmDownloads: number) {
   )
 }
 
-console.log("Fetching GitHub releases for nikomatt69/nikcli...\n")
+console.log("Fetching GitHub releases for nikcli/nikcli...\n")
 
 const releases = await fetchReleases()
 console.log(`\nFetched ${releases.length} releases total\n`)

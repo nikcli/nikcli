@@ -68,8 +68,8 @@ function shouldSkip(): { skip: boolean; reason: string } {
     return { skip: true, reason: "Missing MINIMAX_API_KEY secret" }
   }
 
-  // Only run on nikomatt69/nikcli
-  if (REPO !== "nikomatt69/nikcli") {
+  // Only run on the nikcli repo (moved from nikomatt69/nikcli to nikcli/nikcli)
+  if (REPO !== "nikomatt69/nikcli" && REPO !== "nikcli/nikcli") {
     return { skip: true, reason: `Wrong repository: ${REPO}` }
   }
 

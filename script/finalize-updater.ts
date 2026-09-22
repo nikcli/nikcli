@@ -15,7 +15,7 @@
  *
  * Env:
  *   UPDATER_FRAGMENTS_DIR  directory holding the downloaded updater-* artifacts
- *   GH_REPO                e.g. nikomatt69/nikcli
+ *   GH_REPO                e.g. nikcli/nikcli
  *   NIKCLI_VERSION         version without leading v, e.g. 1.107.0
  *   RELEASE_NOTES          (optional) notes string for the manifest
  */
