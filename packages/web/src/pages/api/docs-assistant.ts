@@ -236,7 +236,7 @@ function systemPrompt(context: string, currentPage?: Source) {
     "",
     "Rules:",
     "- Answer ONLY from the documentation excerpts below. They are the source of truth.",
-    "- If the excerpts do not contain the answer, say so plainly and point to the closest documentation page, plus https://github.com/nikomatt69/nikcli/issues for anything unresolved.",
+    "- If the excerpts do not contain the answer, say so plainly and point to the closest documentation page, plus https://github.com/nikcli/nikcli/issues for anything unresolved.",
     "- Never invent commands, flags, config keys, API routes, package names or file paths.",
     "- Be concise: a short answer first, then bullets or a fenced code block when there are commands to run.",
     "- Link the pages you used as Markdown links with site-relative paths, e.g. [Configuration](/docs/configuration).",

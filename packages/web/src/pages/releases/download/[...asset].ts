@@ -24,7 +24,7 @@
  */
 import type { APIRoute } from "astro"
 
-const GITHUB_RELEASES = "https://github.com/nikomatt69/nikcli/releases/download"
+const GITHUB_RELEASES = "https://github.com/nikcli/nikcli/releases/download"
 
 /** Cloudflare omits the header for unknown or reserved addresses; `T1` is Tor. */
 const UNKNOWN = "XX"
