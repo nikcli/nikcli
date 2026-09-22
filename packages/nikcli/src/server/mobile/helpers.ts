@@ -1105,7 +1105,8 @@ export async function startGithubDeviceAuth() {
     // the same pre-filled URL ourselves, as the CLI's own device flow
     // (account/index.ts) already does.
     verificationUriComplete:
-      payload.verification_uri_complete ?? `${payload.verification_uri}?user_code=${encodeURIComponent(payload.user_code)}`,
+      payload.verification_uri_complete ??
+      `${payload.verification_uri}?user_code=${encodeURIComponent(payload.user_code)}`,
     expiresAt: Date.now() + payload.expires_in * 1000,
     interval: payload.interval ?? 5,
   }
