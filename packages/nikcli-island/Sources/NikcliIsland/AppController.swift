@@ -222,6 +222,12 @@ final class AppController: NSObject, NSApplicationDelegate {
         var req = URLRequest(url: url)
         req.httpMethod = "POST"
         req.setValue("application/json", forHTTPHeaderField: "Content-Type")
+        // The server may require a password (the background service always
+        // does); the bridge stamps the header it needs into the snapshot.
+        if let authorization = model.sessions.first(where: { $0.permissionId == permissionId })?.authorization,
+           !authorization.isEmpty {
+            req.setValue(authorization, forHTTPHeaderField: "Authorization")
+        }
         req.httpBody = try? JSONSerialization.data(withJSONObject: ["reply": reply])
         URLSession.shared.dataTask(with: req).resume()
         // Optimistic: clear just this request immediately rather than waiting the ~0.4s

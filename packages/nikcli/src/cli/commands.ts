@@ -705,6 +705,13 @@ const SpecServiceUnset = Spec.make("unset", {
   },
 })
 
+const SpecServicePassword = Spec.make("password", {
+  description: "print the service password (username nikcli), or replace it and stop the running service",
+  params: {
+    value: Argument.string("value").pipe(Argument.withDescription("the new password"), Argument.optional),
+  },
+})
+
 const SpecService = Spec.make("service", {
   description: "manage the shared background nikcli service",
   commands: [
@@ -715,6 +722,7 @@ const SpecService = Spec.make("service", {
     SpecServiceGet,
     SpecServiceSet,
     SpecServiceUnset,
+    SpecServicePassword,
   ],
 })
 

@@ -1,8 +1,9 @@
 import { HttpApi, HttpApiBuilder, HttpApiEndpoint, HttpApiGroup, OpenApi } from "effect/unstable/httpapi"
-import { Effect, Layer, Schema } from "effect"
+import { Effect, Layer, Option, Schema } from "effect"
 import { Config } from "@/config/config"
 import { ConnectorAuth } from "@/connectors/auth"
 import { InstanceState } from "@/effect"
+import { Auth } from "./auth"
 
 /**
  * Discord Gateway bot manager, as a declared group.
@@ -163,10 +164,16 @@ export namespace DiscordHttpApi {
         return yield* fromPromise(async (): Promise<StartBody> => {
           try {
             const [{ startDiscordBot }, { Server }] = await Promise.all([discordBot(), import("@/server/server")])
+            // The bot reaches this server over HTTP like any client, so it
+            // presents the password this server requires — the background
+            // service always has one.
+            const credentials = Auth.currentCredentials()
+            const password = Option.getOrUndefined(credentials.password)
             const status = await startDiscordBot({
               botToken,
               nikcliUrl: Server.url().origin,
               directory,
+              ...(password ? { nikcliUsername: credentials.username, nikcliPassword: password } : {}),
             })
             return {
               running: status.running,

@@ -14,6 +14,7 @@ import { Effect } from "effect"
 import { runPromiseWithLayer, withCurrentInstance } from "@/effect"
 import { PromptState } from "@/session/prompt-state"
 import { SessionRepo } from "@/session/repo"
+import { Auth } from "@/server/httpapi/auth"
 
 export const log = Log.create({ service: "serve" })
 
@@ -164,7 +165,13 @@ export default Runtime.handler(Commands.commands["serve"], async (input) => {
     )
   }
 
-  if (!Flag.NIKCLI_SERVER_PASSWORD && !tailscaleAuthActive) {
+  // The shared service is never unauthenticated. It reads the channel's
+  // password itself — the file its clients read too — and adopts it before
+  // the socket exists, so there is no moment it answers without one.
+  if (args.service) {
+    const { BackgroundService } = await import("@/service/service")
+    Auth.useServicePassword(await BackgroundService.password())
+  } else if (!Flag.NIKCLI_SERVER_PASSWORD && !tailscaleAuthActive) {
     warn("Warning: NIKCLI_SERVER_PASSWORD is not set; server is unsecured.")
   }
 
@@ -203,21 +210,29 @@ export default Runtime.handler(Commands.commands["serve"], async (input) => {
   }
 
   let workspaceSync: Array<ReturnType<typeof Workspace.startSyncing>> = []
-  if (Installation.isLocal()) {
-    const projects = await runProject(
-      Effect.gen(function* () {
-        const project = yield* Project.Service
-        return yield* project.list()
-      }),
-    )
-    workspaceSync = projects.map((project) => Workspace.startSyncing(project))
-  }
+  let remoteSync: Awaited<ReturnType<typeof maybeStartRemoteSync>>
+  try {
+    if (Installation.isLocal()) {
+      const projects = await runProject(
+        Effect.gen(function* () {
+          const project = yield* Project.Service
+          return yield* project.list()
+        }),
+      )
+      workspaceSync = projects.map((project) => Workspace.startSyncing(project))
+    }
 
-  // Phase 2: optional bidirectional sync to a remote hub
-  // (e.g. https://s.nikcli.store). Activated by NIKCLI_REMOTE_URL +
-  // NIKCLI_REMOTE_TOKEN or the config file's `sync` block. Zero impact
-  // when neither is set.
-  const remoteSync = await maybeStartRemoteSync()
+    // Phase 2: optional bidirectional sync to a remote hub
+    // (e.g. https://s.nikcli.store). Activated by NIKCLI_REMOTE_URL +
+    // NIKCLI_REMOTE_TOKEN or the config file's `sync` block. Zero impact
+    // when neither is set.
+    remoteSync = await maybeStartRemoteSync()
+  } catch (error) {
+    // The registration is already out. Withdraw it before failing, or clients
+    // keep discovering a server that never finished starting.
+    if (releaseRegistration) await releaseRegistration()
+    throw error
+  }
 
   await resumeSuspendedSessions().catch((error) => {
     log.warn("resume sweep failed", { error })

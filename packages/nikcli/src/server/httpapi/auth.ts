@@ -5,6 +5,7 @@ import { MobileAuth } from "@/mobile/auth"
 import { UserDB } from "@/user/users"
 import { externalSessionForToken, identityVerifierOptions, localAccountSession } from "@/server/identity-auth"
 import { Log } from "@nikcli-ai/util/log"
+import { isAccountPath } from "./instance-less"
 
 /**
  * Canonical auth resolution for the nikcli server.
@@ -56,19 +57,21 @@ export namespace Auth {
   const localRequests = new WeakSet<Request>()
 
   /**
-   * Record that a request came from this machine.
+   * Record that a request is this machine's operator.
    *
    * `ServerRouter` marks two shapes: a request handed to it without a
    * `Bun.Server` (no socket at all — `Server.fetch` from the TUI worker, the
    * CLI, plugins, sdk-next), and one that arrived on a listener bound to
-   * loopback, whose only reachable peers are on this machine. The second is
-   * what the background service is, and it stopped being a detail when that
-   * service became the default: the TUI no longer runs the engine in-process,
-   * so "never crossed a socket" alone would have excluded the terminal itself.
+   * loopback *and* satisfied `serverAdmission`. The second is what the
+   * background service's own terminal is: the TUI no longer runs the engine
+   * in-process, so "never crossed a socket" alone would exclude it.
    *
-   * Either way the caller is already inside the trust boundary: it needs no
-   * credentials to be admitted, it can read the same database directly, and
-   * the token file it presents is its own.
+   * The loopback socket alone is not the trust boundary. Every local user and
+   * any page a browser opens can reach it; the server's credential is what only
+   * its operator holds. Marking a loopback caller local before it proved that
+   * handed the machine's own account (`sessionFor`) to anyone on the machine —
+   * enough to read its email, and, through `/user/register`'s admin check, to
+   * mint a user whose bearer is then admitted without the password.
    */
   export function markLocal(request: Request) {
     localRequests.add(request)
@@ -134,16 +137,48 @@ export namespace Auth {
   }
 
   /**
+   * The background service's password, read by `serve --service` from the
+   * channel's own file (`BackgroundService.password`) before it listens.
+   *
+   * It outranks `NIKCLI_SERVER_PASSWORD`, as opencode's daemon password does:
+   * clients authenticate with what they read from that file, not with whatever
+   * the environment of the client that happened to spawn the service held. It
+   * never travels through the environment, so the processes the service spawns
+   * — shells, MCP servers, language servers — do not inherit it.
+   */
+  let servicePassword: string | undefined
+
+  export function useServicePassword(password: string) {
+    servicePassword = password.trim() || undefined
+  }
+
+  /**
    * Reads `Flag.NIKCLI_SERVER_*` every call so runtime changes (e.g. tests
    * that toggle the flag) take effect without a restart.
    */
   export function currentCredentials(): Credentials {
+    if (servicePassword) return { username: "nikcli", password: Option.some(servicePassword) }
     const username = Flag.NIKCLI_SERVER_USERNAME?.trim() || "nikcli"
     const password = Flag.NIKCLI_SERVER_PASSWORD?.trim()
     return {
       username,
       password: password ? Option.some(password) : Option.none(),
     }
+  }
+
+  /**
+   * The `Authorization` value that satisfies this process's own server, or
+   * `undefined` when it requires none.
+   *
+   * For callers inside the process that still reach the server through its
+   * router — `Server.fetch` clients, and the HTTP clients it hands to the
+   * Discord bot and the island app. They are subject to the password like any
+   * other caller, so they present it rather than being exempted.
+   */
+  export function authorizationHeader(credentials: Credentials = currentCredentials()): string | undefined {
+    const password = Option.getOrUndefined(credentials.password)
+    if (!password) return undefined
+    return `Basic ${Buffer.from(`${credentials.username}:${password}`).toString("base64")}`
   }
 
   /** True when the configured password matches the request's basic-auth header. */
@@ -179,9 +214,14 @@ export namespace Auth {
   }
 
   /**
-   * Routes reachable without credentials. Flag-dependent: closing legacy
-   * login (`NIKCLI_REQUIRE_OAUTH` without `NIKCLI_LEGACY_LOGIN`) also closes
-   * password login/registration.
+   * Routes reachable without credentials: those with nothing to protect that a
+   * client needs before it can hold any (health, CORS preflight), and those
+   * whose purpose is to issue a *user* its credential (`/user/login`,
+   * `/user/register`) — they check what they are given themselves.
+   * Flag-dependent: closing legacy login (`NIKCLI_REQUIRE_OAUTH` without
+   * `NIKCLI_LEGACY_LOGIN`) also closes password login/registration.
+   *
+   * `/account` is not one of them; see `isOperatorPath`.
    */
   export function isPublicPath(method: string, pathname: string): boolean {
     const normalizedMethod = method.toUpperCase()
@@ -191,11 +231,22 @@ export namespace Auth {
       return true
     }
     if (normalizedMethod === "GET" && pathname === "/global/health") return true
-    // /account/(login|login/complete) is the browser sign-in flow; it is
-    // public because the caller is unauthenticated by definition. The
-    // `GET /account` (active session) call rejects on its own.
-    if (pathname === "/account" || pathname === "/account/login" || pathname === "/account/login/complete") return true
     return false
+  }
+
+  /**
+   * Routes that act on this machine's own account: `GET /account` reads the
+   * signed-in account, `POST /account/login(/complete)` signs the machine in
+   * and makes the result its active account.
+   *
+   * They are for the machine's operator, so they take the server's own
+   * credential and nothing less — a user's bearer identifies a user, not the
+   * operator. They are exempt from the signed-in-user requirement
+   * (`NIKCLI_REQUIRE_OAUTH`) only, because signing in is how a machine gets a
+   * user in the first place.
+   */
+  export function isOperatorPath(pathname: string): boolean {
+    return isAccountPath(pathname)
   }
 
   function legacyUserTokenAllowed() {
@@ -224,11 +275,62 @@ export namespace Auth {
   }
 
   /**
+   * Whether a request satisfies this server's own credential, independent of
+   * any user bearer: the password, or an allowed tailnet identity where
+   * Tailscale auth is on. `admitted` when the server requires none — an
+   * unsecured server is open by its own configuration.
+   *
+   * The one implementation of that check. `authenticate` uses it for callers
+   * without a user bearer and for operator routes, and `ServerRouter` uses it
+   * to decide whether a loopback caller is this machine's operator.
+   */
+  export function serverAdmission(
+    request: Request,
+    options?: AuthenticateOptions,
+  ): "admitted" | "forbidden" | "identity-required" | "password-required" {
+    const credentials = options?.credentials ?? currentCredentials()
+    if (Flag.NIKCLI_SERVER_TAILSCALE_AUTH && isLoopbackHostname(options?.listenHostname)) {
+      const login = request.headers.get("Tailscale-User-Login")?.trim()
+      if (login) return isTailscaleLoginAllowed(login) ? "admitted" : "forbidden"
+      // Tailscale auth requires identity headers; optionally fall back to Basic.
+      if (Option.isNone(credentials.password)) return "identity-required"
+    }
+    if (Option.isNone(credentials.password)) return "admitted"
+    return matchesBasicAuth(credentials, request.headers.get("authorization")) ? "admitted" : "password-required"
+  }
+
+  /** `serverAdmission` as an `authenticate` result, with its 401 and 403 responses. */
+  function admissionResult(request: Request, options?: AuthenticateOptions): AuthenticateResult {
+    const admission = serverAdmission(request, options)
+    if (admission === "admitted") return { ok: true, principal: { type: "open" } }
+    if (admission === "forbidden") {
+      log.warn("tailscale user not allowed", { login: request.headers.get("Tailscale-User-Login")?.trim() })
+      return { ok: false, response: new Response("Forbidden", { status: 403 }) }
+    }
+    // No password to prompt for: a Basic challenge would invite one that cannot work.
+    if (admission === "identity-required") return unauthorized()
+    return {
+      ok: false,
+      response: new Response("Unauthorized", {
+        status: 401,
+        headers: { "www-authenticate": challenge },
+      }),
+    }
+  }
+
+  /**
    * Full auth decision for a request. Both backends call this — Hono's
    * middleware for every route, the bridge for direct consumers — so the
    * acceptance order has exactly one implementation.
    */
   export async function authenticate(request: Request, options?: AuthenticateOptions): Promise<AuthenticateResult> {
+    // Operator routes take the server's credential whatever else the request
+    // carries; the LAN socket, which admits paired devices only, serves none.
+    if (isOperatorPath(new URL(request.url).pathname)) {
+      if (options?.mobileAuthRequired) return unauthorized()
+      return admissionResult(request, options)
+    }
+
     const bearer = MobileAuth.bearer(request) ?? extractQueryToken(new URL(request.url))
     if (bearer) {
       const principal = await resolveBearer(request)
@@ -267,33 +369,7 @@ export namespace Auth {
       return unauthorized()
     }
 
-    const credentials = options?.credentials ?? currentCredentials()
-
-    const tailscaleAuthEnabled = Flag.NIKCLI_SERVER_TAILSCALE_AUTH && isLoopbackHostname(options?.listenHostname)
-    if (tailscaleAuthEnabled) {
-      const login = request.headers.get("Tailscale-User-Login")?.trim()
-      if (login) {
-        if (!isTailscaleLoginAllowed(login)) {
-          log.warn("tailscale user not allowed", { login })
-          return { ok: false, response: new Response("Forbidden", { status: 403 }) }
-        }
-        return { ok: true, principal: { type: "open" } }
-      }
-      // Tailscale auth requires identity headers; optionally fall back to Basic.
-      if (Option.isNone(credentials.password)) return unauthorized()
-    }
-
-    if (Option.isNone(credentials.password)) return { ok: true, principal: { type: "open" } }
-    if (matchesBasicAuth(credentials, request.headers.get("authorization"))) {
-      return { ok: true, principal: { type: "open" } }
-    }
-    return {
-      ok: false,
-      response: new Response("Unauthorized", {
-        status: 401,
-        headers: { "www-authenticate": challenge },
-      }),
-    }
+    return admissionResult(request, options)
   }
 
   /**

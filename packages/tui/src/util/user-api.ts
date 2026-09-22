@@ -149,7 +149,7 @@ export namespace UserApi {
   /**
    * Whether any account exists on this install — the first-run signal.
    *
-   * Deliberately unauthenticated: `/user/status` is one of the three paths
+   * Deliberately unauthenticated: `/user/status` is one of the paths
    * `Auth.isPublicPath` admits, because asking it is what happens *before*
    * anyone can be signed in. An unreachable server answers `null`, which the
    * caller must not read as "no users" — that would restart onboarding for

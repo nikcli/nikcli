@@ -14,6 +14,7 @@ struct SessionInfo: Identifiable, Equatable {
     var startedAt: Double    // turn clock start (0 = no active turn)
     var permissionId: String // non-empty while state == .permission
     var port: Int32          // local server port to POST the permission reply to (0 = none)
+    var authorization: String // Authorization header that server requires (empty = none)
     var isSubagent: Bool     // true when spawned via delegation (has a parent session)
     var agentTitle: String   // this session's own title — distinguishes subagent rows
                              // that would otherwise show the same `project` as their parent
@@ -113,6 +114,7 @@ enum SessionAggregator {
                 startedAt: s.startedAt,
                 permissionId: eff == .permission ? s.permissionId : "",
                 port: s.port,
+                authorization: s.authorization,
                 isSubagent: !s.parentId.isEmpty,
                 agentTitle: s.agentTitle
             )

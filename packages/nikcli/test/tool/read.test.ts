@@ -30,6 +30,16 @@ describe("ReadTool", () => {
     expect(asked.some((a) => a.permission === "read")).toBe(true)
   })
 
+  it("resolves a relative path against the instance, not the process cwd", async () => {
+    // The background service runs every project from one process, so its
+    // cwd belongs to none of them.
+    await fs.writeFile(path.join(projectDir, "relative.txt"), "from the instance\n")
+    expect(process.cwd()).not.toBe(projectDir)
+    const { ctx } = makeToolContext()
+    const result = await withProjectDirectory(projectDir, () => def.executeAsync({ filePath: "relative.txt" }, ctx))
+    expect(result.output).toContain("from the instance")
+  })
+
   it("respects offset and limit", async () => {
     const filePath = path.join(projectDir, "numbered.txt")
     await fs.writeFile(filePath, "a\nb\nc\nd\ne\n")

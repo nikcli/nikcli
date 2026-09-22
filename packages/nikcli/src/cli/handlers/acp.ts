@@ -7,6 +7,7 @@ import { AgentSideConnection, ndJsonStream } from "@agentclientprotocol/sdk"
 import { ACP } from "@/acp/agent"
 import { Server } from "@/server/server"
 import { createNikcliClient } from "@nikcli-ai/sdk/httpapi"
+import { Auth } from "@/server/httpapi/auth"
 import { resolveNetworkOptions } from "@/cli/network"
 
 export const log = Log.create({ service: "acp-command" })
@@ -29,8 +30,12 @@ export default Runtime.handler(Commands.commands["acp"], async (input) => {
     const opts = await resolveNetworkOptions(args as Parameters<typeof resolveNetworkOptions>[0])
     const server = Server.listen(opts)
 
+    // This process's own server, reached over its socket: present the
+    // credentials it requires, as every in-process client does.
+    const authorization = Auth.authorizationHeader()
     const sdk = createNikcliClient({
       baseUrl: `http://${server.hostname}:${server.port}`,
+      headers: authorization ? { authorization } : undefined,
     })
 
     const input = new WritableStream<Uint8Array>({

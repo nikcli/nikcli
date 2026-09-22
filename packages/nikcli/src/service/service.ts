@@ -1,9 +1,11 @@
 import fs from "fs/promises"
+import os from "os"
 import path from "path"
-import { randomUUID } from "crypto"
+import { randomBytes, randomUUID } from "crypto"
 import { Global } from "@nikcli-ai/util/global"
 import { Log } from "@nikcli-ai/util/log"
 import { Installation } from "@/installation"
+import { Flag } from "@nikcli-ai/util/flag"
 
 const log = Log.create({ service: "background-service" })
 
@@ -15,7 +17,8 @@ const log = Log.create({ service: "background-service" })
  * once per machine and leaves clients as thin HTTP consumers — the shape
  * `nikcli attach <url>` has always run in.
  *
- * The lifecycle here follows opencode v2's `services/service-{config,registration}.ts`,
+ * The lifecycle here follows opencode v2's CLI daemon (`services/daemon.ts` in
+ * its `packages/cli`, formerly `services/service-{config,registration}.ts`),
  * including the parts that are not obvious:
  *
  * - **Per-channel registration and port.** A `local` dev build and an installed
@@ -29,11 +32,13 @@ const log = Log.create({ service: "background-service" })
  *   serving the same channel indefinitely.
  * - **Ownership-checked cleanup**, so an older instance exiting cannot delete a
  *   newer one's registration.
- *
- * Deliberate difference from opencode: no per-service password. nikcli binds
- * loopback and already has `NIKCLI_SERVER_PASSWORD` for its own auth, and adding
- * one would change what every client has to send. Any local process can read the
- * registration file either way.
+ * - **A pid is signalled only once it is proven to be the service** — the
+ *   registered URL answers health with the registered version — because a
+ *   registration outlives a crash and the OS reuses pids.
+ * - **A private password per channel**, as opencode's daemon has: generated once
+ *   into a 0600 file, read by the service itself, sent by every client. Loopback
+ *   is not a boundary on its own — every local user and any web page can reach
+ *   the port — and the file is readable only by the user the service runs as.
  *
  * See `specs/background-service.md`.
  */
@@ -48,6 +53,13 @@ export namespace BackgroundService {
 
   const START_TIMEOUT_MS = 30_000
   const HEALTH_TIMEOUT_MS = 2_000
+  /**
+   * How long a service that accepts connections but does not answer is given
+   * before it is written off. A turn that blocks the event loop for a few
+   * seconds is a busy engine, not a dead one, and writing it off evicts it —
+   * suspending every session it is running.
+   */
+  const BUSY_GRACE_MS = 6_000
   const POLL_INTERVAL_MS = 100
   const STOP_TIMEOUT_MS = 10_000
   const OWNERSHIP_INTERVAL_MS = 5_000
@@ -113,9 +125,167 @@ export namespace BackgroundService {
     return path.join(Global.Path.state, `${filename()}.lock`)
   }
 
-  async function readRegistration(): Promise<Registration | undefined> {
+  /** The Basic-auth username of the service's credentials. `Auth` uses the same literal. */
+  export const USERNAME = "nikcli"
+
+  function passwordPath() {
+    return path.join(Global.Path.state, filename().replace(/\.json$/, ".password"))
+  }
+
+  async function readPassword(): Promise<string> {
+    return fs
+      .readFile(passwordPath(), "utf8")
+      .then((raw) => raw.trim())
+      .catch(() => "")
+  }
+
+  /**
+   * The channel's service password, generated on first use; `value` replaces it.
+   *
+   * One credential kept across restarts, as opencode's daemon keeps its own, so
+   * a client that discovers the service can authenticate with no flag or
+   * environment variable. Replacing it leaves a running service on the old one:
+   * `nikcli service password <value>` stops the service once the file is written.
+   */
+  export async function password(value?: string): Promise<string> {
+    if (value !== undefined) {
+      const next = value.trim()
+      if (!next) throw new Error("The service password cannot be empty")
+      await writePassword(next, "replace")
+      return next
+    }
+    const existing = await readPassword()
+    if (existing) return existing
+    return writePassword(randomBytes(32).toString("base64url"), "create")
+  }
+
+  /**
+   * `create` publishes only if nobody else has: two clients starting at once
+   * would otherwise each write their own, and whichever password the service
+   * did not read is refused on every request. A hard link is the atomic
+   * create-if-absent for a file whose content is already complete.
+   */
+  async function writePassword(secret: string, mode: "create" | "replace"): Promise<string> {
+    const file = passwordPath()
+    await fs.mkdir(path.dirname(file), { recursive: true })
+    const temp = `${file}.${randomUUID()}.tmp`
+    await fs.writeFile(temp, secret, { mode: 0o600 })
     try {
-      const raw = await fs.readFile(registrationPath(), "utf8")
+      if (mode === "create") {
+        try {
+          await fs.link(temp, file)
+          return secret
+        } catch (error) {
+          if ((error as NodeJS.ErrnoException | undefined)?.code === "EEXIST") {
+            const existing = await readPassword()
+            if (existing) return existing
+          }
+          // An empty file names no password, and a volume without hard links
+          // cannot create-if-absent: replacing is the fallback for both.
+        }
+      }
+      await fs.rename(temp, file)
+      return secret
+    } finally {
+      await fs.rm(temp, { force: true }).catch(() => {})
+    }
+  }
+
+  /** The Basic `Authorization` value for a password — the service's own username unless told otherwise. */
+  export function authorization(secret: string, username = USERNAME): string {
+    return `Basic ${Buffer.from(`${username}:${secret}`).toString("base64")}`
+  }
+
+  /**
+   * Whether `url` addresses the registered service, without probing it.
+   *
+   * Loopback names are one host: the registration says `127.0.0.1`, and a user
+   * typing `localhost` means the same socket.
+   */
+  export async function isServiceUrl(url: string): Promise<boolean> {
+    const registration = await readRegistration()
+    if (!registration) return false
+    const a = URL.parse(registration.url)
+    const b = URL.parse(url)
+    if (!a || !b) return false
+    const host = (value: URL) =>
+      value.hostname === "localhost" || value.hostname === "127.0.0.1" || value.hostname === "[::1]"
+        ? "loopback"
+        : value.hostname
+    return a.protocol === b.protocol && a.port === b.port && host(a) === host(b)
+  }
+
+  /**
+   * Put the server's `credentials` on a request, beside the user identity it
+   * may already carry. The one client-side rule, for every transport: the
+   * service's `fetch`, `attach`, and the in-process clients.
+   *
+   * A request that carries a bearer — the `/user/*` calls send the terminal's
+   * issuer token — keeps it as `?token=`, the `auth_token` scheme the server
+   * accepts wherever it accepts a bearer header: one `Authorization` header
+   * cannot hold both, and without the bearer the call loses its identity while
+   * without the credential it is refused. Any other `Authorization` the caller
+   * chose is its own decision; `false` means it was left alone.
+   */
+  export function withCredentials(target: URL, headers: Headers, credentials: string): boolean {
+    const existing = headers.get("authorization")
+    const bearer = existing ? /^Bearer\s+(.+)$/i.exec(existing)?.[1]?.trim() : undefined
+    if (existing && !bearer) return false
+    if (bearer && !target.searchParams.has("token")) target.searchParams.set("token", bearer)
+    headers.set("authorization", credentials)
+    return true
+  }
+
+  /**
+   * A `fetch` that presents `credentials` to the server at `url`, and only to
+   * it: the TUI sends every request through one function, other hosts
+   * included, and the password must not leave for them.
+   */
+  export function authorizedFetch(url: string, credentials: string): typeof fetch {
+    const origin = new URL(url).origin
+    const authorized = async (input: RequestInfo | URL, init?: RequestInit) => {
+      const target = new URL(input instanceof Request ? input.url : String(input))
+      if (target.origin !== origin) return fetch(input, init)
+      const headers = new Headers(init?.headers ?? (input instanceof Request ? input.headers : undefined))
+      if (!withCredentials(target, headers, credentials)) return fetch(input, init)
+      return fetch(input instanceof Request ? new Request(target, input) : target, { ...init, headers })
+    }
+    return Object.assign(authorized, { preconnect: fetch.preconnect }) as typeof fetch
+  }
+
+  /**
+   * How a client reaches the server at `url`.
+   *
+   * The shared service takes its channel password, and it has no directory of
+   * its own — it serves every project from the user's home — so a client of it
+   * names the directory it runs in (`service: true`). Any other server takes
+   * `NIKCLI_SERVER_PASSWORD` when it is set, as opencode's client falls back to
+   * its own, and keeps meaning "the server's directory" when none is named.
+   */
+  export async function connection(url: string): Promise<{ fetch?: typeof fetch; service: boolean }> {
+    if (await isServiceUrl(url)) return { fetch: authorizedFetch(url, authorization(await password())), service: true }
+    const secret = Flag.NIKCLI_SERVER_PASSWORD?.trim()
+    if (!secret) return { service: false }
+    return {
+      fetch: authorizedFetch(url, authorization(secret, Flag.NIKCLI_SERVER_USERNAME?.trim() || USERNAME)),
+      service: false,
+    }
+  }
+
+  /**
+   * What reading the registration found.
+   *
+   * `unreadable` is kept apart from `absent` for the watchdog: a read that
+   * failed (EMFILE under fd pressure, EIO) says nothing about who owns the
+   * channel, and treating it as "gone" made a busy service evict itself.
+   */
+  type ReadResult =
+    | { readonly kind: "present"; readonly registration: Registration }
+    | { readonly kind: "absent" }
+    | { readonly kind: "unreadable" }
+
+  function parseRegistration(raw: string): Registration | undefined {
+    try {
       const parsed = JSON.parse(raw) as Partial<Registration>
       if (typeof parsed.pid !== "number" || typeof parsed.url !== "string") return undefined
       return {
@@ -130,8 +300,41 @@ export namespace BackgroundService {
     }
   }
 
+  async function readRegistrationResult(): Promise<ReadResult> {
+    let raw: string
+    try {
+      raw = await fs.readFile(registrationPath(), "utf8")
+    } catch (error) {
+      if ((error as NodeJS.ErrnoException | undefined)?.code === "ENOENT") return { kind: "absent" }
+      return { kind: "unreadable" }
+    }
+    // Writes are temp + rename, so a file that does not parse was not written
+    // by a service: it names no owner.
+    const registration = parseRegistration(raw)
+    return registration ? { kind: "present", registration } : { kind: "absent" }
+  }
+
+  async function readRegistration(): Promise<Registration | undefined> {
+    const result = await readRegistrationResult()
+    return result.kind === "present" ? result.registration : undefined
+  }
+
   function owns(found: Registration | undefined, mine: Registration): boolean {
     return found !== undefined && found.id === mine.id && found.pid === mine.pid && found.url === mine.url
+  }
+
+  /**
+   * Remove the registration only if it is still `expected`.
+   *
+   * Every removal goes through here, the disposer's included. Between
+   * reading an entry and deciding it is stale — seconds, when a probe waits out
+   * a busy service — another client can start a new service, and deleting
+   * *its* entry makes its watchdog stand it down.
+   */
+  async function removeIfUnchanged(expected: Registration): Promise<void> {
+    const found = await readRegistration()
+    if (!owns(found, expected)) return
+    await fs.rm(registrationPath(), { force: true }).catch(() => {})
   }
 
   /**
@@ -141,8 +344,14 @@ export namespace BackgroundService {
    * Returns the disposer `serve` calls on shutdown — it removes the file only if
    * this instance still owns it, so an older process exiting cannot delete a
    * newer one's entry.
+   *
+   * `intervalMs` exists for tests; the service always runs the default.
    */
-  export async function register(url: string, onEvicted?: () => void): Promise<() => Promise<void>> {
+  export async function register(
+    url: string,
+    onEvicted?: () => void,
+    options?: { readonly intervalMs?: number },
+  ): Promise<() => Promise<void>> {
     const registration: Registration = {
       id: randomUUID(),
       pid: process.pid,
@@ -160,8 +369,14 @@ export namespace BackgroundService {
     await fs.rename(temp, file)
     log.info("service registered", registration)
 
+    // Set by the disposer. A tick already reading when shutdown removes the
+    // file would otherwise see it gone and "evict" a service that is draining —
+    // and a second SIGTERM makes `serve` force-exit mid-drain.
+    let disposed = false
     const watchdog = setInterval(() => {
-      void readRegistration().then((found) => {
+      void readRegistrationResult().then((result) => {
+        if (disposed || result.kind === "unreadable") return
+        const found = result.kind === "present" ? result.registration : undefined
         if (owns(found, registration)) return
         log.warn("service registration replaced; standing down", {
           id: registration.id,
@@ -172,20 +387,15 @@ export namespace BackgroundService {
         clearInterval(watchdog)
         onEvicted?.()
       })
-    }, OWNERSHIP_INTERVAL_MS)
+    }, options?.intervalMs ?? OWNERSHIP_INTERVAL_MS)
     // Never hold the process open on our own account.
     watchdog.unref?.()
 
     return async () => {
+      disposed = true
       clearInterval(watchdog)
-      const found = await readRegistration()
-      if (owns(found, registration)) await fs.rm(file, { force: true }).catch(() => {})
+      await removeIfUnchanged(registration)
     }
-  }
-
-  /** Drop the registration unconditionally. For stale entries and for `stop`. */
-  export async function unregister(): Promise<void> {
-    await fs.rm(registrationPath(), { force: true }).catch(() => {})
   }
 
   function alive(pid: number): boolean {
@@ -198,19 +408,48 @@ export namespace BackgroundService {
     }
   }
 
-  /** `undefined` when the server does not answer; never throws. */
-  export async function health(url: string, timeoutMs = HEALTH_TIMEOUT_MS): Promise<{ version: string } | undefined> {
+  /**
+   * One health probe, classified.
+   *
+   * `busy` means the connection was accepted but no answer came in time — the
+   * shape of a live service whose event loop is blocked. `down` is everything
+   * that is definitely not a healthy service: refused, unreachable, or an answer
+   * without `healthy: true`.
+   */
+  type Probe = { readonly state: "healthy"; readonly version: string } | { readonly state: "busy" | "down" }
+
+  async function probe(url: string, timeoutMs = HEALTH_TIMEOUT_MS): Promise<Probe> {
     try {
       const response = await fetch(new URL("/global/health", url), {
         signal: AbortSignal.timeout(timeoutMs),
       })
-      if (!response.ok) return undefined
+      if (!response.ok) return { state: "down" }
       const body = (await response.json()) as { healthy?: boolean; version?: string }
-      if (body.healthy !== true) return undefined
-      return { version: typeof body.version === "string" ? body.version : "" }
-    } catch {
-      return undefined
+      if (body.healthy !== true) return { state: "down" }
+      return { state: "healthy", version: typeof body.version === "string" ? body.version : "" }
+    } catch (error) {
+      return { state: (error as { name?: unknown } | undefined)?.name === "TimeoutError" ? "busy" : "down" }
     }
+  }
+
+  /**
+   * Probe until the answer is final: a refusal is final at once, a timeout only
+   * once it has lasted `BUSY_GRACE_MS`. A crashed service costs no extra wait;
+   * a busy one is not written off for a single slow answer.
+   */
+  async function probeWithGrace(url: string): Promise<Probe> {
+    const deadline = Date.now() + BUSY_GRACE_MS
+    while (true) {
+      const result = await probe(url)
+      if (result.state !== "busy" || Date.now() >= deadline) return result
+      await Bun.sleep(POLL_INTERVAL_MS)
+    }
+  }
+
+  /** `undefined` when the server does not answer; never throws. */
+  export async function health(url: string, timeoutMs = HEALTH_TIMEOUT_MS): Promise<{ version: string } | undefined> {
+    const result = await probe(url, timeoutMs)
+    return result.state === "healthy" ? { version: result.version } : undefined
   }
 
   /**
@@ -219,23 +458,28 @@ export namespace BackgroundService {
    * Believed only after the file parses, the pid is alive and health answers —
    * cheapest check first. Anything else means the entry is stale, and a stale
    * entry is removed rather than reported: a machine that crashed mid-session
-   * must start cleanly, not fail.
+   * must start cleanly, not fail. A service that is only slow to answer gets
+   * `BUSY_GRACE_MS` first, because removing its entry evicts it.
    */
   export async function discover(): Promise<Registration | undefined> {
     const registration = await readRegistration()
     if (!registration) return undefined
     if (!alive(registration.pid)) {
       log.info("removing stale registration (process gone)", { pid: registration.pid })
-      await unregister()
+      await removeIfUnchanged(registration)
       return undefined
     }
-    const probe = await health(registration.url)
-    if (!probe) {
-      log.info("removing stale registration (unhealthy)", { pid: registration.pid, url: registration.url })
-      await unregister()
+    const result = await probeWithGrace(registration.url)
+    if (result.state !== "healthy") {
+      log.info("removing stale registration (unhealthy)", {
+        pid: registration.pid,
+        url: registration.url,
+        health: result.state,
+      })
+      await removeIfUnchanged(registration)
       return undefined
     }
-    return { ...registration, version: probe.version || registration.version }
+    return { ...registration, version: result.version || registration.version }
   }
 
   /**
@@ -307,6 +551,15 @@ export namespace BackgroundService {
     }
 
     try {
+      // The caller's `discover()` ran before the lock was ours, so whoever held
+      // it may have finished in between. Spawning anyway would start a second
+      // engine whose registration evicts the one just started.
+      const raced = await discover()
+      if (raced) {
+        if (versionBelongsToChannel(raced.version)) return raced
+        await stop()
+      }
+
       // Imported here, not at module scope: `config.ts` imports this module
       // back, and a client that only discovers a running service never needs it.
       const { ServiceConfig } = await import("./config")
@@ -327,6 +580,11 @@ export namespace BackgroundService {
         stdout: "ignore",
         stderr: "ignore",
         detached: true,
+        // Not the spawning client's directory. The service outlives it and
+        // serves every project; requests name their own directory, and a
+        // project cwd would leak into whatever still falls back to it — and pin
+        // a directory that may later be deleted or sit on an unmounted volume.
+        cwd: os.homedir(),
         env: { ...process.env, ...settings.env },
       })
       child.unref()
@@ -362,12 +620,34 @@ export namespace BackgroundService {
     return start()
   }
 
+  /**
+   * Whether the process behind `registration` is provably the service.
+   *
+   * A registration outlives a crash, and the OS reuses pids: a live pid alone
+   * may be any process of this user's. The registered URL answering health
+   * with the registered version ties the pid to the service. `busy` is taken
+   * as the service too — something is holding the registered port and not
+   * answering, which is a wedged service, the case `stop` exists for.
+   */
+  function verified(registration: Registration, result: Probe): boolean {
+    if (result.state !== "healthy") return result.state === "busy"
+    return registration.version === "" || result.version === registration.version
+  }
+
   /** `false` when there was nothing to stop. */
   export async function stop(): Promise<boolean> {
     const registration = await readRegistration()
     if (!registration) return false
     if (!alive(registration.pid)) {
-      await unregister()
+      await removeIfUnchanged(registration)
+      return false
+    }
+    if (!verified(registration, await probeWithGrace(registration.url))) {
+      log.warn("registered service does not answer as itself; leaving its pid alone", {
+        pid: registration.pid,
+        url: registration.url,
+      })
+      await removeIfUnchanged(registration)
       return false
     }
 
@@ -376,14 +656,14 @@ export namespace BackgroundService {
     try {
       process.kill(registration.pid, "SIGTERM")
     } catch {
-      await unregister()
+      await removeIfUnchanged(registration)
       return false
     }
 
     const deadline = Date.now() + STOP_TIMEOUT_MS
     while (Date.now() < deadline) {
       if (!alive(registration.pid)) {
-        await unregister()
+        await removeIfUnchanged(registration)
         return true
       }
       await Bun.sleep(POLL_INTERVAL_MS)
@@ -393,7 +673,7 @@ export namespace BackgroundService {
     try {
       process.kill(registration.pid, "SIGKILL")
     } catch {}
-    await unregister()
+    await removeIfUnchanged(registration)
     return true
   }
 

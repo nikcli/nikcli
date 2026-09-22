@@ -50,6 +50,7 @@ public struct SessionSnapshot: Codable, Sendable {
     public var cwd: String
     public var pid: Int32           // the nikcli process; kill(pid,0) drives liveness
     public var port: Int32          // this process's local server port (0 = none/unknown)
+    public var authorization: String // Authorization header that server requires (empty = none)
     public var startedAt: Double    // unix seconds the current turn began (0 = no active turn)
     public var ts: Double           // unix seconds this snapshot was written
     public var toolEndsAt: Double   // for a `tool` state: 0 = still running; >0 = finished,
@@ -70,6 +71,7 @@ public struct SessionSnapshot: Codable, Sendable {
                 cwd: String = "",
                 pid: Int32 = 0,
                 port: Int32 = 0,
+                authorization: String = "",
                 startedAt: Double = 0,
                 ts: Double = 0,
                 toolEndsAt: Double = 0,
@@ -87,6 +89,7 @@ public struct SessionSnapshot: Codable, Sendable {
         self.cwd = cwd
         self.pid = pid
         self.port = port
+        self.authorization = authorization
         self.startedAt = startedAt
         self.ts = ts
         self.toolEndsAt = toolEndsAt
@@ -97,7 +100,7 @@ public struct SessionSnapshot: Codable, Sendable {
     }
 
     private enum CodingKeys: String, CodingKey {
-        case schema, provider, state, label, tool, project, cwd, pid, port, startedAt, ts, toolEndsAt, detail, agentTitle
+        case schema, provider, state, label, tool, project, cwd, pid, port, authorization, startedAt, ts, toolEndsAt, detail, agentTitle
         case sessionId = "sessionID"
         case permissionId = "permissionID"
         case parentId = "parentID"
@@ -117,6 +120,7 @@ public struct SessionSnapshot: Codable, Sendable {
         cwd          = (try? c.decode(String.self, forKey: .cwd)) ?? ""
         pid          = (try? c.decode(Int32.self, forKey: .pid)) ?? 0
         port         = (try? c.decode(Int32.self, forKey: .port)) ?? 0
+        authorization = (try? c.decode(String.self, forKey: .authorization)) ?? ""
         startedAt    = (try? c.decode(Double.self, forKey: .startedAt)) ?? 0
         ts           = (try? c.decode(Double.self, forKey: .ts)) ?? 0
         toolEndsAt   = (try? c.decode(Double.self, forKey: .toolEndsAt)) ?? 0
@@ -138,6 +142,7 @@ public struct SessionSnapshot: Codable, Sendable {
         try c.encode(cwd, forKey: .cwd)
         try c.encode(pid, forKey: .pid)
         try c.encode(port, forKey: .port)
+        try c.encode(authorization, forKey: .authorization)
         try c.encode(startedAt, forKey: .startedAt)
         try c.encode(ts, forKey: .ts)
         try c.encode(toolEndsAt, forKey: .toolEndsAt)

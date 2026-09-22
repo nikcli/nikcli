@@ -72,6 +72,9 @@ export namespace IslandBridge {
     cwd: string
     pid: number
     port: number
+    /** The `Authorization` the server on `port` requires, or empty. The file
+     *  is 0600 in a 0700 directory, readable only by the user it belongs to. */
+    authorization: string
     startedAt: number
     ts: number
     permissionID: string
@@ -186,6 +189,7 @@ export namespace IslandBridge {
    */
   export type Host = {
     port?: () => Promise<number>
+    authorization?: () => Promise<string | undefined>
     identity?: (sessionID: string) => Promise<{ parentID: string; agentTitle: string }>
   }
 
@@ -206,6 +210,14 @@ export namespace IslandBridge {
       return Number.isFinite(port) ? (port as number) : 0
     } catch {
       return 0
+    }
+  }
+
+  async function currentAuthorization(): Promise<string> {
+    try {
+      return (await host.authorization?.()) ?? ""
+    } catch {
+      return ""
     }
   }
 
@@ -254,6 +266,8 @@ export namespace IslandBridge {
         agentTitle: identity?.agentTitle ?? prev?.agentTitle ?? "",
         ...prev,
         ...patch,
+        // After the spreads: the credential is this process's, never a stale copy.
+        authorization: await currentAuthorization(),
         ts: Date.now() / 1000,
       }
       known.set(sessionID, snap)

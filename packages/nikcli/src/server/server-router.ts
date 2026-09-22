@@ -125,13 +125,25 @@ export namespace ServerRouter {
     return { directory, workspaceID: workspaceID ?? undefined, target: undefined }
   }
 
+  /**
+   * Host checks compare the parsed hostname, never a prefix of the origin:
+   * `startsWith("http://localhost")` also admitted `http://localhost.evil.com`,
+   * handing any site under a name like that credentialed read access to a
+   * loopback server. A `tailscale*` name is admitted only as a single label —
+   * a MagicDNS short name, which no public domain can be.
+   */
+  function loopbackOrTailnetOrigin(origin: string) {
+    const url = URL.parse(origin)
+    if (!url || url.protocol !== "http:") return false
+    if (url.hostname === "localhost" || url.hostname === "127.0.0.1") return true
+    return url.hostname.startsWith("tailscale") && !url.hostname.includes(".")
+  }
+
   function originAllowed(origin: string, options: Options) {
     if (
-      origin.startsWith("http://localhost") ||
-      origin.startsWith("http://127.0.0.1") ||
+      loopbackOrTailnetOrigin(origin) ||
       origin.startsWith("http://*.local") ||
       origin === "tauri://localhost" ||
-      origin.startsWith("http://tailscale") ||
       origin === "capacitor://localhost" ||
       origin.startsWith("exp://") ||
       origin.startsWith("nikcli://")
@@ -331,20 +343,25 @@ export namespace ServerRouter {
 
   export function make(options: Options): Fetch {
     return async (request, server) => {
-      // Two ways a request can be this machine's own. No `Bun.Server` means no
-      // socket at all: `Server.fetch` called from inside the process (the TUI
-      // worker, the CLI, plugins, sdk-next). A loopback-bound listener means
-      // the only peers that can reach it are on this machine — which is what
-      // the background service is, and since it became the default the TUI
-      // talks to it over exactly that socket rather than in-process.
+      // Two ways a request can be this machine's operator. No `Bun.Server`
+      // means no socket at all: `Server.fetch` called from inside the process
+      // (the TUI worker, the CLI, plugins, sdk-next). A loopback-bound listener
+      // qualifies only once the caller satisfies the server's own credential —
+      // the background service's terminal does; another local user, or a page
+      // in a browser, reaches the same socket without it.
       //
       // Checking the *listener*, not the peer address, is deliberate: a
       // non-loopback listener never qualifies, so nothing a remote caller puts
-      // in a header or a forwarded address can buy this. And it grants no
-      // authority — on a loopback listener with no `NIKCLI_SERVER_PASSWORD` a
-      // caller with no bearer is already admitted as `open`; this only lets
-      // `Auth.sessionFor` answer "who is signed in on this machine".
-      if (!server || Auth.isLoopbackHostname(options.listenHostname)) Auth.markLocal(request)
+      // in a header or a forwarded address can buy this. What it grants is
+      // `Auth.sessionFor` answering with the account this machine is signed
+      // into, which is why it must follow the credential and not the socket.
+      if (
+        !server ||
+        (Auth.isLoopbackHostname(options.listenHostname) &&
+          Auth.serverAdmission(request, { listenHostname: options.listenHostname }) === "admitted")
+      ) {
+        Auth.markLocal(request)
+      }
       const limited = bodyLimitResponse(request)
       if (limited) return withCors(limited, request, options)
       if (request.method === "OPTIONS") return preflight(request, options)

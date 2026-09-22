@@ -16,6 +16,8 @@ import { PublicApi } from "./httpapi/public"
 import { MDNS } from "./mdns"
 import { PublicRoutes } from "./public"
 import { ServerRouter } from "./server-router"
+import { Auth } from "./httpapi/auth"
+import { BackgroundService } from "@/service/service"
 import { ServerWebSocket, type WebSocketData } from "./websocket"
 
 // @ts-ignore This global prevents ai-sdk warnings from corrupting stdout.
@@ -70,6 +72,29 @@ export namespace Server {
   export function fetch(request: Request): Promise<Response> {
     return pipeline()(request)
   }
+
+  /**
+   * `fetch(input, init)` served in-process, for SDK clients inside this process.
+   *
+   * The SDK calls `fetch(url, init)`; `fetch` above takes one Request, and
+   * passing the arguments straight through dropped `init` and handed the router
+   * a bare URL. The request still crosses the router, so it presents the
+   * credentials this server requires, by the same rule as every other client
+   * (`BackgroundService.withCredentials`).
+   */
+  export const localFetch = Object.assign(
+    (input: RequestInfo | URL, init?: RequestInit): Promise<Response> => {
+      const request = new Request(input, init)
+      const authorization = Auth.authorizationHeader()
+      if (!authorization) return pipeline()(request)
+      const target = new URL(request.url)
+      BackgroundService.withCredentials(target, request.headers, authorization)
+      // Rebuilt only when a bearer moved into `?token=`; copying the request
+      // keeps its body and its abort signal.
+      return pipeline()(target.href === request.url ? request : new Request(target, request))
+    },
+    { preconnect: () => undefined },
+  )
 
   export function openapi() {
     return Promise.resolve(OpenApi.fromApi(PublicApi))

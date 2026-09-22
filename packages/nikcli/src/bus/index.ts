@@ -20,6 +20,11 @@ const islandHost = {
     const port = Number(Server.url().port)
     return Number.isFinite(port) ? port : 0
   },
+  /** The island replies to permissions over HTTP, so it needs what that server requires. */
+  async authorization() {
+    const { Auth } = await import("@/server/httpapi/auth")
+    return Auth.authorizationHeader()
+  },
   async identity(sessionID: string) {
     const { SessionRepo } = await import("@/session/repo")
     const info = Effect.runSync(SessionRepo.get(sessionID))

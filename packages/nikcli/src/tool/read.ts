@@ -45,7 +45,10 @@ export const ReadTool = Tool.define("read", {
     }
     let filepath = params.filePath
     if (!path.isAbsolute(filepath)) {
-      filepath = path.join(process.cwd(), filepath)
+      // The instance, not `process.cwd()`: the background service runs every
+      // project from one process, so its cwd is none of them. `write` and
+      // `edit` already resolve this way.
+      filepath = path.join(ctx.instance.directory, filepath)
     }
     const title = path.relative(ctx.instance.worktree, filepath)
 

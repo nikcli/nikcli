@@ -1,6 +1,6 @@
 import { preserveTestEnv } from "../helpers/env"
 import { removeTestDir } from "../helpers/fs"
-import { afterAll, describe, expect, it } from "bun:test"
+import { afterAll, describe, expect, it, spyOn } from "bun:test"
 import fs from "fs/promises"
 import os from "os"
 import path from "path"
@@ -43,6 +43,9 @@ const { Server } = await import("@/server/server")
 const { Auth } = await import("@/server/httpapi/auth")
 const { ServerRouter } = await import("@/server/server-router")
 const { AccountRepo } = await import("@/account/repo")
+const { Database } = await import("@/database/database")
+const { users } = await import("@/user/users.sql")
+const { eq } = await import("drizzle-orm")
 
 const ACCOUNT_ID = "acc_localsession"
 const EMAIL = "owner@example.com"
@@ -150,6 +153,114 @@ describe("local account session", () => {
     const remote = new Request("http://nikcli.local/user/me")
     expect(Auth.isLocal(remote)).toBe(false)
     expect(await Auth.sessionFor(remote)).toBeNull()
+  })
+})
+
+/**
+ * The background service always has a password, and its loopback socket is
+ * reachable by every local user and any page a browser opens. The password —
+ * not the socket — is what makes a caller this machine's operator.
+ */
+describe("a password-protected loopback server", () => {
+  const PASSWORD = "operator-secret"
+  const basic = `Basic ${btoa(`nikcli:${PASSWORD}`)}`
+
+  function overService(pathname: string, init: RequestInit = {}) {
+    const handler = ServerRouter.make({
+      fallback: (request) => Server.fetch(request),
+      listenHostname: "127.0.0.1",
+    })
+    return handler(new Request(`http://127.0.0.1:4096${pathname}`, init), {} as never)
+  }
+
+  async function withPassword(fn: () => Promise<void>) {
+    Auth.useServicePassword(PASSWORD)
+    try {
+      await fn()
+    } finally {
+      Auth.useServicePassword("")
+    }
+  }
+
+  it("keeps the machine's account from a caller without the password", async () => {
+    await withPassword(async () => {
+      expect((await overService("/account")).status).toBe(401)
+      expect((await overService("/user/me", { headers: { authorization: `Bearer ${await jwt(-60)}` } })).status).toBe(
+        401,
+      )
+    })
+  })
+
+  it("answers the operator, who presents the password the way the TUI does", async () => {
+    // Basic in the header, the stored bearer as `?token=` — what
+    // `BackgroundService.authorizedFetch` sends.
+    await withPassword(async () => {
+      const account = await overService("/account", { headers: { authorization: basic } })
+      expect(account.status).toBe(200)
+      expect(((await account.json()) as { email: string } | null)?.email).toBe(EMAIL)
+
+      const me = await overService(`/user/me?token=${await jwt(-60)}`, { headers: { authorization: basic } })
+      expect(me.status).toBe(200)
+      expect(((await me.json()) as { email: string }).email).toBe(EMAIL)
+    })
+  })
+
+  it("does not let a user's bearer stand in for the operator on the machine's account", async () => {
+    // A valid bearer identifies a user; `/account` reads and replaces this
+    // machine's own account, which is the operator's to do.
+    await withPassword(async () => {
+      const bearer = { authorization: `Bearer ${await jwt(900)}` }
+      expect((await overService("/account", { headers: bearer })).status).toBe(401)
+      expect((await overService("/account/login", { method: "POST", headers: bearer })).status).toBe(401)
+      expect((await overService("/account/login/complete", { method: "POST", headers: bearer })).status).toBe(401)
+    })
+  })
+
+  it("does not let a caller without the password register a user on the machine's authority", async () => {
+    // Registration past the first user needs an admin session. Answering it
+    // from the machine's account for anyone on the socket let them mint a user
+    // whose bearer the server then admits without the password. The machine's
+    // account is admin whenever it was the database's first identity or is
+    // on the admin allowlist — the usual single-owner machine.
+    Database.syncDb().update(users).set({ role: "admin" }).where(eq(users.email, EMAIL)).run()
+    await withPassword(async () => {
+      const response = await overService("/user/register", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ username: "intruder", email: "intruder@example.com", password: "Intruder-1!" }),
+      })
+      expect(response.status).toBe(403)
+      const login = await overService("/user/login", {
+        method: "POST",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ email: "intruder@example.com", password: "Intruder-1!" }),
+      })
+      expect(login.status).toBe(401)
+    })
+  })
+
+  it("treats a loopback caller as this machine's operator only once it presents the password", async () => {
+    await withPassword(async () => {
+      const marked: Request[] = []
+      const mark = spyOn(Auth, "markLocal").mockImplementation((request) => void marked.push(request))
+      try {
+        await overService("/user/status")
+        expect(marked).toHaveLength(0)
+        await overService("/user/status", { headers: { authorization: "Basic " + btoa("nikcli:wrong") } })
+        expect(marked).toHaveLength(0)
+        await overService("/user/status", { headers: { authorization: basic } })
+        expect(marked).toHaveLength(1)
+      } finally {
+        mark.mockRestore()
+      }
+    })
+  })
+
+  it("still serves health and preflight to anyone", async () => {
+    await withPassword(async () => {
+      expect((await overService("/global/health")).status).toBe(200)
+      expect((await overService("/account", { method: "OPTIONS" })).status).toBe(204)
+    })
   })
 })
 

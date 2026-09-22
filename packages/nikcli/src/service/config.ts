@@ -98,6 +98,11 @@ export namespace ServiceConfig {
         break
       case "env": {
         if (nested === undefined) throw new Error("Usage: nikcli service set env <name> <value>")
+        // The service's own password outranks these, so setting them would do
+        // nothing — a setting that looks broken.
+        if (value === "NIKCLI_SERVER_PASSWORD" || value === "NIKCLI_SERVER_USERNAME") {
+          throw new Error("The service's credentials are managed by `nikcli service password`")
+        }
         info.env = { ...info.env, [value]: nested }
         break
       }

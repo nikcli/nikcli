@@ -664,7 +664,15 @@ export async function runWithArgs(args: any): Promise<void> {
 
   if (args.attach) {
     log.debug("Attaching to remote server", { url: args.attach })
-    const sdk = createNikcliClient({ baseUrl: args.attach })
+    // The credentials that server expects, and — for the shared service, which
+    // has no directory of its own — the directory this command runs in.
+    const { BackgroundService } = await import("@/service/service")
+    const connection = await BackgroundService.connection(args.attach)
+    const sdk = createNikcliClient({
+      baseUrl: args.attach,
+      fetch: connection.fetch,
+      directory: connection.service ? process.cwd() : undefined,
+    })
 
     const sessionID = await (async () => {
       if (args.continue) {
@@ -740,14 +748,9 @@ export async function runWithArgs(args: any): Promise<void> {
   await bootstrap(process.cwd(), async (instance) => {
     log.debug("Running local nikcli session")
 
-    const fetchFn = (async (input: RequestInfo | URL, init?: RequestInit) => {
-      const request = new Request(input, init)
-      return Server.fetch(request)
-    }) as typeof globalThis.fetch
-
     const sdk = createNikcliClient({
       baseUrl: "http://nikcli.local",
-      fetch: fetchFn,
+      fetch: Server.localFetch,
     })
 
     if (args.command) {

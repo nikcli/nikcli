@@ -95,6 +95,7 @@ export const Handlers = Runtime.handlers(Commands, {
     get: () => import("./handlers/service/get"),
     set: () => import("./handlers/service/set"),
     unset: () => import("./handlers/service/unset"),
+    password: () => import("./handlers/service/password"),
   },
   "workspace-serve": () => import("./handlers/workspace-serve"),
   web: () => import("./handlers/web"),

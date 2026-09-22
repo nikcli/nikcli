@@ -9,7 +9,6 @@ import { setMainThreadDaemonHost } from "@nikcli-ai/browser-control/daemon-clien
 import { upgrade, upgradeNow } from "@/cli/upgrade"
 import { GlobalBus } from "@nikcli-ai/util/global-bus"
 import { createNikcliClient, type Event } from "@nikcli-ai/sdk/httpapi"
-import { Flag } from "@nikcli-ai/util/flag"
 import { Process } from "@nikcli-ai/util/process"
 import { IslandBridge } from "@nikcli-ai/util/island-bridge"
 import { BrowserControl } from "@/browser-control/browser-control"
@@ -65,17 +64,10 @@ function startEventStream(directory: string) {
   eventStreams.set(id, abort)
   const signal = abort.signal
 
-  const fetchFn = (async (input: RequestInfo | URL, init?: RequestInit) => {
-    const request = new Request(input, init)
-    const auth = getAuthorizationHeader()
-    if (auth) request.headers.set("Authorization", auth)
-    return Server.fetch(request)
-  }) as typeof globalThis.fetch
-
   const sdk = createNikcliClient({
     baseUrl: "http://nikcli.local",
     directory,
-    fetch: fetchFn,
+    fetch: Server.localFetch,
     signal,
   })
 
@@ -128,17 +120,11 @@ function stopEventStream(id: string) {
 
 export const rpc = {
   async fetch(input: { url: string; method: string; headers: Record<string, string>; body?: string }) {
-    const headers = { ...input.headers }
-    const auth = getAuthorizationHeader()
-    if (auth && !headers["authorization"] && !headers["Authorization"]) {
-      headers["Authorization"] = auth
-    }
-    const request = new Request(input.url, {
+    const response = await Server.localFetch(input.url, {
       method: input.method,
-      headers,
+      headers: input.headers,
       body: input.body,
     })
-    const response = await Server.fetch(request)
     const body = await response.text()
     return {
       status: response.status,
@@ -219,10 +205,3 @@ export const rpc = {
 }
 
 Rpc.listen(rpc)
-
-function getAuthorizationHeader(): string | undefined {
-  const password = Flag.NIKCLI_SERVER_PASSWORD
-  if (!password) return undefined
-  const username = Flag.NIKCLI_SERVER_USERNAME ?? "nikcli"
-  return `Basic ${btoa(`${username}:${password}`)}`
-}

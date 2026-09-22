@@ -109,6 +109,18 @@ export const { use: useRemoteSync, provider: RemoteSyncProvider } = createSimple
     }
 
     /**
+     * `/sync/*` is instance-scoped, so name this TUI's directory, as the SDK
+     * client does on every call. Left out, the server falls back to its own
+     * cwd — the shared background service's is the user's home, and it opened
+     * and indexed an instance there on every stats poll.
+     */
+    function syncUrl(base: string, path: string): string {
+      const url = new URL(`${base.replace(/\/$/, "")}${path}`)
+      if (sdk.directory && !url.searchParams.has("directory")) url.searchParams.set("directory", sdk.directory)
+      return url.toString()
+    }
+
+    /**
      * Direct fetch against the same base URL the SDK uses. We use this
      * for the `/sync/*` endpoints that are not part of the generated
      * SDK yet (the SDK is regenerated from `server.ts` separately).
@@ -119,7 +131,7 @@ export const { use: useRemoteSync, provider: RemoteSyncProvider } = createSimple
       const base = sdk.url
       if (!base) return undefined
       try {
-        const res = await sdk.fetch(`${base.replace(/\/$/, "")}${path}`, {
+        const res = await sdk.fetch(syncUrl(base, path), {
           ...init,
           signal: AbortSignal.timeout(10_000),
           headers: {
@@ -244,7 +256,7 @@ export const { use: useRemoteSync, provider: RemoteSyncProvider } = createSimple
       const base = sdk.url
       if (!base) return { ok: false, error: "server unavailable" }
       try {
-        const res = await sdk.fetch(`${base.replace(/\/$/, "")}/sync/config`, {
+        const res = await sdk.fetch(syncUrl(base, "/sync/config"), {
           method: "POST",
           signal: AbortSignal.timeout(15_000),
           headers: { "content-type": "application/json" },

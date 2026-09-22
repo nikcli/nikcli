@@ -13,6 +13,7 @@ import { SessionStatus } from "@/session/status"
 import { Instance } from "@/project/instance"
 import { runPromiseWithLayer, withCurrentInstance } from "@/effect"
 import { Effect } from "effect"
+import { Auth } from "@/server/httpapi/auth"
 
 // This exercises the real event pipeline (Bus.publish -> GlobalBus -> IslandBridge),
 // the same path every session.status / permission.asked / tool-part update takes in
@@ -274,7 +275,22 @@ describe("IslandBridge", () => {
       await setStatus(sid, { type: "busy", since: Date.now() })
       const snap = await waitForSnapshot(sid, (s) => s.state === "thinking")
       expect(snap.port).toBe(4123)
+      expect(snap.authorization).toBe("")
     })
+  })
+
+  it("stamps the credentials the server requires, so a permission reply is not refused", async () => {
+    Auth.useServicePassword("island-secret")
+    try {
+      await withProject(async () => {
+        const sid = "island-auth"
+        await setStatus(sid, { type: "busy", since: Date.now() })
+        const snap = await waitForSnapshot(sid, (s) => s.state === "thinking")
+        expect(snap.authorization).toBe(`Basic ${btoa("nikcli:island-secret")}`)
+      })
+    } finally {
+      Auth.useServicePassword("")
+    }
   })
 })
 

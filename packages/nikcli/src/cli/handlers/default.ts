@@ -240,13 +240,24 @@ export default Runtime.handler(Commands, async (input) => {
     // through to the private path, loudly. The failure modes here are
     // environmental (a wedged port, a killed spawn), and a user who cannot
     // open their editor has a worse problem than a cold engine.
-    const registration = await BackgroundService.ensure().catch((error) => {
-      Log.Default.warn("background service unavailable; falling back to a private in-process server", {
-        error: errorMessage(error),
+    // The password belongs to the connection: a service this client cannot
+    // authenticate to is as unusable as one that did not start.
+    const connection = await BackgroundService.ensure()
+      .then(async (registration) => ({
+        registration,
+        fetch: BackgroundService.authorizedFetch(
+          registration.url,
+          BackgroundService.authorization(await BackgroundService.password()),
+        ),
+      }))
+      .catch((error) => {
+        Log.Default.warn("background service unavailable; falling back to a private in-process server", {
+          error: errorMessage(error),
+        })
+        return undefined
       })
-      return undefined
-    })
-    if (registration) {
+    if (connection) {
+      const { registration } = connection
       Log.Default.info("using background service", { url: registration.url, pid: registration.pid })
       const { tui } = await import("@nikcli-ai/tui/app")
       const tuiConfig = await TuiConfig.get().catch(() => undefined)
@@ -263,6 +274,7 @@ export default Runtime.handler(Commands, async (input) => {
 
       await tui({
         url: registration.url,
+        fetch: connection.fetch,
         pluginHost: localPluginHost,
         tuiConfig,
         directory: cwd,
