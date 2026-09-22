@@ -124,6 +124,14 @@ export namespace EventFeed {
     }
 
     /**
+     * `local`, for a frame the route encodes itself — an SSE comment ping, or
+     * a greeting in a wire shape `envelope` does not produce.
+     */
+    localFrame(encoded: Uint8Array) {
+      this.write(encoded)
+    }
+
+    /**
      * Offer a broadcast frame. Returns false when the connection was evicted
      * rather than written to.
      *
@@ -325,6 +333,84 @@ export namespace EventFeed {
    */
   export function stream(source: UnderlyingDefaultSource<Uint8Array>): ReadableStream<Uint8Array> {
     return new ReadableStream<Uint8Array>(source, new CountQueuingStrategy({ highWaterMark: LAG_BUDGET }))
+  }
+
+  export type FilteredOptions = {
+    /** The request's signal: the connection closes when the client goes away. */
+    signal?: AbortSignal
+    /** Wire shape of the close reason frame; see `Envelope`. */
+    envelope: Envelope
+    /** Written first, outside the lag budget. */
+    greeting: Uint8Array
+    /** Written every `intervalMs`, outside the lag budget. */
+    heartbeat: { frame: Uint8Array; intervalMs: number }
+    /** Encodes one event for the wire. Defaults to `frame` (`data: <json>`). */
+    encode?: (value: unknown) => Uint8Array
+    /**
+     * Start delivering. `offer` takes an event and the type its delivery class
+     * is read from; returns the unsubscribe.
+     */
+    subscribe: (offer: (value: unknown, type: string | undefined) => void) => () => void
+  }
+
+  /**
+   * A single connection with its own filter, under the same policy as `Feed`.
+   *
+   * For the routes whose every reader wants a different slice of `GlobalBus` —
+   * one session, one workspace, one project — so there is no fan-out to share
+   * an encode across. What they do share with `/event` is the part that
+   * matters: the lag budget as the stream's queuing strategy, eviction with a
+   * stated reason, `snapshot` coalescing, and exactly one release of the
+   * subscription and heartbeat however the connection ends — eviction, the
+   * request aborting, or the reader cancelling.
+   */
+  export function filtered(options: FilteredOptions): ReadableStream<Uint8Array> {
+    let connection: Connection | undefined
+    let closed = false
+    let unsubscribe: (() => void) | undefined
+    let heartbeat: ReturnType<typeof setInterval> | undefined
+    const abort = () => connection?.close()
+
+    const release = () => {
+      closed = true
+      if (heartbeat) clearInterval(heartbeat)
+      heartbeat = undefined
+      unsubscribe?.()
+      unsubscribe = undefined
+      options.signal?.removeEventListener("abort", abort)
+    }
+
+    return stream({
+      start(controller) {
+        const current = new Connection(controller, options.envelope, release)
+        connection = current
+        current.localFrame(options.greeting)
+        const encode = options.encode ?? frame
+        const detach = options.subscribe((value, type) => {
+          // Encoded here rather than by the route: `offer` runs inside
+          // `GlobalBus.emit`, and a throw would reach whoever published.
+          let encoded: Uint8Array
+          try {
+            encoded = encode(value)
+          } catch (error) {
+            log.error("event encoding failed", { type, error })
+            current.fail({ name: "EncodingError", message: "an event could not be encoded" })
+            return
+          }
+          current.offer(encoded, BusEvent.deliveryOf(type))
+        })
+        // Eviction can happen inside `subscribe` itself (a replay burst past
+        // the budget), before there was an unsubscribe to call.
+        if (closed) return detach()
+        unsubscribe = detach
+        heartbeat = setInterval(() => current.localFrame(options.heartbeat.frame), options.heartbeat.intervalMs)
+        if (options.signal?.aborted) return current.close()
+        options.signal?.addEventListener("abort", abort, { once: true })
+      },
+      cancel() {
+        connection?.abandon()
+      },
+    })
   }
 
   export const HEADERS = {

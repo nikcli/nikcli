@@ -411,10 +411,12 @@ export const {
     }
 
     const renderer = useRenderer()
-    process.on("SIGUSR2", async () => {
+    const onReloadSignal = async () => {
       renderer.clearPaletteCache()
       await reload()
-    })
+    }
+    process.on("SIGUSR2", onReloadSignal)
+    onCleanup(() => process.off("SIGUSR2", onReloadSignal))
 
     const values = createMemo(() => {
       return resolveTheme(store.themes[store.active] ?? store.themes.nikcli, store.mode)

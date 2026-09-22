@@ -2,6 +2,7 @@ import { createEffect, createMemo, createSignal, For, Match, onCleanup, Show, Sw
 import { RGBA } from "@opentui/core"
 import { pickDecoder, resize } from "@nikcli-ai/tui-image"
 import { useTheme } from "@tui/context/theme"
+import { createPromiseCache } from "@tui/util/lru-cache"
 
 const MAX_PREVIEW_BYTES = 10 * 1024 * 1024
 const MAX_PREVIEW_COLUMNS = 60
@@ -41,7 +42,9 @@ type ImagePreviewState =
   | { status: "ready"; data: ImagePreviewData }
   | { status: "error"; message: string }
 
-const previewCache = new Map<string, Promise<ImagePreviewData>>()
+// Keyed by width as well as URL, so a resize is a new entry: bounded, or every
+// resize would keep another braille grid per image.
+const previewCache = createPromiseCache<ImagePreviewData>({ maxEntries: 16 })
 
 function cleanPreviewUrl(value: string) {
   return value
@@ -312,14 +315,7 @@ async function loadImagePreview(url: string, maxColumns: number, signal: AbortSi
 
 function cachedImagePreview(url: string, maxColumns: number, signal: AbortSignal) {
   const key = `${maxColumns}\n${url}`
-  const cached = previewCache.get(key)
-  if (cached) return cached
-  const promise = loadImagePreview(url, maxColumns, signal).catch((error) => {
-    previewCache.delete(key)
-    throw error
-  })
-  previewCache.set(key, promise)
-  return promise
+  return previewCache.load(key, (loadSignal) => loadImagePreview(url, maxColumns, loadSignal), signal)
 }
 
 function ImagePreview(props: { url: string; maxColumns: number }) {

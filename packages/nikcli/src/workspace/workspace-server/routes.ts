@@ -1,4 +1,7 @@
 import { GlobalBus } from "@nikcli-ai/util/global-bus"
+import { EventFeed } from "@/server/httpapi/event-feed"
+
+const HEARTBEAT = EventFeed.frame({ type: "server.heartbeat", properties: {} })
 
 export function shouldForwardWorkspaceEvent(eventDirectory: string | undefined, allowed: Array<string | undefined>) {
   const targets = allowed.filter((target): target is string => Boolean(target))
@@ -10,40 +13,18 @@ export function workspaceEventResponse(request: Request) {
   const url = new URL(request.url)
   const directory = url.searchParams.get("directory") ?? request.headers.get("x-nikcli-directory") ?? undefined
   const workspaceID = url.searchParams.get("workspace") ?? request.headers.get("x-nikcli-workspace") ?? undefined
-  let close: (() => void) | undefined
-  const abort = () => close?.()
-  const stream = new ReadableStream<Uint8Array>({
-    cancel() {
-      close?.()
-    },
-    start(controller) {
-      const encoder = new TextEncoder()
-      let closed = false
-      const send = (event: unknown) => {
-        if (closed) return
-        try {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(event)}\n\n`))
-        } catch {
-          close?.()
-        }
-      }
+  const stream = EventFeed.filtered({
+    signal: request.signal,
+    envelope: (event) => event,
+    greeting: EventFeed.frame({ type: "server.connected", properties: {} }),
+    heartbeat: { frame: HEARTBEAT, intervalMs: 10_000 },
+    subscribe(offer) {
       const handler = (event: { directory?: string; payload: unknown }) => {
-        if (shouldForwardWorkspaceEvent(event.directory, [directory, workspaceID])) send(event.payload)
+        if (!shouldForwardWorkspaceEvent(event.directory, [directory, workspaceID])) return
+        offer(event.payload, (event.payload as { type?: string } | undefined)?.type)
       }
       GlobalBus.on("event", handler)
-      send({ type: "server.connected", properties: {} })
-      const heartbeat = setInterval(() => send({ type: "server.heartbeat", properties: {} }), 10_000)
-      close = () => {
-        if (closed) return
-        closed = true
-        clearInterval(heartbeat)
-        GlobalBus.off("event", handler)
-        request.signal.removeEventListener("abort", abort)
-        try {
-          controller.close()
-        } catch {}
-      }
-      request.signal.addEventListener("abort", abort)
+      return () => GlobalBus.off("event", handler)
     },
   })
   return new Response(stream, {

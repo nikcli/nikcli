@@ -79,6 +79,7 @@ RUN set -e; \
       "packages/sdk-next:@nikcli-ai/sdk-next" \
       "packages/slack:@nikcli-ai/slack" \
       "packages/terminal-control:@nikcli-ai/terminal-control" \
+      "packages/tui-storybook:@nikcli-ai/tui-storybook" \
       "packages/ui:@nikcli-ai/ui" \
       "packages/web:@nikcli-ai/web" \
       "packages/webrenderer:@opentui/webrenderer" \

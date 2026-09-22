@@ -12,6 +12,7 @@ import { SyncConfig } from "@/sync/sync-config"
 import { Log } from "@nikcli-ai/util/log"
 import { configUpdateGlobal } from "../mobile/helpers"
 import { Auth } from "./auth"
+import { EventFeed } from "./event-feed"
 
 export namespace SyncHttpApi {
   const log = Log.create({ service: "server.sync" })
@@ -470,52 +471,27 @@ export namespace SyncHttpApi {
    * from (H8). */
   export const HandlersLive = SyncHandlers.pipe(Layer.provide(HttpApiAuth.layer))
 
+  const sseEncoder = new TextEncoder()
+  const SSE_CONNECTED = sseEncoder.encode(": connected\n\n")
+  const SSE_PING = sseEncoder.encode(": ping\n\n")
+
   export async function handleSse(request: Request): Promise<Response> {
     const denied = await scopeDenied(request)
     if (denied) return denied
     const projectID = new URL(request.url).searchParams.get("projectID") ?? ""
-    let close: (() => void) | undefined
-    const abortHandler = () => close?.()
-    const stream = new ReadableStream<Uint8Array>({
-      cancel() {
-        close?.()
-      },
-      start(controller) {
-        const encoder = new TextEncoder()
-        let closed = false
-        const send = (data: unknown) => {
-          if (closed) return
-          try {
-            controller.enqueue(encoder.encode(`event: sync\ndata: ${JSON.stringify(data)}\n\n`))
-          } catch {
-            close?.()
-          }
-        }
-        controller.enqueue(encoder.encode(": connected\n\n"))
+    const stream = EventFeed.filtered({
+      signal: request.signal,
+      envelope: (event) => event,
+      greeting: SSE_CONNECTED,
+      heartbeat: { frame: SSE_PING, intervalMs: 15_000 },
+      encode: (value) => sseEncoder.encode(`event: sync\ndata: ${JSON.stringify(value)}\n\n`),
+      subscribe(offer) {
         const handler = (raw: unknown) => {
-          const envelope = raw as { directory?: string; payload?: unknown }
-          if (envelope?.directory === projectID) send(envelope.payload)
+          const envelope = raw as { directory?: string; payload?: { type?: string } }
+          if (envelope?.directory === projectID) offer(envelope.payload, envelope.payload?.type)
         }
         GlobalBus.on("event", handler as never)
-        const ping = setInterval(() => {
-          if (closed) return
-          try {
-            controller.enqueue(encoder.encode(": ping\n\n"))
-          } catch {
-            close?.()
-          }
-        }, 15_000)
-        close = () => {
-          if (closed) return
-          closed = true
-          clearInterval(ping)
-          GlobalBus.off("event", handler as never)
-          request.signal.removeEventListener("abort", abortHandler)
-          try {
-            controller.close()
-          } catch {}
-        }
-        request.signal.addEventListener("abort", abortHandler)
+        return () => GlobalBus.off("event", handler as never)
       },
     })
     return new Response(stream, {

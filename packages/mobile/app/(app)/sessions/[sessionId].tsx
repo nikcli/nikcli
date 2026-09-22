@@ -292,6 +292,18 @@ export default function SessionScreen() {
     }
   }, [client, sessionId])
 
+  // `load` without the spinner: a reconnect must not blank a transcript the
+  // user is reading. A failure keeps what is on screen and reports nothing —
+  // the stream's own error path already says it is disconnected.
+  const refresh = useCallback(async () => {
+    if (!client || !sessionId) return
+    try {
+      setDetail(await client.getSession(sessionId))
+    } catch {
+      // Keep the current transcript.
+    }
+  }, [client, sessionId])
+
   const loadCommands = useCallback(async () => {
     if (!client || !sessionId) {
       setCommands([])
@@ -473,6 +485,7 @@ export default function SessionScreen() {
     config,
     sessionID: sessionId,
     enabled: Boolean(config && sessionId),
+    onReconnect: refresh,
     onEvent(event: SessionStreamEvent) {
       const nextError = sessionErrorMessage(event)
       if (nextError) {

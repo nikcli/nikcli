@@ -11,6 +11,7 @@ import path from "path"
 import { pickDecoder, type PixelImage } from "@nikcli-ai/tui-image"
 import { IMAGE_EXTENSIONS, isImagePath } from "./settings"
 import { prepare } from "./pixels"
+import { createPromiseCache } from "@tui/util/lru-cache"
 
 const MAX_BYTES = 25 * 1024 * 1024
 
@@ -113,16 +114,16 @@ async function readBytes(location: string): Promise<Uint8Array> {
   return new Uint8Array(await file.arrayBuffer())
 }
 
-const cache = new Map<string, Promise<PixelImage>>()
+// Bounded: Shuffle walks a whole wallpaper folder, and an unbounded map kept
+// every image it ever showed decoded for the rest of the process.
+const cache = createPromiseCache<PixelImage>({ maxEntries: 4 })
 
 /**
  * Decode a resolved location into a working-size image. Cached per location:
  * switching routes or resizing the terminal must never re-decode a photo.
  */
 export function loadImage(location: string): Promise<PixelImage> {
-  const cached = cache.get(location)
-  if (cached) return cached
-  const promise = (async () => {
+  return cache.load(location, async () => {
     const bytes = await readBytes(location)
     // WebP wallpapers are common and Jimp cannot read them; the fallback to
     // photon only works once its wasm asset has been located.
@@ -130,10 +131,5 @@ export function loadImage(location: string): Promise<PixelImage> {
     const image = await decoder(bytes)
     if (image.width <= 0 || image.height <= 0) throw new Error("decoder produced a zero-sized image")
     return prepare(image)
-  })().catch((error: unknown) => {
-    cache.delete(location)
-    throw error
   })
-  cache.set(location, promise)
-  return promise
 }

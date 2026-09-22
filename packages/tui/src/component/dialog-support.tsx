@@ -12,6 +12,7 @@ import { useToast } from "@tui/ui/toast"
 import { Clipboard } from "@tui/util/clipboard"
 import { DialogModel, useConnected } from "@tui/component/dialog-model"
 import { buildSupportDocsIndex } from "@tui/util/support-docs"
+import { useAbortOnCleanup } from "@tui/util/lifecycle"
 import type { Part, TextPart } from "@nikcli-ai/sdk/httpapi"
 import {
   buildSupportPromptParts,
@@ -191,7 +192,15 @@ export function DialogSupport() {
   const [attachments, setAttachments] = createSignal<SupportAttachment[]>([])
 
   let textarea: TextareaRenderable | undefined
-  let abort: AbortController | null = null
+  const life = useAbortOnCleanup()
+  // Filled after the awaits in `onMount`, where there is no owner left: an
+  // `onCleanup` registered there never runs, and `sdk.event.on` cannot attach
+  // its own unsubscribe either. So the release is registered here, while the
+  // owner is still current, and the subscriptions are added to it later.
+  const subscriptions: Array<() => void> = []
+  onCleanup(() => {
+    for (const off of subscriptions.splice(0)) off()
+  })
 
   const msgHeight = createMemo(() => Math.max(8, Math.min(20, dimensions().height - 16)))
 
@@ -234,12 +243,13 @@ export function DialogSupport() {
 
   onMount(async () => {
     dialog.setSize("xlarge")
-    abort = new AbortController()
 
     try {
       const sessionID = await support.ensure()
+      if (life.disposed()) return
       // Load history (latest 100 messages)
-      const history = await sdk.client.session.messages({ sessionID }, { signal: abort.signal }).catch(() => null)
+      const history = await sdk.client.session.messages({ sessionID }, { signal: life.signal }).catch(() => null)
+      if (life.disposed()) return
       const list = history?.data ?? []
       const initial: ChatMessage[] = []
       for (const entry of list) {
@@ -308,8 +318,6 @@ export function DialogSupport() {
           setStreaming(false)
           setBusy(false)
         })
-        abort?.abort()
-        abort = null
         // Refocus the textarea for the next turn.
         setTimeout(() => textarea?.focus(), 30)
       })
@@ -337,20 +345,13 @@ export function DialogSupport() {
         toast.show({ message, variant: "error", duration: 6000 })
       })
 
-      onCleanup(() => {
-        offPart()
-        offIdle()
-        offError()
-      })
+      subscriptions.push(offPart, offIdle, offError)
     } catch (err) {
+      if (life.disposed()) return
       const msg = err instanceof Error ? err.message : String(err)
       setInitError(msg)
       setReady(true)
     }
-  })
-
-  onCleanup(() => {
-    abort?.abort()
   })
 
   // Focus the textarea on mount once ready

@@ -300,6 +300,10 @@ appears more than once.
 | EOT-03 | The replace-not-push contract pinned; the dialog host was testable after all                                     | `d0e9b0032d`                                            |
 | EOT-20 | A test literal containing an `import` statement was rewritten by the transform                                   | `d0e9b0032d`                                            |
 | EOT-03 | `useAbortOnCleanup` cannot guard a dialog that opens dialogs — two reverted rounds, and why                      | `29735847d4fc`                                          |
+| EOT-03 | Owner-bound calls after an `await` gated by an AST scan; the support dialog leaked three listeners per open      | working tree                                            |
+| EOT-05 | `createPromiseCache`: image and wallpaper memos bounded; a load is cancelled only once every caller has left     | working tree                                            |
+| EOT-04 | `EventFeed.filtered`: sync, mobile-session and workspace SSE get the lag budget; a stalled reader is evicted     | working tree                                            |
+| EOT-19 | Mobile session stream re-reads the session on reconnect, which is what heals an eviction or a dropped socket     | working tree                                            |
 
 Every spec has been opened and every spec now has at least one landed slice,
 EOT-14 and EOT-19 included.

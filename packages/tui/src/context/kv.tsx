@@ -1,5 +1,5 @@
 import { Global } from "@nikcli-ai/util/global"
-import { createSignal, type Setter } from "solid-js"
+import { createSignal, onCleanup, type Setter } from "solid-js"
 import { createStore } from "solid-js/store"
 import { createSimpleContext } from "./helper"
 import path from "path"
@@ -63,7 +63,14 @@ export const { use: useKV, provider: KVProvider } = createSimpleContext({
     }
 
     // Ensure pending writes are flushed on exit
-    process.on("exit", () => result.flush())
+    const flushOnExit = () => result.flush()
+    process.on("exit", flushOnExit)
+    // A provider torn down before the process exits (restart, an embedding
+    // host, a test) takes its listener with it, and writes only what is pending.
+    onCleanup(() => {
+      process.off("exit", flushOnExit)
+      if (flushTimer) result.flush()
+    })
 
     return result
   },

@@ -626,3 +626,108 @@ describe("delivery class at the lag budget", () => {
     expect(connection.cost.coalesced).toBe(0)
   })
 })
+
+/**
+ * The per-connection routes: each reader wants its own slice of `GlobalBus`
+ * (one session, one workspace, one project), so they cannot share a `Feed`.
+ * Before `EventFeed.filtered` they each built a private `ReadableStream` whose
+ * `enqueue` never refused, so a reader that stopped reading — a phone put in a
+ * pocket with the socket still open — grew server memory for as long as events
+ * kept coming. Driven through the real handlers, not a fake controller.
+ */
+describe("per-connection SSE routes are bounded", async () => {
+  const { GlobalBus } = await import("@nikcli-ai/util/global-bus")
+  const { handleSessionStreamRequest } = await import("@/server/mobile/session-lifecycle")
+  const { workspaceEventResponse } = await import("@/workspace/workspace-server/routes")
+  const { SyncHttpApi } = await import("@/server/httpapi/sync")
+
+  const routes = [
+    {
+      name: "mobile session stream",
+      directory: "/p",
+      open: (signal?: AbortSignal) =>
+        handleSessionStreamRequest(new Request("http://local/mobile/session/ses_1/stream", { signal }))!,
+      emit: (i: number) =>
+        GlobalBus.emit("event", {
+          directory: "/p",
+          payload: { type: "session.status", properties: { sessionID: "ses_1", status: { type: "busy", i } } },
+        }),
+      greeting: 'data: {"type":"server.connected","properties":{"sessionID":"ses_1"}}\n\n',
+      event: 'data: {"type":"session.status","properties":{"sessionID":"ses_1","status":{"type":"busy","i":0}}}\n\n',
+    },
+    {
+      name: "workspace server stream",
+      directory: "/w",
+      open: (signal?: AbortSignal) =>
+        workspaceEventResponse(new Request("http://local/event?directory=/w", { signal })),
+      emit: (i: number) =>
+        GlobalBus.emit("event", { directory: "/w", payload: { type: "session.status", properties: { i } } }),
+      greeting: 'data: {"type":"server.connected","properties":{}}\n\n',
+      event: 'data: {"type":"session.status","properties":{"i":0}}\n\n',
+    },
+    {
+      name: "sync stream",
+      directory: "prj_1",
+      open: (signal?: AbortSignal) =>
+        SyncHttpApi.handleSse(new Request("http://local/sync/stream?projectID=prj_1", { signal })),
+      emit: (i: number) =>
+        GlobalBus.emit("event", { directory: "prj_1", payload: { type: "sync.received", properties: { seq: i } } }),
+      greeting: ": connected\n\n",
+      event: 'event: sync\ndata: {"type":"sync.received","properties":{"seq":0}}\n\n',
+    },
+  ]
+
+  async function readAll(response: Response) {
+    const text = await new Response(response.body).text()
+    return text.split(/(?<=\n\n)/)
+  }
+
+  for (const route of routes) {
+    describe(route.name, () => {
+      it("keeps its wire format", async () => {
+        const controller = new AbortController()
+        const response = await route.open(controller.signal)
+        route.emit(0)
+        controller.abort()
+        expect(await readAll(response)).toEqual([route.greeting, route.event])
+      })
+
+      it("evicts a reader that stopped reading, says why, and lets go of the bus", async () => {
+        const baseline = GlobalBus.listenerCount("event")
+        const response = await route.open()
+        expect(GlobalBus.listenerCount("event")).toBe(baseline + 1)
+        for (let i = 0; i < EventFeed.LAG_BUDGET + 64; i++) route.emit(i)
+        expect(GlobalBus.listenerCount("event")).toBe(baseline)
+        const frames = await readAll(response)
+        // Greeting plus as many events as the budget holds — never the whole burst.
+        expect(frames.length).toBeLessThanOrEqual(EventFeed.LAG_BUDGET + 1)
+        expect(frames.at(-1)).toContain("SubscriberOverflowError")
+      })
+
+      it("releases the bus when the request is aborted", async () => {
+        const baseline = GlobalBus.listenerCount("event")
+        const controller = new AbortController()
+        await route.open(controller.signal)
+        expect(GlobalBus.listenerCount("event")).toBe(baseline + 1)
+        controller.abort()
+        expect(GlobalBus.listenerCount("event")).toBe(baseline)
+      })
+
+      it("an event that cannot be encoded fails the connection, not the publisher", async () => {
+        const baseline = GlobalBus.listenerCount("event")
+        const response = await route.open()
+        const unencodable = { type: "session.status", properties: { sessionID: "ses_1", big: 1n } }
+        expect(() => GlobalBus.emit("event", { directory: route.directory, payload: unencodable })).not.toThrow()
+        expect(GlobalBus.listenerCount("event")).toBe(baseline)
+        expect((await readAll(response)).at(-1)).toContain("EncodingError")
+      })
+
+      it("releases the bus when the reader cancels", async () => {
+        const baseline = GlobalBus.listenerCount("event")
+        const response = await route.open()
+        await response.body!.cancel()
+        expect(GlobalBus.listenerCount("event")).toBe(baseline)
+      })
+    })
+  }
+})

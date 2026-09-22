@@ -17,6 +17,7 @@ import {
 import { cellSize } from "@tui/util/browser-frames"
 import { fitOverlayCells, type CellMetrics } from "@tui/util/native-overlay"
 import { useTheme } from "@tui/context/theme"
+import { createPromiseCache } from "@tui/util/lru-cache"
 
 /**
  * Image preview in the scrolling message list.
@@ -205,7 +206,9 @@ type TuiImageState =
   | { status: "ready"; data: TuiImageData }
   | { status: "error"; message: string }
 
-const previewCache = new Map<string, Promise<TuiImageData>>()
+// Keyed by size as well as URL, so a resize is a new entry: bounded, or every
+// resize would keep another full cell grid (and native payload) per image.
+const previewCache = createPromiseCache<TuiImageData>({ maxEntries: 16 })
 
 function previewBounds(maxColumns: number, maxRows: number) {
   return {
@@ -365,14 +368,11 @@ function cachedTuiImage(
 ) {
   const bounds = previewBounds(maxColumns, maxRows)
   const key = `${bounds.columns}x${bounds.rows}\n${Math.round(cell.width)}x${Math.round(cell.height)}\n${live ? "live" : "env"}\n${url}`
-  const cached = previewCache.get(key)
-  if (cached) return cached
-  const promise = loadTuiImage(url, bounds.columns, bounds.rows, live, cell, signal).catch((error) => {
-    previewCache.delete(key)
-    throw error
-  })
-  previewCache.set(key, promise)
-  return promise
+  return previewCache.load(
+    key,
+    (loadSignal) => loadTuiImage(url, bounds.columns, bounds.rows, live, cell, loadSignal),
+    signal,
+  )
 }
 
 function TuiImage(props: { url: string; maxColumns: number; maxRows: number; writer?: TuiImageWriter }) {

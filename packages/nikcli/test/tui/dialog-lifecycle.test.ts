@@ -1,7 +1,9 @@
 import { describe, expect, test } from "bun:test"
-import { createRoot } from "solid-js"
+import ts from "typescript"
+import { createGlobalEmitter } from "@solid-primitives/event-bus"
+import { createRoot, onCleanup, onMount } from "solid-js"
 import { useAbortOnCleanup } from "@tui/util/lifecycle"
-import { stripComments, tuiSource } from "./tui-source"
+import { stripComments, TUI_SRC, tuiSource } from "./tui-source"
 
 /**
  * The unmount-during-await race, from both ends.
@@ -160,5 +162,167 @@ describe("dialogs that await", () => {
     const src = stripComments(await tuiSource("component/session-tabs.tsx"))
     const handler = src.split("useKeyboard((event) => {")[1] ?? ""
     expect(handler.trimStart().startsWith("if (dialog.stack.length > 0) return")).toBe(true)
+  })
+})
+
+/**
+ * Work registered after an `await` has no owner.
+ *
+ * Solid's owner is a synchronous context: inside `onMount(async () => …)` it is
+ * current until the first `await`, and gone after it. `onCleanup` called past
+ * that point is dropped, and so is the automatic unsubscribe `sdk.event.on`
+ * attaches through `tryOnCleanup` — so a dialog that subscribes after loading
+ * something keeps every listener, and the closure over its unmounted state,
+ * for the life of the process. `DialogSupport` did exactly that, three
+ * listeners per open.
+ */
+describe("owner-bound work after an await", () => {
+  function mountAfterAwait(register: (on: () => () => void) => void) {
+    // The emitter `sdk.event` is built on, so the auto-unsubscribe under test is the real one.
+    const bus = createGlobalEmitter<{ tick: number }>()
+    let hits = 0
+    let dispose!: () => void
+    let subscribed!: () => void
+    const ready = new Promise<void>((resolve) => (subscribed = resolve))
+    createRoot((d) => {
+      dispose = d
+      register(() => bus.on("tick", () => hits++))
+    })
+    return {
+      ready,
+      subscribed: () => subscribed(),
+      async unmountAndEmit() {
+        await ready
+        dispose()
+        bus.emit("tick", 1)
+        return hits
+      },
+    }
+  }
+
+  test("an onCleanup registered after the await never runs", async () => {
+    const probe = mountAfterAwait((on) =>
+      onMount(async () => {
+        await Promise.resolve()
+        const off = on()
+        onCleanup(off)
+        probe.subscribed()
+      }),
+    )
+    expect(await probe.unmountAndEmit()).toBe(1)
+  })
+
+  test("a release registered before the await does run", async () => {
+    const probe = mountAfterAwait((on) => {
+      const subscriptions: Array<() => void> = []
+      onCleanup(() => {
+        for (const off of subscriptions.splice(0)) off()
+      })
+      onMount(async () => {
+        await Promise.resolve()
+        subscriptions.push(on())
+        probe.subscribed()
+      })
+    })
+    expect(await probe.unmountAndEmit()).toBe(0)
+  })
+
+  test("the support dialog releases its live-event listeners and re-guards every await", async () => {
+    const src = stripComments(await tuiSource("component/dialog-support.tsx"))
+    const mount = src.indexOf("onMount(async () => {")
+    const release = src.indexOf("for (const off of subscriptions.splice(0)) off()")
+    expect(release).toBeGreaterThan(-1)
+    // Registered while the owner is still current, i.e. before the async mount.
+    expect(release).toBeLessThan(mount)
+    expect(src).toContain("subscriptions.push(offPart, offIdle, offError)")
+    const body = src.slice(mount)
+    expect(body.split("await support.ensure()")[1]?.trimStart().startsWith("if (life.disposed()) return")).toBe(true)
+    expect(body).toMatch(
+      /\.messages\(\{ sessionID \}, \{ signal: life\.signal \}\)\.catch\(\(\) => null\)\s*if \(life\.disposed\(\)\) return/,
+    )
+  })
+
+  test("no TUI source calls an owner-bound primitive after an await", async () => {
+    // Every one of these either needs the current owner or registers against it.
+    const OWNER_BOUND = new Set([
+      "onCleanup",
+      "onMount",
+      "createEffect",
+      "createRenderEffect",
+      "createComputed",
+      "createMemo",
+      "createResource",
+      "useKeyboard",
+      "useTerminalDimensions",
+    ])
+    const isFunction = (node: ts.Node): node is ts.FunctionLikeDeclaration =>
+      ts.isArrowFunction(node) ||
+      ts.isFunctionExpression(node) ||
+      ts.isFunctionDeclaration(node) ||
+      ts.isMethodDeclaration(node)
+    const offenders: string[] = []
+    let scanned = 0
+    for await (const file of new Bun.Glob("**/*.{ts,tsx}").scan(TUI_SRC)) {
+      scanned++
+      const text = await Bun.file(TUI_SRC + file).text()
+      const kind = file.endsWith(".tsx") ? ts.ScriptKind.TSX : ts.ScriptKind.TS
+      const sf = ts.createSourceFile(file, text, ts.ScriptTarget.Latest, true, kind)
+      const visit = (fn: ts.FunctionLikeDeclaration) => {
+        if (!fn.body || !fn.modifiers?.some((m) => m.kind === ts.SyntaxKind.AsyncKeyword)) return
+        // Nested functions are their own scope: they are visited on their own.
+        const within = (node: ts.Node, each: (node: ts.Node) => void) => {
+          each(node)
+          ts.forEachChild(node, (child) => {
+            if (!isFunction(child)) within(child, each)
+          })
+        }
+        let firstAwait = Infinity
+        within(fn.body, (node) => {
+          if (ts.isAwaitExpression(node) || (ts.isForOfStatement(node) && node.awaitModifier))
+            firstAwait = Math.min(firstAwait, node.getStart())
+        })
+        within(fn.body, (node) => {
+          if (!ts.isCallExpression(node) || node.getStart() < firstAwait) return
+          if (!ts.isIdentifier(node.expression) || !OWNER_BOUND.has(node.expression.text)) return
+          const line = sf.getLineAndCharacterOfPosition(node.getStart()).line + 1
+          offenders.push(`${file}:${line} ${node.expression.text}`)
+        })
+      }
+      const walk = (node: ts.Node) => {
+        if (isFunction(node)) visit(node)
+        ts.forEachChild(node, walk)
+      }
+      walk(sf)
+    }
+    // A scan of the wrong directory would pass vacuously.
+    expect(scanned).toBeGreaterThan(100)
+    expect(offenders).toEqual([])
+  })
+})
+
+/**
+ * Process-wide listeners a provider installs belong to the provider.
+ *
+ * Production mounts each provider once per process, which hid this; a test file
+ * or an embedding host mounts them repeatedly, and every mount left a listener
+ * — and the store it closes over — on `process` for good.
+ */
+describe("provider process listeners", () => {
+  test("the KV provider removes its exit flush when it is disposed", async () => {
+    const { KVProvider } = await import("@tui/context/kv")
+    const before = process.listenerCount("exit")
+    const dispose = createRoot((dispose) => {
+      KVProvider({ children: undefined })
+      return dispose
+    })
+    expect(process.listenerCount("exit")).toBe(before + 1)
+    dispose()
+    expect(process.listenerCount("exit")).toBe(before)
+  })
+
+  test("the theme provider removes its SIGUSR2 reload when it is disposed", async () => {
+    const src = stripComments(await tuiSource("context/theme.tsx"))
+    expect(src).toContain('process.on("SIGUSR2", onReloadSignal)')
+    expect(src).toContain('onCleanup(() => process.off("SIGUSR2", onReloadSignal))')
   })
 })

@@ -28,9 +28,17 @@ export function useSessionStream(input: {
   enabled?: boolean
   onEvent(event: SessionStreamEvent): void
   onError?(error: string): void
+  /**
+   * The stream came back after a drop. Events published while it was down
+   * were never delivered — and the server closes a reader that falls too far
+   * behind (a backgrounded app), so this is also how that eviction heals —
+   * so whatever the screen shows must be re-read, not resumed.
+   */
+  onReconnect?(): void
 }) {
   const onEventRef = useRef(input.onEvent)
   const onErrorRef = useRef(input.onError)
+  const onReconnectRef = useRef(input.onReconnect)
 
   useEffect(() => {
     onEventRef.current = input.onEvent
@@ -39,6 +47,10 @@ export function useSessionStream(input: {
   useEffect(() => {
     onErrorRef.current = input.onError
   }, [input.onError])
+
+  useEffect(() => {
+    onReconnectRef.current = input.onReconnect
+  }, [input.onReconnect])
 
   // react-native-sse's EventSource does not expose a per-listener
   // removeEventListener; removeAllEventListeners() drops every
@@ -49,6 +61,9 @@ export function useSessionStream(input: {
     if (!input.enabled || !input.config || !input.sessionID) return
 
     let active = true
+    // The server greets every connection, and react-native-sse reconnects on
+    // its own after a close; a second greeting is therefore a reconnection.
+    let greeted = false
     const url = buildMobileUrl(input.config, `/mobile/session/${encodeURIComponent(input.sessionID)}/stream`)
     const es = new EventSource(url, {
       headers: buildMobileHeaders(input.config),
@@ -63,7 +78,12 @@ export function useSessionStream(input: {
       if (!active || !message.data) return
 
       try {
-        onEventRef.current(JSON.parse(message.data) as SessionStreamEvent)
+        const event = JSON.parse(message.data) as SessionStreamEvent
+        if (event.type === "server.connected") {
+          if (greeted) onReconnectRef.current?.()
+          greeted = true
+        }
+        onEventRef.current(event)
       } catch (error) {
         reportError(error)
       }

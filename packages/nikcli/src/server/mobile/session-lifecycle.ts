@@ -19,6 +19,7 @@ import {
   runWorktree,
 } from "./helpers"
 import { MobileHttpError } from "./request"
+import { EventFeed } from "../httpapi/event-feed"
 
 type SessionStreamEvent = {
   type?: string
@@ -26,46 +27,21 @@ type SessionStreamEvent = {
 }
 
 function sessionEventStream(request: Request, sessionID: string): Response {
-  let close: (() => void) | undefined
-  const abort = () => close?.()
-  const stream = new ReadableStream<Uint8Array>({
-    cancel() {
-      close?.()
-    },
-    start(controller) {
-      const encoder = new TextEncoder()
-      let closed = false
-      const send = (data: SessionStreamEvent) => {
-        if (closed) return
-        try {
-          controller.enqueue(encoder.encode(`data: ${JSON.stringify(data)}\n\n`))
-        } catch {
-          close?.()
-        }
-      }
-      send({ type: "server.connected", properties: { sessionID } })
+  const stream = EventFeed.filtered({
+    signal: request.signal,
+    envelope: (event) => event,
+    greeting: EventFeed.frame({ type: "server.connected", properties: { sessionID } }),
+    heartbeat: { frame: EventFeed.frame({ type: "server.heartbeat", properties: { sessionID } }), intervalMs: 30_000 },
+    subscribe(offer) {
       const onEvent = (event: { payload?: SessionStreamEvent }) => {
         const payload = event?.payload
         if (!payload?.type) return
         const ids = extractSessionIDs(payload.properties ?? null)
         if (!ids.includes(sessionID)) return
-        send(payload)
+        offer(payload, payload.type)
       }
       GlobalBus.on("event", onEvent)
-      const heartbeat = setInterval(() => {
-        send({ type: "server.heartbeat", properties: { sessionID } })
-      }, 30_000)
-      close = () => {
-        if (closed) return
-        closed = true
-        clearInterval(heartbeat)
-        GlobalBus.off("event", onEvent)
-        request.signal.removeEventListener("abort", abort)
-        try {
-          controller.close()
-        } catch {}
-      }
-      request.signal.addEventListener("abort", abort)
+      return () => GlobalBus.off("event", onEvent)
     },
   })
   return new Response(stream, {
