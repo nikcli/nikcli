@@ -3,6 +3,17 @@
 <!-- UNRELEASED:START -->
 <!-- UNRELEASED:END -->
 
+## v1.390.0 (September 2026)
+
+## Core
+
+- Format release-identity test with prettier (@nikomatt69)
+
+**Thank you to 1 community contributor:**
+
+- @nikomatt69:
+  - style(test): format release-identity test with prettier
+
 ## v1.389.0 (September 2026)
 
 ## Core
