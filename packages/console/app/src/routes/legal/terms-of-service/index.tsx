@@ -318,9 +318,9 @@ export default function TermsOfService() {
               <h2 id="what-if-i-want-to-stop">What if I want to stop using the Services?</h2>
               <p>
                 You're free to do that at any time; please refer to our Privacy Policy{" "}
-                <a href={language.route("/legal/privacy-policy")}>https://nikcli-ai.dev/legal/privacy-policy</a>, as well
-                as the licenses above, to understand how we treat information you provide to us after you have stopped
-                using our Services.
+                <a href={language.route("/legal/privacy-policy")}>https://nikcli-ai.dev/legal/privacy-policy</a>, as
+                well as the licenses above, to understand how we treat information you provide to us after you have
+                stopped using our Services.
               </p>
 
               <p>

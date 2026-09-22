@@ -56,8 +56,8 @@ character-for-character — otherwise GitHub refuses with
 _"The redirect_uri is not associated with this application"_ and sign-in
 cannot start.
 
-| Environment | ISSUER                          | Default `redirect_uri` sent to GitHub           |
-| ----------- | ------------------------------- | ----------------------------------------------- |
+| Environment | ISSUER                           | Default `redirect_uri` sent to GitHub            |
+| ----------- | -------------------------------- | ------------------------------------------------ |
 | production  | `https://auth.nikcli-ai.dev`     | `https://auth.nikcli-ai.dev/callback/github`     |
 | staging     | `https://dev.auth.nikcli-ai.dev` | `https://dev.auth.nikcli-ai.dev/callback/github` |
 

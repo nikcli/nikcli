@@ -8,15 +8,15 @@ This document describes the complete deployment infrastructure for nikcli on Clo
 
 ### Workers
 
-| Worker         | Domain             | Status    | Environment Variables                   |
-| -------------- | ------------------ | --------- | --------------------------------------- |
+| Worker         | Domain              | Status    | Environment Variables                   |
+| -------------- | ------------------- | --------- | --------------------------------------- |
 | `nikcli-slack` | slack.nikcli-ai.dev | ✅ Online | NODE_ENV, CF_REGION, WRANGLER_LOG_LEVEL |
 | `nikcli-web`   | nikcli-ai.dev       | ✅ Online | ASSETS binding (dist)                   |
 
 ### Pages
 
-| Project      | Domain           | Status    | Build Output |
-| ------------ | ---------------- | --------- | ------------ |
+| Project      | Domain            | Status    | Build Output |
+| ------------ | ----------------- | --------- | ------------ |
 | `nikcli-app` | app.nikcli-ai.dev | ✅ Online | dist/        |
 
 ### KV Namespaces
@@ -116,8 +116,8 @@ CF_REGION = "us"
 
 ## DNS Configuration
 
-| Record             | Type  | Target               | Proxied |
-| ------------------ | ----- | -------------------- | ------- |
+| Record              | Type  | Target               | Proxied |
+| ------------------- | ----- | -------------------- | ------- |
 | nikcli-ai.dev       | A     | Worker               | N/A     |
 | nikcli-ai.dev       | A     | Worker               | N/A     |
 | slack.nikcli-ai.dev | A     | Worker               | N/A     |
@@ -130,8 +130,8 @@ CF_REGION = "us"
 
 ### Slack Bot
 
-| Endpoint                                          | Method | Description          |
-| ------------------------------------------------- | ------ | -------------------- |
+| Endpoint                                           | Method | Description          |
+| -------------------------------------------------- | ------ | -------------------- |
 | `https://slack.nikcli-ai.dev/health`               | GET    | Health check         |
 | `https://slack.nikcli-ai.dev/slack/events`         | POST   | Slack Events API     |
 | `https://slack.nikcli-ai.dev/slack/interactive`    | POST   | Slack Interactivity  |
@@ -140,15 +140,15 @@ CF_REGION = "us"
 
 ### Website
 
-| Endpoint                     | Description   |
-| ---------------------------- | ------------- |
+| Endpoint                      | Description   |
+| ----------------------------- | ------------- |
 | `https://nikcli-ai.dev/`      | Homepage      |
 | `https://nikcli-ai.dev/docs/` | Documentation |
 
 ### Web App
 
-| Endpoint                    | Description     |
-| --------------------------- | --------------- |
+| Endpoint                     | Description     |
+| ---------------------------- | --------------- |
 | `https://app.nikcli-ai.dev/` | Web Application |
 
 ---

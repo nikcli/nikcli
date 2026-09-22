@@ -2,8 +2,8 @@
 
 ## URLs
 
-| Service          | URL                               | Status |
-| ---------------- | --------------------------------- | ------ |
+| Service          | URL                                | Status |
+| ---------------- | ---------------------------------- | ------ |
 | Website          | https://nikcli-ai.dev              | ✅     |
 | Documentation    | https://nikcli-ai.dev/docs         | ✅     |
 | Web App          | https://app.nikcli-ai.dev          | ✅     |

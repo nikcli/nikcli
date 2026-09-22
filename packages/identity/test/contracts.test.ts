@@ -399,7 +399,9 @@ describe("Content Security Policy", () => {
 
 describe("GitHub OAuth redirect_uri", () => {
   test("defaults to ${ISSUER}/callback/github for every environment", () => {
-    expect(githubRedirectURI({ ISSUER: "https://auth.nikcli-ai.dev" })).toBe("https://auth.nikcli-ai.dev/callback/github")
+    expect(githubRedirectURI({ ISSUER: "https://auth.nikcli-ai.dev" })).toBe(
+      "https://auth.nikcli-ai.dev/callback/github",
+    )
     expect(githubRedirectURI({ ISSUER: "https://dev.auth.nikcli-ai.dev" })).toBe(
       "https://dev.auth.nikcli-ai.dev/callback/github",
     )

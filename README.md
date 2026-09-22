@@ -163,7 +163,7 @@ Bun workspace with centralized version catalog (`bunfig.toml`, `package.json`).
 | `packages/terminal-control`                  | Terminal abstraction reused by CLI and IDE                                                    |
 | `packages/mobile`                            | Mobile Expo / React Native app with realtime SSE                                              |
 | `packages/app`                               | Main web app (SolidStart)                                                                     |
-| `packages/web`                               | Documentation site + installer + landing (`nikcli-ai.dev`)                                     |
+| `packages/web`                               | Documentation site + installer + landing (`nikcli-ai.dev`)                                    |
 | `packages/desktop`                           | Tauri desktop app                                                                             |
 | `packages/enterprise`                        | Enterprise SSO / multi-tenant build                                                           |
 | `packages/cloud`                             | Cloudflare worker (KV, Durable Objects)                                                       |

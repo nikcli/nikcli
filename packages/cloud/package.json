@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@nikcli-ai/cloud",
-  "version": "1.390.0",
+  "version": "1.391.0",
   "private": true,
   "type": "module",
   "scripts": {

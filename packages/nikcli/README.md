@@ -38,7 +38,7 @@ Run `nikcli --help` to see all available commands.
 
 | Method | Command                                                           |
 | ------ | ----------------------------------------------------------------- |
-| curl   | `curl -fsSL https://nikcli-ai.dev/install \| bash`                 |
+| curl   | `curl -fsSL https://nikcli-ai.dev/install \| bash`                |
 | npm    | `npm install -g nikcli-ai`                                        |
 | pnpm   | `pnpm install -g nikcli-ai`                                       |
 | bun    | `bun install -g nikcli-ai`                                        |
@@ -63,7 +63,7 @@ Local development runs the CLI entrypoint at `packages/nikcli/src/index.ts`.
 | ----------------- | ------------------------------------------ |
 | `packages/nikcli` | CLI, TUI, agent engine, server, connectors |
 | `packages/mobile` | Expo mobile companion app                  |
-| `packages/web`    | Documentation site (nikcli-ai.dev)          |
+| `packages/web`    | Documentation site (nikcli-ai.dev)         |
 | `packages/sdk`    | Shared TypeScript SDK                      |
 
 ## Resources
