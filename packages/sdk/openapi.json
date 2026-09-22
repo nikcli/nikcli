@@ -20776,6 +20776,75 @@
         ]
       }
     },
+    "/session/{sessionID}/background/{delegationID}/resume": {
+      "post": {
+        "tags": ["session"],
+        "operationId": "session.background.resume",
+        "parameters": [
+          {
+            "name": "sessionID",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "delegationID",
+            "in": "path",
+            "schema": {
+              "type": "string"
+            },
+            "required": true
+          },
+          {
+            "name": "directory",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "workspace",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "auth_token": []
+          },
+          {
+            "basicAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "boolean"
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "js",
+            "source": "import { createNikcliClient } from \"@nikcli-ai/sdk/httpapi\"\n\nconst client = createNikcliClient()\nawait client.session.background.resume({\n  ...\n})"
+          }
+        ]
+      }
+    },
     "/session/{sessionID}/monitor/{monitorID}": {
       "get": {
         "tags": ["session"],

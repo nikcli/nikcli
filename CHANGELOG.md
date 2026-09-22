@@ -3,6 +3,19 @@
 <!-- UNRELEASED:START -->
 <!-- UNRELEASED:END -->
 
+## v1.388.0 (September 2026)
+
+## Core
+
+- Discover models once per process instead of on every catalog patch (@nikomatt69)
+- Stop orphaning live runs, and let interrupted ones resume (@nikomatt69)
+
+**Thank you to 1 community contributor:**
+
+- @nikomatt69:
+  - fix(delegation): stop orphaning live runs, and let interrupted ones resume
+  - perf(cursor): discover models once per process instead of on every catalog patch
+
 ## v1.387.0 (September 2026)
 
 ## Core
