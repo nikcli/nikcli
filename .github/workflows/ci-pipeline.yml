@@ -86,7 +86,7 @@ jobs:
       needs.validate.result == 'success' &&
       github.event_name == 'push' &&
       github.ref == 'refs/heads/live-main' &&
-      github.repository == 'nikomatt69/nikcli' &&
+      (github.repository == 'nikomatt69/nikcli' || github.repository == 'nikcli/nikcli') &&
       !startsWith(github.event.head_commit.message, 'release: v') &&
       !startsWith(github.event.head_commit.message, 'chore: generate') &&
       !startsWith(github.event.head_commit.message, 'chore: update') &&
@@ -104,7 +104,7 @@ jobs:
       needs.publish.result == 'success' &&
       github.event_name == 'push' &&
       github.ref == 'refs/heads/live-main' &&
-      github.repository == 'nikomatt69/nikcli' &&
+      (github.repository == 'nikomatt69/nikcli' || github.repository == 'nikcli/nikcli') &&
       needs.publish.outputs.tag != ''
     permissions:
       contents: write
@@ -121,7 +121,7 @@ jobs:
       needs.publish.result == 'success' &&
       github.event_name == 'push' &&
       github.ref == 'refs/heads/live-main' &&
-      github.repository == 'nikomatt69/nikcli' &&
+      (github.repository == 'nikomatt69/nikcli' || github.repository == 'nikcli/nikcli') &&
       needs.publish.outputs.tag != ''
     permissions:
       contents: write
@@ -141,7 +141,7 @@ jobs:
       needs.desktop.result == 'success' &&
       github.event_name == 'push' &&
       github.ref == 'refs/heads/live-main' &&
-      github.repository == 'nikomatt69/nikcli' &&
+      (github.repository == 'nikomatt69/nikcli' || github.repository == 'nikcli/nikcli') &&
       needs.publish.outputs.tag != ''
     permissions:
       contents: write
@@ -163,7 +163,7 @@ jobs:
       needs.desktop.result == 'success' &&
       github.event_name == 'push' &&
       github.ref == 'refs/heads/live-main' &&
-      github.repository == 'nikomatt69/nikcli' &&
+      (github.repository == 'nikomatt69/nikcli' || github.repository == 'nikcli/nikcli') &&
       needs.publish.outputs.tag != ''
     permissions:
       contents: write
@@ -179,7 +179,7 @@ jobs:
       needs.publish.result == 'success' &&
       github.event_name == 'push' &&
       github.ref == 'refs/heads/live-main' &&
-      github.repository == 'nikomatt69/nikcli'
+      (github.repository == 'nikomatt69/nikcli' || github.repository == 'nikcli/nikcli')
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -245,7 +245,7 @@ jobs:
     if: >-
       always() &&
       needs.validate.result == 'failure' &&
-      github.repository == 'nikomatt69/nikcli' &&
+      (github.repository == 'nikomatt69/nikcli' || github.repository == 'nikcli/nikcli') &&
       (
         github.event_name == 'push' ||
         (github.event_name == 'pull_request' &&
@@ -331,7 +331,7 @@ jobs:
     if: >-
       always() &&
       needs.validate.result == 'failure' &&
-      github.repository == 'nikomatt69/nikcli'
+      (github.repository == 'nikomatt69/nikcli' || github.repository == 'nikcli/nikcli')
     runs-on: ubuntu-latest
     permissions:
       contents: read

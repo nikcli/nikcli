@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   check:
-    if: github.repository == 'nikomatt69/nikcli'
+    if: (github.repository == 'nikomatt69/nikcli' || github.repository == 'nikcli/nikcli')
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:

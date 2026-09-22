@@ -9,7 +9,7 @@ concurrency: ${{ github.workflow }}-${{ github.ref }}
 
 jobs:
   stats:
-    if: github.repository == 'nikomatt69/nikcli'
+    if: (github.repository == 'nikomatt69/nikcli' || github.repository == 'nikcli/nikcli')
     runs-on: ubuntu-latest
     continue-on-error: true
     timeout-minutes: 10

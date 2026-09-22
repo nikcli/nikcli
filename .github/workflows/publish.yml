@@ -61,7 +61,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     if: >-
-      github.repository == 'nikomatt69/nikcli' &&
+      (github.repository == 'nikomatt69/nikcli' || github.repository == 'nikcli/nikcli') &&
       (github.event_name != 'push' ||
       (!startsWith(github.event.head_commit.message, 'release: v') &&
       !startsWith(github.event.head_commit.message, 'chore: generate') &&

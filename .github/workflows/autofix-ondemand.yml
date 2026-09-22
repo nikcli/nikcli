@@ -19,7 +19,7 @@ jobs:
       github.event.issue.pull_request &&
       startsWith(github.event.comment.body, '/autofix') &&
       contains(fromJson('["OWNER","MEMBER","COLLABORATOR"]'), github.event.comment.author_association) &&
-      github.repository == 'nikomatt69/nikcli'
+      (github.repository == 'nikomatt69/nikcli' || github.repository == 'nikcli/nikcli')
     runs-on: ubuntu-latest
     permissions:
       contents: write

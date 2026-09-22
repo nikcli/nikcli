@@ -18,7 +18,7 @@ permissions:
 jobs:
   create-release:
     runs-on: ubuntu-latest
-    if: github.repository == 'nikomatt69/nikcli'
+    if: (github.repository == 'nikomatt69/nikcli' || github.repository == 'nikcli/nikcli')
     steps:
       - uses: actions/checkout@v7
         with:
