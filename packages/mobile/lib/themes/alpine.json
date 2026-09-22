@@ -1,5 +1,5 @@
 {
-  "$schema": "https://nikcli.store/theme.json",
+  "$schema": "https://nikcli-ai.dev/theme.json",
   "defs": {
     "bgDark": "#0d0d12",
     "bgDarkAlt": "#070c13",

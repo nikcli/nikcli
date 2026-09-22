@@ -52,7 +52,7 @@ export default Runtime.handler(Commands.commands["github"].commands["install"], 
             "",
             "    3. Go to a GitHub issue and comment `/nik summarize` to see the agent in action",
             "",
-            "   Learn more about the GitHub agent - https://nikcli.store/docs/github/#usage-examples",
+            "   Learn more about the GitHub agent - https://nikcli-ai.dev/docs/github/#usage-examples",
           ].join("\n"),
         )
       }

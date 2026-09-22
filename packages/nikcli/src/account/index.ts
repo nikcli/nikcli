@@ -115,7 +115,7 @@ export namespace Account {
   // Configuration
   // ============================================================================
 
-  const DEFAULT_ACCOUNT_URL = process.env.NIKCLI_ACCOUNT_URL ?? "https://auth.nikcli.store"
+  const DEFAULT_ACCOUNT_URL = process.env.NIKCLI_ACCOUNT_URL ?? "https://auth.nikcli-ai.dev"
 
   /** Fallback poll cadence when the issuer does not send one. */
   const DEFAULT_POLL_INTERVAL_SECONDS = 5
@@ -715,7 +715,7 @@ export namespace Account {
       },
     })
 
-    // The nikcli issuer has no organizations: `auth.nikcli.store` publishes no
+    // The nikcli issuer has no organizations: `auth.nikcli-ai.dev` publishes no
     // `/api/user/orgs` route and its schema has no orgs table, so every call
     // here answered 404 and `nikcli account orgs` could only ever print
     // "Failed to fetch orgs: 404 404 Not Found" — never its own "No

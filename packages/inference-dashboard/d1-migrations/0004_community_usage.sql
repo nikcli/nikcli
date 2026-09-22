@@ -2,7 +2,7 @@
 --
 -- `usage_events` only ever sees traffic that went through the inference
 -- gateway. Most nikcli users bring their own provider keys, so their models
--- never appear there — which is the whole picture nikcli.store/data was
+-- never appear there — which is the whole picture nikcli-ai.dev/data was
 -- missing. This table holds what those installs choose to report: one row per
 -- install, day, provider and model, and nothing else.
 --

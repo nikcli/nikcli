@@ -10,14 +10,14 @@ This document describes the complete deployment infrastructure for nikcli on Clo
 
 | Worker         | Domain             | Status    | Environment Variables                   |
 | -------------- | ------------------ | --------- | --------------------------------------- |
-| `nikcli-slack` | slack.nikcli.store | ✅ Online | NODE_ENV, CF_REGION, WRANGLER_LOG_LEVEL |
-| `nikcli-web`   | nikcli.store       | ✅ Online | ASSETS binding (dist)                   |
+| `nikcli-slack` | slack.nikcli-ai.dev | ✅ Online | NODE_ENV, CF_REGION, WRANGLER_LOG_LEVEL |
+| `nikcli-web`   | nikcli-ai.dev       | ✅ Online | ASSETS binding (dist)                   |
 
 ### Pages
 
 | Project      | Domain           | Status    | Build Output |
 | ------------ | ---------------- | --------- | ------------ |
-| `nikcli-app` | app.nikcli.store | ✅ Online | dist/        |
+| `nikcli-app` | app.nikcli-ai.dev | ✅ Online | dist/        |
 
 ### KV Namespaces
 
@@ -34,7 +34,7 @@ This document describes the complete deployment infrastructure for nikcli on Clo
 ```bash
 # Slack Bot
 cd packages/slack
-bunx wrangler deploy src/worker.ts --name nikcli-slack --routes 'slack.nikcli.store/*'
+bunx wrangler deploy src/worker.ts --name nikcli-slack --routes 'slack.nikcli-ai.dev/*'
 
 # Website
 cd packages/web
@@ -118,11 +118,11 @@ CF_REGION = "us"
 
 | Record             | Type  | Target               | Proxied |
 | ------------------ | ----- | -------------------- | ------- |
-| nikcli.store       | A     | Worker               | N/A     |
-| nikcli.store       | A     | Worker               | N/A     |
-| slack.nikcli.store | A     | Worker               | N/A     |
-| app.nikcli.store   | CNAME | nikcli-app.pages.dev | ✅      |
-| docs.nikcli.store  | A     | nikcli-web           | ✅      |
+| nikcli-ai.dev       | A     | Worker               | N/A     |
+| nikcli-ai.dev       | A     | Worker               | N/A     |
+| slack.nikcli-ai.dev | A     | Worker               | N/A     |
+| app.nikcli-ai.dev   | CNAME | nikcli-app.pages.dev | ✅      |
+| docs.nikcli-ai.dev  | A     | nikcli-web           | ✅      |
 
 ---
 
@@ -132,24 +132,24 @@ CF_REGION = "us"
 
 | Endpoint                                          | Method | Description          |
 | ------------------------------------------------- | ------ | -------------------- |
-| `https://slack.nikcli.store/health`               | GET    | Health check         |
-| `https://slack.nikcli.store/slack/events`         | POST   | Slack Events API     |
-| `https://slack.nikcli.store/slack/interactive`    | POST   | Slack Interactivity  |
-| `https://slack.nikcli.store/slack/install`        | GET    | Slack OAuth install  |
-| `https://slack.nikcli.store/slack/oauth/callback` | GET    | Slack OAuth callback |
+| `https://slack.nikcli-ai.dev/health`               | GET    | Health check         |
+| `https://slack.nikcli-ai.dev/slack/events`         | POST   | Slack Events API     |
+| `https://slack.nikcli-ai.dev/slack/interactive`    | POST   | Slack Interactivity  |
+| `https://slack.nikcli-ai.dev/slack/install`        | GET    | Slack OAuth install  |
+| `https://slack.nikcli-ai.dev/slack/oauth/callback` | GET    | Slack OAuth callback |
 
 ### Website
 
 | Endpoint                     | Description   |
 | ---------------------------- | ------------- |
-| `https://nikcli.store/`      | Homepage      |
-| `https://nikcli.store/docs/` | Documentation |
+| `https://nikcli-ai.dev/`      | Homepage      |
+| `https://nikcli-ai.dev/docs/` | Documentation |
 
 ### Web App
 
 | Endpoint                    | Description     |
 | --------------------------- | --------------- |
-| `https://app.nikcli.store/` | Web Application |
+| `https://app.nikcli-ai.dev/` | Web Application |
 
 ---
 
@@ -159,7 +159,7 @@ CF_REGION = "us"
 
 ```bash
 # Check health
-curl https://slack.nikcli.store/health
+curl https://slack.nikcli-ai.dev/health
 
 # View logs
 bunx wrangler tail --name nikcli-slack
@@ -172,7 +172,7 @@ bunx wrangler deployments list --name nikcli-slack
 
 ```bash
 # Check DNS
-dig app.nikcli.store +short
+dig app.nikcli-ai.dev +short
 
 # Verify Cloudflare DNS settings
 # Go to: https://dash.cloudflare.com > DNS > Records
@@ -184,7 +184,7 @@ Ensure the following origins are allowed in your CORS configuration:
 
 - `http://localhost:*`
 - `http://127.0.0.1:*`
-- `https://*.nikcli.store`
+- `https://*.nikcli-ai.dev`
 
 ---
 
@@ -194,7 +194,7 @@ Ensure the following origins are allowed in your CORS configuration:
 
 ```bash
 cd packages/slack
-bunx wrangler deploy src/worker.ts --name nikcli-slack --routes 'slack.nikcli.store/*'
+bunx wrangler deploy src/worker.ts --name nikcli-slack --routes 'slack.nikcli-ai.dev/*'
 ```
 
 ### Redeploy Website

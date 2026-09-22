@@ -9,7 +9,7 @@ function base64Url(bytes: Uint8Array): string {
 
 export const GET: APIRoute = async (ctx) => {
   const env = getEnv(ctx)
-  const issuer = (env.AUTH_ISSUER || "https://auth.nikcli.store").replace(/\/$/, "")
+  const issuer = (env.AUTH_ISSUER || "https://auth.nikcli-ai.dev").replace(/\/$/, "")
   const stateBytes = crypto.getRandomValues(new Uint8Array(32))
   const verifierBytes = crypto.getRandomValues(new Uint8Array(64))
   const state = base64Url(stateBytes)

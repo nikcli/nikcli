@@ -8,7 +8,7 @@ export type SessionPreview = {
   kind: SessionPreviewKind
   title: string
   messageId: string
-  /** Canonical nikcli.store link, safe to copy and share. */
+  /** Canonical nikcli-ai.dev link, safe to copy and share. */
   url?: string
   /** Capability URL used only to render the preview inside the connected session. */
   previewUrl?: string
@@ -121,7 +121,7 @@ function isSessionWorkspacePreviewUrl(raw: string, normalized: string, serverUrl
   const normHost = normParsed.hostname.toLowerCase()
 
   if (
-    (rawHost === "nikcli.store" || rawHost.endsWith(".nikcli.store")) &&
+    (rawHost === "nikcli-ai.dev" || rawHost.endsWith(".nikcli-ai.dev")) &&
     /^\/artifact\/[^/]+/.test(rawParsed.pathname)
   ) {
     return true

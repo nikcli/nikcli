@@ -86,9 +86,9 @@ export namespace PublicRoutes {
 
   export async function proxy(request: Request): Promise<Response> {
     const source = new URL(request.url)
-    const target = new URL(source.pathname + source.search, "https://app.nikcli.store")
+    const target = new URL(source.pathname + source.search, "https://app.nikcli-ai.dev")
     const headers = new Headers(request.headers)
-    headers.set("host", "app.nikcli.store")
+    headers.set("host", "app.nikcli-ai.dev")
     const response = await fetch(target, {
       method: request.method,
       headers,

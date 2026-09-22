@@ -83,12 +83,12 @@ describe("Session", () => {
       const validShare = {
         id: "share_123",
         mode: "local" as const,
-        url: "https://nikcli.store/s/share123",
+        url: "https://nikcli-ai.dev/s/share123",
       }
 
       const parsed = Session.ShareInfo.parse(validShare)
       expect(parsed.mode).toBe("local")
-      expect(parsed.url).toBe("https://nikcli.store/s/share123")
+      expect(parsed.url).toBe("https://nikcli-ai.dev/s/share123")
     })
 
     it("accepts minimal share info with only url", () => {

@@ -12,7 +12,7 @@ import { Global } from "@nikcli-ai/util/global"
 
 const log = Log.create({ service: "tui.migrate" })
 
-const TUI_SCHEMA_URL = "https://nikcli.store/tui.json"
+const TUI_SCHEMA_URL = "https://nikcli-ai.dev/tui.json"
 
 const LegacyTheme = ThemeField
 const LegacyRecord = z.record(z.string(), z.unknown()).optional()

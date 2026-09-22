@@ -49,7 +49,7 @@ jobs:
 
       - name: Install nikcli
         if: steps.changes.outputs.has_changes == 'true'
-        run: curl -fsSL https://nikcli.store/install | bash
+        run: curl -fsSL https://nikcli-ai.dev/install | bash
 
       - name: Sync locale docs with nikcli
         if: steps.changes.outputs.has_changes == 'true'

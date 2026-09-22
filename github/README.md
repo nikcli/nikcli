@@ -1,6 +1,6 @@
 # nikcli GitHub Action
 
-A GitHub Action that integrates [nikcli](https://nikcli.store) directly into your GitHub workflow.
+A GitHub Action that integrates [nikcli](https://nikcli-ai.dev) directly into your GitHub workflow.
 
 Mention `/nikcli` in your comment, and nikcli will execute tasks within your GitHub Actions runner.
 

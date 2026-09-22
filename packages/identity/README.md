@@ -1,6 +1,6 @@
 # `@nikcli-ai/identity` — nikcli Identity issuer
 
-Cloudflare Worker at `auth.nikcli.store` (staging: `dev.auth.nikcli.store`) that
+Cloudflare Worker at `auth.nikcli-ai.dev` (staging: `dev.auth.nikcli-ai.dev`) that
 issues OAuth 2.1 authorization-code + PKCE (S256) tokens for GitHub and email-code
 sign-in, plus the device flow used by the CLI.
 
@@ -44,7 +44,7 @@ wrangler secret put GITHUB_REDIRECT_URI
 ```
 
 Email sending is delivered through Cloudflare Email Sending; enable it on the
-zone (`wrangler email sending enable nikcli.store`) before going live.
+zone (`wrangler email sending enable nikcli-ai.dev`) before going live.
 
 ## GitHub OAuth App setup
 
@@ -58,8 +58,8 @@ cannot start.
 
 | Environment | ISSUER                          | Default `redirect_uri` sent to GitHub           |
 | ----------- | ------------------------------- | ----------------------------------------------- |
-| production  | `https://auth.nikcli.store`     | `https://auth.nikcli.store/callback/github`     |
-| staging     | `https://dev.auth.nikcli.store` | `https://dev.auth.nikcli.store/callback/github` |
+| production  | `https://auth.nikcli-ai.dev`     | `https://auth.nikcli-ai.dev/callback/github`     |
+| staging     | `https://dev.auth.nikcli-ai.dev` | `https://dev.auth.nikcli-ai.dev/callback/github` |
 
 If the registered callback on the GitHub OAuth App differs (tenant-scoped
 subdomain, custom path, etc.), pin it with the `GITHUB_REDIRECT_URI` Worker

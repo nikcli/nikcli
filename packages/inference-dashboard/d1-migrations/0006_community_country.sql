@@ -1,6 +1,6 @@
 -- Where a community report came from, at country granularity.
 --
--- nikcli.store/data could say what models installs run, but never where they
+-- nikcli-ai.dev/data could say what models installs run, but never where they
 -- run. This adds the missing dimension for the geographic breakdown on that
 -- page — and adds only that.
 --

@@ -102,7 +102,7 @@ export namespace VoiceTranscribe {
       headers: {
         Authorization: `Bearer ${config.apiKey}`,
         "Content-Type": "application/json",
-        "HTTP-Referer": "https://nikcli.store/",
+        "HTTP-Referer": "https://nikcli-ai.dev/",
         "X-Title": "nikcli",
       },
       body: JSON.stringify({
@@ -181,7 +181,7 @@ export namespace VoiceTranscribe {
         headers: {
           Authorization: `Bearer ${config.apiKey}`,
           "Content-Type": "application/json",
-          "HTTP-Referer": "https://nikcli.store/",
+          "HTTP-Referer": "https://nikcli-ai.dev/",
           "X-Title": "nikcli",
         },
         body: JSON.stringify({

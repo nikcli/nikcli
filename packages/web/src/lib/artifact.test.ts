@@ -66,8 +66,8 @@ describe("artifact payloads", () => {
   })
 
   test("share URL includes the view key (the bare page is login-gated)", () => {
-    expect(artifactShareUrl("artifact-id", "view-key", "https://nikcli.store")).toBe(
-      "https://nikcli.store/artifact/artifact-id?key=view-key",
+    expect(artifactShareUrl("artifact-id", "view-key", "https://nikcli-ai.dev")).toBe(
+      "https://nikcli-ai.dev/artifact/artifact-id?key=view-key",
     )
   })
 

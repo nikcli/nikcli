@@ -106,7 +106,7 @@ export namespace Config {
         }
         const remoteConfig = wellknown.config ?? {}
         // Add $schema to prevent load() from trying to write back to a non-existent file
-        if (!remoteConfig.$schema) remoteConfig.$schema = "https://nikcli.store/config.json"
+        if (!remoteConfig.$schema) remoteConfig.$schema = "https://nikcli-ai.dev/config.json"
         result = mergeConfigConcatArrays(
           result,
           await load(
@@ -1494,7 +1494,7 @@ export namespace Config {
       command: z
         .record(z.string(), Command)
         .optional()
-        .describe("Command configuration, see https://nikcli.store/docs/commands"),
+        .describe("Command configuration, see https://nikcli-ai.dev/docs/commands"),
       reference: z
         .record(z.string(), Reference)
         .optional()
@@ -1511,7 +1511,7 @@ export namespace Config {
           url: z
             .string()
             .optional()
-            .describe("Remote sync hub URL, e.g. https://s.nikcli.store. NIKCLI_REMOTE_URL overrides this."),
+            .describe("Remote sync hub URL, e.g. https://s.nikcli-ai.dev. NIKCLI_REMOTE_URL overrides this."),
           token: z
             .string()
             .optional()
@@ -1532,7 +1532,7 @@ export namespace Config {
             .boolean()
             .optional()
             .describe(
-              "Contribute anonymous per-day model totals to the public stats at nikcli.store/data. On by default; set false to opt out, or set DO_NOT_TRACK=1 / NIKCLI_DISABLE_ANALYTICS=1. Only day, provider, model, session count, message count, token count and cost are sent, under a random identifier — never prompts, paths, repositories, session titles or account.",
+              "Contribute anonymous per-day model totals to the public stats at nikcli-ai.dev/data. On by default; set false to opt out, or set DO_NOT_TRACK=1 / NIKCLI_DISABLE_ANALYTICS=1. Only day, provider, model, session count, message count, token count and cost are sent, under a random identifier — never prompts, paths, repositories, session titles or account.",
             ),
           endpoint: z
             .string()
@@ -1602,7 +1602,7 @@ export namespace Config {
         })
         .catchall(Agent)
         .optional()
-        .describe("Agent configuration, see https://nikcli.store/docs/agents"),
+        .describe("Agent configuration, see https://nikcli-ai.dev/docs/agents"),
       provider: z
         .record(z.string(), Provider)
         .optional()
@@ -2080,9 +2080,9 @@ export namespace Config {
     const parsed = Info.safeParse(data)
     if (parsed.success) {
       if (!parsed.data.$schema) {
-        parsed.data.$schema = "https://nikcli.store/config.json"
+        parsed.data.$schema = "https://nikcli-ai.dev/config.json"
         // Write the $schema to the original text to preserve variables like {env:VAR}
-        const updated = original.replace(/^\s*\{/, '{\n  "$schema": "https://nikcli.store/config.json",')
+        const updated = original.replace(/^\s*\{/, '{\n  "$schema": "https://nikcli-ai.dev/config.json",')
         let tmp: string | undefined
         try {
           const target = await fs.realpath(configFilepath).catch(() => configFilepath)

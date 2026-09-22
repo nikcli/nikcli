@@ -2,7 +2,7 @@ import { and, count, Database, gte, lt, sql } from "@nikcli-ai/console-core/driz
 import { UsageTable } from "@nikcli-ai/console-core/schema/billing.sql.js"
 
 /**
- * Public, aggregate-only feed of gateway usage — the data behind nikcli.store/data.
+ * Public, aggregate-only feed of gateway usage — the data behind nikcli-ai.dev/data.
  *
  * Every figure is a SUM over the `usage` table, the row the gateway writes for
  * each completion it bills. It is served from here rather than queried from the

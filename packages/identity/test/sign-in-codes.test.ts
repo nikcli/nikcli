@@ -32,9 +32,9 @@ function harness() {
   const sent: SentEmail[] = []
   const db = memoryD1()
   const env = {
-    ISSUER: "https://auth.nikcli.store",
+    ISSUER: "https://auth.nikcli-ai.dev",
     AUDIENCE: "nikcli-api",
-    EMAIL_SENDER: "auth@nikcli.store",
+    EMAIL_SENDER: "auth@nikcli-ai.dev",
     GITHUB_CLIENT_ID: "test-client",
     GITHUB_CLIENT_SECRET: "test-secret",
     STATE: fakeState(),
@@ -51,18 +51,18 @@ function harness() {
 
   const post = (path: string, form: Record<string, string>, ip = "203.0.113.7") =>
     fetch(
-      new Request(`https://auth.nikcli.store${path}`, {
+      new Request(`https://auth.nikcli-ai.dev${path}`, {
         method: "POST",
         headers: { "content-type": "application/x-www-form-urlencoded", "cf-connecting-ip": ip },
         body: new URLSearchParams(form).toString(),
       }),
     )
 
-  const get = (path: string) => fetch(new Request(`https://auth.nikcli.store${path}`))
+  const get = (path: string) => fetch(new Request(`https://auth.nikcli-ai.dev${path}`))
 
   async function startDevice() {
     const response = await fetch(
-      new Request("https://auth.nikcli.store/oauth/device/code", {
+      new Request("https://auth.nikcli-ai.dev/oauth/device/code", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ client_id: "nikcli", scope: "openid profile email offline_access" }),
@@ -73,7 +73,7 @@ function harness() {
 
   const pollDevice = async (deviceCode: string) => {
     const response = await fetch(
-      new Request("https://auth.nikcli.store/oauth/device/token", {
+      new Request("https://auth.nikcli-ai.dev/oauth/device/token", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ client_id: "nikcli", device_code: deviceCode }),
@@ -300,20 +300,20 @@ describe("PKCE clients (mobile, desktop, web, console)", () => {
   const CHALLENGE = "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM"
 
   function authorizeUrl(clientID: string, redirectURI: string) {
-    const url = new URL("https://auth.nikcli.store/authorize")
+    const url = new URL("https://auth.nikcli-ai.dev/authorize")
     url.searchParams.set("client_id", clientID)
     url.searchParams.set("redirect_uri", redirectURI)
     url.searchParams.set("response_type", "code")
     url.searchParams.set("state", "client-state")
     url.searchParams.set("code_challenge", CHALLENGE)
     url.searchParams.set("code_challenge_method", "S256")
-    return url.toString().replace("https://auth.nikcli.store", "")
+    return url.toString().replace("https://auth.nikcli-ai.dev", "")
   }
 
   test.each([
     ["nikcli-mobile", "nikcli://auth/callback"],
     ["nikcli-desktop", "nikcli://auth/callback"],
-    ["nikcli-web", "https://nikcli.store/dashboard/callback"],
+    ["nikcli-web", "https://nikcli-ai.dev/dashboard/callback"],
   ])("%s completes with a code pasted the way a mail client hands it over", async (clientID, redirectURI) => {
     const kit = fixture()
     const page = await kit.get(authorizeUrl(clientID, redirectURI)).then((r) => r.text())

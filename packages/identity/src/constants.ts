@@ -47,7 +47,7 @@ export const EMAIL_CODE_HOURLY_WINDOW_SECONDS = 60 * 60
  * the address was unlimited, and every other endpoint here — device start,
  * token, device approval, passkey auth — already carries an IP bucket, so this
  * was the one hole in the set. What comes out of it is mail from
- * `auth@nikcli.store`, so the cost of leaving it open is charged to the
+ * `auth@nikcli-ai.dev`, so the cost of leaving it open is charged to the
  * issuer's own sending reputation and quota, not to an attacker.
  *
  * Sized for humans rather than for the limit: ten codes in ten minutes is more
@@ -76,15 +76,15 @@ export const CLIENTS = {
   nikcli: ["loopback"],
   "nikcli-desktop": ["nikcli://auth/callback"],
   "nikcli-mobile": ["nikcli://auth/callback"],
-  "nikcli-studio": ["https://nikcli.store/dashboard/callback"],
-  "nikcli-web": ["https://nikcli.store/dashboard/callback", "https://nikcli.store/user/callback"],
-  // `https://nikcli.store/api/auth/callback` used to be listed here too and was
-  // removed: nikcli.store serves no such route, so approving a sign-in aimed at
+  "nikcli-studio": ["https://nikcli-ai.dev/dashboard/callback"],
+  "nikcli-web": ["https://nikcli-ai.dev/dashboard/callback", "https://nikcli-ai.dev/user/callback"],
+  // `https://nikcli-ai.dev/api/auth/callback` used to be listed here too and was
+  // removed: nikcli-ai.dev serves no such route, so approving a sign-in aimed at
   // it landed the user on a 404 page with their authorization code in the URL.
   // The dashboard builds its redirect from its own origin and has only ever
   // used the entry below.
-  "nikcli-inference-dashboard": ["https://dashboard.nikcli.store/api/auth/callback"],
-  "nikcli-console": ["https://console.nikcli.store/auth/callback"],
+  "nikcli-inference-dashboard": ["https://dashboard.nikcli-ai.dev/api/auth/callback"],
+  "nikcli-console": ["https://console.nikcli-ai.dev/auth/callback"],
 } as const
 
 export type ClientID = keyof typeof CLIENTS

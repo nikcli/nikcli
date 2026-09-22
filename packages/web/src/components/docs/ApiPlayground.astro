@@ -4,7 +4,7 @@
  *
  * The docs are static, so every request is made from the reader's own browser
  * to their own nikcli server. That works because the server's CORS allowlist
- * already includes `*.nikcli.store` and permits exactly the headers used here
+ * already includes `*.nikcli-ai.dev` and permits exactly the headers used here
  * (`Authorization`, `Content-Type`, `x-nikcli-directory`, `x-nikcli-workspace`)
  * — see `server-router.ts`. Nothing is proxied through this site, and no value
  * entered below ever leaves the browser.
@@ -52,7 +52,7 @@
       <p class="api-pg-sub">
         Start a server with <code>nikcli serve --hostname 127.0.0.1 --port 4096</code>. Requests go
         straight from this page to that address — the browser allows it because loopback counts as a
-        secure origin, and the server allows it because <code>nikcli.store</code> is in its CORS
+        secure origin, and the server allows it because <code>nikcli-ai.dev</code> is in its CORS
         allowlist.
       </p>
       <p class="api-pg-sub">

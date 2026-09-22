@@ -145,7 +145,7 @@ export namespace Installation {
     stderr: Schema.String,
   }) {}
 
-  export const WINDOWS_UPGRADE_SCRIPT = "irm https://nikcli.store/install.ps1 | iex"
+  export const WINDOWS_UPGRADE_SCRIPT = "irm https://nikcli-ai.dev/install.ps1 | iex"
 
   export type UpgradeStrategy =
     | { type: "windows-installer"; script: typeof WINDOWS_UPGRADE_SCRIPT }
@@ -192,7 +192,7 @@ export namespace Installation {
           // "unknown" means detection failed and the user explicitly chose to
           // install anyway — fall back to the standalone installer instead of
           // throwing.
-          cmd = $`curl -fsSL https://nikcli.store/install | bash`.env({
+          cmd = $`curl -fsSL https://nikcli-ai.dev/install | bash`.env({
             ...process.env,
             VERSION: target,
           })

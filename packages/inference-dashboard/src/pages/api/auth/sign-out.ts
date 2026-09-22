@@ -6,7 +6,7 @@ export const POST: APIRoute = async (ctx) => {
   const refresh = ctx.cookies.get(REFRESH_COOKIE)?.value
   if (refresh) {
     const env = getEnv(ctx)
-    const issuer = (env.AUTH_ISSUER || "https://auth.nikcli.store").replace(/\/$/, "")
+    const issuer = (env.AUTH_ISSUER || "https://auth.nikcli-ai.dev").replace(/\/$/, "")
     await fetch(`${issuer}/revoke`, {
       method: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },

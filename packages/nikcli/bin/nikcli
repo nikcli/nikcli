@@ -172,7 +172,7 @@ if (!resolved) {
   console.error(
     'It seems that your package manager failed to install the right version of the nikcli CLI for your platform. You can try manually installing the "' +
       candidates[0] +
-      '" package, or reinstall with the standalone installer: https://nikcli.store/install',
+      '" package, or reinstall with the standalone installer: https://nikcli-ai.dev/install',
   )
   process.exit(1)
 }

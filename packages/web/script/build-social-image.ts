@@ -69,7 +69,7 @@ function socialSvg(p: (typeof palette)["dark" | "light"], wordmark: string) {
 
   <!-- Footer strip -->
   <path d="M72 560H1128" stroke="${p.border}"/>
-  <text x="72" y="600" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" fill="${p.text}">nikcli.store</text>
+  <text x="72" y="600" font-family="Arial, Helvetica, sans-serif" font-size="22" font-weight="700" fill="${p.text}">nikcli-ai.dev</text>
   <text x="1128" y="600" text-anchor="end" font-family="Arial, Helvetica, sans-serif" font-size="17" fill="${p.muted}">21+ providers · 40+ built-in tools</text>
 </svg>`
 }

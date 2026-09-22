@@ -633,7 +633,7 @@ function DesktopAccount() {
               </DropdownMenu.Item>
               <DropdownMenu.Item
                 class="desktop-account__menu-item"
-                onSelect={() => platform.openLink("https://nikcli.store")}
+                onSelect={() => platform.openLink("https://nikcli-ai.dev")}
               >
                 <Icon name="share" size="small" />
                 <DropdownMenu.ItemLabel>{t("desktop.account.invite")}</DropdownMenu.ItemLabel>

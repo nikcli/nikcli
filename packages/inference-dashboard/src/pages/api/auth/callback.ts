@@ -14,7 +14,7 @@ export const GET: APIRoute = async (ctx) => {
   const code = url.searchParams.get("code")
   if (!code) return Response.json({ error: url.searchParams.get("error") || "missing_code" }, { status: 400 })
   const env = getEnv(ctx)
-  const issuer = (env.AUTH_ISSUER || "https://auth.nikcli.store").replace(/\/$/, "")
+  const issuer = (env.AUTH_ISSUER || "https://auth.nikcli-ai.dev").replace(/\/$/, "")
   const response = await fetch(`${issuer}/oauth/token`, {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded" },

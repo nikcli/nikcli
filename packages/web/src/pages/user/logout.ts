@@ -5,7 +5,7 @@ export const POST: APIRoute = async (context) => {
   const env = (context.locals as App.Locals).runtime?.env
   const refresh = context.cookies.get("nikcli_refresh")?.value
   if (refresh) {
-    const issuer = (env?.AUTH_ISSUER ?? "https://auth.nikcli.store").replace(/\/$/, "")
+    const issuer = (env?.AUTH_ISSUER ?? "https://auth.nikcli-ai.dev").replace(/\/$/, "")
     await fetch(`${issuer}/revoke`, {
       method: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },

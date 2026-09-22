@@ -8,7 +8,7 @@ WebBrowser.maybeCompleteAuthSession()
 
 export const OAUTH_CLIENT_ID = "nikcli-mobile"
 export const OAUTH_REDIRECT_URI = "nikcli://auth/callback"
-export const DEFAULT_OAUTH_ISSUER = "https://auth.nikcli.store"
+export const DEFAULT_OAUTH_ISSUER = "https://auth.nikcli-ai.dev"
 
 let refreshPromise: Promise<OAuthTokenTriple> | null = null
 

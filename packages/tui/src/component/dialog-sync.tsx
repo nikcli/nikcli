@@ -225,7 +225,7 @@ export function DialogSync() {
                     setForm("url", v)
                     setForm("status", "")
                   }}
-                  placeholder="https://s.nikcli.store"
+                  placeholder="https://s.nikcli-ai.dev"
                   cursorColor={theme.accent.fg}
                   focusedTextColor={theme.foreground.default}
                   ref={(r: any) => (urlInput = r)}

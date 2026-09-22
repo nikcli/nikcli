@@ -278,7 +278,7 @@ describe("SyncReducer — replay with snapshot cache", () => {
 
 describe("Outbox — pending push queue", () => {
   it("enqueues and reports counts", () => {
-    const target = "https://s.nikcli.store"
+    const target = "https://s.nikcli-ai.dev"
     Effect.runSync(Outbox.enqueue("syn_aaa", target))
     Effect.runSync(Outbox.enqueue("syn_bbb", target))
     Effect.runSync(Outbox.enqueue("syn_ccc", target))
@@ -288,7 +288,7 @@ describe("Outbox — pending push queue", () => {
   })
 
   it("is idempotent on (eventId, target)", () => {
-    const target = "https://s.nikcli.store"
+    const target = "https://s.nikcli-ai.dev"
     const before = Effect.runSync(Outbox.status(target)).pending
     Effect.runSync(Outbox.enqueue("syn_idempotent", target))
     Effect.runSync(Outbox.enqueue("syn_idempotent", target))
@@ -298,7 +298,7 @@ describe("Outbox — pending push queue", () => {
   })
 
   it("drain marks sent on successful push", async () => {
-    const target = "https://s.nikcli.store"
+    const target = "https://s.nikcli-ai.dev"
     const eventId = "syn_drain_test"
     Effect.runSync(Outbox.enqueue(eventId, target))
 

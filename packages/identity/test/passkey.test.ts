@@ -25,9 +25,9 @@ function harness() {
   const sent: SentEmail[] = []
   const db = memoryD1()
   const env = {
-    ISSUER: "https://auth.nikcli.store",
+    ISSUER: "https://auth.nikcli-ai.dev",
     AUDIENCE: "nikcli-api",
-    EMAIL_SENDER: "auth@nikcli.store",
+    EMAIL_SENDER: "auth@nikcli-ai.dev",
     GITHUB_CLIENT_ID: "test-client",
     GITHUB_CLIENT_SECRET: "test-secret",
     STATE: fakeState(),
@@ -44,7 +44,7 @@ function harness() {
 
   const postForm = (path: string, form: Record<string, string>) =>
     fetch(
-      new Request(`https://auth.nikcli.store${path}`, {
+      new Request(`https://auth.nikcli-ai.dev${path}`, {
         method: "POST",
         headers: { "content-type": "application/x-www-form-urlencoded", "cf-connecting-ip": "203.0.113.7" },
         body: new URLSearchParams(form).toString(),
@@ -53,18 +53,18 @@ function harness() {
 
   const postJSON = (path: string, body: Record<string, unknown>) =>
     fetch(
-      new Request(`https://auth.nikcli.store${path}`, {
+      new Request(`https://auth.nikcli-ai.dev${path}`, {
         method: "POST",
         headers: { "content-type": "application/json", "cf-connecting-ip": "203.0.113.7" },
         body: JSON.stringify(body),
       }),
     )
 
-  const get = (path: string) => fetch(new Request(`https://auth.nikcli.store${path}`))
+  const get = (path: string) => fetch(new Request(`https://auth.nikcli-ai.dev${path}`))
 
   async function startDevice() {
     const response = await fetch(
-      new Request("https://auth.nikcli.store/oauth/device/code", {
+      new Request("https://auth.nikcli-ai.dev/oauth/device/code", {
         method: "POST",
         headers: { "content-type": "application/json" },
         body: JSON.stringify({ client_id: "nikcli", scope: "openid profile email offline_access" }),
@@ -89,7 +89,7 @@ function codeOf(email: SentEmail): string {
 const CHALLENGE = "E9Melhoa2OwvFrEMTJguCHaoeK1t8URWbuGJSstw-cM"
 
 function authorizePath() {
-  const url = new URL("https://auth.nikcli.store/authorize")
+  const url = new URL("https://auth.nikcli-ai.dev/authorize")
   url.searchParams.set("client_id", "nikcli-mobile")
   url.searchParams.set("redirect_uri", "nikcli://auth/callback")
   url.searchParams.set("response_type", "code")
@@ -152,7 +152,7 @@ describe("passkey authentication options", () => {
     const body = (await response.json()) as { challenge?: unknown; rpId?: unknown }
     expect(typeof body.challenge).toBe("string")
     expect((body.challenge as string).length).toBeGreaterThan(8)
-    expect(body.rpId).toBe("auth.nikcli.store")
+    expect(body.rpId).toBe("auth.nikcli-ai.dev")
   })
 })
 

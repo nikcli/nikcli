@@ -184,7 +184,7 @@ describe("ci-autofix.ts", () => {
 
     it("installs nikcli via shell installer", async () => {
       const content = await fs.readFile(path.join(scriptsDir, "ci-autofix.ts"), "utf8")
-      expect(content).toContain("https://nikcli.store/install")
+      expect(content).toContain("https://nikcli-ai.dev/install")
     })
 
     it("calls nikcli run headlessly with --command, --model, --format json", async () => {

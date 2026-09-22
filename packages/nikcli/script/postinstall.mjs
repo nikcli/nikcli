@@ -208,7 +208,7 @@ function main() {
   throw new Error(
     `could not resolve a native binary for ${platform}-${arch}. Tried: ${names.join(", ")}.\n` +
       `The 'nikcli' command will try again at runtime. To fix it now, install one of those packages manually,\n` +
-      `or use the standalone installer: https://nikcli.store/install`,
+      `or use the standalone installer: https://nikcli-ai.dev/install`,
   )
 }
 

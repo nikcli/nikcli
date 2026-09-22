@@ -10,7 +10,7 @@ function artifactMessage(input: {
   kind: "image" | "video"
   version?: number
 }): MessageWithParts {
-  const url = `https://nikcli.store/artifact/${input.artifactId}`
+  const url = `https://nikcli-ai.dev/artifact/${input.artifactId}`
   return {
     info: {
       id: input.messageId,
@@ -56,9 +56,9 @@ describe("published session artifacts", () => {
     const previews = extractSessionPreviews([image, video])
 
     expect(previews.map((item) => item.kind)).toEqual(["video", "image"])
-    expect(previews[0]?.url).toBe("https://nikcli.store/artifact/vid?key=view-key")
-    expect(previews[0]?.previewUrl).toBe("https://nikcli.store/artifact/vid/raw?key=view-key")
-    expect(previews[0]?.viewerUrl).toBe("https://nikcli.store/artifact/vid?key=view-key")
+    expect(previews[0]?.url).toBe("https://nikcli-ai.dev/artifact/vid?key=view-key")
+    expect(previews[0]?.previewUrl).toBe("https://nikcli-ai.dev/artifact/vid/raw?key=view-key")
+    expect(previews[0]?.viewerUrl).toBe("https://nikcli-ai.dev/artifact/vid?key=view-key")
   })
 
   test("keeps only the newest version of the same published artifact", () => {
@@ -84,9 +84,9 @@ describe("published session artifacts", () => {
         filename: "demo.mp4",
         contentType: "video/mp4",
         kind: "video",
-        url: "https://nikcli.store/artifact/persisted",
-        viewerUrl: "https://nikcli.store/artifact/persisted?key=view-key",
-        previewUrl: "https://nikcli.store/artifact/persisted/raw?key=view-key",
+        url: "https://nikcli-ai.dev/artifact/persisted",
+        viewerUrl: "https://nikcli-ai.dev/artifact/persisted?key=view-key",
+        previewUrl: "https://nikcli-ai.dev/artifact/persisted/raw?key=view-key",
         version: 3,
         sessionID: "ses_test",
         size: 1_024,

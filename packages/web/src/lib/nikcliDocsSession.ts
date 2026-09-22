@@ -74,7 +74,7 @@ export async function runNikcliTurn(input: {
   let sessionID = input.sessionID
   if (!sessionID) {
     const created = (await sdk.mobile.session.create({
-      mobileSessionCreateInput: { title: "nikcli.store docs support" },
+      mobileSessionCreateInput: { title: "nikcli-ai.dev docs support" },
     })) as unknown as { id?: string; data?: { id?: string } }
     sessionID = created?.id ?? created?.data?.id
     if (!sessionID) throw new Error("nikcli did not return a session id")

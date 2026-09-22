@@ -18,7 +18,7 @@ import path from "path"
  * needs id + secret where a local one needs id + url.
  *
  * The remote endpoint is a stub `Bun.serve` reached through `enterprise.url`,
- * so nothing in this file talks to s.nikcli.store.
+ * so nothing in this file talks to s.nikcli-ai.dev.
  */
 
 const testHome = await fs.mkdtemp(path.join(os.tmpdir(), "nikcli-share-contract-home-"))
@@ -72,7 +72,7 @@ async function makeProject(enterpriseUrl: string, prefix: string) {
   const directory = await fs.realpath(await fs.mkdtemp(path.join(os.tmpdir(), prefix)))
   await Bun.write(
     path.join(directory, "nikcli.json"),
-    JSON.stringify({ $schema: "https://nikcli.store/config.json", enterprise: { url: enterpriseUrl } }, null, 2),
+    JSON.stringify({ $schema: "https://nikcli-ai.dev/config.json", enterprise: { url: enterpriseUrl } }, null, 2),
   )
   return directory
 }

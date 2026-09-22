@@ -5,10 +5,10 @@ compatibility_flags = ["nodejs_compat"]
 
 workers_dev = false
 
-# custom_domain lets wrangler create the DNS record on the nikcli.store zone;
+# custom_domain lets wrangler create the DNS record on the nikcli-ai.dev zone;
 # a bare `route` would require the record to already exist.
 [[routes]]
-pattern = "discord.nikcli.store"
+pattern = "discord.nikcli-ai.dev"
 custom_domain = true
 
 [vars]
@@ -42,4 +42,4 @@ new_sqlite_classes = ["ChannelSession"]
 # DISCORD_BOT_TOKEN is not needed by the Worker, only by `bun run register`.
 #
 # After deploying, set the Interactions Endpoint URL in the Developer Portal to
-# https://discord.nikcli.store/discord/interactions and run `bun run register`.
+# https://discord.nikcli-ai.dev/discord/interactions and run `bun run register`.

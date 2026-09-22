@@ -801,7 +801,7 @@ function App(props: { checkUpgrade?: () => Promise<UpdateAvailable | undefined> 
       category: "Support",
       slash: { name: "docs" },
       onSelect: () => {
-        openExternal("https://nikcli.store/docs")
+        openExternal("https://nikcli-ai.dev/docs")
       },
     },
     {
@@ -1396,7 +1396,7 @@ function App(props: { checkUpgrade?: () => Promise<UpdateAvailable | undefined> 
       title: "Open docs",
       value: "docs.open",
       onSelect: () => {
-        open("https://nikcli.store/docs").catch(() => {})
+        open("https://nikcli-ai.dev/docs").catch(() => {})
         dialog.clear()
       },
       category: "System",

@@ -67,7 +67,7 @@ export default function Home() {
               <span>
                 <span>curl -fsSL </span>
                 <span data-slot="protocol">https://</span>
-                <span data-slot="highlight">nikcli.store/install</span>
+                <span data-slot="highlight">nikcli-ai.dev/install</span>
                 <span> | bash</span>
               </span>
               <CopyStatus />
@@ -164,7 +164,7 @@ export default function Home() {
             <a href="https://github.com/nikcli/nikcli">{i18n.t("footer.github")}</a>
           </div>
           <div data-slot="cell">
-            <a href="https://nikcli.store/discord">{i18n.t("footer.discord")}</a>
+            <a href="https://nikcli-ai.dev/discord">{i18n.t("footer.discord")}</a>
           </div>
         </footer>
       </div>

@@ -8,7 +8,7 @@ title: Plain HTTP / curl · nikcli Inference docs
 ## Chat completion
 
 ```bash
-curl https://inference.nikcli.store/v1/chat/completions \
+curl https://inference.nikcli-ai.dev/v1/chat/completions \
   -H "Authorization: Bearer $NIKCLI_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -21,7 +21,7 @@ curl https://inference.nikcli.store/v1/chat/completions \
 ## Streaming (SSE)
 
 ```bash
-curl -N https://inference.nikcli.store/v1/chat/completions \
+curl -N https://inference.nikcli-ai.dev/v1/chat/completions \
   -H "Authorization: Bearer $NIKCLI_API_KEY" \
   -H "Content-Type: application/json" \
   -d '{
@@ -34,17 +34,17 @@ curl -N https://inference.nikcli.store/v1/chat/completions \
 ## List models
 
 ```bash
-curl https://inference.nikcli.store/v1/models \
+curl https://inference.nikcli-ai.dev/v1/models \
   -H "Authorization: Bearer $NIKCLI_API_KEY"
 
 # Include upstream provider routes per model:
-curl 'https://inference.nikcli.store/v1/models?routes=1' \
+curl 'https://inference.nikcli-ai.dev/v1/models?routes=1' \
   -H "Authorization: Bearer $NIKCLI_API_KEY"
 ```
 
 ## Inspect health
 
 ```bash
-curl https://inference.nikcli.store/health
-curl https://inference.nikcli.store/v1/providers
+curl https://inference.nikcli-ai.dev/health
+curl https://inference.nikcli-ai.dev/v1/providers
 ```

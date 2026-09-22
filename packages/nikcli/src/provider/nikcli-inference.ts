@@ -11,7 +11,7 @@
 
 export const NIKCLI_INFERENCE_ID = "nikcli-inference"
 export const NIKCLI_INFERENCE_ENV = "NIKCLI_INFERENCE_KEY"
-export const NIKCLI_INFERENCE_DEFAULT_URL = "https://inference.nikcli.store/v1"
+export const NIKCLI_INFERENCE_DEFAULT_URL = "https://inference.nikcli-ai.dev/v1"
 
 export interface GatewayModel {
   id: string

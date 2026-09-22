@@ -46,7 +46,7 @@ function oauthLogin(dialog: DialogContext): Promise<UserSchema.PublicUser | null
 }
 
 /**
- * Startup sign-in flow. OAuth (device code against auth.nikcli.store) is the
+ * Startup sign-in flow. OAuth (device code against auth.nikcli-ai.dev) is the
  * primary path — it links the identity to the local user database so the TUI
  * session works exactly as before. The password flow remains as the offline
  * fallback for self-hosted machines.

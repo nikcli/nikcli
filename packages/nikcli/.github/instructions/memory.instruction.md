@@ -68,7 +68,7 @@ Substantial at the service-definition layer: session, provider, tools, permissio
 - Distinguish three meanings of "sync": the `sync_event` log, `Workspace.startSyncing()` SSE loops, and Cloud push/pull. They are not interchangeable.
 - Workspace backends are transparent to clients: `Workspace.get()` plus adaptor `target()` resolves local vs remote; server middleware proxies remote requests. Built-in adaptors are worktree and container.
 - No ETag/`If-Match` optimistic-concurrency scheme; concurrency relies on locks, WAL, and sequence reservation.
-- Optional Railway hub remote sync uses `s.nikcli.store`, `NIKCLI_REMOTE_URL`, `NIKCLI_REMOTE_TOKEN`. TUI exposes `/sync` and `<leader>y` via `RemoteSync` and `DialogSync`; routes include `/sync/stats`, `/sync/connect`, `/sync/disconnect`, `/sync/drain`.
+- Optional Railway hub remote sync uses `s.nikcli-ai.dev`, `NIKCLI_REMOTE_URL`, `NIKCLI_REMOTE_TOKEN`. TUI exposes `/sync` and `<leader>y` via `RemoteSync` and `DialogSync`; routes include `/sync/stats`, `/sync/connect`, `/sync/disconnect`, `/sync/drain`.
 
 ## Agents, Delegation, And Testing
 

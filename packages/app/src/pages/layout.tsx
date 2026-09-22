@@ -929,7 +929,7 @@ export default function Layout(props: ParentProps) {
         title: language.t("command.docs.open"),
         category: language.t("command.category.system"),
         slash: "docs",
-        onSelect: () => platform.openLink("https://nikcli.store/docs"),
+        onSelect: () => platform.openLink("https://nikcli-ai.dev/docs"),
       },
       {
         id: "support.help",

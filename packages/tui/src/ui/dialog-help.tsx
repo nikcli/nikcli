@@ -167,7 +167,7 @@ export function DialogHelp() {
 
       <box paddingTop={1} flexDirection="row" justifyContent="space-between">
         <text fg={theme.foreground.muted}>
-          Need more? See <span style={{ fg: theme.accent.alt }}>https://nikcli.store/docs</span>
+          Need more? See <span style={{ fg: theme.accent.alt }}>https://nikcli-ai.dev/docs</span>
         </text>
         <text fg={theme.foreground.muted}>Press {keybind.print("command_list")} to open the command palette</text>
       </box>

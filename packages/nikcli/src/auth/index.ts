@@ -389,7 +389,7 @@ export namespace Auth {
     // Build refresh request
     const tokenUrl = oauth.enterpriseUrl
       ? `${oauth.enterpriseUrl}/oauth/token`
-      : "https://auth.nikcli.store/oauth/token"
+      : "https://auth.nikcli-ai.dev/oauth/token"
 
     log.info("refreshing token", { providerID })
 
@@ -413,7 +413,7 @@ export namespace Auth {
           title: "Auth session expired",
           what: `${providerID} rejected the refresh token (${response.status}).`,
           try: `Run \`nikcli auth login ${providerID}\` to reconnect, or pick a different provider.`,
-          docs: "https://nikcli.store/docs/auth",
+          docs: "https://nikcli-ai.dev/docs/auth",
           cause: { status: response.status, error: errorText },
         })
       }

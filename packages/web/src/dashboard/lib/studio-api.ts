@@ -6,9 +6,9 @@ export const SERVER_TOKEN_KEY = "nikcli_server_token"
 // Legacy dashboard-only token key (email/password era) — still read for back-compat.
 export const USER_TOKEN_KEY = "nikcli_dashboard_token"
 export const DASHBOARD_USER_KEY = "nikcli_dashboard_user"
-// Production nikcli server deployed on Railway, reachable at the s.nikcli.store subdomain.
+// Production nikcli server deployed on Railway, reachable at the s.nikcli-ai.dev subdomain.
 // This is the default backend for every dashboard (hosted or local) unless overridden.
-const PROD_SERVER_URL = "https://s.nikcli.store"
+const PROD_SERVER_URL = "https://s.nikcli-ai.dev"
 const DEFAULT_SERVER_URL =
   (typeof import.meta !== "undefined" && (import.meta as any).env?.PROD_SERVER_URL) || PROD_SERVER_URL
 
@@ -128,8 +128,8 @@ export function clearDashboardSession() {
 }
 
 export function resolveServerBase(override?: string | null): string {
-  // Every dashboard (hosted on nikcli.store or run locally) targets the nikcli
-  // server — defaulting to the Railway deployment at s.nikcli.store — and
+  // Every dashboard (hosted on nikcli-ai.dev or run locally) targets the nikcli
+  // server — defaulting to the Railway deployment at s.nikcli-ai.dev — and
   // authenticates with the shared pairing token. An explicit override or a stored
   // server URL always wins (e.g. pointing at a local `nikcli serve`).
   const candidate = override

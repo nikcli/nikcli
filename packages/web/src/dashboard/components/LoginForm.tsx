@@ -2,7 +2,7 @@ import { useState } from "react"
 import { AuthProvider, useAuth } from "../auth/AuthContext"
 import { getErrorMessage } from "../lib/studio-api"
 
-const DEFAULT_SERVER_URL = "https://s.nikcli.store"
+const DEFAULT_SERVER_URL = "https://s.nikcli-ai.dev"
 
 type Mode = "oauth" | "account" | "token"
 

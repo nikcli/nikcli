@@ -18,7 +18,7 @@ import { Account } from "@/account"
 const STUB_ACTIVE = {
   id: "act_test_account",
   email: "test@nikcli.local",
-  url: "https://auth.nikcli.store",
+  url: "https://auth.nikcli-ai.dev",
   active_org_id: null as null | string,
   created_at: 0,
   updated_at: 0,
@@ -57,7 +57,7 @@ function stubLayer(opts: {
       list: () => Effect.succeed(opts.active ? [opts.active] : []),
       use: () => Effect.void,
       remove: () => Effect.succeed(false),
-      config: () => Effect.succeed({ serverUrl: "https://auth.nikcli.store" }),
+      config: () => Effect.succeed({ serverUrl: "https://auth.nikcli-ai.dev" }),
     }),
   )
 }

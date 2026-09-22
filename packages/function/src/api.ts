@@ -10,7 +10,7 @@ type Env = {
   SYNC_SERVER: DurableObjectNamespace
   // R2 bucket for durable storage of shared session JSON (survives DO eviction).
   Bucket: R2Bucket
-  // Public web origin used to build share URLs, e.g. "nikcli.store".
+  // Public web origin used to build share URLs, e.g. "nikcli-ai.dev".
   WEB_DOMAIN: string
   // Secret guarding the admin share-delete endpoint.
   ADMIN_SECRET: string

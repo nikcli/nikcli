@@ -28,7 +28,7 @@ async function challengeFor(verifier: string): Promise<string> {
 }
 
 export function issuerUrl(): string {
-  return (import.meta.env.PUBLIC_NIKCLI_AUTH_ISSUER || "https://auth.nikcli.store").replace(/\/$/, "")
+  return (import.meta.env.PUBLIC_NIKCLI_AUTH_ISSUER || "https://auth.nikcli-ai.dev").replace(/\/$/, "")
 }
 
 export async function beginOAuth(redirectUri: string): Promise<string> {

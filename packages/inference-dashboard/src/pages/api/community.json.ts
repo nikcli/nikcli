@@ -2,7 +2,7 @@ import type { APIRoute } from "astro"
 
 /**
  * Public, aggregate-only feed of what nikcli installs report running — the
- * community half of nikcli.store/data.
+ * community half of nikcli-ai.dev/data.
  *
  * `install_id` never leaves this route. It is grouped away everywhere, and the
  * only thing derived from it is `COUNT(DISTINCT install_id)`, so the feed can

@@ -8,10 +8,10 @@ interface Props {
 
 const { title, description } = Astro.props
 // Share URLs must not include tracking parameters or credentials from the request.
-const canonical = new URL("https://nikcli.store")
+const canonical = new URL("https://nikcli-ai.dev")
 canonical.pathname = Astro.url.pathname
 const url = canonical.href
-const image = "https://nikcli.store/og.png"
+const image = "https://nikcli-ai.dev/og.png"
 const imageAlt = "nikcli — Open-source AI development agent. Your terminal. Your models. Your control."
 ---
 

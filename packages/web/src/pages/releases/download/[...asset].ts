@@ -1,5 +1,5 @@
 /**
- * nikcli.store/releases/download/<tag>/<asset> — the download path the
+ * nikcli-ai.dev/releases/download/<tag>/<asset> — the download path the
  * installers already use.
  *
  * `install` sets this as `release_url_primary` and falls back to

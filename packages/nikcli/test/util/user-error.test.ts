@@ -8,14 +8,14 @@ describe("UserFacingError (Schema.TaggedError)", () => {
       title: "Auth session expired",
       what: "Provider rejected the refresh token.",
       try: "Run `nikcli auth login` to reconnect.",
-      docs: "https://nikcli.store/docs/auth",
+      docs: "https://nikcli-ai.dev/docs/auth",
     })
     expect(err._tag).toBe("UserFacingError")
     expect(err.name).toBe("UserFacingError")
     expect(err.title).toBe("Auth session expired")
     expect(err.what).toBe("Provider rejected the refresh token.")
     expect(err.try).toBe("Run `nikcli auth login` to reconnect.")
-    expect(err.docs).toBe("https://nikcli.store/docs/auth")
+    expect(err.docs).toBe("https://nikcli-ai.dev/docs/auth")
     // The `trySuggestion` alias is kept for back-compat with call sites that
     // read the legacy property name (FormatError, userFacingParts, TUI toast).
     expect(err.trySuggestion).toBe("Run `nikcli auth login` to reconnect.")

@@ -38,7 +38,7 @@ function originMatchesList(origin: string, list: string[]) {
 function defaultOriginAllowed(origin: string): boolean {
   if (origin.startsWith("http://localhost")) return true
   if (origin.startsWith("http://127.0.0.1")) return true
-  if (origin.endsWith(".nikcli.store")) return true
+  if (origin.endsWith(".nikcli-ai.dev")) return true
   return false
 }
 

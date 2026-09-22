@@ -15,7 +15,7 @@ export const GET: APIRoute = async (context) => {
   const code = context.url.searchParams.get("code")
   if (!code) return Response.json({ error: context.url.searchParams.get("error") ?? "missing_code" }, { status: 400 })
   const env = (context.locals as App.Locals).runtime?.env
-  const issuer = (env?.AUTH_ISSUER ?? "https://auth.nikcli.store").replace(/\/$/, "")
+  const issuer = (env?.AUTH_ISSUER ?? "https://auth.nikcli-ai.dev").replace(/\/$/, "")
   const redirectUri = new URL("/user/callback", context.url.origin).toString()
   const response = await fetch(`${issuer}/oauth/token`, {
     method: "POST",

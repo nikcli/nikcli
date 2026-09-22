@@ -1,7 +1,7 @@
 import { createRemoteJWKSet, jwtVerify } from "jose"
 
 /**
- * Minimal offline verifier for issuer (auth.nikcli.store) access tokens.
+ * Minimal offline verifier for issuer (auth.nikcli-ai.dev) access tokens.
  * Mirrors @nikcli-ai/auth verify.ts, but avoids the workspace dependency so
  * the standalone Docker build (deploy/package.runtime.json) keeps working.
  */

@@ -4,17 +4,17 @@
 
 | Service          | URL                               | Status |
 | ---------------- | --------------------------------- | ------ |
-| Website          | https://nikcli.store              | ✅     |
-| Documentation    | https://nikcli.store/docs         | ✅     |
-| Web App          | https://app.nikcli.store          | ✅     |
-| Slack Bot        | https://slack.nikcli.store        | ✅     |
-| Slack Bot Health | https://slack.nikcli.store/health | ✅     |
+| Website          | https://nikcli-ai.dev              | ✅     |
+| Documentation    | https://nikcli-ai.dev/docs         | ✅     |
+| Web App          | https://app.nikcli-ai.dev          | ✅     |
+| Slack Bot        | https://slack.nikcli-ai.dev        | ✅     |
+| Slack Bot Health | https://slack.nikcli-ai.dev/health | ✅     |
 
 ## Quick Commands
 
 ```bash
 # Deploy Slack
-cd packages/slack && npx wrangler deploy src/worker.ts --name nikcli-slack --routes 'slack.nikcli.store/*'
+cd packages/slack && npx wrangler deploy src/worker.ts --name nikcli-slack --routes 'slack.nikcli-ai.dev/*'
 
 # Deploy Website
 cd packages/web && npm run build && npx wrangler deploy

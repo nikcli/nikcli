@@ -65,14 +65,14 @@ export async function buildSupportDocsIndex(root: string): Promise<string> {
 
   if (total === 0) {
     lines.push("No documentation files found in this workspace.")
-    lines.push("Use `webfetch https://nikcli.store/docs` for the online reference.")
+    lines.push("Use `webfetch https://nikcli-ai.dev/docs` for the online reference.")
   } else {
     lines.push("## How to use")
     lines.push("- Use `read <path>` to open a file.")
     lines.push(
       '- Use `grep` to search across all docs for keywords (e.g. `grep -n "keybinds" packages/nikcli/specs/`).',
     )
-    lines.push("- Use `webfetch https://nikcli.store/docs/<topic>` for the latest online docs.")
+    lines.push("- Use `webfetch https://nikcli-ai.dev/docs/<topic>` for the latest online docs.")
     lines.push("- Use `websearch` for release notes, GitHub issues, or recent changes.")
   }
   lines.push("</docs_index>")

@@ -128,7 +128,7 @@ describe("OpenAI-compatible Chat route", () => {
         id: "kimi-k2.6",
         provider: "nikcli-inference",
         route: "openai-compatible-chat",
-        baseURL: "https://inference.nikcli.store/v1",
+        baseURL: "https://inference.nikcli-ai.dev/v1",
         apiKey: "test-key",
       })
     }),

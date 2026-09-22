@@ -20,7 +20,7 @@ jobs:
       - uses: ./.github/actions/setup-bun
 
       - name: Install nikcli
-        run: curl -fsSL https://nikcli.store/install | bash
+        run: curl -fsSL https://nikcli-ai.dev/install | bash
 
       - name: Check duplicates and compliance
         env:
@@ -123,7 +123,7 @@ jobs:
       - uses: ./.github/actions/setup-bun
 
       - name: Install nikcli
-        run: curl -fsSL https://nikcli.store/install | bash
+        run: curl -fsSL https://nikcli-ai.dev/install | bash
 
       - name: Recheck compliance
         env:

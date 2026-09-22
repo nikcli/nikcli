@@ -22,7 +22,7 @@ describe("ConfigHttpApi.Info", () => {
 
   test("encodes a config that exercises the whole document", () => {
     const encoded = roundtrip({
-      $schema: "https://nikcli.store/config.json",
+      $schema: "https://nikcli-ai.dev/config.json",
       theme: "dark",
       locale: { language: "it", replyLanguage: true },
       keybinds: { session_parent: "ctrl+b" },

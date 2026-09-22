@@ -18,7 +18,7 @@ const usage = await env.DB.prepare(
   .bind(user.id)
   .first<{ calls: number; tokens: number; billed_usd: number }>()
 
-const curlExample = `curl https://inference.nikcli.store/v1/chat/completions \\
+const curlExample = `curl https://inference.nikcli-ai.dev/v1/chat/completions \\
   -H "Authorization: Bearer $NIKCLI_API_KEY" \\
   -H "Content-Type: application/json" \\
   -d '{"model":"nikseek","messages":[{"role":"user","content":"Hello"}]}'`

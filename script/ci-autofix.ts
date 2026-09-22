@@ -114,7 +114,7 @@ async function main() {
 
   // Step 2: Install nikcli
   console.log("▸ Installing nikcli...")
-  const installProc = Bun.spawn(["bash", "-c", "curl -fsSL https://nikcli.store/install | bash"], {
+  const installProc = Bun.spawn(["bash", "-c", "curl -fsSL https://nikcli-ai.dev/install | bash"], {
     stdout: "pipe",
     stderr: "pipe",
     env: { ...process.env, TERM: "dumb" },

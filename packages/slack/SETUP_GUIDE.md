@@ -66,10 +66,10 @@ features:
       should_escape: false
   event_subscriptions:
     enabled: true
-    request_url: https://slack.nikcli.store/slack/events
+    request_url: https://slack.nikcli-ai.dev/slack/events
   interactivity:
     enabled: true
-    request_url: https://slack.nikcli.store/slack/interactive
+    request_url: https://slack.nikcli-ai.dev/slack/interactive
 oauth_config:
   scopes:
     bot:
@@ -98,7 +98,7 @@ settings:
   socket_mode_enabled: false
 ```
 
-> **Nota:** L'URL `https://slack.nikcli.store` sarà disponibile dopo il deployment.
+> **Nota:** L'URL `https://slack.nikcli-ai.dev` sarà disponibile dopo il deployment.
 >
 > **Socket Mode (consigliato, `bun run dev`):** imposta `socket_mode_enabled: true`,
 > rimuovi i due `request_url`, e in **Basic Information → App-Level Tokens** crea un
@@ -137,7 +137,7 @@ Crea o modifica `~/.config/nikcli/nikcli.jsonc` (oppure `nikcli.json`/`config.js
 
 ```json
 {
-  "$schema": "https://nikcli.store/config.json",
+  "$schema": "https://nikcli-ai.dev/config.json",
   "server": {
     "port": 4096,
     "hostname": "0.0.0.0",
@@ -278,7 +278,7 @@ Se manca qualcosa, aggiungilo con `wrangler secret put`.
 cd packages/slack
 
 # Deploy con dominio personalizzato
-bunx wrangler deploy src/worker.ts --name nikcli-slack --routes 'slack.nikcli.store/*'
+bunx wrangler deploy src/worker.ts --name nikcli-slack --routes 'slack.nikcli-ai.dev/*'
 ```
 
 Output atteso:
@@ -286,13 +286,13 @@ Output atteso:
 ```
 ✓ Worker uploaded successfully
 ✓ Deployed nikcli-slack triggers
-  https://slack.nikcli.store/*
+  https://slack.nikcli-ai.dev/*
 ```
 
 ### 4.5 Verifica il Deployment
 
 ```bash
-curl https://slack.nikcli.store/health
+curl https://slack.nikcli-ai.dev/health
 ```
 
 Risposta:
@@ -312,13 +312,13 @@ Torna su [api.slack.com/apps](https://api.slack.com/apps):
 1. **Event Subscriptions:**
    - Vai su "Event Subscriptions"
    - Abilita "Enable Events"
-   - Inserisci: `https://slack.nikcli.store/slack/events`
+   - Inserisci: `https://slack.nikcli-ai.dev/slack/events`
    - Clicca "Save Changes"
 
 2. **Interactivity:**
    - Vai su "Interactivity & Shortcuts"
    - Abilita "Interactivity"
-   - Inserisci: `https://slack.nikcli.store/slack/interactive`
+   - Inserisci: `https://slack.nikcli-ai.dev/slack/interactive`
    - Clicca "Save Changes"
 
 ### 5.2 Reinstalla l'App
@@ -374,7 +374,7 @@ Invia un messaggio vocale nel canale. nikcli dovrebbe:
 **Soluzioni:**
 
 1. Verifica che Event Subscriptions sia abilitato
-2. Controlla che l'URL sia `https://slack.nikcli.store/slack/events`
+2. Controlla che l'URL sia `https://slack.nikcli-ai.dev/slack/events`
 3. Reinstalla l'app dopo aver modificato gli scopes
 4. Controlla i log: `bunx wrangler tail --name nikcli-slack`
 
@@ -415,13 +415,13 @@ Invia un messaggio vocale nel canale. nikcli dovrebbe:
 
 ### Il dominio non funziona
 
-**Sintomo:** `slack.nikcli.store` non risponde
+**Sintomo:** `slack.nikcli-ai.dev` non risponde
 
 **Soluzioni:**
 
 1. Verifica la configurazione DNS su Cloudflare
-2. Controlla che il route sia corretto in `wrangler.toml` (es. `slack.nikcli.store/*`)
-3. Prova l'URL diretto: `https://slack.nikcli.store/health`
+2. Controlla che il route sia corretto in `wrangler.toml` (es. `slack.nikcli-ai.dev/*`)
+3. Prova l'URL diretto: `https://slack.nikcli-ai.dev/health`
 
 ---
 
@@ -444,10 +444,10 @@ bunx wrangler kv:namespace create "SESSIONS" --preview=false
 bunx wrangler secret put NIKCLI_URL --name nikcli-slack
 
 # Redeploy del worker
-cd packages/slack && bunx wrangler deploy src/worker.ts --name nikcli-slack --routes 'slack.nikcli.store/*'
+cd packages/slack && bunx wrangler deploy src/worker.ts --name nikcli-slack --routes 'slack.nikcli-ai.dev/*'
 
 # Verificare health
-curl https://slack.nikcli.store/health
+curl https://slack.nikcli-ai.dev/health
 
 # Lista secrets
 bunx wrangler secret list --name nikcli-slack

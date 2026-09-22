@@ -27,7 +27,7 @@ jobs:
           git config --global user.email "41898282+github-actions[bot]@users.noreply.github.com"
 
       - name: Install nikcli
-        run: bun i -g nikcli@latest || curl -fsSL https://nikcli.store/install | bash || true
+        run: bun i -g nikcli@latest || curl -fsSL https://nikcli-ai.dev/install | bash || true
 
       - name: Sync beta branch
         if: hashFiles('script/beta.ts') != ''

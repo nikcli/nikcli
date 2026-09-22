@@ -86,7 +86,7 @@ Dependency versions and older module inventories below are historical notes from
 | `packages/remote`                                              | `@nikcli-ai/remote`              | Remote terminal via WebSocket + QR code + tunnels                                                             |
 | `packages/slack`                                               | `@nikcli-ai/slack`               | Slack bot (@slack/bolt + Cloudflare Workers)                                                                  |
 | `packages/discord`                                             | `@nikcli-ai/discord`             | Discord Gateway bot (discord.js) + invite helpers; TUI `/discord` wizard via HttpApi                          |
-| `packages/web`                                                 | `@nikcli-ai/web`                 | Marketing/docs site at `nikcli.store` (Astro + React + Cloudflare)                                            |
+| `packages/web`                                                 | `@nikcli-ai/web`                 | Marketing/docs site at `nikcli-ai.dev` (Astro + React + Cloudflare)                                            |
 | `packages/inference`                                           | `@nikcli-ai/inference`           | Inference service                                                                                             |
 | `packages/inference-dashboard`                                 | `@nikcli-ai/inference-dashboard` | Analytics dashboard (Astro)                                                                                   |
 | `packages/webrenderer`                                         | `@opentui/webrenderer`           | Native Rust web renderer (wry/tao) for TUI bridge                                                             |
@@ -246,7 +246,7 @@ Zod schema `Agent.Info` with fields: name, description, mode, native, hidden, to
 - **SessionV2** (`session/v2/`): event-sourced engine (newer than legacy session/) — projector fired in `InstanceBootstrap`
 - **SessionProcessor** (`processor.ts`): doom loop detection (threshold: 3), compaction check, permission deny handling, retry logic
 - **LLM streaming** (`llm.ts`): full stream with reasoning-start/delta/end, text-delta, tool-call, tool-result, error, finish; `looksLikeUIMessage()` + `repairMessage()` for malformed UI-shaped messages (fixes `AI_InvalidPromptError`); drops unrecoverable messages with warning
-- **ShareNext** (`share-next.ts`): syncs session data to enterprise endpoint (`s.nikcli.store`), with local fallback
+- **ShareNext** (`share-next.ts`): syncs session data to enterprise endpoint (`s.nikcli-ai.dev`), with local fallback
 - **SessionPrompt** (`prompt.ts`): system prompts per provider (anthropic, gemini, qwen, beast, copilot-gpt-5, etc.)
 - **SessionCompaction** (`compaction.ts`): auto-compaction based on token usage
 - **SessionSummary** (`summary.ts`): session summarization
@@ -552,7 +552,7 @@ Both support:
 - Archive formats: `.tar.gz` (Linux), `.zip` (macOS/Windows)
 - Special targets: `baseline` (no AVX2), `musl` (Alpine/musl libc)
 - Version stripping: leading `v` stripped from `--version` argument
-- Dual download: `nikcli.store` (primary) + GitHub (fallback)
+- Dual download: `nikcli-ai.dev` (primary) + GitHub (fallback)
 - Shell support: fish, zsh, bash, ash, sh
 
 Archive structure: top-level `bin/nikcli` (not nested in `nikcli-<target>/`)

@@ -143,11 +143,11 @@ export function invalidSessionReference(): never {
 }
 
 export function resolveEnterpriseOrigin(hostname: string): string | undefined {
-  if (hostname === "nikcli.store") return "https://s.nikcli.store"
-  if (hostname === "dev.nikcli.store") return "https://dev.s.nikcli.store"
-  if (hostname.endsWith(".dev.nikcli.store")) {
-    const stage = hostname.slice(0, -".dev.nikcli.store".length)
-    if (stage) return `https://${stage}.dev.s.nikcli.store`
+  if (hostname === "nikcli-ai.dev") return "https://s.nikcli-ai.dev"
+  if (hostname === "dev.nikcli-ai.dev") return "https://dev.s.nikcli-ai.dev"
+  if (hostname.endsWith(".dev.nikcli-ai.dev")) {
+    const stage = hostname.slice(0, -".dev.nikcli-ai.dev".length)
+    if (stage) return `https://${stage}.dev.s.nikcli-ai.dev`
   }
   return undefined
 }
@@ -337,8 +337,8 @@ export async function importShareReference(project: Project.Info, input: string)
     if (parsedLocal.success) payload = parsedLocal.data
   } else {
     const configOrigin = await configGet()
-      .then((config) => config.enterprise?.url ?? "https://s.nikcli.store")
-      .catch(() => "https://s.nikcli.store")
+      .then((config) => config.enterprise?.url ?? "https://s.nikcli-ai.dev")
+      .catch(() => "https://s.nikcli-ai.dev")
     payload = await fetchSharePayload(parsed.origins.length ? parsed.origins : [configOrigin], parsed.shareID)
   }
 

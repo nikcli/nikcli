@@ -20,7 +20,7 @@ import { runPromiseWithLayer } from "@/effect"
  *    caller as `"operator"`, and `sync/sync-config.ts` reports
  *    `configured: false` with no account so remote sync simply does not run.
  *    Requiring an account here would break local-only sync, which works.
- *  - **share** — `share/share-next.ts` POSTs to `s.nikcli.store/api/share`
+ *  - **share** — `share/share-next.ts` POSTs to `s.nikcli-ai.dev/api/share`
  *    with no authorization header at all. The share service is anonymous.
  *  - **mobile companion** — carries its own `nkm_` capability tokens
  *    (`MobileAuth`), and teleport takes the *target* server's token in the

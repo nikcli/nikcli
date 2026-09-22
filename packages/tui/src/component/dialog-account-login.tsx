@@ -14,7 +14,7 @@ import { UserSession } from "@nikcli-ai/util/user-session"
 import type { UserSchema } from "@nikcli-ai/util/user-schema"
 
 /**
- * Device-code sign-in to the nikcli account issuer (auth.nikcli.store).
+ * Device-code sign-in to the nikcli account issuer (auth.nikcli-ai.dev).
  * On success the issuer JWT is stored locally and `GET /user/me` provisions
  * the matching local user on the server (`ensureExternalUser` lives there).
  * One sign-in covers both the account plane and the TUI/server session.
@@ -32,7 +32,7 @@ export function DialogAccountLogin(props: {
 
   const [active, setActive] = createSignal<UserApi.AccountInfo>()
   const [start, setStart] = createSignal<UserApi.LoginStart>()
-  const [status, setStatus] = createSignal("Contacting auth.nikcli.store…")
+  const [status, setStatus] = createSignal("Contacting auth.nikcli-ai.dev…")
   const [error, setError] = createSignal<string>()
   const [browserOpened, setBrowserOpened] = createSignal(true)
   const [now, setNow] = createSignal(Date.now())
@@ -63,7 +63,7 @@ export function DialogAccountLogin(props: {
     setError(undefined)
     setStart(undefined)
     setBrowserOpened(true)
-    setStatus("Contacting auth.nikcli.store…")
+    setStatus("Contacting auth.nikcli-ai.dev…")
     try {
       const started = await UserApi.accountLogin(sdk, signal)
       if (stale()) return

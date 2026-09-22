@@ -155,7 +155,7 @@ export namespace ServerRouter {
       /^https:\/\/([a-z0-9-]+\.)*ts\.net(?::\d+)?$/.test(origin)
     )
       return true
-    if (/^https:\/\/([a-z0-9-]+\.)*nikcli\.store$/.test(origin)) return true
+    if (/^https:\/\/([a-z0-9-]+\.)*nikcli-ai\.dev$/.test(origin)) return true
     return options.corsWhitelist?.includes(origin) ?? false
   }
 

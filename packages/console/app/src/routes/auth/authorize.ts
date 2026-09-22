@@ -20,7 +20,7 @@ export async function GET(input: APIEvent) {
     ...value,
     oauth: { state, verifier, callback: callbackUrl.toString(), continueTo },
   }))
-  const issuer = import.meta.env.VITE_AUTH_URL || "https://auth.nikcli.store"
+  const issuer = import.meta.env.VITE_AUTH_URL || "https://auth.nikcli-ai.dev"
   const authorize = new URL("/authorize", issuer)
   authorize.search = new URLSearchParams({
     response_type: "code",

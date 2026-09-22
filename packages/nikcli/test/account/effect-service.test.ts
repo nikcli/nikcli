@@ -87,10 +87,10 @@ describe("Account.Service", () => {
       )
 
       expect(requests).toEqual([
-        "https://auth.nikcli.store/oauth/device/token",
-        "https://auth.nikcli.store/userinfo",
-        "https://auth.nikcli.store/oauth/device/token",
-        "https://auth.nikcli.store/userinfo",
+        "https://auth.nikcli-ai.dev/oauth/device/token",
+        "https://auth.nikcli-ai.dev/userinfo",
+        "https://auth.nikcli-ai.dev/oauth/device/token",
+        "https://auth.nikcli-ai.dev/userinfo",
       ])
       expect(result.second.accountID).toBe(result.first.accountID)
       expect(result.accounts).toHaveLength(1)
@@ -107,8 +107,8 @@ describe("Account.Service", () => {
       Response.json({
         device_code: "device-code",
         user_code: "1234-5678",
-        verification_url: "https://auth.nikcli.store/device",
-        verification_uri_complete: "https://auth.nikcli.store/device?user_code=1234-5678",
+        verification_url: "https://auth.nikcli-ai.dev/device",
+        verification_uri_complete: "https://auth.nikcli-ai.dev/device?user_code=1234-5678",
         interval: 5,
         expires_in: 600,
       })) as typeof fetch
@@ -120,7 +120,7 @@ describe("Account.Service", () => {
           return yield* account.login()
         }),
       )
-      expect(start.verificationUrlComplete).toBe("https://auth.nikcli.store/device?user_code=1234-5678")
+      expect(start.verificationUrlComplete).toBe("https://auth.nikcli-ai.dev/device?user_code=1234-5678")
       expect(start.expiresAt).toBeGreaterThan(Date.now())
     } finally {
       globalThis.fetch = originalFetch
@@ -133,7 +133,7 @@ describe("Account.Service", () => {
       Response.json({
         device_code: "device-code",
         user_code: "1234-5678",
-        verification_url: "https://auth.nikcli.store/device",
+        verification_url: "https://auth.nikcli-ai.dev/device",
         interval: 5,
         expires_in: 600,
       })) as typeof fetch
@@ -145,7 +145,7 @@ describe("Account.Service", () => {
           return yield* account.login()
         }),
       )
-      expect(start.verificationUrlComplete).toBe("https://auth.nikcli.store/device?user_code=1234-5678")
+      expect(start.verificationUrlComplete).toBe("https://auth.nikcli-ai.dev/device?user_code=1234-5678")
     } finally {
       globalThis.fetch = originalFetch
     }
@@ -241,7 +241,7 @@ describe("Account.Service", () => {
   })
 
   /**
-   * `auth.nikcli.store` serves no `/api/user/orgs` and has no orgs table, so
+   * `auth.nikcli-ai.dev` serves no `/api/user/orgs` and has no orgs table, so
    * the only answer this call ever got in production was a 404 — which the
    * service raised as `AccountFetchOrgs` and `nikcli account orgs` printed as
    * "Failed to fetch orgs: 404 404 Not Found". An issuer with no organizations

@@ -12,7 +12,7 @@ nikcli is an AI-powered development tool with connectors, a mobile companion, an
 
 ```bash
 # 1. Install (one of the methods below)
-curl -fsSL https://nikcli.store/install | bash
+curl -fsSL https://nikcli-ai.dev/install | bash
 
 # 2. Run the TUI
 nikcli
@@ -38,7 +38,7 @@ Run `nikcli --help` to see all available commands.
 
 | Method | Command                                                           |
 | ------ | ----------------------------------------------------------------- |
-| curl   | `curl -fsSL https://nikcli.store/install \| bash`                 |
+| curl   | `curl -fsSL https://nikcli-ai.dev/install \| bash`                 |
 | npm    | `npm install -g nikcli-ai`                                        |
 | pnpm   | `pnpm install -g nikcli-ai`                                       |
 | bun    | `bun install -g nikcli-ai`                                        |
@@ -63,14 +63,14 @@ Local development runs the CLI entrypoint at `packages/nikcli/src/index.ts`.
 | ----------------- | ------------------------------------------ |
 | `packages/nikcli` | CLI, TUI, agent engine, server, connectors |
 | `packages/mobile` | Expo mobile companion app                  |
-| `packages/web`    | Documentation site (nikcli.store)          |
+| `packages/web`    | Documentation site (nikcli-ai.dev)          |
 | `packages/sdk`    | Shared TypeScript SDK                      |
 
 ## Resources
 
-- [Documentation](https://nikcli.store/docs)
-- [Configuration reference](https://nikcli.store/docs/configuration)
-- [CLI reference](https://nikcli.store/docs/cli)
+- [Documentation](https://nikcli-ai.dev/docs)
+- [Configuration reference](https://nikcli-ai.dev/docs/configuration)
+- [CLI reference](https://nikcli-ai.dev/docs/cli)
 
 ## Specs
 

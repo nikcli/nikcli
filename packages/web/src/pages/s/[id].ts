@@ -4,17 +4,17 @@ function shortDomain(requestURL: URL) {
   const protocol = "https:"
   const hostname = requestURL.hostname
 
-  if (hostname === "nikcli.store") return `${protocol}//s.nikcli.store`
-  if (hostname === "dev.nikcli.store") return `${protocol}//dev.s.nikcli.store`
-  if (hostname.endsWith(".dev.nikcli.store")) {
-    const stage = hostname.slice(0, -".dev.nikcli.store".length)
-    if (stage) return `${protocol}//${stage}.dev.s.nikcli.store`
+  if (hostname === "nikcli-ai.dev") return `${protocol}//s.nikcli-ai.dev`
+  if (hostname === "dev.nikcli-ai.dev") return `${protocol}//dev.s.nikcli-ai.dev`
+  if (hostname.endsWith(".dev.nikcli-ai.dev")) {
+    const stage = hostname.slice(0, -".dev.nikcli-ai.dev".length)
+    if (stage) return `${protocol}//${stage}.dev.s.nikcli-ai.dev`
   }
 
   const stage = import.meta.env.SST_STAGE
-  if (stage === "production") return `${protocol}//s.nikcli.store`
-  if (!stage || stage === "dev") return `${protocol}//dev.s.nikcli.store`
-  return `${protocol}//${stage}.dev.s.nikcli.store`
+  if (stage === "production") return `${protocol}//s.nikcli-ai.dev`
+  if (!stage || stage === "dev") return `${protocol}//dev.s.nikcli-ai.dev`
+  return `${protocol}//${stage}.dev.s.nikcli-ai.dev`
 }
 
 export const GET: APIRoute = ({ params, url }) => {

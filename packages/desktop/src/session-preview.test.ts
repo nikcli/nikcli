@@ -16,9 +16,9 @@ describe("desktop session previews", () => {
           id: kind,
           title: `${kind} preview`,
           kind,
-          url: `https://nikcli.store/artifact/${kind}`,
-          viewerUrl: `https://nikcli.store/artifact/${kind}?key=view-key`,
-          previewUrl: `https://nikcli.store/artifact/${kind}/raw?key=view-key`,
+          url: `https://nikcli-ai.dev/artifact/${kind}`,
+          viewerUrl: `https://nikcli-ai.dev/artifact/${kind}?key=view-key`,
+          previewUrl: `https://nikcli-ai.dev/artifact/${kind}/raw?key=view-key`,
           version: 1,
         },
       },
@@ -26,8 +26,8 @@ describe("desktop session previews", () => {
 
     const previews = collectSessionPreviews(parts)
     expect(previews.map((item) => item.kind)).toEqual(["image", "video"])
-    expect(previews[1]?.url).toBe("https://nikcli.store/artifact/video?key=view-key")
-    expect(previews[1]?.previewUrl).toBe("https://nikcli.store/artifact/video/raw?key=view-key")
+    expect(previews[1]?.url).toBe("https://nikcli-ai.dev/artifact/video?key=view-key")
+    expect(previews[1]?.previewUrl).toBe("https://nikcli-ai.dev/artifact/video/raw?key=view-key")
   })
 
   test("collects direct and tool image/video attachments", () => {
@@ -61,8 +61,8 @@ describe("desktop session previews", () => {
           title: "Dashboard",
           kind: "html",
           version,
-          url: "https://nikcli.store/artifact/same",
-          viewerUrl: `https://nikcli.store/artifact/same?version=${version}`,
+          url: "https://nikcli-ai.dev/artifact/same",
+          viewerUrl: `https://nikcli-ai.dev/artifact/same?version=${version}`,
         },
       },
     })
@@ -85,14 +85,14 @@ describe("desktop session previews", () => {
             title: "Dashboard",
             kind: "html",
             version: 2,
-            url: "https://nikcli.store/artifact/same",
-            viewerUrl: "https://nikcli.store/artifact/same?key=view-key",
+            url: "https://nikcli-ai.dev/artifact/same",
+            viewerUrl: "https://nikcli-ai.dev/artifact/same?key=view-key",
           },
         },
       },
     ])
 
     expect(preview).toBeDefined()
-    expect(sessionPreviewFrameUrl(preview!)).toBe("https://nikcli.store/artifact/same?key=view-key&_nikcli_preview=2")
+    expect(sessionPreviewFrameUrl(preview!)).toBe("https://nikcli-ai.dev/artifact/same?key=view-key&_nikcli_preview=2")
   })
 })

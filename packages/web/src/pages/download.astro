@@ -76,8 +76,8 @@ const cliSec = sectionFor("cli")
 const mobileSec = sectionFor("mobile")
 const hasContent = Boolean(base)
 
-const curlCmd = "curl -fsSL https://nikcli.store/install | bash"
-const psCmd = "irm https://nikcli.store/install.ps1 | iex"
+const curlCmd = "curl -fsSL https://nikcli-ai.dev/install | bash"
+const psCmd = "irm https://nikcli-ai.dev/install.ps1 | iex"
 const seoDescription =
   "Download nikcli — desktop apps and ADE for macOS, Windows, and Linux, standalone CLI binaries, and mobile builds for every released version."
 ---
@@ -465,8 +465,8 @@ const seoDescription =
 
     // copy install commands
     const copyCommands: Array<[string, string, string]> = [
-      ["copy-curl", "copy-curl-label", "curl -fsSL https://nikcli.store/install | bash"],
-      ["copy-ps", "copy-ps-label", "irm https://nikcli.store/install.ps1 | iex"],
+      ["copy-curl", "copy-curl-label", "curl -fsSL https://nikcli-ai.dev/install | bash"],
+      ["copy-ps", "copy-ps-label", "irm https://nikcli-ai.dev/install.ps1 | iex"],
     ]
     for (const [btnId, lblId, command] of copyCommands) {
       const copyBtn = document.getElementById(btnId)

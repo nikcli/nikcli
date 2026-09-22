@@ -423,7 +423,7 @@ describe("Session retry matrix", () => {
       message: "timeout from provider",
       expected: "timeout from provider",
     },
-    { message: "FreeUsageLimitError", expected: "Free usage exceeded, add credits https://nikcli.store/zen" },
+    { message: "FreeUsageLimitError", expected: "Free usage exceeded, add credits https://nikcli-ai.dev/zen" },
     {
       message: '{"type":"error","error":{"type":"too_many_requests"}}',
       expected: "Too Many Requests",

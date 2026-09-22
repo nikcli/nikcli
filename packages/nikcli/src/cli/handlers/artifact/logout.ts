@@ -6,7 +6,7 @@ import { UI } from "@/cli/ui"
 
 export default Runtime.handler(Commands.commands["artifact"].commands["logout"], async (_input) => {
   UI.empty()
-  prompts.intro("nikcli.store account")
+  prompts.intro("nikcli-ai.dev account")
   await Artifact.logout()
   prompts.log.info(
     "Artifacts have no separate login. Sign out from the CLI/TUI account screen to end the shared session.",

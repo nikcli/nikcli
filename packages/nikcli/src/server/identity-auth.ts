@@ -6,7 +6,7 @@ import { AccountDB } from "@/account/db"
 import { runPromiseWithLayer } from "@/effect"
 import { UserDB } from "@/user/users"
 
-const DEFAULT_ISSUER = "https://auth.nikcli.store"
+const DEFAULT_ISSUER = "https://auth.nikcli-ai.dev"
 
 /**
  * The server is the single trust boundary in

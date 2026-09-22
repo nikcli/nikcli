@@ -20,7 +20,7 @@
  * Each surface the guard was written for turned out to be account-optional
  * on purpose: sync identifies an unauthenticated local caller as `"operator"`
  * and reports `configured: false` without an account, share POSTs to
- * `s.nikcli.store` with no authorization header, and the mobile companion
+ * `s.nikcli-ai.dev` with no authorization header, and the mobile companion
  * carries its own `nkm_` capability tokens. Listing any of them here would
  * not harden a route; it would turn working behaviour into a 401. See the
  * docblock on `src/account/guard.ts` for the evidence per surface.

@@ -549,7 +549,7 @@ export const SessionPreviewSheet = forwardRef<ActionSheetRef, SessionPreviewShee
         ) : (
           <EmptyState
             title="No artifacts yet"
-            description="Published nikcli.store artifacts, dev server links, and generated previews from the chat appear here."
+            description="Published nikcli-ai.dev artifacts, dev server links, and generated previews from the chat appear here."
           />
         )}
       </ScrollView>

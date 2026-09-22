@@ -40,7 +40,7 @@ the published schema; the paragraphs below are kept because they state the cost 
 
 Every plural rename in that document (`plugin` → `plugins`, `agent` → `agents`, `permission` →
 `permissions`, `provider` → `providers`, `snapshot` → `snapshots`, `attachment` → `attachments`) is a
-breaking change to a JSON Schema published at `https://nikcli.store/config.json`. There are two
+breaking change to a JSON Schema published at `https://nikcli-ai.dev/config.json`. There are two
 precedents in the codebase and they disagree:
 
 - **Accept both, migrate in the loader.** What `autoshare` → `share`, `mode` → `agent`, and `tools` →
@@ -66,7 +66,7 @@ each an independent decision:
   building a hook system for it.
 - **No account abstraction.** Credentials are `Auth.Info` records keyed by provider id. Upstream has
   `AccountV2` with activation and a service id. nikcli's unified-auth work (OAuth on
-  `auth.nikcli.store` with a shared JWKS verifier, pinned by `test/server/unified-auth.test.ts`) is
+  `auth.nikcli-ai.dev` with a shared JWKS verifier, pinned by `test/server/unified-auth.test.ts`) is
   the natural place for this, not the provider catalog.
 - **`Model.family` is carried but unused.** Either selection starts using it or it comes out.
 

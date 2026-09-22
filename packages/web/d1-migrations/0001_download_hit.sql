@@ -3,11 +3,11 @@
 -- GitHub and npm both publish a download counter and nothing else: a release
 -- asset carries `download_count`, an integer, and npm's API returns totals per
 -- day. Neither exposes geography in any form, to anyone, so the map on
--- nikcli.store/data cannot be derived from them — the dimension does not exist
+-- nikcli-ai.dev/data cannot be derived from them — the dimension does not exist
 -- upstream.
 --
 -- It exists here instead. `install` and `install.ps1` already fetch from
--- nikcli.store/releases/download/<tag>/<asset> as their primary URL, so the
+-- nikcli-ai.dev/releases/download/<tag>/<asset> as their primary URL, so the
 -- request passes our edge before it reaches GitHub. That request carries
 -- `cf-ipcountry`, which is the country, resolved by Cloudflare, without asking
 -- the client for anything. The route records it and redirects; the file is

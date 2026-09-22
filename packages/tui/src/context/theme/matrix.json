@@ -1,5 +1,5 @@
 {
-  "$schema": "https://nikcli.store/theme.json",
+  "$schema": "https://nikcli-ai.dev/theme.json",
   "defs": {
     "matrixInk0": "#0a0e0a",
     "matrixInk1": "#0e130d",

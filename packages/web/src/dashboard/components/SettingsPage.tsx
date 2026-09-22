@@ -9,7 +9,7 @@ import {
   studioApi,
 } from "../lib/studio-api"
 
-const PROD_SERVER_URL = "https://s.nikcli.store"
+const PROD_SERVER_URL = "https://s.nikcli-ai.dev"
 const LOCAL_SERVER_URL = "http://localhost:4096"
 
 interface SettingsSectionProps {
@@ -288,7 +288,7 @@ function SettingsPageInner() {
             onClick={() => applyServerPreset(PROD_SERVER_URL)}
             className="rounded-[var(--radius-md)] border border-terminal-border px-3 py-1.5 text-xs font-medium text-terminal-text transition-colors hover:border-terminal-accent/50 hover:bg-terminal-accent/10"
           >
-            Railway · s.nikcli.store
+            Railway · s.nikcli-ai.dev
           </button>
           <button
             type="button"

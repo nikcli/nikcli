@@ -4,7 +4,7 @@ import * as OpenAICompatibleChat from "../protocols/openai-compatible-chat"
 import type { OpenAICompatibleChatModelInput } from "../protocols/openai-compatible-chat"
 
 export const id = ProviderID.make("nikcli-inference")
-export const baseURL = "https://inference.nikcli.store/v1"
+export const baseURL = "https://inference.nikcli-ai.dev/v1"
 
 export type ModelOptions = Omit<OpenAICompatibleChatModelInput, "id" | "provider" | "baseURL"> & {
   readonly baseURL?: string

@@ -130,7 +130,7 @@ bun run register                # registers the global /nikcli command
 ```
 
 Then set the **Interactions Endpoint URL** in the Developer Portal to
-`https://discord.nikcli.store/discord/interactions`. Discord verifies the
+`https://discord.nikcli-ai.dev/discord/interactions`. Discord verifies the
 endpoint by sending a deliberately invalid signature, so it must be reachable
 before you save.
 

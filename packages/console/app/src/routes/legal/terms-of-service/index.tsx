@@ -38,7 +38,7 @@ export default function TermsOfService() {
                 <strong>ANOMALY INNOVATIONS, INC.</strong> ("Nikcli," "we" and "us"). Your use of the Services in any
                 way means that you agree to all of these Terms, and these Terms will remain in effect while you use the
                 Services. These Terms include the provisions in this document as well as those in the Privacy Policy{" "}
-                <a href={language.route("/legal/privacy-policy")}>https://nikcli.store/legal/privacy-policy</a>.{" "}
+                <a href={language.route("/legal/privacy-policy")}>https://nikcli-ai.dev/legal/privacy-policy</a>.{" "}
                 <strong>
                   Your use of or participation in certain Services may also be subject to additional policies, rules
                   and/or conditions ("Additional Terms"), which are incorporated herein by reference, and you understand
@@ -81,7 +81,7 @@ export default function TermsOfService() {
               <p>
                 We are constantly trying to improve our Services, so these Terms may need to change along with our
                 Services. We reserve the right to change the Terms at any time, but if we do, we will place a notice on
-                our site located at nikcli.store, send you an email, and/or notify you by some other means.
+                our site located at nikcli-ai.dev, send you an email, and/or notify you by some other means.
               </p>
 
               <p>
@@ -99,7 +99,7 @@ export default function TermsOfService() {
               <p>
                 Nikcli takes the privacy of its users very seriously. For the current Nikcli Privacy Policy, please
                 click here{" "}
-                <a href="https://nikcli.store/legal/privacy-policy">https://nikcli.store/legal/privacy-policy</a>.
+                <a href="https://nikcli-ai.dev/legal/privacy-policy">https://nikcli-ai.dev/legal/privacy-policy</a>.
               </p>
 
               <h3>Children's Online Privacy Protection Act</h3>
@@ -262,7 +262,7 @@ export default function TermsOfService() {
               <p>
                 Certain of our Services, including Zen, may be subject to payments now or in the future (the "Paid
                 Services"). Please see our Paid Services page{" "}
-                <a href={language.route("/zen")}>https://nikcli.store/zen</a> for a description of the current Paid
+                <a href={language.route("/zen")}>https://nikcli-ai.dev/zen</a> for a description of the current Paid
                 Services. Please note that any payment terms presented to you in the process of using or signing up for
                 a Paid Service are deemed part of these Terms.
               </p>
@@ -303,7 +303,7 @@ export default function TermsOfService() {
                 CONFIRMED BY US) THAT YOU HAVE TERMINATED THIS AUTHORIZATION OR WISH TO CHANGE YOUR PAYMENT METHOD. SUCH
                 NOTICE WILL NOT AFFECT CHARGES SUBMITTED BEFORE WE REASONABLY COULD ACT. TO TERMINATE YOUR AUTHORIZATION
                 OR CHANGE YOUR PAYMENT METHOD, GO TO ACCOUNT SETTINGS{" "}
-                <a href="https://nikcli.store/auth">https://nikcli.store/auth</a>.
+                <a href="https://nikcli-ai.dev/auth">https://nikcli-ai.dev/auth</a>.
               </p>
 
               <h3>Free Trials and Other Promotions</h3>
@@ -318,7 +318,7 @@ export default function TermsOfService() {
               <h2 id="what-if-i-want-to-stop">What if I want to stop using the Services?</h2>
               <p>
                 You're free to do that at any time; please refer to our Privacy Policy{" "}
-                <a href={language.route("/legal/privacy-policy")}>https://nikcli.store/legal/privacy-policy</a>, as well
+                <a href={language.route("/legal/privacy-policy")}>https://nikcli-ai.dev/legal/privacy-policy</a>, as well
                 as the licenses above, to understand how we treat information you provide to us after you have stopped
                 using our Services.
               </p>

@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test"
 import { artifactPublishedHref } from "@tui/util/tool-shapes"
 import { source, stripComments, tuiSource } from "./tui-source"
 
-const bare = "https://nikcli.store/artifact/a14e5eb6-3095-4501-8853-2a821a4f01eb"
+const bare = "https://nikcli-ai.dev/artifact/a14e5eb6-3095-4501-8853-2a821a4f01eb"
 const keyed = `${bare}?key=view-key`
 
 describe("artifact published link", () => {

@@ -9,8 +9,8 @@ export default function NotFound() {
         <A href="/" class="text-text-strong hover:text-text-base">
           Service home
         </A>
-        <a href="https://nikcli.store" class="text-text-strong hover:text-text-base">
-          nikcli.store
+        <a href="https://nikcli-ai.dev" class="text-text-strong hover:text-text-base">
+          nikcli-ai.dev
         </a>
       </div>
     </main>

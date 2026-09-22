@@ -108,7 +108,7 @@ export default Runtime.handler(Commands.commands["quickstart"], async (input) =>
         process.exit(code)
       }
       if (action === "docs") {
-        prompts.log.info("Read https://nikcli.store/docs/quickstart for the full walkthrough.")
+        prompts.log.info("Read https://nikcli-ai.dev/docs/quickstart for the full walkthrough.")
       }
     } else {
       prompts.log.success(`${connected} provider${connected === 1 ? "" : "s"} connected.`)
@@ -172,7 +172,7 @@ export default Runtime.handler(Commands.commands["quickstart"], async (input) =>
       process.exit(modelsCode)
     default:
       prompts.log.info("Help: `nikcli --help` lists every command.")
-      prompts.log.info("Docs: https://nikcli.store/docs")
+      prompts.log.info("Docs: https://nikcli-ai.dev/docs")
       prompts.log.info(`Docs path: ${process.cwd()}${EOL}`)
       prompts.outro("Done.")
   }

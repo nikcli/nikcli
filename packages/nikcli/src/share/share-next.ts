@@ -88,7 +88,7 @@ export namespace ShareNext {
   }
 
   async function urlImpl() {
-    return configGet().then((x) => x.enterprise?.url ?? "https://s.nikcli.store")
+    return configGet().then((x) => x.enterprise?.url ?? "https://s.nikcli-ai.dev")
   }
 
   function isDisabled() {

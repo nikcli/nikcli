@@ -136,7 +136,7 @@ bunx wrangler secret put NIKCLI_USERNAME
 bunx wrangler secret put NIKCLI_PASSWORD
 
 # Deploy with custom domain (optional)
-bunx wrangler deploy src/worker.ts --name nikcli-slack --routes 'slack.nikcli.store/*'
+bunx wrangler deploy src/worker.ts --name nikcli-slack --routes 'slack.nikcli-ai.dev/*'
 
 # Or without custom domain
 # bunx wrangler deploy src/worker.ts --name nikcli-slack
@@ -146,8 +146,8 @@ bunx wrangler deploy src/worker.ts --name nikcli-slack --routes 'slack.nikcli.st
 
 After deployment, update your Slack app:
 
-- **Event Subscriptions URL**: `https://slack.nikcli.store/slack/events`
-- **Interactivity URL**: `https://slack.nikcli.store/slack/interactive`
+- **Event Subscriptions URL**: `https://slack.nikcli-ai.dev/slack/events`
+- **Interactivity URL**: `https://slack.nikcli-ai.dev/slack/interactive`
 
 Reinstall the app.
 
@@ -228,7 +228,7 @@ bun run typecheck
 
 ### Worker not receiving events
 
-- Verify Event Subscriptions URL is correct (`https://slack.nikcli.store/slack/events`) and uses HTTPS
+- Verify Event Subscriptions URL is correct (`https://slack.nikcli-ai.dev/slack/events`) and uses HTTPS
 - Check Slack app has required bot scopes
 - Reinstall app after changing scopes
 

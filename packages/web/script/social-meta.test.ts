@@ -20,7 +20,7 @@ describe("social sharing metadata", () => {
       expect(meta('meta[property="og:site_name"]')).toBe("nikcli")
       expect(meta('meta[name="twitter:card"]')).toBe("summary_large_image")
       expect(doc.querySelectorAll('meta[property="og:image"]').length).toBe(1)
-      expect(meta('meta[property="og:image"]')).toBe("https://nikcli.store/og.png")
+      expect(meta('meta[property="og:image"]')).toBe("https://nikcli-ai.dev/og.png")
       expect(meta('meta[name="twitter:image"]')).toBe(meta('meta[property="og:image"]'))
       expect(meta('meta[property="og:image:alt"]')).toBeTruthy()
       expect(meta('meta[property="og:image:width"]')).toBe("1200")
@@ -34,7 +34,7 @@ describe("social sharing metadata", () => {
       const canonical = doc.querySelector('link[rel="canonical"]')!.getAttribute("href")!
       expect(doc.querySelectorAll('link[rel="canonical"]').length).toBe(1)
       const url = new URL(canonical)
-      expect(url.origin).toBe("https://nikcli.store")
+      expect(url.origin).toBe("https://nikcli-ai.dev")
       expect(url.pathname.replace(/\/$/, "")).toBe(`/${path.replace(/\/index.html$/, "")}`)
       expect(url.search).toBe("")
       expect(url.hash).toBe("")

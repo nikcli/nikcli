@@ -1,5 +1,5 @@
 {
-  "$schema": "https://nikcli.store/theme.json",
+  "$schema": "https://nikcli-ai.dev/theme.json",
   "defs": {
     "nord0": "#2E3440",
     "nord1": "#3B4252",

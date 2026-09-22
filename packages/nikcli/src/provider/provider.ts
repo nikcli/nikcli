@@ -797,7 +797,7 @@ export namespace Provider {
           // that have no fixed catalog price.
           extraBody: { usage: { include: true } },
           headers: {
-            "HTTP-Referer": "https://nikcli.store/",
+            "HTTP-Referer": "https://nikcli-ai.dev/",
             "X-Title": "nikcli",
           },
         },
@@ -808,7 +808,7 @@ export namespace Provider {
         autoload: false,
         options: {
           headers: {
-            "http-referer": "https://nikcli.store/",
+            "http-referer": "https://nikcli-ai.dev/",
             "x-title": "nikcli",
           },
         },
@@ -875,7 +875,7 @@ export namespace Provider {
         autoload: false,
         options: {
           headers: {
-            "HTTP-Referer": "https://nikcli.store/",
+            "HTTP-Referer": "https://nikcli-ai.dev/",
             "X-Title": "nikcli",
           },
         },
@@ -942,7 +942,7 @@ export namespace Provider {
             // Cloudflare AI Gateway uses cf-aig-authorization for authenticated gateways
             // This enables Unified Billing where Cloudflare handles upstream provider auth
             ...(apiToken ? { "cf-aig-authorization": `Bearer ${apiToken}` } : undefined),
-            "HTTP-Referer": "https://nikcli.store/",
+            "HTTP-Referer": "https://nikcli-ai.dev/",
             "X-Title": "nikcli",
           },
           // Custom fetch to handle parameter transformation and auth

@@ -53,8 +53,8 @@ function formRecord(form: URLSearchParams): Record<string, string> {
 }
 
 const allowedOrigins = new Set([
-  "https://nikcli.store",
-  "https://console.nikcli.store",
+  "https://nikcli-ai.dev",
+  "https://console.nikcli-ai.dev",
   "tauri://localhost",
   "http://tauri.localhost",
 ])

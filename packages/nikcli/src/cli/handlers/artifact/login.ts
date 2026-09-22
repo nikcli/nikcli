@@ -7,7 +7,7 @@ import { log } from "./shared"
 
 export default Runtime.handler(Commands.commands["artifact"].commands["login"], async (_input) => {
   UI.empty()
-  prompts.intro("nikcli.store account")
+  prompts.intro("nikcli-ai.dev account")
 
   const spinner = prompts.spinner()
   spinner.start("Checking the active CLI user...")

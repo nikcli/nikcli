@@ -1,5 +1,5 @@
 {
-  "$schema": "https://nikcli.store/theme.json",
+  "$schema": "https://nikcli-ai.dev/theme.json",
   "defs": {
     "darkStep6": "#394436",
     "darkStep11": "#96aa92",

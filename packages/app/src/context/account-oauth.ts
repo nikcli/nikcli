@@ -1,5 +1,5 @@
 export const OAUTH_ISSUER =
-  (import.meta.env.VITE_NIKCLI_ACCOUNT_URL as string | undefined)?.trim() || "https://auth.nikcli.store"
+  (import.meta.env.VITE_NIKCLI_ACCOUNT_URL as string | undefined)?.trim() || "https://auth.nikcli-ai.dev"
 export const OAUTH_CLIENT_ID = "nikcli-desktop"
 export const OAUTH_REDIRECT_URI = "nikcli://auth/callback"
 

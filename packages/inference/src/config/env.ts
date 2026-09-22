@@ -28,7 +28,7 @@ const envSchema = z.object({
   UPSTASH_REDIS_REST_TOKEN: z.string().optional(),
 
   /**
-   * Dashboard control plane (dashboard.nikcli.store). When both are set,
+   * Dashboard control plane (dashboard.nikcli-ai.dev). When both are set,
    * customer keys are validated against POST /api/validate and usage is
    * recorded via POST /api/usage/ingest; the hardcoded demo keys are disabled.
    */
@@ -36,7 +36,7 @@ const envSchema = z.object({
   GATEWAY_SHARED_SECRET: z.string().optional(),
 
   /** Identity issuer for OAuth bearer tokens (offline JWKS verification). */
-  AUTH_ISSUER: z.string().url().default("https://auth.nikcli.store"),
+  AUTH_ISSUER: z.string().url().default("https://auth.nikcli-ai.dev"),
   AUTH_AUDIENCE: z.string().default("nikcli-api"),
   AUTH_JWKS_URL: z.string().url().optional(),
 

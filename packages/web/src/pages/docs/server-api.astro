@@ -133,7 +133,7 @@ NIKCLI_SERVER_PASSWORD=secret \
       <li><strong>Websocket upgrades.</strong> PTY connect paths upgrade in place instead of returning a body.</li>
       <li><strong>Raw handlers.</strong> <code>PublicRoutes.instanceRequest()</code> claims SSE, prompt streaming, chatbot webhooks, and the <code>extra.ts</code> routes.</li>
       <li><strong>HttpApi bridge.</strong> If <code>HttpApiBridge.supports(path, method)</code> matches, the typed handler answers.</li>
-      <li><strong>Fallback.</strong> Unmatched non-<code>/mobile</code> paths are proxied to <code>app.nikcli.store</code> so the hosted web app can be served from the same origin.</li>
+      <li><strong>Fallback.</strong> Unmatched non-<code>/mobile</code> paths are proxied to <code>app.nikcli-ai.dev</code> so the hosted web app can be served from the same origin.</li>
     </ol>
     <DocCallout type="info" title="Raw before typed, always">
       <p>
@@ -426,10 +426,10 @@ bun run --cwd packages/sdk/js generate:httpapi
       <tbody>
         <tr><td>401 on every request</td><td>Missing bearer token, Basic Auth password mismatch, or Tailscale identity header absent.</td><td>Check auth headers and <code>NIKCLI_SERVER_PASSWORD</code>.</td></tr>
         <tr><td>Workspace not found</td><td><code>x-nikcli-workspace</code> points at a workspace with no target.</td><td>Call workspace list or remove the stale workspace id.</td></tr>
-        <tr><td>Route returns the hosted web app</td><td>The bridge does not claim that method/path, so the fallback proxied it to <code>app.nikcli.store</code>.</td><td>Inspect <code>HttpApiBridge.supports</code> and the <code>RoutePattern</code> table.</td></tr>
+        <tr><td>Route returns the hosted web app</td><td>The bridge does not claim that method/path, so the fallback proxied it to <code>app.nikcli-ai.dev</code>.</td><td>Inspect <code>HttpApiBridge.supports</code> and the <code>RoutePattern</code> table.</td></tr>
         <tr><td>500 on a route that used to work</td><td>A response schema is stricter than the real payload — the bridge validates responses.</td><td><code>curl</code> the route and diff the body against the schema.</td></tr>
         <tr><td>Empty mobile session list</td><td>A resurrected <code>server/routes/mobile.ts</code> shadowing <code>server/mobile/</code>.</td><td>Delete the monolith file.</td></tr>
-        <tr><td>CORS preflight fails</td><td>Origin is not local, app, Tailscale, <code>nikcli.store</code>, or whitelisted.</td><td>Set <code>NIKCLI_SERVER_CORS_ORIGINS</code> for custom origins.</td></tr>
+        <tr><td>CORS preflight fails</td><td>Origin is not local, app, Tailscale, <code>nikcli-ai.dev</code>, or whitelisted.</td><td>Set <code>NIKCLI_SERVER_CORS_ORIGINS</code> for custom origins.</td></tr>
         <tr><td>Mobile bootstrap is slow</td><td>Bootstrap hits project, GitHub, Expo, container, provider, and config checks.</td><td>Smoke <code>/mobile/auth/token</code> first.</td></tr>
         <tr><td>Unknown error JSON</td><td>Error did not match a known domain class in <code>ServerRouter.mapError</code>.</td><td>Use <code>--print-logs</code> and inspect <code>Global.Path.log</code>.</td></tr>
       </tbody>

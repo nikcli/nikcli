@@ -12,7 +12,7 @@ export type ArtifactMeta = {
   size: number
   version: number
   sessionID?: string
-  /** nikcli.store user id of the publisher. */
+  /** nikcli-ai.dev user id of the publisher. */
   owner: string
   author?: string
   time: { created: number; updated: number }
@@ -32,7 +32,7 @@ export const ARTIFACT_MAX_BYTES = 25 * 1024 * 1024
 
 /** Cookie the artifact viewer sets after a /user/login; same token space as Bearer auth. */
 export const ARTIFACT_TOKEN_COOKIE = "nikcli_token"
-export const DEFAULT_NIKCLI_AUTH_SERVER = "https://s.nikcli.store"
+export const DEFAULT_NIKCLI_AUTH_SERVER = "https://s.nikcli-ai.dev"
 
 export function parseByteRange(value: string, size: number): { offset: number; length: number } | null {
   const match = /^bytes=(\d*)-(\d*)$/.exec(value.trim())
@@ -197,7 +197,7 @@ export async function resolveViewerUserId(
   if (!token) return null
 
   if (!token.startsWith("nku_")) {
-    const issuer = env.AUTH_ISSUER ?? "https://auth.nikcli.store"
+    const issuer = env.AUTH_ISSUER ?? "https://auth.nikcli-ai.dev"
     try {
       const auth = await verifyAccessToken(token, {
         issuer,

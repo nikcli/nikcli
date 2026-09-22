@@ -43,10 +43,10 @@ describe("checkServerHealth", () => {
 
 describe("server bearer authentication", () => {
   test("matches only the configured server and path boundary", () => {
-    expect(serverUrlMatchesRequest("https://s.nikcli.store", "https://s.nikcli.store/global/health")).toBe(true)
-    expect(serverUrlMatchesRequest("https://s.nikcli.store/api", "https://s.nikcli.store/api/session")).toBe(true)
-    expect(serverUrlMatchesRequest("https://s.nikcli.store/api", "https://s.nikcli.store/apiv2/session")).toBe(false)
-    expect(serverUrlMatchesRequest("https://s.nikcli.store", "https://other.example/global/health")).toBe(false)
+    expect(serverUrlMatchesRequest("https://s.nikcli-ai.dev", "https://s.nikcli-ai.dev/global/health")).toBe(true)
+    expect(serverUrlMatchesRequest("https://s.nikcli-ai.dev/api", "https://s.nikcli-ai.dev/api/session")).toBe(true)
+    expect(serverUrlMatchesRequest("https://s.nikcli-ai.dev/api", "https://s.nikcli-ai.dev/apiv2/session")).toBe(false)
+    expect(serverUrlMatchesRequest("https://s.nikcli-ai.dev", "https://other.example/global/health")).toBe(false)
   })
 
   test("adds bearer auth without mutating the source request", async () => {
@@ -55,11 +55,11 @@ describe("server bearer authentication", () => {
       received = input instanceof Request ? input : new Request(input, init)
       return new Response(null, { status: 204 })
     }) as typeof globalThis.fetch
-    const source = new Request("https://s.nikcli.store/global/health", {
+    const source = new Request("https://s.nikcli-ai.dev/global/health", {
       headers: { "x-test": "value" },
     })
 
-    await withServerBearerToken(fetcher, "https://s.nikcli.store", "secret-token")(source)
+    await withServerBearerToken(fetcher, "https://s.nikcli-ai.dev", "secret-token")(source)
 
     expect(source.headers.get("Authorization")).toBeNull()
     expect(received?.headers.get("Authorization")).toBe("Bearer secret-token")
@@ -74,7 +74,7 @@ describe("server bearer authentication", () => {
       return new Response(null, { status: 204 })
     }) as typeof globalThis.fetch
 
-    await withServerBearerToken(fetcher, "https://s.nikcli.store", "secret-token")("https://example.com/global/health")
+    await withServerBearerToken(fetcher, "https://s.nikcli-ai.dev", "secret-token")("https://example.com/global/health")
 
     expect(authorization).toBeNull()
   })

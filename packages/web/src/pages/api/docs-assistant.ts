@@ -154,7 +154,7 @@ const ARTIFACT_INSTRUCTIONS = [
   "Artifact rules:",
   "- Inside the block, write only the outline of the page: section headings, ordered steps, bullet points, tables, and the exact commands or config snippets. It is rendered into a designed, interactive HTML guide for you — do not write HTML, CSS or JavaScript yourself.",
   "- Cover the whole topic in that outline: every step, option and caveat you want on the page, taken from the documentation excerpts.",
-  "- The block is removed from the chat and published as a shareable page on nikcli.store; introduce it in one sentence before the block and do not repeat its content outside the block.",
+  "- The block is removed from the chat and published as a shareable page on nikcli-ai.dev; introduce it in one sentence before the block and do not repeat its content outside the block.",
   "- Use it only when a standalone page is genuinely useful; a normal answer needs no artifact.",
 ].join("\n")
 
@@ -224,13 +224,13 @@ Requirements:
 - Every CSS and JS value must be complete and valid; never leave a number or colour channel empty.
 - Sandboxed iframe: no network requests, no external fonts, scripts, or images.
 - Responsive to 360px: wrap every <table> in <div class="scroll"> so wide content scrolls inside its own box, and keep code lines short. The page itself must never scroll sideways.
-- Readable in light and dark, and factually faithful to the documentation given. Link back to docs pages with absolute https://nikcli.store/docs/... URLs.`
+- Readable in light and dark, and factually faithful to the documentation given. Link back to docs pages with absolute https://nikcli-ai.dev/docs/... URLs.`
 
 function systemPrompt(context: string, currentPage?: Source) {
   const pages = docsIndex.map((entry) => `- ${entry.title} — ${entry.href}`).join("\n")
 
   return [
-    "You are the Nikcli documentation assistant, embedded in the official docs at nikcli.store.",
+    "You are the Nikcli documentation assistant, embedded in the official docs at nikcli-ai.dev.",
     "Nikcli is an open-source, terminal-native AI development agent (CLI, TUI, server, web app and mobile app).",
     "You help users understand and use nikcli. You are support, not a code-writing agent.",
     "",
@@ -628,7 +628,7 @@ export const POST: APIRoute = async ({ request, locals, url }) => {
     return publishArtifact(env.ARTIFACTS, await renderArtifact(draft), {
       origin: url.origin,
       // Local and preview runs keep their own origin: the artifact lives in
-      // that deployment's bucket, so a nikcli.store link would 404.
+      // that deployment's bucket, so a nikcli-ai.dev link would 404.
       publicOrigin: isLocalOrigin(url.hostname) ? undefined : env.ARTIFACT_PUBLIC_ORIGIN,
       sessionID: typeof body.sessionID === "string" ? body.sessionID : undefined,
     })

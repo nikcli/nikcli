@@ -6,11 +6,11 @@ import { UserSession } from "@nikcli-ai/util/user-session"
 import { ArtifactRepo } from "./repo"
 
 /**
- * Published artifacts — Claude-artifacts-style pages hosted on nikcli.store.
+ * Published artifacts — Claude-artifacts-style pages hosted on nikcli-ai.dev.
  *
  * The CLI publishes a local file (html/markdown/image/video) to the
- * nikcli.store worker (`POST /api/artifact`), which stores it in R2 and
- * serves it at `https://nikcli.store/artifact/{id}`. Publishing never asks
+ * nikcli-ai.dev worker (`POST /api/artifact`), which stores it in R2 and
+ * serves it at `https://nikcli-ai.dev/artifact/{id}`. Publishing never asks
  * for a password: the active CLI user session (same `nku_` token as
  * /user/login, from src/user) binds ownership when the store can verify it
  * against this host's server; otherwise the publish is anonymous. Viewing
@@ -73,7 +73,7 @@ export namespace Artifact {
   }
 
   export function baseUrl(): string {
-    return (process.env["NIKCLI_ARTIFACT_URL"] ?? "https://nikcli.store").replace(/\/$/, "")
+    return (process.env["NIKCLI_ARTIFACT_URL"] ?? "https://nikcli-ai.dev").replace(/\/$/, "")
   }
 
   export function previewUrl(info: Pick<Info, "id" | "viewKey">): string {
@@ -92,7 +92,7 @@ export namespace Artifact {
     return (
       process.env["NIKCLI_ARTIFACT_AUTH_SERVER"] ??
       process.env["NIKCLI_REMOTE_URL"] ??
-      "https://s.nikcli.store"
+      "https://s.nikcli-ai.dev"
     ).replace(/\/$/, "")
   }
 

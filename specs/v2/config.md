@@ -11,7 +11,7 @@ time and decide whether each field is ported as-is, removed, or redesigned.
 
 `nikcli.json` is the one schema in the codebase that is authored in **zod** and converted to Effect
 Schema (`util/zod-effect.ts`) rather than the other way round. That is deliberate — the JSON Schema
-published at `https://nikcli.store/config.json` is the user-facing contract — and it means every
+published at `https://nikcli-ai.dev/config.json` is the user-facing contract — and it means every
 decision here is a zod edit, not a Schema edit.
 
 ## Status Labels
@@ -55,7 +55,7 @@ that is a discovery change, listed as an open question below rather than decided
 | `remote`        | Remote Control defaults                        | keep     | Consumed: onboarding writes it (`dialog-onboarding.tsx`) and `dialog-remote.tsx` reads it back through the synced config.                                                                                                                                                                      |
 | `teleport`      | Default remote server for `/teleport`          | pending  | No reader found in `src` or `packages/tui`. Either wire it into the teleport command or drop it; do not leave it published in the JSON Schema unread.                                                                                                                                          |
 | `autoupdate`    | `true` / `false` / `"notify"`                  | keep     | Global-only user preference.                                                                                                                                                                                                                                                                   |
-| `theme`         | TUI theme name                                 | remove   | **Already migrated out.** `migrateTuiConfig` moves `theme`, `keybinds`, and `tui` from every `nikcli.json` into a sibling `tui.json` (schema `https://nikcli.store/tui.json`), skipping locations that already have one. The fields remain in `Config.Info` only so old documents still parse. |
+| `theme`         | TUI theme name                                 | remove   | **Already migrated out.** `migrateTuiConfig` moves `theme`, `keybinds`, and `tui` from every `nikcli.json` into a sibling `tui.json` (schema `https://nikcli-ai.dev/tui.json`), skipping locations that already have one. The fields remain in `Config.Info` only so old documents still parse. |
 | `keybinds`      | Keybind overrides                              | remove   | Same migration. Note the loader still fills in parsed defaults when absent, so removal has to check that path.                                                                                                                                                                                 |
 | `tui`           | TUI-specific settings                          | remove   | Same migration. `src/config/tui.ts` reads `tui.json`, and flattens a nested `tui` key so documents written in the old shape still apply.                                                                                                                                                       |
 | `locale`        | BCP-47 primary subtag for UI and replies       | keep     | Affects model output, not only presentation, so it is not purely a client concern and should not follow `theme` into `tui.json`.                                                                                                                                                               |
@@ -251,7 +251,7 @@ stays inside `nikcli.json`. So the file rewrite is not a candidate for them, and
 describes is not one.
 
 This is an argument, not a ratification: the decision belongs to whoever owns the published schema at
-`https://nikcli.store/config.json`, and nothing here has been renamed.
+`https://nikcli-ai.dev/config.json`, and nothing here has been renamed.
 
 ### Execute the three statuses separately — they are not one job
 

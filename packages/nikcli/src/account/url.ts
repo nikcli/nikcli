@@ -4,7 +4,7 @@
  */
 export function normalizeServerUrl(input: string): string {
   if (!input) {
-    return "https://auth.nikcli.store"
+    return "https://auth.nikcli-ai.dev"
   }
 
   let url: URL

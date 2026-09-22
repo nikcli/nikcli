@@ -87,7 +87,7 @@ describe("domain SQL (missions, monitors, shares, artifacts)", () => {
         filename: "index.html",
         contentType: "text/html",
         kind: "html" as const,
-        url: "https://nikcli.store/artifact/art_sql_1",
+        url: "https://nikcli-ai.dev/artifact/art_sql_1",
         viewKey: "view",
         secret: "sekrit",
         version: 1,

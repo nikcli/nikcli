@@ -584,7 +584,7 @@ function ApiMethod(props: ApiMethodProps) {
                   key.
                 </text>
                 <text fg={theme.foreground.default}>
-                  Go to <span style={{ fg: theme.accent.fg }}>https://nikcli.store/zen</span> to get a key
+                  Go to <span style={{ fg: theme.accent.fg }}>https://nikcli-ai.dev/zen</span> to get a key
                 </text>
               </box>
             )

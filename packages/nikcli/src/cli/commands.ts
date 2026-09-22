@@ -535,7 +535,7 @@ const SpecArtifactList = Spec.make("list", {
 })
 
 const SpecArtifact = Spec.make("artifact", {
-  description: "manage published artifacts (nikcli.store/artifact)",
+  description: "manage published artifacts (nikcli-ai.dev/artifact)",
   commands: [SpecArtifactLogin, SpecArtifactLogout, SpecArtifactList],
 })
 
@@ -1425,7 +1425,7 @@ const SpecSyncToken = Spec.make("token", {
 })
 
 const SpecSync = Spec.make("sync", {
-  description: "manage optional remote hub sync (e.g. https://s.nikcli.store)",
+  description: "manage optional remote hub sync (e.g. https://s.nikcli-ai.dev)",
   commands: [SpecSyncStatus, SpecSyncConnect, SpecSyncDisconnect, SpecSyncToken],
 })
 

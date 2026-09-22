@@ -32,7 +32,7 @@ const toc = [
     <h2>Overview</h2>
     <p>
       The sync subsystem is the bridge between a local nikcli process and the optional
-      <strong>remote hub</strong> (such as <code>https://s.nikcli.store</code>). It turns the
+      <strong>remote hub</strong> (such as <code>https://s.nikcli-ai.dev</code>). It turns the
       ephemeral bus events a session produces into a durable, ordered, replayable log, then ships
       that log over HTTP when (and only when) a remote is configured.
     </p>
@@ -162,7 +162,7 @@ curl "http://127.0.0.1:4096/sync/snapshot?directory=$PWD"
     </table>
     <DocCode language="bash">
 nikcli sync status
-# target:        https://s.nikcli.store (config file)
+# target:        https://s.nikcli-ai.dev (config file)
 # outbox pending: 12
 # outbox failed:  0
 # outbox total:   1024
@@ -197,7 +197,7 @@ nikcli sync status
     </p>
     <DocCode language="bash">
 # Set the target hub for this shell
-export NIKCLI_REMOTE_URL=https://s.nikcli.store
+export NIKCLI_REMOTE_URL=https://s.nikcli-ai.dev
 export NIKCLI_REMOTE_TOKEN=&lt;cli-sync token&gt;
 
 nikcli sync status              # outbox state + source of truth

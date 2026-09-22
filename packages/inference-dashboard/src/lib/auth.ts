@@ -14,7 +14,7 @@ export const SESSION_COOKIE = "nik_identity"
 export const REFRESH_COOKIE = "nik_identity_refresh"
 
 function verifier(env: RuntimeEnv) {
-  const issuer = env.AUTH_ISSUER || "https://auth.nikcli.store"
+  const issuer = env.AUTH_ISSUER || "https://auth.nikcli-ai.dev"
   return {
     issuer,
     audience: env.AUTH_AUDIENCE || "nikcli-api",
@@ -102,7 +102,7 @@ export async function getCurrentUser(ctx: APIContext): Promise<AuthUser | null> 
   if (current) return current
   const refresh = ctx.cookies.get(REFRESH_COOKIE)?.value
   if (!refresh) return null
-  const issuer = (env.AUTH_ISSUER || "https://auth.nikcli.store").replace(/\/$/, "")
+  const issuer = (env.AUTH_ISSUER || "https://auth.nikcli-ai.dev").replace(/\/$/, "")
   const response = await fetch(`${issuer}/oauth/token`, {
     method: "POST",
     headers: { "content-type": "application/x-www-form-urlencoded" },

@@ -921,14 +921,14 @@ const result = await Mcp.callTool("my-server", "tool-name", { arg: "value" })
 
 ## Learning Resources
 
-- **Docs**: https://nikcli.store/docs
-- **Architecture**: https://nikcli.store/docs/architecture
-- **CLI Reference**: https://nikcli.store/docs/cli
-- **Sessions**: https://nikcli.store/docs/sessions
-- **Providers**: https://nikcli.store/docs/providers
-- **Permissions**: https://nikcli.store/docs/permissions
-- **Server API**: https://nikcli.store/docs/server-api
-- **Storage**: https://nikcli.store/docs/storage
-- **MCP**: https://nikcli.store/docs/mcp
-- **Plugins**: https://nikcli.store/docs/plugins
+- **Docs**: https://nikcli-ai.dev/docs
+- **Architecture**: https://nikcli-ai.dev/docs/architecture
+- **CLI Reference**: https://nikcli-ai.dev/docs/cli
+- **Sessions**: https://nikcli-ai.dev/docs/sessions
+- **Providers**: https://nikcli-ai.dev/docs/providers
+- **Permissions**: https://nikcli-ai.dev/docs/permissions
+- **Server API**: https://nikcli-ai.dev/docs/server-api
+- **Storage**: https://nikcli-ai.dev/docs/storage
+- **MCP**: https://nikcli-ai.dev/docs/mcp
+- **Plugins**: https://nikcli-ai.dev/docs/plugins
 - **GitHub**: https://github.com/nikcli/nikcli

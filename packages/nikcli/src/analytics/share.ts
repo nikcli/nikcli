@@ -1,7 +1,7 @@
 /**
  * Anonymous usage reporting, on by default.
  *
- * nikcli.store/data can only show what the inference gateway served, which is a
+ * nikcli-ai.dev/data can only show what the inference gateway served, which is a
  * small slice of what nikcli actually runs: most people bring their own
  * provider keys, and those models never reach the gateway. This sends the
  * per-day, per-model totals the CLI already keeps locally, so the public page
@@ -35,7 +35,7 @@ import { runPromiseWithLayer } from "@/effect"
 export namespace AnalyticsShare {
   const log = Log.create({ service: "analytics-share" })
 
-  const DEFAULT_ENDPOINT = "https://dashboard.nikcli.store/api/community/report"
+  const DEFAULT_ENDPOINT = "https://dashboard.nikcli-ai.dev/api/community/report"
   /** How far back to catch up when an install has been offline. */
   const MAX_CATCHUP_DAYS = 7
   const DAY_MS = 86_400_000

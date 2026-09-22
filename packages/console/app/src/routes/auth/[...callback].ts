@@ -16,7 +16,7 @@ export async function GET(input: APIEvent) {
     if (!transaction || !url.searchParams.get("state") || url.searchParams.get("state") !== transaction.state) {
       throw new Error("OAuth state validation failed")
     }
-    const issuer = import.meta.env.VITE_AUTH_URL || "https://auth.nikcli.store"
+    const issuer = import.meta.env.VITE_AUTH_URL || "https://auth.nikcli-ai.dev"
     const response = await fetch(new URL("/oauth/token", issuer), {
       method: "POST",
       headers: { "content-type": "application/x-www-form-urlencoded" },

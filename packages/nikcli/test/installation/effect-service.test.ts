@@ -51,7 +51,7 @@ describe("Installation.Service", () => {
     for (const method of ["curl", "unknown"] as Installation.Method[]) {
       expect(Installation.resolveUpgradeStrategy(method, "win32")).toEqual({
         type: "windows-installer",
-        script: "irm https://nikcli.store/install.ps1 | iex",
+        script: "irm https://nikcli-ai.dev/install.ps1 | iex",
       })
     }
 
@@ -379,7 +379,7 @@ describe("Update dialog wiring (cross-platform)", () => {
     expect(source).toContain("brew upgrade ${formula}")
     expect(source).toContain("choco upgrade nikcli --version=${target}")
     expect(source).toContain("scoop install nikcli@${target}")
-    expect(source).toContain("https://nikcli.store/install")
+    expect(source).toContain("https://nikcli-ai.dev/install")
   })
 
   it("every install method has a working latest-version fetch (per platform)", async () => {

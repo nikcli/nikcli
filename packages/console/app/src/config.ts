@@ -3,7 +3,7 @@
  */
 export const config = {
   // Base URL
-  baseUrl: "https://nikcli.store",
+  baseUrl: "https://nikcli-ai.dev",
 
   // GitHub
   github: {

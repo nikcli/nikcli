@@ -68,7 +68,7 @@ export const PROVIDER_DEFS = {
     baseUrl: "https://openrouter.ai/api/v1",
     envKey: "OPENROUTER_API_KEY",
     headers: {
-      "HTTP-Referer": process.env.OPENROUTER_REFERRER ?? "https://nikcli.store",
+      "HTTP-Referer": process.env.OPENROUTER_REFERRER ?? "https://nikcli-ai.dev",
       "X-Title": process.env.OPENROUTER_APP_NAME ?? "nikcli-inference",
     },
   },

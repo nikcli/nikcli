@@ -20,7 +20,7 @@ jobs:
         uses: ./.github/actions/setup-bun
 
       - name: Install nikcli
-        run: curl -fsSL https://nikcli.store/install | bash
+        run: curl -fsSL https://nikcli-ai.dev/install | bash
 
       - name: Triage issue
         env:

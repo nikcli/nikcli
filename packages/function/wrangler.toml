@@ -5,7 +5,7 @@ compatibility_flags = ["nodejs_compat"]
 
 # Public web origin used to build share URLs (override per environment).
 [vars]
-WEB_DOMAIN = "nikcli.store"
+WEB_DOMAIN = "nikcli-ai.dev"
 
 # Share/sync hub: one Durable Object instance per shared session.
 [[durable_objects.bindings]]

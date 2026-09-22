@@ -1,6 +1,6 @@
 name: web-version-check
 
-# Periodically keeps the live site (nikcli.store) in sync with releases, but
+# Periodically keeps the live site (nikcli-ai.dev) in sync with releases, but
 # only AFTER a release's CI pipeline has fully finished publishing artifacts.
 #
 # A release is treated as "complete" only when every expected artifact is on the
@@ -35,7 +35,7 @@ jobs:
           REPO: ${{ github.repository }}
         run: |
           set -euo pipefail
-          SITE="https://nikcli.store"
+          SITE="https://nikcli-ai.dev"
 
           # 1) Only act if the site is online ("se il sito è online")
           status=$(curl -fsS -o /dev/null -w "%{http_code}" "$SITE/" || echo "000")

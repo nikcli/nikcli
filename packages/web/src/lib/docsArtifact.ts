@@ -5,7 +5,7 @@ import { artifactKind, artifactShareUrl, writeArtifact } from "./artifact"
  *
  * The assistant can emit a fenced block tagged `artifact` with attributes on
  * the info string; the content is published as a real, standalone HTML file on
- * nikcli.store/artifact/:id, reachable through its `?key=` capability link:
+ * nikcli-ai.dev/artifact/:id, reachable through its `?key=` capability link:
  *
  * ```artifact title="Nikcli permission modes" filename="permission-modes.html"
  * <h1>Permission modes</h1>
@@ -316,7 +316,7 @@ export async function publishArtifact(
     content.buffer as ArrayBuffer,
   )
 
-  // Artifacts are always shared under their canonical nikcli.store home, even
+  // Artifacts are always shared under their canonical nikcli-ai.dev home, even
   // when created from a preview deployment or a local dev server.
   return {
     id,

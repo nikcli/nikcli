@@ -15,7 +15,7 @@ import {
   buttonText,
 } from "../styles"
 
-const CONSOLE_URL = "https://nikcli.store/"
+const CONSOLE_URL = "https://nikcli-ai.dev/"
 
 interface InviteEmailProps {
   inviter: string

@@ -85,7 +85,7 @@ describe("SessionRetry.retryable precise strings", () => {
       message: "prefix FreeUsageLimitError suffix",
       isRetryable: true,
     })
-    expect(SessionRetry.retryable(e.toObject())).toBe("Free usage exceeded, add credits https://nikcli.store/zen")
+    expect(SessionRetry.retryable(e.toObject())).toBe("Free usage exceeded, add credits https://nikcli-ai.dev/zen")
   })
 
   it("FreeUsageLimitError in responseBody only", () => {

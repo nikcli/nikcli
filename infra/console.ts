@@ -31,7 +31,7 @@ new sst.x.DevCommand("Studio", {
   },
 })
 
-const authIssuer = process.env.NIKCLI_AUTH_ISSUER || "https://auth.nikcli.store"
+const authIssuer = process.env.NIKCLI_AUTH_ISSUER || "https://auth.nikcli-ai.dev"
 
 ////////////////
 // GATEWAY

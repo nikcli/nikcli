@@ -11,11 +11,11 @@ import { EOL } from "os"
 export const SHARE_ID = /^[a-zA-Z0-9_-]+$/
 
 export function resolveEnterpriseOrigin(hostname: string) {
-  if (hostname === "nikcli.store") return "https://s.nikcli.store"
-  if (hostname === "dev.nikcli.store") return "https://dev.s.nikcli.store"
-  if (hostname.endsWith(".dev.nikcli.store")) {
-    const stage = hostname.slice(0, -".dev.nikcli.store".length)
-    if (stage) return `https://${stage}.dev.s.nikcli.store`
+  if (hostname === "nikcli-ai.dev") return "https://s.nikcli-ai.dev"
+  if (hostname === "dev.nikcli-ai.dev") return "https://dev.s.nikcli-ai.dev"
+  if (hostname.endsWith(".dev.nikcli-ai.dev")) {
+    const stage = hostname.slice(0, -".dev.nikcli-ai.dev".length)
+    if (stage) return `https://${stage}.dev.s.nikcli-ai.dev`
   }
 }
 
@@ -150,7 +150,7 @@ export default Runtime.handler(Commands.commands["import"], async (input) => {
       const parsed = parseShareURL(args.file)
       if (!parsed) {
         process.stdout.write(
-          `Invalid URL format. Expected: https://nikcli.store/s/<slug> or https://s.nikcli.store/share/<slug>`,
+          `Invalid URL format. Expected: https://nikcli-ai.dev/s/<slug> or https://s.nikcli-ai.dev/share/<slug>`,
         )
         process.stdout.write(EOL)
         return

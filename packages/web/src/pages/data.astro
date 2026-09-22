@@ -1651,7 +1651,7 @@ const updatedAt = new Date(now * 1000).toLocaleString("en-US", {
             id="download-geo"
             source="Edge counter"
             heading="Where downloads come from"
-            blurb={`Downloads that passed nikcli.store/releases/download — the URL the install scripts fetch from — resolved to a country at the edge and then handed to GitHub, which serves the file and counts it as it always has. GitHub and npm publish a download total with no geography attached, so this is measured here rather than derived from either, and it counts only from the day the route shipped${lastDownload ? `: the ${whole.format(lastDownload.total)} in the release log above have no country and never will` : ""}.`}
+            blurb={`Downloads that passed nikcli-ai.dev/releases/download — the URL the install scripts fetch from — resolved to a country at the edge and then handed to GitHub, which serves the file and counts it as it always has. GitHub and npm publish a download total with no geography attached, so this is measured here rather than derived from either, and it counts only from the day the route shipped${lastDownload ? `: the ${whole.format(lastDownload.total)} in the release log above have no country and never will` : ""}.`}
             stats={downloadGeo}
             format={(value) => whole.format(value)}
             unit="downloads"

@@ -6,7 +6,7 @@ import { z } from "zod"
  *
  * Open by design, and hardened accordingly. An install running its own provider
  * keys has no account to sign with, and that is precisely the population
- * nikcli.store/data exists to show — the gateway already counts everyone else.
+ * nikcli-ai.dev/data exists to show — the gateway already counts everyone else.
  * Requiring credentials would leave the page measuring the users it can already
  * see.
  *

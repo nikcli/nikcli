@@ -51,7 +51,7 @@ interface CloudflareEnv {
   DOCS_ASSISTANT_RATE_LIMIT?: string
   /**
    * Canonical origin for artifact share links, so an artifact created from a
-   * preview deployment still points at nikcli.store.
+   * preview deployment still points at nikcli-ai.dev.
    */
   ARTIFACT_PUBLIC_ORIGIN?: string
   /**

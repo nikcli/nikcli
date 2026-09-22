@@ -2,7 +2,7 @@
 #                https://rubystyle-guide.org/
 class Nikcli < Formula
   desc "AI-native CLI agent that researches, plans, and writes code"
-  homepage "https://nikcli.store"
+  homepage "https://nikcli-ai.dev"
   license "MIT"
   head "https://github.com/nikcli/nikcli.git", branch: "live-main"
 

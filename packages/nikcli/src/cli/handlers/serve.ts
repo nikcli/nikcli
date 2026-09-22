@@ -223,7 +223,7 @@ export default Runtime.handler(Commands.commands["serve"], async (input) => {
     }
 
     // Phase 2: optional bidirectional sync to a remote hub
-    // (e.g. https://s.nikcli.store). Activated by NIKCLI_REMOTE_URL +
+    // (e.g. https://s.nikcli-ai.dev). Activated by NIKCLI_REMOTE_URL +
     // NIKCLI_REMOTE_TOKEN or the config file's `sync` block. Zero impact
     // when neither is set.
     remoteSync = await maybeStartRemoteSync()

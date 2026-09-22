@@ -4,7 +4,7 @@
  *
  * Usage:
  *   const stop = await RemoteSync.start({
- *     url: "https://s.nikcli.store",
+ *     url: "https://s.nikcli-ai.dev",
  *     token: process.env.NIKCLI_REMOTE_TOKEN!,
  *     projectID: Instance.project.id,
  *   })
