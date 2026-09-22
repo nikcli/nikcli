@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useState } from "react"
 import { ActivityIndicator, FlatList, Modal, Pressable, ScrollView, Text, View } from "react-native"
 import * as WebBrowser from "expo-web-browser"
 import { Link, useFocusEffect, type Href } from "expo-router"
@@ -11,6 +11,7 @@ import { SurfaceCard } from "@/components/ui/SurfaceCard"
 import { TextField } from "@/components/ui/TextField"
 import { CenteredScreenHeader } from "@/components/layout/CenteredScreenHeader"
 import { SectionHeader } from "@/components/ui/SectionHeader"
+import { useGithubDeviceAuth } from "@/hooks/use-github-device-auth"
 import { useServer } from "@/lib/server-context"
 import { setAppPreferencesWith } from "@/lib/storage"
 import { ensureNotificationPermissions } from "@/lib/notifications"
@@ -26,16 +27,11 @@ import {
   type SettingsSectionID,
   type SkillInfo,
   type ThemeMode,
-  type GitHubDeviceAuthStart,
   type MobileExecutionTarget,
   type ProviderCatalog,
 } from "@/lib/types"
 
 const EMPTY_ROWS: never[] = []
-
-function sleep(ms: number) {
-  return new Promise((resolve) => setTimeout(resolve, ms))
-}
 
 function maybeHandle(message: string | null) {
   return message ? <ErrorBanner message={message} /> : null
@@ -153,12 +149,9 @@ export default function SettingsScreen() {
   const [providerLoading, setProviderLoading] = useState(false)
   const [providerSaving, setProviderSaving] = useState(false)
   const [defaultsSaving, setDefaultsSaving] = useState(false)
-  const [oauthBusy, setOauthBusy] = useState(false)
   const [mcpBusy, setMcpBusy] = useState(false)
   const [advancedOpen, setAdvancedOpen] = useState(false)
-  const [oauthFlow, setOauthFlow] = useState<GitHubDeviceAuthStart | null>(null)
   const [message, setMessage] = useState<string | null>(null)
-  const authRun = useRef(0)
 
   const [prevConfig, setPrevConfig] = useState(config)
   if (config !== prevConfig) {
@@ -300,6 +293,12 @@ export default function SettingsScreen() {
     await loadAutomationData().catch(() => null)
     if (messageText) setMessage(messageText)
   }
+
+  const { oauthBusy, oauthFlow, startGithubOAuth, checkGithubApproval, cancelGithubOAuth } = useGithubDeviceAuth({
+    client,
+    onApproved: (login) => syncBootstrap(`GitHub connected as @${login}`),
+    onMessage: (text) => setMessage(text || null),
+  })
 
   // persistPreferences is intentionally defined here because each field's
   // type is derived from the component's local useState (via `typeof`).
@@ -586,99 +585,6 @@ export default function SettingsScreen() {
     }
   }
 
-  async function waitForApproval(flow: GitHubDeviceAuthStart, runID: number) {
-    let interval = flow.interval
-    while (Date.now() < flow.expiresAt && authRun.current === runID) {
-      if (authRun.current !== runID || !client) return
-      await sleep(interval * 1000)
-      if (authRun.current !== runID || !client) return
-      const result = await client.pollGithubDeviceAuth(flow.deviceCode)
-      if (result.status === "pending") {
-        interval = result.interval ?? interval
-        continue
-      }
-      if (result.status === "approved") {
-        authRun.current = 0
-        setOauthFlow(null)
-        await syncBootstrap(`GitHub connected as @${result.user?.login}`)
-        return
-      }
-      if (result.status === "denied") {
-        authRun.current = 0
-        setOauthFlow(null)
-        setMessage("GitHub authorization was denied")
-        return
-      }
-      if (result.status === "expired") {
-        authRun.current = 0
-        setOauthFlow(null)
-        setMessage("GitHub authorization expired. Start a new sign-in.")
-        return
-      }
-    }
-    if (authRun.current === runID) {
-      authRun.current = 0
-      setOauthFlow(null)
-      setMessage("GitHub authorization expired. Start a new sign-in.")
-    }
-  }
-
-  async function startGithubOAuth() {
-    if (!client) return
-
-    try {
-      setOauthBusy(true)
-      setMessage(null)
-      const flow = await client.startGithubDeviceAuth()
-      const runID = Date.now()
-      authRun.current = runID
-      setOauthFlow(flow)
-      void WebBrowser.openBrowserAsync(flow.verificationUriComplete || flow.verificationUri)
-      void waitForApproval(flow, runID)
-      setMessage("Approve GitHub in your browser. The app is waiting for confirmation.")
-    } catch (error) {
-      const text = error instanceof Error ? error.message : String(error)
-      setMessage(
-        /github oauth client id is not configured/i.test(text)
-          ? "This nikcli host has no GitHub client ID. Update nikcli on the computer, or set one under OAuth client ID below."
-          : text,
-      )
-    } finally {
-      setOauthBusy(false)
-    }
-  }
-
-  async function checkGithubApproval() {
-    if (!client || !oauthFlow) return
-    try {
-      setOauthBusy(true)
-      const result = await client.pollGithubDeviceAuth(oauthFlow.deviceCode)
-      if (result.status === "approved") {
-        authRun.current = 0
-        setOauthFlow(null)
-        await syncBootstrap(`GitHub connected as @${result.user?.login}`)
-        return
-      }
-      if (result.status === "pending") {
-        setMessage("Still waiting for GitHub approval.")
-        return
-      }
-      if (result.status === "denied") {
-        authRun.current = 0
-        setOauthFlow(null)
-        setMessage("GitHub authorization was denied")
-        return
-      }
-      authRun.current = 0
-      setOauthFlow(null)
-      setMessage("GitHub authorization expired. Start a new sign-in.")
-    } catch (error) {
-      setMessage(error instanceof Error ? error.message : String(error))
-    } finally {
-      setOauthBusy(false)
-    }
-  }
-
   async function connectGithubWithToken() {
     if (!client || !githubToken.trim()) return
     try {
@@ -697,8 +603,7 @@ export default function SettingsScreen() {
     if (!client) return
     try {
       setSaving(true)
-      authRun.current = 0
-      setOauthFlow(null)
+      cancelGithubOAuth()
       await client.clearGithubToken()
       await syncBootstrap("GitHub access removed from host")
     } catch (error) {
@@ -727,8 +632,7 @@ export default function SettingsScreen() {
   }, [skills, skillsSearch])
 
   async function forgetHost() {
-    authRun.current = 0
-    setOauthFlow(null)
+    cancelGithubOAuth()
     await clear()
     setMessage("Host configuration removed from this device")
   }

@@ -1099,7 +1099,13 @@ export async function startGithubDeviceAuth() {
     deviceCode: payload.device_code,
     userCode: payload.user_code,
     verificationUri: payload.verification_uri,
-    verificationUriComplete: payload.verification_uri_complete,
+    // GitHub omits `verification_uri_complete` for some device-flow app
+    // configs. Without a fallback the mobile client opened the plain
+    // verification page and the user had to type the code by hand — build
+    // the same pre-filled URL ourselves, as the CLI's own device flow
+    // (account/index.ts) already does.
+    verificationUriComplete:
+      payload.verification_uri_complete ?? `${payload.verification_uri}?user_code=${encodeURIComponent(payload.user_code)}`,
     expiresAt: Date.now() + payload.expires_in * 1000,
     interval: payload.interval ?? 5,
   }

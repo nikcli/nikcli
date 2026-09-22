@@ -26,8 +26,18 @@ const THEME_ID_KEY = "nikcli_theme_id"
 const COLOR_SCHEME_KEY = "nikcli_color_scheme"
 const TELEPORT_TARGET_KEY = "nikcli_teleport_target"
 const SESSION_SEEN_KEY = "nikcli_session_seen"
+const GITHUB_DEVICE_AUTH_PENDING_KEY = "nikcli_github_device_auth_pending"
 
 export type TeleportTarget = { url: string; token: string }
+
+export type GithubDeviceAuthPending = {
+  deviceCode: string
+  userCode: string
+  verificationUri: string
+  verificationUriComplete?: string
+  expiresAt: number
+  interval: number
+}
 
 export type StoredColorScheme = "light" | "dark" | "system"
 
@@ -240,6 +250,46 @@ export async function getTeleportTarget(): Promise<TeleportTarget | null> {
 
 export async function setTeleportTarget(target: TeleportTarget): Promise<void> {
   await SecureStore.setItemAsync(TELEPORT_TARGET_KEY, JSON.stringify(target))
+}
+
+/**
+ * Survives the app process being killed while the user is away approving GitHub
+ * device auth in a browser tab — Android reclaims backgrounded RN JS far more
+ * aggressively than iOS, which otherwise loses the whole in-progress flow.
+ */
+export async function getGithubDeviceAuthPending(): Promise<GithubDeviceAuthPending | null> {
+  const raw = await SecureStore.getItemAsync(GITHUB_DEVICE_AUTH_PENDING_KEY)
+  if (!raw) return null
+  try {
+    const parsed = JSON.parse(raw) as Partial<GithubDeviceAuthPending>
+    if (
+      typeof parsed.deviceCode === "string" &&
+      typeof parsed.userCode === "string" &&
+      typeof parsed.verificationUri === "string" &&
+      typeof parsed.expiresAt === "number" &&
+      typeof parsed.interval === "number"
+    ) {
+      return {
+        deviceCode: parsed.deviceCode,
+        userCode: parsed.userCode,
+        verificationUri: parsed.verificationUri,
+        verificationUriComplete: parsed.verificationUriComplete,
+        expiresAt: parsed.expiresAt,
+        interval: parsed.interval,
+      }
+    }
+    return null
+  } catch {
+    return null
+  }
+}
+
+export async function setGithubDeviceAuthPending(flow: GithubDeviceAuthPending): Promise<void> {
+  await SecureStore.setItemAsync(GITHUB_DEVICE_AUTH_PENDING_KEY, JSON.stringify(flow))
+}
+
+export async function clearGithubDeviceAuthPending(): Promise<void> {
+  await SecureStore.deleteItemAsync(GITHUB_DEVICE_AUTH_PENDING_KEY)
 }
 
 export async function getAppPreferences(): Promise<AppPreferences> {
