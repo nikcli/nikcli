@@ -59,7 +59,7 @@ export default Runtime.handler(Commands.commands["pr"], async (input) => {
           }
 
           if (prInfo && prInfo.body) {
-            const sessionMatch = prInfo.body.match(/https:\/\/nikcli\.ai\/s\/([a-zA-Z0-9_-]+)/)
+            const sessionMatch = prInfo.body.match(/https:\/\/(?:nikcli-ai\.dev|nikcli\.store)\/s\/([a-zA-Z0-9_-]+)/)
             if (sessionMatch) {
               const sessionUrl = sessionMatch[0]
               UI.println(`Found nikcli session: ${sessionUrl}`)

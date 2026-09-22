@@ -275,7 +275,7 @@ export function DialogConnectProvider(props: { provider: string }) {
                           </div>
                           <div class="text-14-regular text-text-base">
                             {language.t("provider.connect.nikcliZen.visit.prefix")}
-                            <Link href="https://nikcli.ai/zen" tabIndex={-1}>
+                            <Link href="https://nikcli-ai.dev/zen" tabIndex={-1}>
                               {language.t("provider.connect.nikcliZen.visit.link")}
                             </Link>
                             {language.t("provider.connect.nikcliZen.visit.suffix")}

@@ -23,12 +23,12 @@
   <content_rating type="oars-1.1" />
 
   <url type="bugtracker">https://github.com/nikcli/nikcli/issues</url>
-  <url type="homepage">https://nikcli.ai</url>
+  <url type="homepage">https://nikcli-ai.dev</url>
   <url type="vcs-browser">https://github.com/nikcli/nikcli</url>
 
   <screenshots>
     <screenshot type="default">
-      <image>https://nikcli.ai/docs/_astro/screenshot.Bs5D4atL_ZvsvFu.webp</image>
+      <image>https://nikcli-ai.dev/docs/_astro/screenshot.Bs5D4atL_ZvsvFu.webp</image>
     </screenshot>
   </screenshots>
 

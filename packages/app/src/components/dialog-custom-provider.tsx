@@ -284,7 +284,7 @@ export function DialogCustomProvider(props: Props) {
         <form onSubmit={save} class="flex flex-col gap-6">
           <p class="text-14-regular text-text-base">
             {language.t("provider.custom.description.prefix")}
-            <Link href="https://nikcli.ai/docs/providers/#custom-provider" tabIndex={-1}>
+            <Link href="https://nikcli-ai.dev/docs/providers/#custom-provider" tabIndex={-1}>
               {language.t("provider.custom.description.link")}
             </Link>
             {language.t("provider.custom.description.suffix")}

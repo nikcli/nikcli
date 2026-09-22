@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test"
 import { SignJWT } from "jose"
-import { verifyAccessToken } from "../src/verify"
+import { acceptedIssuers, verifyAccessToken } from "../src/verify"
 
 const secret = "test-secret-that-is-long-enough-for-hs256"
 const issuer = "https://auth.test"
@@ -71,5 +71,31 @@ describe("verifyAccessToken", () => {
         jwtSecret: secret,
       }),
     ).rejects.toThrow()
+  })
+
+  test("accepts tokens minted before the move to nikcli-ai.dev, and after it", async () => {
+    for (const [configured, minted] of [
+      ["https://auth.nikcli-ai.dev", "https://auth.nikcli-ai.dev"],
+      ["https://auth.nikcli-ai.dev", "https://auth.nikcli-ai.dev"],
+      ["https://dev.auth.nikcli-ai.dev", "https://dev.auth.nikcli-ai.dev"],
+    ]) {
+      const result = await verifyAccessToken(await token({ iss: minted }), {
+        issuer: configured,
+        audience,
+        jwtSecret: secret,
+      })
+      expect(result.accountID).toBe("acc_test")
+    }
+  })
+
+  test("does not alias the old domain to unrelated issuers", async () => {
+    await expect(
+      verifyAccessToken(await token({ iss: "https://auth.nikcli-ai.dev" }), {
+        issuer: "https://auth.nikcli-ai.dev.evil.test",
+        audience,
+        jwtSecret: secret,
+      }),
+    ).rejects.toThrow()
+    expect(acceptedIssuers(issuer)).toEqual([issuer])
   })
 })

@@ -187,7 +187,7 @@ export const SettingsGeneral: Component = () => {
               description={
                 <>
                   {language.t("settings.general.row.theme.description")}{" "}
-                  <Link href="https://nikcli.ai/docs/themes/">{language.t("common.learnMore")}</Link>
+                  <Link href="https://nikcli-ai.dev/docs/themes/">{language.t("common.learnMore")}</Link>
                 </>
               }
             >

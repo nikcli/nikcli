@@ -4,7 +4,7 @@
   "version": "1.390.0",
   "type": "module",
   "license": "MIT",
-  "homepage": "https://nikcli.ai",
+  "homepage": "https://nikcli-ai.dev",
   "author": "Nikcli",
   "scripts": {
     "typecheck": "tsc -b",

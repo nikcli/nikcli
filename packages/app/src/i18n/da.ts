@@ -126,7 +126,7 @@ export const dict = {
   "provider.connect.nikcliZen.line2":
     "Med en enkelt API-nøgle får du adgang til modeller som Claude, GPT, Gemini, GLM og flere.",
   "provider.connect.nikcliZen.visit.prefix": "Besøg ",
-  "provider.connect.nikcliZen.visit.link": "nikcli.ai/zen",
+  "provider.connect.nikcliZen.visit.link": "nikcli-ai.dev/zen",
   "provider.connect.nikcliZen.visit.suffix": " for at hente din API-nøgle.",
   "provider.connect.oauth.code.visit.prefix": "Besøg ",
   "provider.connect.oauth.code.visit.link": "dette link",

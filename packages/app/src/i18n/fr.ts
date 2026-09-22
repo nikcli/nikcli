@@ -126,7 +126,7 @@ export const dict = {
   "provider.connect.nikcliZen.line2":
     "Avec une seule clé API, vous aurez accès à des modèles tels que Claude, GPT, Gemini, GLM et plus encore.",
   "provider.connect.nikcliZen.visit.prefix": "Visitez ",
-  "provider.connect.nikcliZen.visit.link": "nikcli.ai/zen",
+  "provider.connect.nikcliZen.visit.link": "nikcli-ai.dev/zen",
   "provider.connect.nikcliZen.visit.suffix": " pour récupérer votre clé API.",
   "provider.connect.oauth.code.visit.prefix": "Visitez ",
   "provider.connect.oauth.code.visit.link": "ce lien",

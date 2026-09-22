@@ -1,6 +1,6 @@
 # nikcli Homebrew Tap
 
-Unofficial [Homebrew](https://brew.sh/) tap for [nikcli](https://nikcli.ai) — an AI-native CLI agent that researches, plans, and writes code.
+Unofficial [Homebrew](https://brew.sh/) tap for [nikcli](https://nikcli-ai.dev) — an AI-native CLI agent that researches, plans, and writes code.
 
 ## Installation
 
@@ -11,12 +11,12 @@ brew install nikomatt69/tap/nikcli
 Or use the install script:
 
 ```bash
-curl -fsSL https://nikcli.ai/install | bash
+curl -fsSL https://nikcli-ai.dev/install | bash
 ```
 
 ## Documentation
 
-For full documentation, visit [https://nikcli.ai](https://nikcli.ai)
+For full documentation, visit [https://nikcli-ai.dev](https://nikcli-ai.dev)
 
 ## License
 

@@ -1495,7 +1495,7 @@ function App(props: { checkUpgrade?: () => Promise<UpdateAvailable | undefined> 
             DialogAlert.show(
               dialog,
               "Warning",
-              "While openrouter is a convenient way to access LLMs your request will often be routed to subpar providers that do not work well in our testing.\n\nFor reliable access to models check out Nikcli Zen\nhttps://nikcli.ai/zen",
+              "While openrouter is a convenient way to access LLMs your request will often be routed to subpar providers that do not work well in our testing.\n\nFor reliable access to models check out Nikcli Zen\nhttps://nikcli-ai.dev/zen",
             ).then(() => kv.set("openrouter_warning", true))
           })
         }

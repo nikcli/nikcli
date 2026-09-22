@@ -132,7 +132,7 @@ export const dict = {
   "provider.connect.nikcliZen.line1": "Nikcli Zen 为你提供一组精选的可靠优化模型，用于代码智能体。",
   "provider.connect.nikcliZen.line2": "只需一个 API 密钥，你就能使用 Claude、GPT、Gemini、GLM 等模型。",
   "provider.connect.nikcliZen.visit.prefix": "访问 ",
-  "provider.connect.nikcliZen.visit.link": "nikcli.ai/zen",
+  "provider.connect.nikcliZen.visit.link": "nikcli-ai.dev/zen",
   "provider.connect.nikcliZen.visit.suffix": " 获取你的 API 密钥。",
   "provider.connect.oauth.code.visit.prefix": "访问 ",
   "provider.connect.oauth.code.visit.link": "此链接",

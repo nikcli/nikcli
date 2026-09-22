@@ -119,6 +119,17 @@ export async function refreshTokenPair(
   }
 }
 
+/**
+ * The issuer moved from `*.nikcli-ai.dev` to `*.nikcli-ai.dev` with the same
+ * signing keys; tokens minted under either hostname are this issuer's.
+ * Mirrors `acceptedIssuers` in @nikcli-ai/auth.
+ */
+function acceptedIssuers(issuer: string): string[] {
+  const legacy = issuer.replace(/\.nikcli-ai\.dev(?=[/:]|$)/, ".nikcli-ai.dev")
+  const current = issuer.replace(/\.nikcli\.store(?=[/:]|$)/, ".nikcli-ai.dev")
+  return [...new Set([issuer, current, legacy])]
+}
+
 export async function verifyAccessToken(
   env: Env,
   token: string,
@@ -136,7 +147,7 @@ export async function verifyAccessToken(
   try {
     const publicKey = await importJWK(JSON.parse(row.public_jwk) as JWK, "ES256")
     const result = await jwtVerify(token, publicKey, {
-      issuer: env.ISSUER,
+      issuer: acceptedIssuers(env.ISSUER),
       audience: env.AUDIENCE,
       algorithms: ["ES256"],
       clockTolerance: 60,
