@@ -136,7 +136,7 @@ describe("latest-version lookups for unpublished channels", () => {
     // There is no nikcli formula in homebrew-core (only nikomatt69/tap), so a
     // 404 there must not fail the update check.
     expect(src).toContain('await fetch("https://formulae.brew.sh/api/formula/nikcli.json").catch(() => null)')
-    expect(src).toContain("api.github.com/repos/nikomatt69/nikcli/releases/latest")
+    expect(src).toContain("api.github.com/repos/nikcli/nikcli/releases/latest")
   })
 })
 

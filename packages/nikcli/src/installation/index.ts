@@ -367,7 +367,7 @@ export namespace Installation {
         })
     }
 
-    return fetch("https://api.github.com/repos/nikomatt69/nikcli/releases/latest")
+    return fetch("https://api.github.com/repos/nikcli/nikcli/releases/latest")
       .then((res) => {
         if (!res.ok) throw new Error(res.statusText)
         return res.json()

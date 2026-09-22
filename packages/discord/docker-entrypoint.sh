@@ -5,7 +5,7 @@ set -e
 # fast-forwarded on restarts. Public by default; set GITHUB_TOKEN to clone a
 # private repo and/or to push.
 WORKDIR="${NIKCLI_WORKDIR:-/workspace/nikcli}"
-REPO_URL="${NIKCLI_REPO_URL:-https://github.com/nikomatt69/nikcli}"
+REPO_URL="${NIKCLI_REPO_URL:-https://github.com/nikcli/nikcli}"
 
 # If a token is provided, embed it so git can clone/push.
 if [ -n "$GITHUB_TOKEN" ]; then

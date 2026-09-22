@@ -185,7 +185,7 @@ describe("trigger coherence", () => {
     const after = yml.slice(pubIdx, pubIdx + 600)
     expect(after).toContain("needs.validate.result == 'success'")
     expect(after).toContain("refs/heads/live-main")
-    expect(after).toContain("nikomatt69/nikcli")
+    expect(after).toContain("nikcli/nikcli")
   })
 
   it("ci-pipeline.yml autofix job blocks fork PRs and only allows push or same-repo PR", async () => {

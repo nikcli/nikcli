@@ -161,7 +161,7 @@ export default function Home() {
             <a href="https://x.com/nikcli">{i18n.t("footer.x")}</a>
           </div>
           <div data-slot="cell">
-            <a href="https://github.com/nikomatt69/nikcli">{i18n.t("footer.github")}</a>
+            <a href="https://github.com/nikcli/nikcli">{i18n.t("footer.github")}</a>
           </div>
           <div data-slot="cell">
             <a href="https://nikcli.store/discord">{i18n.t("footer.discord")}</a>

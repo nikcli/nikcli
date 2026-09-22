@@ -475,7 +475,7 @@ Se hai problemi:
 
 1. Controlla i log: `bunx wrangler tail --name nikcli-slack`
 2. Verifica i passaggi in questa guida
-3. Apri una [Issue su GitHub](https://github.com/nikomatt69/nikcli/issues)
+3. Apri una [Issue su GitHub](https://github.com/nikcli/nikcli/issues)
 
 ---
 

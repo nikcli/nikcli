@@ -368,7 +368,7 @@ describe("railway-deploy job specifics", () => {
     expect(block).toContain("needs: publish")
     expect(block).toContain("needs.publish.result == 'success'")
     expect(block).toContain("github.ref == 'refs/heads/live-main'")
-    expect(block).toContain("github.repository == 'nikomatt69/nikcli'")
+    expect(block).toContain("github.repository == 'nikcli/nikcli'")
   })
 
   it("fails when RAILWAY_TOKEN is unset instead of reporting a skipped deploy as successful", async () => {

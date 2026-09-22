@@ -67,7 +67,7 @@
     },
     "updater": {
       "pubkey": "dW50cnVzdGVkIGNvbW1lbnQ6IG1pbmlzaWduIHB1YmxpYyBrZXk6IEI2NjhCNDk5MkIzOTZGMjcKUldRbmJ6a3JtYlJvdG54anJFVXFTSEdKUmVsbzJzODZxT1BxcSt0dnlZYk1ydGpCR1VXWkxtZTIK",
-      "endpoints": ["https://github.com/nikomatt69/nikcli/releases/latest/download/latest.json"]
+      "endpoints": ["https://github.com/nikcli/nikcli/releases/latest/download/latest.json"]
     }
   }
 }

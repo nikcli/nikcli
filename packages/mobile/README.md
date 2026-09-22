@@ -5,7 +5,7 @@ and lets you follow and steer sessions from a phone.
 
 ## Installing a release build
 
-Every release on [nikomatt69/nikcli](https://github.com/nikomatt69/nikcli/releases)
+Every release on [nikcli/nikcli](https://github.com/nikcli/nikcli/releases)
 carries the mobile artifacts alongside the CLI and desktop ones:
 
 | File                                         | Platform                              |

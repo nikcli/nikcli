@@ -26,9 +26,9 @@ const theme: ChromeTheme = {
 
 const STATUS: RepoStatus = {
   directory: "/repo",
-  name: "nikomatt69/nikcli",
-  slug: "nikomatt69/nikcli",
-  remoteUrl: "git@github.com:nikomatt69/nikcli.git",
+  name: "nikcli/nikcli",
+  slug: "nikcli/nikcli",
+  remoteUrl: "git@github.com:nikcli/nikcli.git",
   branch: "live-main",
   detached: false,
   upstream: "origin/live-main",
@@ -146,7 +146,7 @@ describe("<RepoStrip>", () => {
   test("answers branch, drift, dirtiness and stash count in one line", async () => {
     const { captureSpans } = await mount({ status: STATUS })
     const screen = paint(captureSpans)
-    expect(screen).toContain("nikomatt69/nikcli")
+    expect(screen).toContain("nikcli/nikcli")
     expect(screen).toContain("live-main")
     expect(screen).toContain("↑3")
     expect(screen).toContain("↓1")

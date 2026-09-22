@@ -73,9 +73,9 @@ describe("parseStatus", () => {
 
 describe("parseRemoteSlug", () => {
   it("handles ssh, https and trailing .git", () => {
-    expect(parseRemoteSlug("git@github.com:nikomatt69/nikcli.git")).toBe("nikomatt69/nikcli")
-    expect(parseRemoteSlug("https://github.com/nikomatt69/nikcli")).toBe("nikomatt69/nikcli")
-    expect(parseRemoteSlug("https://github.com/nikomatt69/nikcli.git")).toBe("nikomatt69/nikcli")
+    expect(parseRemoteSlug("git@github.com:nikcli/nikcli.git")).toBe("nikcli/nikcli")
+    expect(parseRemoteSlug("https://github.com/nikcli/nikcli")).toBe("nikcli/nikcli")
+    expect(parseRemoteSlug("https://github.com/nikcli/nikcli.git")).toBe("nikcli/nikcli")
   })
 
   it("returns nothing for a non-GitHub remote", () => {
@@ -86,7 +86,7 @@ describe("parseRemoteSlug", () => {
 
 describe("remoteWebUrl", () => {
   it("builds a browser URL for GitHub and passes through plain https", () => {
-    expect(remoteWebUrl("git@github.com:nikomatt69/nikcli.git")).toBe("https://github.com/nikomatt69/nikcli")
+    expect(remoteWebUrl("git@github.com:nikcli/nikcli.git")).toBe("https://github.com/nikcli/nikcli")
     expect(remoteWebUrl("https://gitlab.com/group/project.git")).toBe("https://gitlab.com/group/project")
   })
 

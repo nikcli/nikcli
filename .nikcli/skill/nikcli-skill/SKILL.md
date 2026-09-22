@@ -931,4 +931,4 @@ const result = await Mcp.callTool("my-server", "tool-name", { arg: "value" })
 - **Storage**: https://nikcli.store/docs/storage
 - **MCP**: https://nikcli.store/docs/mcp
 - **Plugins**: https://nikcli.store/docs/plugins
-- **GitHub**: https://github.com/nikomatt69/nikcli
+- **GitHub**: https://github.com/nikcli/nikcli
