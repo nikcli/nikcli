@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react"
 import {
   ActivityIndicator,
   Animated,
@@ -12,7 +12,7 @@ import {
   TextInput,
   useWindowDimensions,
   View,
-} from "react-native";
+} from "react-native"
 import {
   ArrowUp,
   CircleAlert,
@@ -24,116 +24,104 @@ import {
   Square,
   Terminal,
   X,
-} from "lucide-react-native";
-import {
-  SPRING_CONFIG,
-  SPRING_MICRO,
-  usePrefersReducedMotion,
-} from "@/lib/animation";
-import { triggerHaptic } from "@/lib/haptics";
-import { hexToRgba, useAppTheme } from "@/lib/theme";
-import { AdaptiveBlur } from "@/components/GlassView";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { ComposerToolDrawer, type ComposerTab } from "./ComposerToolDrawer";
-import type { MobileModelOption } from "@/lib/model-catalog";
+} from "lucide-react-native"
+import { SPRING_CONFIG, SPRING_MICRO, usePrefersReducedMotion } from "@/lib/animation"
+import { triggerHaptic } from "@/lib/haptics"
+import { hexToRgba, useAppTheme } from "@/lib/theme"
+import { AdaptiveBlur } from "@/components/GlassView"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
+import { ComposerToolDrawer, type ComposerTab } from "./ComposerToolDrawer"
+import type { MobileModelOption } from "@/lib/model-catalog"
 
 export type SessionComposerProps = {
-  mode: "plan" | "code";
-  setMode(mode: "plan" | "code"): void;
-  input: string;
-  setInput(value: string): void;
+  mode: "plan" | "code"
+  setMode(mode: "plan" | "code"): void
+  input: string
+  setInput(value: string): void
   slashSuggestions?: Array<{
-    name: string;
-    description?: string;
-    badge?: string;
-  }>;
-  slashLoading?: boolean;
-  sending: boolean;
-  sessionProcessing?: boolean;
-  queuedMessageCount?: number;
-  offlineQueuedMessageCount?: number;
-  sessionBlocked: boolean;
-  cleaned: boolean;
-  onOpenCommands(): void;
-  onSelectSlash(name: string): void;
-  onSend(): void;
-  onAttach?(): void;
-  onOpenGit?(): void;
-  onStop?(): void;
+    name: string
+    description?: string
+    badge?: string
+  }>
+  slashLoading?: boolean
+  sending: boolean
+  sessionProcessing?: boolean
+  queuedMessageCount?: number
+  offlineQueuedMessageCount?: number
+  sessionBlocked: boolean
+  cleaned: boolean
+  onOpenCommands(): void
+  onSelectSlash(name: string): void
+  onSend(): void
+  onAttach?(): void
+  onOpenGit?(): void
+  onStop?(): void
   pendingAttachments?: Array<{
-    id: string;
-    mime?: string;
-    filename?: string;
-    base64?: string;
-    previewUri?: string;
-    sizeLabel?: string;
-    uri?: string;
-    name?: string;
-    type?: string;
-  }>;
+    id: string
+    mime?: string
+    filename?: string
+    base64?: string
+    previewUri?: string
+    sizeLabel?: string
+    uri?: string
+    name?: string
+    type?: string
+  }>
   onAddAttachment?(item: {
-    id: string;
-    mime?: string;
-    filename?: string;
-    base64?: string;
-    previewUri?: string;
-    sizeLabel?: string;
-    uri?: string;
-    name?: string;
-    type?: string;
-  }): void;
-  onRemoveAttachment?(id: string): void;
-  modelLabel?: string;
-  activeModelKey?: string;
-  activeVariant?: string;
-  activeMcpCount?: number;
-  availableModels?: MobileModelOption[];
-  skills?: Array<{ name: string; description?: string; category?: string }>;
-  tools?: Array<{ name: string; description?: string; enabled: boolean }>;
-  mcpServers?: Array<{ name: string; connected: boolean; enabled: boolean }>;
-  onModelSelect?(id: string, variant?: string): void;
-  onOpenModelPicker?(): void;
-  onSkillSelect?(name: string): void;
-  onToolToggle?(name: string, enabled: boolean): void;
-  onMcpToggle?(name: string, enabled: boolean): void;
-  onSkillsManage?(): void;
-  onToolsManage?(): void;
-  onMcpManage?(): void;
-  permissionModeLabel?: string;
-  onOpenPermissions?(): void;
-  error?: string | null;
-  onRetryError?(): void;
-  onDismissError?(): void;
-};
+    id: string
+    mime?: string
+    filename?: string
+    base64?: string
+    previewUri?: string
+    sizeLabel?: string
+    uri?: string
+    name?: string
+    type?: string
+  }): void
+  onRemoveAttachment?(id: string): void
+  modelLabel?: string
+  activeModelKey?: string
+  activeVariant?: string
+  activeMcpCount?: number
+  availableModels?: MobileModelOption[]
+  skills?: Array<{ name: string; description?: string; category?: string }>
+  tools?: Array<{ name: string; description?: string; enabled: boolean }>
+  mcpServers?: Array<{ name: string; connected: boolean; enabled: boolean }>
+  onModelSelect?(id: string, variant?: string): void
+  onOpenModelPicker?(): void
+  onSkillSelect?(name: string): void
+  onToolToggle?(name: string, enabled: boolean): void
+  onMcpToggle?(name: string, enabled: boolean): void
+  onSkillsManage?(): void
+  onToolsManage?(): void
+  onMcpManage?(): void
+  permissionModeLabel?: string
+  onOpenPermissions?(): void
+  error?: string | null
+  onRetryError?(): void
+  onDismissError?(): void
+}
 
-const CHAR_COUNT_THRESHOLD = 100;
+const CHAR_COUNT_THRESHOLD = 100
 // Each segment width — pill animates between [2, SEGMENT_W + 2]
-const SEGMENT_W = 44;
+const SEGMENT_W = 44
 // TextInput line metrics
-const INPUT_LINE_HEIGHT = 22;
-const INPUT_PADDING_TOP = 14;
-const INPUT_PADDING_BOTTOM = 12;
-const INPUT_MIN_ROWS = 2;
-const INPUT_MAX_ROWS = 6;
-const INPUT_MIN_HEIGHT =
-  INPUT_PADDING_TOP + INPUT_MIN_ROWS * INPUT_LINE_HEIGHT + INPUT_PADDING_BOTTOM; // 68
-const INPUT_MAX_HEIGHT =
-  INPUT_PADDING_TOP + INPUT_MAX_ROWS * INPUT_LINE_HEIGHT + INPUT_PADDING_BOTTOM; // 156
+const INPUT_LINE_HEIGHT = 22
+const INPUT_PADDING_TOP = 14
+const INPUT_PADDING_BOTTOM = 12
+const INPUT_MIN_ROWS = 2
+const INPUT_MAX_ROWS = 6
+const INPUT_MIN_HEIGHT = INPUT_PADDING_TOP + INPUT_MIN_ROWS * INPUT_LINE_HEIGHT + INPUT_PADDING_BOTTOM // 68
+const INPUT_MAX_HEIGHT = INPUT_PADDING_TOP + INPUT_MAX_ROWS * INPUT_LINE_HEIGHT + INPUT_PADDING_BOTTOM // 156
 
 // Stable empty defaults so memo() on child components sees the same
 // reference across renders and doesn't redraw.
-const EMPTY_SLASH_SUGGESTIONS: NonNullable<
-  SessionComposerProps["slashSuggestions"]
-> = [];
-const EMPTY_PENDING_ATTACHMENTS: NonNullable<
-  SessionComposerProps["pendingAttachments"]
-> = [];
-const EMPTY_AVAILABLE_MODELS: NonNullable<
-  SessionComposerProps["availableModels"]
-> = [];
-const EMPTY_SKILLS: NonNullable<SessionComposerProps["skills"]> = [];
-const EMPTY_TOOLS: NonNullable<SessionComposerProps["tools"]> = [];
-const EMPTY_MCP_SERVERS: NonNullable<SessionComposerProps["mcpServers"]> = [];
+const EMPTY_SLASH_SUGGESTIONS: NonNullable<SessionComposerProps["slashSuggestions"]> = []
+const EMPTY_PENDING_ATTACHMENTS: NonNullable<SessionComposerProps["pendingAttachments"]> = []
+const EMPTY_AVAILABLE_MODELS: NonNullable<SessionComposerProps["availableModels"]> = []
+const EMPTY_SKILLS: NonNullable<SessionComposerProps["skills"]> = []
+const EMPTY_TOOLS: NonNullable<SessionComposerProps["tools"]> = []
+const EMPTY_MCP_SERVERS: NonNullable<SessionComposerProps["mcpServers"]> = []
 
 export function SessionComposer({
   mode,
@@ -178,84 +166,72 @@ export function SessionComposer({
   onRetryError,
   onDismissError,
 }: SessionComposerProps) {
-  const { palette, isDark } = useAppTheme();
-  const prefersReducedMotion = usePrefersReducedMotion();
-  const insets = useSafeAreaInsets();
-  const { width: windowWidth } = useWindowDimensions();
-  const narrowToolbar = windowWidth < 375;
-  const showModelControl = windowWidth >= 375;
-  const inputRef = useRef<TextInput>(null);
-  const [isFocused, setIsFocused] = useState(false);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
-  const [drawerVisible, setDrawerVisible] = useState(false);
-  const [activeTab, setActiveTab] = useState<ComposerTab>("tools");
+  const { palette, isDark } = useAppTheme()
+  const prefersReducedMotion = usePrefersReducedMotion()
+  const insets = useSafeAreaInsets()
+  const { width: windowWidth } = useWindowDimensions()
+  const narrowToolbar = windowWidth < 375
+  const showModelControl = windowWidth >= 375
+  const inputRef = useRef<TextInput>(null)
+  const [isFocused, setIsFocused] = useState(false)
+  const [keyboardHeight, setKeyboardHeight] = useState(0)
+  const [drawerVisible, setDrawerVisible] = useState(false)
+  const [activeTab, setActiveTab] = useState<ComposerTab>("tools")
 
-  const sendBlocked = cleaned || !input.trim();
-  const sendDisabled = sending || sendBlocked;
-  const showSlash = input.trimStart().startsWith("/");
-  const hasText = input.trim().length > 0;
-  const charCount = input.length;
-  const showCharCount = charCount > CHAR_COUNT_THRESHOLD;
-  const showProcessingBanner = sessionProcessing && !cleaned;
-  const showOfflineBanner = offlineQueuedMessageCount > 0 && !cleaned;
-  const showStatus = showProcessingBanner || showOfflineBanner || cleaned;
-  const queueOnSend = sessionProcessing && hasText && !sendBlocked;
-  const showStop = Boolean(
-    onStop && (sessionProcessing || sending) && !hasText,
-  );
-  const hasAttachments = pendingAttachments.length > 0;
+  const sendBlocked = cleaned || !input.trim()
+  const sendDisabled = sending || sendBlocked
+  const showSlash = input.trimStart().startsWith("/")
+  const hasText = input.trim().length > 0
+  const charCount = input.length
+  const showCharCount = charCount > CHAR_COUNT_THRESHOLD
+  const showProcessingBanner = sessionProcessing && !cleaned
+  const showOfflineBanner = offlineQueuedMessageCount > 0 && !cleaned
+  const showStatus = showProcessingBanner || showOfflineBanner || cleaned
+  const queueOnSend = sessionProcessing && hasText && !sendBlocked
+  const showStop = Boolean(onStop && (sessionProcessing || sending) && !hasText)
+  const hasAttachments = pendingAttachments.length > 0
 
   // ── Animation values ──────────────────────────────────────────────────────
 
   // Focus: border glow (non-native — drives borderColor interpolation)
-  const focusAnimRef = useRef<Animated.Value | null>(null);
-  if (focusAnimRef.current === null)
-    focusAnimRef.current = new Animated.Value(0);
-  const focusAnim = focusAnimRef.current;
+  const focusAnimRef = useRef<Animated.Value | null>(null)
+  if (focusAnimRef.current === null) focusAnimRef.current = new Animated.Value(0)
+  const focusAnim = focusAnimRef.current
 
   // Send button: color transition (non-native)
-  const sendColorAnimRef = useRef<Animated.Value | null>(null);
-  if (sendColorAnimRef.current === null)
-    sendColorAnimRef.current = new Animated.Value(
-      hasText && !sendBlocked ? 1 : 0,
-    );
-  const sendColorAnim = sendColorAnimRef.current;
+  const sendColorAnimRef = useRef<Animated.Value | null>(null)
+  if (sendColorAnimRef.current === null) sendColorAnimRef.current = new Animated.Value(hasText && !sendBlocked ? 1 : 0)
+  const sendColorAnim = sendColorAnimRef.current
 
   // Send button: scale spring pop (native)
-  const sendScaleAnimRef = useRef<Animated.Value | null>(null);
-  if (sendScaleAnimRef.current === null)
-    sendScaleAnimRef.current = new Animated.Value(1);
-  const sendScaleAnim = sendScaleAnimRef.current;
+  const sendScaleAnimRef = useRef<Animated.Value | null>(null)
+  if (sendScaleAnimRef.current === null) sendScaleAnimRef.current = new Animated.Value(1)
+  const sendScaleAnim = sendScaleAnimRef.current
 
   // Stop button: pulsing scale (native)
-  const stopPulseRef = useRef<Animated.Value | null>(null);
-  if (stopPulseRef.current === null)
-    stopPulseRef.current = new Animated.Value(1);
-  const stopPulse = stopPulseRef.current;
+  const stopPulseRef = useRef<Animated.Value | null>(null)
+  if (stopPulseRef.current === null) stopPulseRef.current = new Animated.Value(1)
+  const stopPulse = stopPulseRef.current
 
   // Mode segmented control: sliding pill (transform, separate from color)
   // The pill transform can run on the UI thread, the segment-label colors
   // can't, so two Animated.Values are kept in sync.
-  const modeAnimRef = useRef<Animated.Value | null>(null);
-  if (modeAnimRef.current === null)
-    modeAnimRef.current = new Animated.Value(mode === "code" ? 1 : 0);
-  const modeAnim = modeAnimRef.current;
-  const modePosAnimRef = useRef<Animated.Value | null>(null);
-  if (modePosAnimRef.current === null)
-    modePosAnimRef.current = new Animated.Value(mode === "code" ? 1 : 0);
-  const modePosAnim = modePosAnimRef.current;
+  const modeAnimRef = useRef<Animated.Value | null>(null)
+  if (modeAnimRef.current === null) modeAnimRef.current = new Animated.Value(mode === "code" ? 1 : 0)
+  const modeAnim = modeAnimRef.current
+  const modePosAnimRef = useRef<Animated.Value | null>(null)
+  if (modePosAnimRef.current === null) modePosAnimRef.current = new Animated.Value(mode === "code" ? 1 : 0)
+  const modePosAnim = modePosAnimRef.current
 
   // Slash panel: fade + slide (native)
-  const slashAnimRef = useRef<Animated.Value | null>(null);
-  if (slashAnimRef.current === null)
-    slashAnimRef.current = new Animated.Value(0);
-  const slashAnim = slashAnimRef.current;
+  const slashAnimRef = useRef<Animated.Value | null>(null)
+  if (slashAnimRef.current === null) slashAnimRef.current = new Animated.Value(0)
+  const slashAnim = slashAnimRef.current
 
   // Status banner: slide down (native)
-  const statusAnimRef = useRef<Animated.Value | null>(null);
-  if (statusAnimRef.current === null)
-    statusAnimRef.current = new Animated.Value(0);
-  const statusAnim = statusAnimRef.current;
+  const statusAnimRef = useRef<Animated.Value | null>(null)
+  if (statusAnimRef.current === null) statusAnimRef.current = new Animated.Value(0)
+  const statusAnim = statusAnimRef.current
 
   // ── Effects ───────────────────────────────────────────────────────────────
 
@@ -265,45 +241,39 @@ export function SessionComposer({
       duration: 220,
       useNativeDriver: false,
       easing: Easing.out(Easing.ease),
-    }).start();
-  }, [isFocused, focusAnim]);
+    }).start()
+  }, [isFocused, focusAnim])
 
   useEffect(() => {
-    const isReady = hasText && !sendBlocked;
+    const isReady = hasText && !sendBlocked
     Animated.timing(sendColorAnim, {
       toValue: isReady ? 1 : 0,
       duration: 200,
       useNativeDriver: false,
       easing: Easing.out(Easing.ease),
-    }).start();
+    }).start()
     if (prefersReducedMotion) {
-      sendScaleAnim.setValue(isReady ? 1 : 0.88);
-      return;
+      sendScaleAnim.setValue(isReady ? 1 : 0.88)
+      return
     }
 
     if (isReady) {
       Animated.spring(sendScaleAnim, {
         toValue: 1,
         ...SPRING_CONFIG,
-      }).start();
+      }).start()
     } else {
       Animated.spring(sendScaleAnim, {
         toValue: 0.88,
         ...SPRING_CONFIG,
-      }).start();
+      }).start()
     }
-  }, [
-    hasText,
-    prefersReducedMotion,
-    sendBlocked,
-    sendColorAnim,
-    sendScaleAnim,
-  ]);
+  }, [hasText, prefersReducedMotion, sendBlocked, sendColorAnim, sendScaleAnim])
 
   useEffect(() => {
     if (!showStop || prefersReducedMotion) {
-      stopPulse.setValue(1);
-      return;
+      stopPulse.setValue(1)
+      return
     }
     const pulse = Animated.loop(
       Animated.sequence([
@@ -320,16 +290,16 @@ export function SessionComposer({
           easing: Easing.inOut(Easing.ease),
         }),
       ]),
-    );
-    pulse.start();
-    return () => pulse.stop();
-  }, [prefersReducedMotion, showStop, stopPulse]);
+    )
+    pulse.start()
+    return () => pulse.stop()
+  }, [prefersReducedMotion, showStop, stopPulse])
 
   useEffect(() => {
     if (prefersReducedMotion) {
-      modeAnim.setValue(mode === "code" ? 1 : 0);
-      modePosAnim.setValue(mode === "code" ? 1 : 0);
-      return;
+      modeAnim.setValue(mode === "code" ? 1 : 0)
+      modePosAnim.setValue(mode === "code" ? 1 : 0)
+      return
     }
 
     Animated.parallel([
@@ -350,50 +320,46 @@ export function SessionComposer({
         useNativeDriver: true,
         easing: Easing.out(Easing.quad),
       }),
-    ]).start();
-  }, [mode, modeAnim, modePosAnim, prefersReducedMotion]);
+    ]).start()
+  }, [mode, modeAnim, modePosAnim, prefersReducedMotion])
 
   useEffect(() => {
     if (prefersReducedMotion) {
-      slashAnim.setValue(showSlash ? 1 : 0);
-      return;
+      slashAnim.setValue(showSlash ? 1 : 0)
+      return
     }
 
     Animated.spring(slashAnim, {
       toValue: showSlash ? 1 : 0,
       ...SPRING_MICRO,
-    }).start();
-  }, [prefersReducedMotion, showSlash, slashAnim]);
+    }).start()
+  }, [prefersReducedMotion, showSlash, slashAnim])
 
   useEffect(() => {
     if (prefersReducedMotion) {
-      statusAnim.setValue(showStatus ? 1 : 0);
-      return;
+      statusAnim.setValue(showStatus ? 1 : 0)
+      return
     }
 
     Animated.spring(statusAnim, {
       toValue: showStatus ? 1 : 0,
       ...SPRING_MICRO,
-    }).start();
-  }, [prefersReducedMotion, showStatus, statusAnim]);
+    }).start()
+  }, [prefersReducedMotion, showStatus, statusAnim])
 
   // ── Derived animated styles ───────────────────────────────────────────────
 
   const borderColor = focusAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [palette.border, hexToRgba(palette.ink, 0.28)],
-  });
+  })
 
   // Idle: same chrome as the header buttons. With text: fills with ink.
   const sendBackgroundColor = sendColorAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [
-      isDark ? "rgba(22,22,22,0.88)" : "rgba(255,255,255,0.88)",
-      palette.ink,
-    ],
-  });
-  const sendIconColor =
-    hasText && !sendBlocked ? palette.background : palette.muted;
+    outputRange: [isDark ? "rgba(22,22,22,0.88)" : "rgba(255,255,255,0.88)", palette.ink],
+  })
+  const sendIconColor = hasText && !sendBlocked ? palette.background : palette.muted
 
   // Send button matches the circular chrome buttons: surface fill + hairline.
 
@@ -404,26 +370,26 @@ export function SessionComposer({
   const segmentPillLeft = modePosAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [2, SEGMENT_W + 2],
-  });
+  })
 
   const segmentLabelPlan = modeAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [isDark ? palette.accentLight : palette.accent, palette.muted],
-  });
+  })
 
   const segmentLabelCode = modeAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [palette.muted, isDark ? palette.accentLight : palette.accent],
-  });
+  })
 
   const slashTranslateY = slashAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [8, 0],
-  });
+  })
   const statusTranslateY = statusAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [-6, 0],
-  });
+  })
 
   // ── Icon button style — bare icons, no chrome (Cursor-style toolbar) ─────
   const iconBtn = useMemo(
@@ -432,26 +398,26 @@ export function SessionComposer({
       backgroundColor: "transparent" as const,
     }),
     [],
-  );
+  )
 
   useEffect(() => {
-    if (Platform.OS !== "android") return;
+    if (Platform.OS !== "android") return
     const show = Keyboard.addListener("keyboardDidShow", (event) => {
-      setKeyboardHeight(event.endCoordinates.height);
-    });
+      setKeyboardHeight(event.endCoordinates.height)
+    })
     const hide = Keyboard.addListener("keyboardDidHide", () => {
-      setKeyboardHeight(0);
-    });
+      setKeyboardHeight(0)
+    })
     return () => {
-      show.remove();
-      hide.remove();
-    };
-  }, []);
+      show.remove()
+      hide.remove()
+    }
+  }, [])
 
   // Edge-to-edge Android does not shrink the JS window for the IME, and this
   // screen opts KeyboardAvoidingView out on Android. Lift the composer and drop
   // the gesture-nav inset so the caret is not left in the dead band under the keyboard.
-  const keyboardOpen = Platform.OS === "android" && keyboardHeight > 0;
+  const keyboardOpen = Platform.OS === "android" && keyboardHeight > 0
 
   return (
     <View
@@ -579,17 +545,11 @@ export function SessionComposer({
               gap: 8,
             }}
           >
-            {cleaned ? (
-              <Lock size={14} color={palette.danger} strokeWidth={2.2} />
-            ) : null}
+            {cleaned ? <Lock size={14} color={palette.danger} strokeWidth={2.2} /> : null}
             <Text
               style={{
                 flex: 1,
-                color: cleaned
-                  ? palette.danger
-                  : showOfflineBanner
-                    ? palette.warn
-                    : palette.accentLight,
+                color: cleaned ? palette.danger : showOfflineBanner ? palette.warn : palette.accentLight,
                 fontSize: 12,
                 fontWeight: "600",
               }}
@@ -625,9 +585,7 @@ export function SessionComposer({
               borderCurve: "continuous",
               overflow: "hidden",
               borderWidth: 1,
-              borderColor: isDark
-                ? "rgba(255,255,255,0.12)"
-                : hexToRgba(palette.ink, 0.1),
+              borderColor: isDark ? "rgba(255,255,255,0.12)" : hexToRgba(palette.ink, 0.1),
               shadowColor: palette.shadow,
               shadowOffset: { width: 0, height: 8 },
               shadowOpacity: isDark ? 0.24 : 0.1,
@@ -639,10 +597,7 @@ export function SessionComposer({
               style={[
                 StyleSheet.absoluteFill,
                 {
-                  backgroundColor: hexToRgba(
-                    palette.surface,
-                    isDark ? 0.94 : 0.96,
-                  ),
+                  backgroundColor: hexToRgba(palette.surface, isDark ? 0.94 : 0.96),
                 },
               ]}
               pointerEvents="none"
@@ -651,9 +606,7 @@ export function SessionComposer({
               style={[
                 StyleSheet.absoluteFill,
                 {
-                  backgroundColor: isDark
-                    ? "rgba(255,255,255,0.012)"
-                    : "rgba(239,237,232,0.12)",
+                  backgroundColor: isDark ? "rgba(255,255,255,0.012)" : "rgba(239,237,232,0.12)",
                 },
               ]}
               pointerEvents="none"
@@ -685,9 +638,7 @@ export function SessionComposer({
                   ? `${slashSuggestions.length} command${slashSuggestions.length > 1 ? "s" : ""}`
                   : "Commands"}
               </Text>
-              {slashLoading && (
-                <ActivityIndicator size="small" color={palette.accent} />
-              )}
+              {slashLoading && <ActivityIndicator size="small" color={palette.accent} />}
             </View>
 
             {slashSuggestions.length ? (
@@ -701,8 +652,8 @@ export function SessionComposer({
                   <Pressable
                     key={item.name}
                     onPress={() => {
-                      void triggerHaptic("selection");
-                      onSelectSlash(item.name);
+                      void triggerHaptic("selection")
+                      onSelectSlash(item.name)
                     }}
                     style={({ pressed }) => ({
                       borderRadius: 14,
@@ -737,11 +688,7 @@ export function SessionComposer({
                           }}
                           numberOfLines={1}
                         >
-                          {item.name?.trim()
-                            ? `/${item.name}`
-                            : item.description ||
-                              item.badge ||
-                              "(unnamed command)"}
+                          {item.name?.trim() ? `/${item.name}` : item.description || item.badge || "(unnamed command)"}
                         </Text>
                         {item.name?.trim() && item.description ? (
                           <Text
@@ -767,10 +714,7 @@ export function SessionComposer({
                             borderRadius: 999,
                             borderWidth: StyleSheet.hairlineWidth,
                             borderColor: hexToRgba(palette.ink, 0.1),
-                            backgroundColor: hexToRgba(
-                              palette.ink,
-                              isDark ? 0.08 : 0.045,
-                            ),
+                            backgroundColor: hexToRgba(palette.ink, isDark ? 0.08 : 0.045),
                             paddingHorizontal: 9,
                             paddingVertical: 4,
                           }}
@@ -826,9 +770,7 @@ export function SessionComposer({
               tint={isDark ? "systemMaterialDark" : "systemMaterialLight"}
               intensity={72}
               fallbackColor={hexToRgba(palette.surface, isDark ? 0.94 : 0.96)}
-              opaqueFallbackColor={
-                isDark ? palette.surface : palette.background
-              }
+              opaqueFallbackColor={isDark ? palette.surface : palette.background}
               style={StyleSheet.absoluteFill}
               pointerEvents="none"
             />
@@ -837,19 +779,14 @@ export function SessionComposer({
               style={[
                 StyleSheet.absoluteFill,
                 {
-                  backgroundColor: isDark
-                    ? "rgba(255,255,255,0.015)"
-                    : "rgba(247,246,242,0.2)",
+                  backgroundColor: isDark ? "rgba(255,255,255,0.015)" : "rgba(247,246,242,0.2)",
                 },
               ]}
               pointerEvents="none"
             />
             {/* Animated border overlay */}
             <Animated.View
-              style={[
-                StyleSheet.absoluteFill,
-                { borderRadius: 24, borderWidth: 1, borderColor },
-              ]}
+              style={[StyleSheet.absoluteFill, { borderRadius: 24, borderWidth: 1, borderColor }]}
               pointerEvents="none"
             />
 
@@ -875,10 +812,7 @@ export function SessionComposer({
                       borderRadius: 10,
                       borderWidth: StyleSheet.hairlineWidth,
                       borderColor: hexToRgba(palette.ink, 0.12),
-                      backgroundColor: hexToRgba(
-                        palette.ink,
-                        isDark ? 0.08 : 0.04,
-                      ),
+                      backgroundColor: hexToRgba(palette.ink, isDark ? 0.08 : 0.04),
                       paddingLeft: 9,
                       paddingRight: 4,
                       paddingVertical: 5,
@@ -899,8 +833,8 @@ export function SessionComposer({
                     {onRemoveAttachment ? (
                       <Pressable
                         onPress={() => {
-                          void triggerHaptic("selection");
-                          onRemoveAttachment(attachment.id);
+                          void triggerHaptic("selection")
+                          onRemoveAttachment(attachment.id)
                         }}
                         accessibilityRole="button"
                         accessibilityLabel={`Remove ${attachment.filename || attachment.name || "attachment"}`}
@@ -976,9 +910,9 @@ export function SessionComposer({
                 {onAttach ? (
                   <Pressable
                     onPress={() => {
-                      void triggerHaptic("selection");
-                      Keyboard.dismiss();
-                      onAttach();
+                      void triggerHaptic("selection")
+                      Keyboard.dismiss()
+                      onAttach()
                     }}
                     disabled={cleaned}
                     accessibilityRole="button"
@@ -1027,9 +961,9 @@ export function SessionComposer({
                 {/* Commands */}
                 <Pressable
                   onPress={() => {
-                    void triggerHaptic("selection");
-                    Keyboard.dismiss();
-                    onOpenCommands();
+                    void triggerHaptic("selection")
+                    Keyboard.dismiss()
+                    onOpenCommands()
                   }}
                   accessibilityRole="button"
                   accessibilityLabel="Open command palette"
@@ -1049,9 +983,9 @@ export function SessionComposer({
                 {onOpenGit ? (
                   <Pressable
                     onPress={() => {
-                      void triggerHaptic("selection");
-                      Keyboard.dismiss();
-                      onOpenGit();
+                      void triggerHaptic("selection")
+                      Keyboard.dismiss()
+                      onOpenGit()
                     }}
                     accessibilityRole="button"
                     accessibilityLabel="Open Git panel"
@@ -1072,16 +1006,12 @@ export function SessionComposer({
                 {onOpenPermissions && !narrowToolbar ? (
                   <Pressable
                     onPress={() => {
-                      void triggerHaptic("selection");
-                      Keyboard.dismiss();
-                      onOpenPermissions();
+                      void triggerHaptic("selection")
+                      Keyboard.dismiss()
+                      onOpenPermissions()
                     }}
                     accessibilityRole="button"
-                    accessibilityLabel={
-                      permissionModeLabel
-                        ? `Permissions: ${permissionModeLabel}`
-                        : "Permissions"
-                    }
+                    accessibilityLabel={permissionModeLabel ? `Permissions: ${permissionModeLabel}` : "Permissions"}
                     accessibilityHint="Choose how the host asks before tool actions"
                     hitSlop={6}
                     style={({ pressed }) => ({
@@ -1098,9 +1028,9 @@ export function SessionComposer({
                 {/* Plus - opens tools drawer */}
                 <Pressable
                   onPress={() => {
-                    void triggerHaptic("selection");
-                    Keyboard.dismiss();
-                    setDrawerVisible(true);
+                    void triggerHaptic("selection")
+                    Keyboard.dismiss()
+                    setDrawerVisible(true)
                   }}
                   accessibilityRole="button"
                   accessibilityLabel="Open tools"
@@ -1129,8 +1059,8 @@ export function SessionComposer({
                 {/* Mode segmented control */}
                 <Pressable
                   onPress={() => {
-                    void triggerHaptic("selection");
-                    setMode(mode === "plan" ? "code" : "plan");
+                    void triggerHaptic("selection")
+                    setMode(mode === "plan" ? "code" : "plan")
                   }}
                   accessibilityRole="button"
                   accessibilityLabel={`Switch composer mode. Current mode is ${mode}`}
@@ -1145,9 +1075,7 @@ export function SessionComposer({
                     style={[
                       styles.segment,
                       {
-                        borderColor: isDark
-                          ? hexToRgba(palette.ink, 0.13)
-                          : hexToRgba(palette.border, 0.78),
+                        borderColor: isDark ? hexToRgba(palette.ink, 0.13) : hexToRgba(palette.border, 0.78),
                       },
                     ]}
                   >
@@ -1160,59 +1088,37 @@ export function SessionComposer({
                           // translateX instead of `left` so the pill can slide
                           // on the UI thread.
                           transform: [{ translateX: segmentPillLeft }],
-                          backgroundColor: isDark
-                            ? "rgba(255,255,255,0.13)"
-                            : "rgba(255,255,255,0.95)",
+                          backgroundColor: isDark ? "rgba(255,255,255,0.13)" : "rgba(255,255,255,0.95)",
                           borderColor: hexToRgba(palette.ink, 0.18),
                         },
                       ]}
                     />
                     {/* Plan segment */}
                     <View style={styles.segmentItem}>
-                      <Animated.Text
-                        style={[
-                          styles.segmentLabel,
-                          { color: segmentLabelPlan },
-                        ]}
-                      >
-                        Plan
-                      </Animated.Text>
+                      <Animated.Text style={[styles.segmentLabel, { color: segmentLabelPlan }]}>Plan</Animated.Text>
                     </View>
                     {/* Code segment */}
                     <View style={styles.segmentItem}>
-                      <Animated.Text
-                        style={[
-                          styles.segmentLabel,
-                          { color: segmentLabelCode },
-                        ]}
-                      >
-                        Code
-                      </Animated.Text>
+                      <Animated.Text style={[styles.segmentLabel, { color: segmentLabelCode }]}>Code</Animated.Text>
                     </View>
                   </View>
                 </Pressable>
                 {showModelControl && (modelLabel || onOpenModelPicker) ? (
                   <Pressable
                     onPress={() => {
-                      void triggerHaptic("selection");
-                      onOpenModelPicker?.();
+                      void triggerHaptic("selection")
+                      onOpenModelPicker?.()
                     }}
                     accessibilityRole="button"
                     accessibilityLabel={
-                      modelLabel
-                        ? `Model: ${modelLabel}. Tap to change model or thinking effort.`
-                        : "Choose model"
+                      modelLabel ? `Model: ${modelLabel}. Tap to change model or thinking effort.` : "Choose model"
                     }
                     style={({ pressed }) => ({
                       flexShrink: 0,
                       borderRadius: 999,
                       borderWidth: 1,
-                      borderColor: isDark
-                        ? hexToRgba(palette.ink, 0.12)
-                        : hexToRgba(palette.border, 0.7),
-                      backgroundColor: isDark
-                        ? "rgba(255,255,255,0.05)"
-                        : "rgba(255,255,255,0.62)",
+                      borderColor: isDark ? hexToRgba(palette.ink, 0.12) : hexToRgba(palette.border, 0.7),
+                      backgroundColor: isDark ? "rgba(255,255,255,0.05)" : "rgba(255,255,255,0.62)",
                       paddingHorizontal: 14,
                       paddingVertical: 7,
                       opacity: pressed ? 0.72 : 1,
@@ -1249,8 +1155,8 @@ export function SessionComposer({
                   <Animated.View style={{ transform: [{ scale: stopPulse }] }}>
                     <Pressable
                       onPress={() => {
-                        void triggerHaptic("error");
-                        onStop?.();
+                        void triggerHaptic("error")
+                        onStop?.()
                       }}
                       accessibilityRole="button"
                       accessibilityLabel="Stop current run"
@@ -1261,57 +1167,40 @@ export function SessionComposer({
                         borderRadius: 999,
                         borderCurve: "continuous",
                         borderWidth: 1,
-                        borderColor: isDark
-                          ? hexToRgba(palette.ink, 0.16)
-                          : hexToRgba(palette.border, 0.82),
-                        backgroundColor: isDark
-                          ? "rgba(22,22,22,0.88)"
-                          : "rgba(255,255,255,0.88)",
+                        borderColor: isDark ? hexToRgba(palette.ink, 0.16) : hexToRgba(palette.border, 0.82),
+                        backgroundColor: isDark ? "rgba(22,22,22,0.88)" : "rgba(255,255,255,0.88)",
                         alignItems: "center",
                         justifyContent: "center",
                         opacity: pressed ? 0.7 : 1,
                         transform: [{ scale: pressed ? 0.93 : 1 }],
                       })}
                     >
-                      <Square
-                        size={14}
-                        color={palette.ink}
-                        strokeWidth={0}
-                        fill={palette.ink}
-                      />
+                      <Square size={14} color={palette.ink} strokeWidth={0} fill={palette.ink} />
                     </Pressable>
                   </Animated.View>
                 ) : (
-                  <Animated.View
-                    style={{ transform: [{ scale: sendScaleAnim }] }}
-                  >
+                  <Animated.View style={{ transform: [{ scale: sendScaleAnim }] }}>
                     <Pressable
                       accessibilityRole="button"
-                      accessibilityLabel={
-                        queueOnSend ? "Queue message" : "Send message"
-                      }
+                      accessibilityLabel={queueOnSend ? "Queue message" : "Send message"}
                       accessibilityState={{ disabled: sendDisabled }}
                       disabled={sendDisabled}
                       onPress={() => {
-                        void triggerHaptic("send");
-                        onSend();
+                        void triggerHaptic("send")
+                        onSend()
                       }}
                       style={({ pressed }) => ({
                         width: 44,
                         height: 44,
                         borderRadius: 999,
                         borderWidth: 1,
-                        borderColor: isDark
-                          ? hexToRgba(palette.ink, 0.16)
-                          : hexToRgba(palette.border, 0.82),
+                        borderColor: isDark ? hexToRgba(palette.ink, 0.16) : hexToRgba(palette.border, 0.82),
                         backgroundColor: "transparent",
                         alignItems: "center",
                         justifyContent: "center",
                         overflow: "hidden",
                         opacity: pressed && !sendDisabled ? 0.7 : 1,
-                        transform: [
-                          { scale: pressed && !sendDisabled ? 0.93 : 1 },
-                        ],
+                        transform: [{ scale: pressed && !sendDisabled ? 0.93 : 1 }],
                       })}
                     >
                       <Animated.View
@@ -1324,11 +1213,7 @@ export function SessionComposer({
                           },
                         ]}
                       />
-                      <ArrowUp
-                        size={18}
-                        color={sendIconColor}
-                        strokeWidth={2.2}
-                      />
+                      <ArrowUp size={18} color={sendIconColor} strokeWidth={2.2} />
                     </Pressable>
                   </Animated.View>
                 )}
@@ -1349,8 +1234,8 @@ export function SessionComposer({
         availableModels={availableModels}
         onModelSelect={onModelSelect}
         onOpenModelPicker={() => {
-          setDrawerVisible(false);
-          onOpenModelPicker?.();
+          setDrawerVisible(false)
+          onOpenModelPicker?.()
         }}
         skills={skills}
         onSkillSelect={onSkillSelect}
@@ -1363,7 +1248,7 @@ export function SessionComposer({
         onMcpManage={onMcpManage}
       />
     </View>
-  );
+  )
 }
 
 const styles = StyleSheet.create({
@@ -1413,4 +1298,4 @@ const styles = StyleSheet.create({
     fontWeight: "600",
     letterSpacing: 0.15,
   },
-});
+})

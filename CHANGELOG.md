@@ -3,6 +3,32 @@
 <!-- UNRELEASED:START -->
 <!-- UNRELEASED:END -->
 
+## v1.387.0 (September 2026)
+
+## Core
+
+- Finish nikomatt69/nikcli -> nikcli/nikcli migration repo-wide (@nikomatt69)
+- Update repo-owner-hardcoded release scripts to nikcli/nikcli (@nikomatt69)
+- Fix prettier formatting in mobile helpers to unblock CI (@nikomatt69)
+- Streamline GitHub device authentication flow and improve code organization (@nikomatt69)
+
+## Mobile
+
+- Update import formatting in FloatingDock component for consistency (@nikomatt69)
+- Standardize import statements and improve code formatting across multiple files (@nikomatt69)
+
+**Thank you to 1 community contributor:**
+
+- @nikomatt69:
+  - refactor: standardize import statements and improve code formatting across multiple files
+  - style: update import formatting in FloatingDock component for consistency
+  - refactor: streamline GitHub device authentication flow and improve code organization
+  - style: fix prettier formatting in mobile helpers to unblock CI
+  - fix(ci): release/deploy workflows now recognize both repo slugs
+  - fix(web): point site, install scripts and release API at nikcli/nikcli
+  - fix(release): update repo-owner-hardcoded release scripts to nikcli/nikcli
+  - fix(repo): finish nikomatt69/nikcli -> nikcli/nikcli migration repo-wide
+
 ## v1.384.0 (September 2026)
 
 ## Core

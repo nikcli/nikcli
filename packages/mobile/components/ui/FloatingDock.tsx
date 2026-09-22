@@ -1,7 +1,7 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState } from "react"
 import {
   ActivityIndicator,
-  Animated, 
+  Animated,
   Keyboard,
   Platform,
   Pressable,
@@ -9,25 +9,25 @@ import {
   Text,
   TextInput,
   View,
-} from "react-native";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Plus, Search } from "lucide-react-native";
-import { AdaptiveBlur } from "@/components/GlassView";
-import { usePressAnimation } from "@/lib/animation";
-import { triggerHaptic } from "@/lib/haptics";
-import { contrastOn, hexToRgba, useAppTheme } from "@/lib/theme";
-import { type as typeStyle } from "@/lib/typography";
+} from "react-native"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
+import { Plus, Search } from "lucide-react-native"
+import { AdaptiveBlur } from "@/components/GlassView"
+import { usePressAnimation } from "@/lib/animation"
+import { triggerHaptic } from "@/lib/haptics"
+import { contrastOn, hexToRgba, useAppTheme } from "@/lib/theme"
+import { type as typeStyle } from "@/lib/typography"
 
 type FloatingDockProps = {
-  actionLabel: string;
-  onAction(): void;
-  actionLoading?: boolean;
-  searchValue: string;
-  onSearchChange(value: string): void;
-  searchPlaceholder: string;
+  actionLabel: string
+  onAction(): void
+  actionLoading?: boolean
+  searchValue: string
+  onSearchChange(value: string): void
+  searchPlaceholder: string
   /** Extra bottom offset when the screen sits above a tab bar. */
-  bottomInset?: number;
-};
+  bottomInset?: number
+}
 
 /**
  * Search field and compose control share one dock row so the action cannot
@@ -42,32 +42,30 @@ export function FloatingDock({
   searchPlaceholder,
   bottomInset = 0,
 }: FloatingDockProps) {
-  const { palette, colorScheme, isDark } = useAppTheme();
-  const insets = useSafeAreaInsets();
-  const press = usePressAnimation();
-  const [focused, setFocused] = useState(false);
-  const [keyboardHeight, setKeyboardHeight] = useState(0);
+  const { palette, colorScheme, isDark } = useAppTheme()
+  const insets = useSafeAreaInsets()
+  const press = usePressAnimation()
+  const [focused, setFocused] = useState(false)
+  const [keyboardHeight, setKeyboardHeight] = useState(0)
 
   useEffect(() => {
-    const showEvent =
-      Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow";
-    const hideEvent =
-      Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide";
+    const showEvent = Platform.OS === "ios" ? "keyboardWillShow" : "keyboardDidShow"
+    const hideEvent = Platform.OS === "ios" ? "keyboardWillHide" : "keyboardDidHide"
     const show = Keyboard.addListener(showEvent, (event) => {
-      setKeyboardHeight(event.endCoordinates.height);
-    });
+      setKeyboardHeight(event.endCoordinates.height)
+    })
     const hide = Keyboard.addListener(hideEvent, () => {
-      setKeyboardHeight(0);
-    });
+      setKeyboardHeight(0)
+    })
     return () => {
-      show.remove();
-      hide.remove();
-    };
-  }, []);
+      show.remove()
+      hide.remove()
+    }
+  }, [])
 
   // The dock is absolute, so Android's window resize never moves it. Lift it by
   // the keyboard height and drop the tab-bar / home-indicator gap while typing.
-  const lifted = keyboardHeight > 0;
+  const lifted = keyboardHeight > 0
 
   return (
     <View
@@ -140,9 +138,7 @@ export function FloatingDock({
           </View>
         </View>
 
-        <Animated.View
-          style={{ flexShrink: 0, transform: [{ scale: press.scale }] }}
-        >
+        <Animated.View style={{ flexShrink: 0, transform: [{ scale: press.scale }] }}>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={actionLabel}
@@ -151,8 +147,8 @@ export function FloatingDock({
             onPressIn={press.onPressIn}
             onPressOut={press.onPressOut}
             onPress={() => {
-              void triggerHaptic("selection");
-              onAction();
+              void triggerHaptic("selection")
+              onAction()
             }}
           >
             <View
@@ -175,16 +171,9 @@ export function FloatingDock({
               }}
             >
               {actionLoading ? (
-                <ActivityIndicator
-                  size="small"
-                  color={contrastOn(palette.accent)}
-                />
+                <ActivityIndicator size="small" color={contrastOn(palette.accent)} />
               ) : (
-                <Plus
-                  size={18}
-                  color={contrastOn(palette.accent)}
-                  strokeWidth={2.4}
-                />
+                <Plus size={18} color={contrastOn(palette.accent)} strokeWidth={2.4} />
               )}
               <Text
                 style={{
@@ -199,5 +188,5 @@ export function FloatingDock({
         </Animated.View>
       </View>
     </View>
-  );
+  )
 }

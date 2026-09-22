@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react"
 import {
   ActivityIndicator,
   Animated,
@@ -11,29 +11,23 @@ import {
   StyleSheet,
   Text,
   View,
-} from "react-native";
-import { Image } from "expo-image";
-import { useServer, userMe, userStatus } from "@/lib/server-context";
-import { loginWithOAuth } from "@/lib/oauth";
-import { router } from "expo-router";
-import { useSafeAreaInsets } from "react-native-safe-area-context";
-import { Check, KeyRound } from "lucide-react-native";
-import { ActionButton } from "@/components/ui/ActionButton";
-import { ErrorBanner } from "@/components/ui/ErrorBanner";
-import { SurfaceCard } from "@/components/ui/SurfaceCard";
-import { contrastOn, hexToRgba, useAppTheme } from "@/lib/theme";
-import { type as typeStyle } from "@/lib/typography";
-import { triggerHaptic } from "@/lib/haptics";
-import { SPRING_CONFIG, usePrefersReducedMotion } from "@/lib/animation";
-import { AdaptiveBlur } from "@/components/GlassView";
+} from "react-native"
+import { Image } from "expo-image"
+import { useServer, userMe, userStatus } from "@/lib/server-context"
+import { loginWithOAuth } from "@/lib/oauth"
+import { router } from "expo-router"
+import { useSafeAreaInsets } from "react-native-safe-area-context"
+import { Check, KeyRound } from "lucide-react-native"
+import { ActionButton } from "@/components/ui/ActionButton"
+import { ErrorBanner } from "@/components/ui/ErrorBanner"
+import { SurfaceCard } from "@/components/ui/SurfaceCard"
+import { contrastOn, hexToRgba, useAppTheme } from "@/lib/theme"
+import { type as typeStyle } from "@/lib/typography"
+import { triggerHaptic } from "@/lib/haptics"
+import { SPRING_CONFIG, usePrefersReducedMotion } from "@/lib/animation"
+import { AdaptiveBlur } from "@/components/GlassView"
 
-function AnimatedLogo({
-  scale,
-  opacity,
-}: {
-  scale: Animated.Value;
-  opacity: Animated.Value;
-}) {
+function AnimatedLogo({ scale, opacity }: { scale: Animated.Value; opacity: Animated.Value }) {
   return (
     <Animated.View
       style={{
@@ -53,7 +47,7 @@ function AnimatedLogo({
         accessibilityLabel="nikcli"
       />
     </Animated.View>
-  );
+  )
 }
 
 function AnimatedFormCard({
@@ -61,32 +55,28 @@ function AnimatedFormCard({
   opacity,
   children,
 }: {
-  translateY: Animated.Value;
-  opacity: Animated.Value;
-  children: React.ReactNode;
+  translateY: Animated.Value
+  opacity: Animated.Value
+  children: React.ReactNode
 }) {
-  return (
-    <Animated.View style={{ transform: [{ translateY }], opacity }}>
-      {children}
-    </Animated.View>
-  );
+  return <Animated.View style={{ transform: [{ translateY }], opacity }}>{children}</Animated.View>
 }
 
 function SuccessCheckmark({ visible }: { visible: boolean }) {
-  const { palette } = useAppTheme();
-  const prefersReducedMotion = usePrefersReducedMotion();
-  const scaleRef = useRef<Animated.Value | null>(null);
-  if (scaleRef.current === null) scaleRef.current = new Animated.Value(0.92);
-  const scale = scaleRef.current;
-  const opacityRef = useRef<Animated.Value | null>(null);
-  if (opacityRef.current === null) opacityRef.current = new Animated.Value(0);
-  const opacity = opacityRef.current;
+  const { palette } = useAppTheme()
+  const prefersReducedMotion = usePrefersReducedMotion()
+  const scaleRef = useRef<Animated.Value | null>(null)
+  if (scaleRef.current === null) scaleRef.current = new Animated.Value(0.92)
+  const scale = scaleRef.current
+  const opacityRef = useRef<Animated.Value | null>(null)
+  if (opacityRef.current === null) opacityRef.current = new Animated.Value(0)
+  const opacity = opacityRef.current
 
   useEffect(() => {
     if (prefersReducedMotion) {
-      scale.setValue(visible ? 1 : 0.92);
-      opacity.setValue(visible ? 1 : 0);
-      return;
+      scale.setValue(visible ? 1 : 0.92)
+      opacity.setValue(visible ? 1 : 0)
+      return
     }
 
     if (visible) {
@@ -100,7 +90,7 @@ function SuccessCheckmark({ visible }: { visible: boolean }) {
           duration: 200,
           useNativeDriver: true,
         }),
-      ]).start();
+      ]).start()
     } else {
       Animated.parallel([
         Animated.spring(scale, {
@@ -112,9 +102,9 @@ function SuccessCheckmark({ visible }: { visible: boolean }) {
           duration: 150,
           useNativeDriver: true,
         }),
-      ]).start();
+      ]).start()
     }
-  }, [visible, scale, opacity, prefersReducedMotion]);
+  }, [visible, scale, opacity, prefersReducedMotion])
 
   return (
     <Animated.View
@@ -144,51 +134,46 @@ function SuccessCheckmark({ visible }: { visible: boolean }) {
         <Check size={40} color={palette.success} strokeWidth={2.5} />
       </View>
     </Animated.View>
-  );
+  )
 }
 
 export default function LoginScreen() {
-  const { palette, isDark } = useAppTheme();
-  const prefersReducedMotion = usePrefersReducedMotion();
-  const { top, bottom } = useSafeAreaInsets();
-  const { config, setOAuthSession } = useServer();
+  const { palette, isDark } = useAppTheme()
+  const prefersReducedMotion = usePrefersReducedMotion()
+  const { top, bottom } = useSafeAreaInsets()
+  const { config, setOAuthSession } = useServer()
 
-  const [mode, setMode] = useState<"signin" | "signup">("signin");
-  const [checkingStatus, setCheckingStatus] = useState(true);
+  const [mode, setMode] = useState<"signin" | "signup">("signin")
+  const [checkingStatus, setCheckingStatus] = useState(true)
 
-  const [oauthLoading, setOauthLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState(false);
+  const [oauthLoading, setOauthLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const [success, setSuccess] = useState(false)
 
-  const logoScaleRef = useRef<Animated.Value | null>(null);
-  if (logoScaleRef.current === null)
-    logoScaleRef.current = new Animated.Value(0.96);
-  const logoScale = logoScaleRef.current;
-  const logoOpacityRef = useRef<Animated.Value | null>(null);
-  if (logoOpacityRef.current === null)
-    logoOpacityRef.current = new Animated.Value(0);
-  const logoOpacity = logoOpacityRef.current;
-  const formTranslateYRef = useRef<Animated.Value | null>(null);
-  if (formTranslateYRef.current === null)
-    formTranslateYRef.current = new Animated.Value(30);
-  const formTranslateY = formTranslateYRef.current;
-  const formOpacityRef = useRef<Animated.Value | null>(null);
-  if (formOpacityRef.current === null)
-    formOpacityRef.current = new Animated.Value(0);
-  const formOpacity = formOpacityRef.current;
-  const shakeAnimRef = useRef<Animated.Value | null>(null);
-  if (shakeAnimRef.current === null)
-    shakeAnimRef.current = new Animated.Value(0);
-  const shakeAnim = shakeAnimRef.current;
+  const logoScaleRef = useRef<Animated.Value | null>(null)
+  if (logoScaleRef.current === null) logoScaleRef.current = new Animated.Value(0.96)
+  const logoScale = logoScaleRef.current
+  const logoOpacityRef = useRef<Animated.Value | null>(null)
+  if (logoOpacityRef.current === null) logoOpacityRef.current = new Animated.Value(0)
+  const logoOpacity = logoOpacityRef.current
+  const formTranslateYRef = useRef<Animated.Value | null>(null)
+  if (formTranslateYRef.current === null) formTranslateYRef.current = new Animated.Value(30)
+  const formTranslateY = formTranslateYRef.current
+  const formOpacityRef = useRef<Animated.Value | null>(null)
+  if (formOpacityRef.current === null) formOpacityRef.current = new Animated.Value(0)
+  const formOpacity = formOpacityRef.current
+  const shakeAnimRef = useRef<Animated.Value | null>(null)
+  if (shakeAnimRef.current === null) shakeAnimRef.current = new Animated.Value(0)
+  const shakeAnim = shakeAnimRef.current
 
   useEffect(() => {
     if (!checkingStatus) {
       if (prefersReducedMotion) {
-        logoScale.setValue(1);
-        logoOpacity.setValue(1);
-        formTranslateY.setValue(0);
-        formOpacity.setValue(1);
-        return;
+        logoScale.setValue(1)
+        logoOpacity.setValue(1)
+        formTranslateY.setValue(0)
+        formOpacity.setValue(1)
+        return
       }
 
       Animated.stagger(80, [
@@ -216,34 +201,27 @@ export default function LoginScreen() {
           easing: Easing.out(Easing.cubic),
           useNativeDriver: true,
         }),
-      ]).start();
+      ]).start()
     }
-  }, [
-    checkingStatus,
-    formOpacity,
-    formTranslateY,
-    logoOpacity,
-    logoScale,
-    prefersReducedMotion,
-  ]);
+  }, [checkingStatus, formOpacity, formTranslateY, logoOpacity, logoScale, prefersReducedMotion])
 
   useEffect(() => {
-    if (!config) return;
-    setCheckingStatus(true);
+    if (!config) return
+    setCheckingStatus(true)
     userStatus(config.url)
       .then(({ hasUsers }) => {
         // A server without registered users starts on sign up.
-        setMode(hasUsers ? "signin" : "signup");
+        setMode(hasUsers ? "signin" : "signup")
       })
       .catch(() => setMode("signin"))
-      .finally(() => setCheckingStatus(false));
-  }, [config]);
+      .finally(() => setCheckingStatus(false))
+  }, [config])
 
   useEffect(() => {
     if (error) {
       if (prefersReducedMotion) {
-        shakeAnim.setValue(0);
-        return;
+        shakeAnim.setValue(0)
+        return
       }
 
       Animated.sequence([
@@ -277,41 +255,34 @@ export default function LoginScreen() {
           duration: 60,
           useNativeDriver: true,
         }),
-      ]).start();
+      ]).start()
     }
-  }, [error, prefersReducedMotion, shakeAnim]);
+  }, [error, prefersReducedMotion, shakeAnim])
 
   async function handleOAuth() {
-    if (!config) return;
-    setError(null);
-    setOauthLoading(true);
+    if (!config) return
+    setError(null)
+    setOauthLoading(true)
     try {
-      const tokens = await loginWithOAuth(config.authIssuer);
-      const user = await userMe(config.url, tokens.access);
-      setSuccess(true);
-      void triggerHaptic("success");
-      await setOAuthSession(tokens, user);
-      router.replace("/sessions");
+      const tokens = await loginWithOAuth(config.authIssuer)
+      const user = await userMe(config.url, tokens.access)
+      setSuccess(true)
+      void triggerHaptic("success")
+      await setOAuthSession(tokens, user)
+      router.replace("/sessions")
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : mode === "signup"
-            ? "Sign up failed"
-            : "Sign in failed",
-      );
-      void triggerHaptic("error");
+      setError(err instanceof Error ? err.message : mode === "signup" ? "Sign up failed" : "Sign in failed")
+      void triggerHaptic("error")
     } finally {
-      setOauthLoading(false);
+      setOauthLoading(false)
     }
   }
 
   function toggleMode() {
-    if (!prefersReducedMotion)
-      LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut);
-    setMode((current) => (current === "signin" ? "signup" : "signin"));
-    setError(null);
-    void triggerHaptic("selection");
+    if (!prefersReducedMotion) LayoutAnimation.configureNext(LayoutAnimation.Presets.easeInEaseOut)
+    setMode((current) => (current === "signin" ? "signup" : "signin"))
+    setError(null)
+    void triggerHaptic("selection")
   }
 
   if (checkingStatus) {
@@ -348,10 +319,10 @@ export default function LoginScreen() {
           <ActivityIndicator color={palette.accent} size="small" />
         </View>
       </View>
-    );
+    )
   }
 
-  const isSignup = mode === "signup";
+  const isSignup = mode === "signup"
 
   return (
     <KeyboardAvoidingView
@@ -391,9 +362,7 @@ export default function LoginScreen() {
             </Animated.View>
             <Animated.View style={{ opacity: logoOpacity, marginTop: 4 }}>
               <Text style={{ color: palette.muted, ...typeStyle(14) }}>
-                {isSignup
-                  ? "Create your account to get started"
-                  : "Sign in to your account"}
+                {isSignup ? "Create your account to get started" : "Sign in to your account"}
               </Text>
             </Animated.View>
           </View>
@@ -415,16 +384,12 @@ export default function LoginScreen() {
                     : "Continue securely in your browser with GitHub or an email code."}
                 </Text>
 
-                <Animated.View
-                  style={{ transform: [{ translateX: shakeAnim }] }}
-                >
+                <Animated.View style={{ transform: [{ translateX: shakeAnim }] }}>
                   {error ? <ErrorBanner message={error} /> : null}
                 </Animated.View>
 
                 <ActionButton
-                  label={
-                    isSignup ? "Sign up with Nikcli" : "Sign in with Nikcli"
-                  }
+                  label={isSignup ? "Sign up with Nikcli" : "Sign in with Nikcli"}
                   loading={oauthLoading}
                   onPress={handleOAuth}
                   disabled={oauthLoading || !config}
@@ -433,9 +398,7 @@ export default function LoginScreen() {
                 <Pressable
                   onPress={toggleMode}
                   accessibilityRole="button"
-                  accessibilityLabel={
-                    isSignup ? "Switch to sign in" : "Switch to sign up"
-                  }
+                  accessibilityLabel={isSignup ? "Switch to sign in" : "Switch to sign up"}
                   hitSlop={8}
                   style={({ pressed }) => ({
                     opacity: pressed ? 0.7 : 1,
@@ -486,8 +449,8 @@ export default function LoginScreen() {
               <SurfaceCard tone="panel">
                 <Pressable
                   onPress={() => {
-                    void triggerHaptic("selection");
-                    router.push("/connect");
+                    void triggerHaptic("selection")
+                    router.push("/connect")
                   }}
                   accessibilityRole="button"
                   accessibilityLabel="Connect with a host mobile token"
@@ -515,11 +478,7 @@ export default function LoginScreen() {
                         justifyContent: "center",
                       }}
                     >
-                      <KeyRound
-                        size={18}
-                        color={palette.accentLight}
-                        strokeWidth={2}
-                      />
+                      <KeyRound size={18} color={palette.accentLight} strokeWidth={2} />
                     </View>
                     <View style={{ flex: 1 }}>
                       <Text
@@ -537,8 +496,7 @@ export default function LoginScreen() {
                           ...typeStyle(12),
                         }}
                       >
-                        Pair with your host using an nkm_ token instead of an
-                        account
+                        Pair with your host using an nkm_ token instead of an account
                       </Text>
                     </View>
                   </View>
@@ -566,5 +524,5 @@ export default function LoginScreen() {
         <SuccessCheckmark visible={success} />
       </View>
     </KeyboardAvoidingView>
-  );
+  )
 }
