@@ -16,17 +16,6 @@ function getRemoteJwks(url: string) {
   return created
 }
 
-/**
- * The issuer moved from `*.nikcli-ai.dev` to `*.nikcli-ai.dev` with the same
- * signing keys; tokens minted under either hostname are this issuer's.
- * Mirrors `acceptedIssuers` in @nikcli-ai/auth.
- */
-function acceptedIssuers(issuer: string): string[] {
-  const legacy = issuer.replace(/\.nikcli-ai\.dev(?=[/:]|$)/, ".nikcli-ai.dev")
-  const current = issuer.replace(/\.nikcli\.store(?=[/:]|$)/, ".nikcli-ai.dev")
-  return [...new Set([issuer, current, legacy])]
-}
-
 export interface OauthContext {
   accountID: string
   email?: string
@@ -37,7 +26,7 @@ export async function verifyOauthToken(
   options: { issuer: string; audience: string; jwksUrl: string },
 ): Promise<OauthContext> {
   const verified = await jwtVerify(token, getRemoteJwks(options.jwksUrl), {
-    issuer: acceptedIssuers(options.issuer),
+    issuer: options.issuer,
     audience: options.audience,
     clockTolerance: 60,
     algorithms: ["ES256", "RS256", "EdDSA"],
