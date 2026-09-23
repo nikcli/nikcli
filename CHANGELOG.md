@@ -3,6 +3,21 @@
 <!-- UNRELEASED:START -->
 <!-- UNRELEASED:END -->
 
+## v1.392.0 (September 2026)
+
+## Core
+
+- Keep sign-in working across the nikcli.store -> nikcli-ai.dev move (@nikomatt69)
+
+**Thank you to 1 community contributor:**
+
+- @nikomatt69:
+  - fix(inference): verify oauth tokens against the configured issuer only
+  - chore(deploy): pin nikcli-ai.dev custom domains for web and function workers
+  - fix(inference-dashboard): bind static assets so unknown paths 404 instead of 500
+  - fix(identity): keep sign-in working across the nikcli.store -> nikcli-ai.dev move
+  - fix(identity): offer a current-host passkey to accounts that only have legacy ones
+
 ## v1.391.0 (September 2026)
 
 - No notable changes
