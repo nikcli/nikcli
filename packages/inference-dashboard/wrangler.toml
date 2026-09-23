@@ -7,6 +7,9 @@ routes = [{ pattern = "dashboard.nikcli-ai.dev", custom_domain = true }]
 
 [assets]
 directory = "./dist"
+# The Astro adapter serves 404s and static fallbacks through env.ASSETS; without
+# the binding every unknown path throws and answers 500.
+binding = "ASSETS"
 
 # Create with: bun run d1:create
 # Then replace database_id below with the value printed.
