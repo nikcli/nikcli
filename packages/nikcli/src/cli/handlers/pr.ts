@@ -61,7 +61,8 @@ export default Runtime.handler(Commands.commands["pr"], async (input) => {
           if (prInfo && prInfo.body) {
             const sessionMatch = prInfo.body.match(/https:\/\/(?:nikcli-ai\.dev|nikcli\.store)\/s\/([a-zA-Z0-9_-]+)/)
             if (sessionMatch) {
-              const sessionUrl = sessionMatch[0]
+              // Links from before the domain move point at nikcli.store; the share lives on nikcli-ai.dev.
+              const sessionUrl = `https://nikcli-ai.dev/s/${sessionMatch[1]}`
               UI.println(`Found nikcli session: ${sessionUrl}`)
               UI.println(`Importing session...`)
 
