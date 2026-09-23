@@ -18,6 +18,16 @@ function isInvalidRefreshToken(error: unknown): boolean {
   return value.code === "invalid_grant" || value.params?.error === "invalid_grant"
 }
 
+/**
+ * Issuer hosts from before the move to nikcli-ai.dev. A session stored under
+ * one of them would otherwise fail discovery forever: the issuer now names its
+ * new host, which is not the one we asked.
+ */
+const LEGACY_ISSUER_HOSTS: Record<string, string> = {
+  "auth.nikcli.store": "auth.nikcli-ai.dev",
+  "dev.auth.nikcli.store": "dev.auth.nikcli-ai.dev",
+}
+
 function normalizedIssuer(override?: string): string {
   const value = (override || process.env.EXPO_PUBLIC_NIKCLI_AUTH_ISSUER || DEFAULT_OAUTH_ISSUER)
     .trim()
@@ -33,6 +43,8 @@ function normalizedIssuer(override?: string): string {
     throw new Error("The OAuth issuer must use HTTPS (HTTP is allowed only for localhost)")
   }
   if (url.search || url.hash) throw new Error("The OAuth issuer URL cannot include a query or fragment")
+  const moved = LEGACY_ISSUER_HOSTS[url.hostname]
+  if (moved && url.protocol === "https:") return value.replace(url.host, moved)
   return value
 }
 

@@ -343,20 +343,42 @@ export async function finishGitHub(c: AppContext): Promise<Response> {
   }
 
   const callback = githubRedirectURI(c.env)
-  const exchange = await fetch("https://github.com/login/oauth/access_token", {
-    method: "POST",
-    headers: {
-      Accept: "application/json",
-      "Content-Type": "application/x-www-form-urlencoded",
-    },
-    body: new URLSearchParams({
-      client_id: c.env.GITHUB_CLIENT_ID,
-      client_secret: c.env.GITHUB_CLIENT_SECRET,
-      code,
-      redirect_uri: callback,
-    }),
-  })
+  const exchangeCode = () =>
+    fetch("https://github.com/login/oauth/access_token", {
+      method: "POST",
+      headers: {
+        Accept: "application/json",
+        "Content-Type": "application/x-www-form-urlencoded",
+        // github.com throttles anonymous clients on shared egress (every Worker
+        // leaves from Cloudflare's addresses) far harder than identified ones,
+        // and answered the exchange with a bare 429.
+        "User-Agent": "nikcli-identity",
+      },
+      body: new URLSearchParams({
+        client_id: c.env.GITHUB_CLIENT_ID,
+        client_secret: c.env.GITHUB_CLIENT_SECRET,
+        code,
+        redirect_uri: callback,
+      }),
+    })
+  let exchange = await exchangeCode()
+  if (exchange.status === 429) {
+    // A throttled exchange never consumed the code, so one retry is safe and
+    // saves the user a whole new round trip through github.com.
+    const retryAfter = Number(exchange.headers.get("retry-after"))
+    const wait = Number.isFinite(retryAfter) && retryAfter > 0 ? Math.min(retryAfter, 3) : 1
+    await new Promise((resolve) => setTimeout(resolve, wait * 1000))
+    exchange = await exchangeCode()
+  }
   if (!exchange.ok) {
+    console.error(
+      JSON.stringify({
+        message: "github token exchange failed",
+        path: c.req.path,
+        status: exchange.status,
+        retryAfter: exchange.headers.get("retry-after"),
+      }),
+    )
     return resultPage(
       c,
       "Sign-in failed",

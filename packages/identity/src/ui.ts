@@ -1,5 +1,6 @@
 import type { Context } from "hono"
 import type { ContentfulStatusCode } from "hono/utils/http-status"
+import { legacyIssuerHost } from "./constants"
 
 function escape(value: string): string {
   return value
@@ -104,10 +105,16 @@ export function loginPage(
       ? undefined
       : "Continue to the nikcli web app, Studio, or CLI without sharing a password. If this is your first time, your account will be created automatically after verification.")
   const note = `${notice}${explanation ? `<p>${escape(explanation)}</p>` : ""}`
+  // Shown by the script only after the first passkey prompt comes back empty:
+  // a passkey saved before the issuer moved hosts is bound to the old one.
+  const legacyHost = legacyIssuerHost(c.env.ISSUER)
+  const legacyButton = legacyHost
+    ? `<button type="button" class="secondary" id="passkey-legacy-btn" hidden>${keyIcon}Use a passkey saved on ${escape(legacyHost)}</button>`
+    : ""
   return page(
     c,
     lead ? "One more step" : "Sign in or create an account",
-    `${note}<div class="notice" id="passkey-error" hidden></div><div class="stack"><button type="button" id="passkey-btn">${keyIcon}Continue with passkey</button><a class="button secondary" href="/login/github?login_state=${encodeURIComponent(loginState)}">${nikcliMark}${githubIcon}Continue with GitHub</a><div class="or">or use email</div><form class="stack" method="post" action="/login/email/request"><input type="hidden" name="login_state" value="${escape(loginState)}"><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="email" inputmode="email" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="you@example.com" required><button type="submit">${mailIcon}Email me a code</button></form></div>`,
+    `${note}<div class="notice" id="passkey-error" hidden></div><div class="stack"><button type="button" id="passkey-btn">${keyIcon}Continue with passkey</button>${legacyButton}<a class="button secondary" href="/login/github?login_state=${encodeURIComponent(loginState)}">${nikcliMark}${githubIcon}Continue with GitHub</a><div class="or">or use email</div><form class="stack" method="post" action="/login/email/request"><input type="hidden" name="login_state" value="${escape(loginState)}"><label for="email">Email address</label><input id="email" name="email" type="email" autocomplete="email" inputmode="email" autocorrect="off" autocapitalize="off" spellcheck="false" placeholder="you@example.com" required><button type="submit">${mailIcon}Email me a code</button></form></div>`,
     status,
     "default",
     passkeyScript(loginState, "authenticate"),
@@ -146,6 +153,7 @@ function passkeyScript(loginState: string, mode: "authenticate" | "register"): s
   var loginState = ${JSON.stringify(loginState)};
   var mode = ${JSON.stringify(mode)};
   var authBtn = document.getElementById("passkey-btn");
+  var legacyBtn = document.getElementById("passkey-legacy-btn");
   var registerBtn = document.getElementById("passkey-register-btn");
   var skipBtn = document.getElementById("passkey-skip-btn");
   // No WebAuthn at all: an older browser, a webview, a hardened profile. The
@@ -231,8 +239,8 @@ function passkeyScript(loginState: string, mode: "authenticate" | "register"): s
     }
     return data;
   }
-  async function authenticate() {
-    var options = await postJSON("/login/passkey/authentication/options", { login_state: loginState });
+  async function authenticate(legacy) {
+    var options = await postJSON("/login/passkey/authentication/options", { login_state: loginState, legacy: legacy === true });
     var assertion = await navigator.credentials.get({
       publicKey: {
         challenge: b64urlToBuf(options.challenge),
@@ -276,10 +284,10 @@ function passkeyScript(loginState: string, mode: "authenticate" | "register"): s
       credential: credentialToJSON(attestation)
     }));
   }
-  async function run(action, button) {
+  async function run(action, button, legacy) {
     if (button) button.disabled = true;
     try {
-      await action();
+      await action(legacy);
     } catch (error) {
       if (button) button.disabled = false;
       var name = error && error.name;
@@ -300,11 +308,24 @@ function passkeyScript(loginState: string, mode: "authenticate" | "register"): s
       // only while signing in: enrollment has a visible "Not now" beside it.
       if (name === "NotAllowedError") {
         if (mode === "authenticate") {
+          // The first prompt only lists passkeys for the current host, so one
+          // saved before the move looks exactly like "no passkey" here.
+          if (legacyBtn && !legacy) legacyBtn.hidden = false;
           showNote(
-            "No passkey was used. If this device does not have one for nikcli, continue with GitHub or an email code below — you can save a passkey here afterwards.",
+            legacyBtn && !legacy
+              ? "No passkey was used. If you saved yours before nikcli moved to nikcli-ai.dev, use the button below; otherwise continue with GitHub or an email code — you can save a passkey here afterwards."
+              : "No passkey was used. If this device does not have one for nikcli, continue with GitHub or an email code below — you can save a passkey here afterwards.",
             true
           );
         }
+        return;
+      }
+      // Related Origin Requests are what let this origin use a passkey bound
+      // to the old host; a browser without them refuses the RP ID outright.
+      if (name === "SecurityError" && legacy) {
+        showError(
+          "This browser cannot use a passkey saved before nikcli moved to nikcli-ai.dev. Continue with GitHub or an email code below, then save a new passkey."
+        );
         return;
       }
       if (name === "AbortError") return;
@@ -315,7 +336,10 @@ function passkeyScript(loginState: string, mode: "authenticate" | "register"): s
     }
   }
   if (mode === "authenticate" && authBtn) {
-    authBtn.addEventListener("click", function () { run(authenticate, authBtn); });
+    authBtn.addEventListener("click", function () { run(authenticate, authBtn, false); });
+  }
+  if (mode === "authenticate" && legacyBtn) {
+    legacyBtn.addEventListener("click", function () { run(authenticate, legacyBtn, true); });
   }
   if (mode === "register" && registerBtn) {
     registerBtn.addEventListener("click", function () { run(register, registerBtn); });

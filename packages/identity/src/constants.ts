@@ -72,12 +72,41 @@ export const SIGNING_KEY_ROTATION_SECONDS = 30 * 24 * 60 * 60
 export const RETIRED_KEY_PUBLICATION_SECONDS = 24 * 60 * 60
 export const MAX_FORM_BYTES = 16 * 1024
 
+/**
+ * Issuer hostnames from before the move to nikcli-ai.dev, keyed by the host that
+ * replaced them. Both stay attached to this Worker (wrangler.jsonc) because the
+ * old name is baked into places a deploy cannot reach:
+ *
+ * - Every CLI, desktop and mobile install signed in before the move stored
+ *   `https://auth.nikcli.store` as its account URL and refreshes against it.
+ *   Dropping the host logged them all out with a DNS error instead of a 401.
+ * - Passkeys are bound to the RP ID they were created under, which was the
+ *   issuer hostname. They can still be used from the new origin through
+ *   WebAuthn Related Origin Requests, which the legacy host has to answer
+ *   (`/.well-known/webauthn`).
+ */
+export const LEGACY_ISSUER_HOSTS: Readonly<Record<string, string>> = {
+  "auth.nikcli-ai.dev": "auth.nikcli.store",
+  "dev.auth.nikcli-ai.dev": "dev.auth.nikcli.store",
+}
+
+export function legacyIssuerHost(issuer: string): string | undefined {
+  return LEGACY_ISSUER_HOSTS[new URL(issuer).hostname]
+}
+
 export const CLIENTS = {
   nikcli: ["loopback"],
   "nikcli-desktop": ["nikcli://auth/callback"],
   "nikcli-mobile": ["nikcli://auth/callback"],
-  "nikcli-studio": ["https://nikcli-ai.dev/dashboard/callback"],
-  "nikcli-web": ["https://nikcli-ai.dev/dashboard/callback", "https://nikcli-ai.dev/user/callback"],
+  // nikcli-web still serves nikcli.store as well (packages/web/wrangler.toml) and
+  // builds its redirect from whichever origin the page was loaded on.
+  "nikcli-studio": ["https://nikcli-ai.dev/dashboard/callback", "https://nikcli.store/dashboard/callback"],
+  "nikcli-web": [
+    "https://nikcli-ai.dev/dashboard/callback",
+    "https://nikcli-ai.dev/user/callback",
+    "https://nikcli.store/dashboard/callback",
+    "https://nikcli.store/user/callback",
+  ],
   // `https://nikcli-ai.dev/api/auth/callback` used to be listed here too and was
   // removed: nikcli-ai.dev serves no such route, so approving a sign-in aimed at
   // it landed the user on a 404 page with their authorization code in the URL.

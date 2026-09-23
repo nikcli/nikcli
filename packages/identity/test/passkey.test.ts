@@ -154,6 +154,56 @@ describe("passkey authentication options", () => {
     expect((body.challenge as string).length).toBeGreaterThan(8)
     expect(body.rpId).toBe("auth.nikcli-ai.dev")
   })
+
+  test("asks for a passkey bound to the legacy issuer host on request", async () => {
+    const kit = fixture()
+    const page = await kit.get(authorizePath()).then((r) => r.text())
+    expect(page).toContain('id="passkey-legacy-btn" hidden')
+    const response = await kit.postJSON("/login/passkey/authentication/options", {
+      login_state: loginStateOf(page),
+      legacy: true,
+    })
+    expect(response.status).toBe(200)
+    expect(((await response.json()) as { rpId?: unknown }).rpId).toBe("auth.nikcli.store")
+  })
+})
+
+describe("legacy issuer host", () => {
+  test("names the current origin as related for WebAuthn", async () => {
+    const kit = fixture()
+    const served = await app.fetch(new Request("https://auth.nikcli.store/.well-known/webauthn"), kit.env)
+    expect(served.status).toBe(200)
+    expect((await served.json()) as unknown).toEqual({ origins: ["https://auth.nikcli-ai.dev"] })
+  })
+
+  test("sends browser pages to the current issuer host", async () => {
+    const kit = fixture()
+    const response = await app.fetch(new Request(`https://auth.nikcli.store${authorizePath()}`), kit.env)
+    expect(response.status).toBe(308)
+    expect(response.headers.get("location")).toBe(`https://auth.nikcli-ai.dev${authorizePath()}`)
+  })
+
+  test("keeps serving the endpoints installed clients call directly", async () => {
+    const kit = fixture()
+    const discovery = await app.fetch(
+      new Request("https://auth.nikcli.store/.well-known/oauth-authorization-server"),
+      kit.env,
+    )
+    expect(discovery.status).toBe(200)
+    expect(((await discovery.json()) as { issuer: string }).issuer).toBe("https://auth.nikcli-ai.dev")
+
+    const refresh = await app.fetch(
+      new Request("https://auth.nikcli.store/oauth/token", {
+        method: "POST",
+        headers: { "content-type": "application/x-www-form-urlencoded" },
+        body: new URLSearchParams({ grant_type: "refresh_token", refresh_token: "unknown", client_id: "nikcli" }),
+      }),
+      kit.env,
+    )
+    // Reaches the token endpoint (rejects the unknown token) instead of redirecting.
+    expect(refresh.status).toBe(400)
+    expect(((await refresh.json()) as { error: string }).error).toBe("invalid_grant")
+  })
 })
 
 describe("passkey skip after first-factor offer", () => {

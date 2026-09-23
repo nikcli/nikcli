@@ -6,6 +6,8 @@ import {
   DEVICE_POLL_INTERVAL_SECONDS,
   isAllowedRedirect,
   isClientID,
+  LEGACY_ISSUER_HOSTS,
+  legacyIssuerHost,
 } from "./constants"
 import { randomDigits, randomToken, secureEqual, sha256 } from "./crypto"
 import {
@@ -55,6 +57,7 @@ function formRecord(form: URLSearchParams): Record<string, string> {
 const allowedOrigins = new Set([
   "https://nikcli-ai.dev",
   "https://console.nikcli-ai.dev",
+  "https://nikcli.store",
   "tauri://localhost",
   "http://tauri.localhost",
 ])
@@ -72,9 +75,28 @@ app.use(
 
 app.use("*", async (c, next) => {
   await next()
-  if (c.req.path !== "/.well-known/jwks.json") noStore(c.res)
+  if (c.req.path !== "/.well-known/jwks.json" && c.req.path !== "/.well-known/webauthn") noStore(c.res)
   c.res.headers.set("X-Content-Type-Options", "nosniff")
   c.res.headers.set("Referrer-Policy", "no-referrer")
+})
+
+/**
+ * A legacy issuer host (see LEGACY_ISSUER_HOSTS) keeps answering the endpoints
+ * installed clients call directly — token, device, userinfo, revoke and the
+ * well-known documents — but sends browser pages to the current issuer, so new
+ * sign-ins, passkey ceremonies and GitHub callbacks all run on one origin.
+ */
+const legacyHosts = new Set(Object.values(LEGACY_ISSUER_HOSTS))
+
+app.use("*", async (c, next) => {
+  const url = new URL(c.req.url)
+  const isPage = c.req.method === "GET" || c.req.method === "HEAD"
+  const isAPI = url.pathname.startsWith("/.well-known/") || url.pathname === "/userinfo" || url.pathname === "/health"
+  if (!legacyHosts.has(url.hostname) || !isPage || isAPI) return next()
+  const issuer = new URL(c.env.ISSUER)
+  url.protocol = issuer.protocol
+  url.host = issuer.host
+  return c.redirect(url.toString(), 308)
 })
 
 app.onError((error, c) => {
@@ -353,6 +375,17 @@ app.get("/.well-known/oauth-authorization-server", (c) =>
     access_token_ttl: ACCESS_TTL_SECONDS,
   }),
 )
+
+/**
+ * WebAuthn Related Origin Requests: lets the current issuer origin use passkeys
+ * whose RP ID is the legacy issuer host. The browser fetches this from the RP ID
+ * host, so it matters on the legacy host and is harmless on the current one.
+ */
+app.get("/.well-known/webauthn", (c) => {
+  if (!legacyIssuerHost(c.env.ISSUER)) return c.notFound()
+  c.header("Cache-Control", "public, max-age=3600")
+  return c.json({ origins: [new URL(c.env.ISSUER).origin] })
+})
 
 app.get("/.well-known/nikcli/issuer", (c) => c.text(c.env.ISSUER))
 app.get("/.well-known/nikcli", (c) =>

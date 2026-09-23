@@ -784,6 +784,53 @@ describe("GitHub OAuth callback (/callback/github)", () => {
     }
   })
 
+  test("identifies itself and retries a throttled token exchange once", async () => {
+    const target = env({ DB: permissiveDb() })
+    const loginState = await bootstrapLoginState(target)
+    let exchanges = 0
+    const stub = stubFetch((call) => {
+      if (call.url === "https://github.com/login/oauth/access_token") {
+        exchanges++
+        if (exchanges === 1) return new Response("", { status: 429, headers: { "retry-after": "1" } })
+        return new Response(JSON.stringify({ access_token: "gho_test" }), {
+          status: 200,
+          headers: { "content-type": "application/json" },
+        })
+      }
+      return new Response("forbidden", { status: 403 })
+    })
+    try {
+      await app.fetch(
+        new Request(`https://auth.nikcli-ai.dev/callback/github?code=abc&state=${encodeURIComponent(loginState)}`),
+        target,
+      )
+      const exchangeCalls = stub.calls.filter((call) => call.url === "https://github.com/login/oauth/access_token")
+      expect(exchangeCalls).toHaveLength(2)
+      expect(new Headers(exchangeCalls[0].init?.headers).get("user-agent")).toBe("nikcli-identity")
+      // Past the exchange: the retry's token reached the profile calls.
+      expect(stub.calls.map((c) => c.url)).toContain("https://api.github.com/user")
+    } finally {
+      stub.restore()
+    }
+  })
+
+  test("reports a token exchange that stays throttled", async () => {
+    const target = env({ DB: permissiveDb() })
+    const loginState = await bootstrapLoginState(target)
+    const stub = stubFetch(() => new Response("", { status: 429, headers: { "retry-after": "1" } }))
+    try {
+      const response = await app.fetch(
+        new Request(`https://auth.nikcli-ai.dev/callback/github?code=abc&state=${encodeURIComponent(loginState)}`),
+        target,
+      )
+      expect(response.status).toBe(502)
+      expect(await response.text()).toContain("GitHub rejected the authorization code (429)")
+      expect(stub.calls).toHaveLength(2)
+    } finally {
+      stub.restore()
+    }
+  })
+
   test("returns 502 with the actual upstream status when the /user API fails", async () => {
     const target = env({ DB: permissiveDb() })
     const loginState = await bootstrapLoginState(target)

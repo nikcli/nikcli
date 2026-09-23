@@ -11,7 +11,12 @@ import type {
 } from "@simplewebauthn/server"
 import { isoBase64URL } from "@simplewebauthn/server/helpers"
 import type { Context } from "hono"
-import { PASSKEY_AUTH_LIMIT, PASSKEY_AUTH_WINDOW_SECONDS, PASSKEY_CHALLENGE_TTL_SECONDS } from "./constants"
+import {
+  legacyIssuerHost,
+  PASSKEY_AUTH_LIMIT,
+  PASSKEY_AUTH_WINDOW_SECONDS,
+  PASSKEY_CHALLENGE_TTL_SECONDS,
+} from "./constants"
 import { createID } from "./crypto"
 import { getAccount, getPasskeyByCredentialID, insertPasskey, listPasskeys, updatePasskeyCounter } from "./database"
 import { HttpError, readForm, readJson, requestIP } from "./http"
@@ -43,10 +48,14 @@ function offerKey(loginState: string): string {
   return `passkey-offer:${loginState}`
 }
 
-function relyingParty(env: Env): { rpID: string; rpName: string; expectedOrigin: string } {
+function relyingParty(env: Env): { rpID: string; legacyRPID?: string; rpName: string; expectedOrigin: string } {
   const issuer = new URL(env.ISSUER)
   return {
     rpID: issuer.hostname,
+    // Passkeys created before the issuer moved hosts. New ones are always
+    // registered under `rpID`; these can only be asserted, via Related Origin
+    // Requests (`/.well-known/webauthn` on the legacy host).
+    legacyRPID: legacyIssuerHost(env.ISSUER),
     rpName: "nikcli",
     expectedOrigin: issuer.origin,
   }
@@ -125,11 +134,13 @@ function webAuthnCredential(row: PasskeyRow) {
 
 export async function passkeyAuthenticationOptions(c: AppContext): Promise<Response> {
   await consumePasskeyAuthLimit(c)
-  const loginState = requireLoginState(await readJson(c.req.raw))
+  const body = await readJson(c.req.raw)
+  const loginState = requireLoginState(body)
   await requireIntent(c, loginState)
-  const { rpID } = relyingParty(c.env)
+  const { rpID, legacyRPID } = relyingParty(c.env)
+  if (body.legacy === true && !legacyRPID) throw new HttpError(400, "No legacy passkey domain")
   const options = await generateAuthenticationOptions({
-    rpID,
+    rpID: body.legacy === true ? legacyRPID! : rpID,
     userVerification: "preferred",
     allowCredentials: [],
   })
@@ -152,7 +163,7 @@ export async function passkeyAuthenticationVerify(c: AppContext): Promise<Respon
   const passkey = await getPasskeyByCredentialID(c.env.DB, response.id)
   if (!passkey) throw new HttpError(400, "Unknown passkey")
 
-  const { rpID, expectedOrigin } = relyingParty(c.env)
+  const { rpID, legacyRPID, expectedOrigin } = relyingParty(c.env)
   let verified = false
   let newCounter = passkey.sign_count
   try {
@@ -160,7 +171,7 @@ export async function passkeyAuthenticationVerify(c: AppContext): Promise<Respon
       response,
       expectedChallenge: challenge,
       expectedOrigin,
-      expectedRPID: rpID,
+      expectedRPID: legacyRPID ? [rpID, legacyRPID] : rpID,
       credential: webAuthnCredential(passkey),
       requireUserVerification: false,
     })
