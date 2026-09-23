@@ -20,7 +20,7 @@ import {
 import { createID } from "./crypto"
 import { getAccount, getPasskeyByCredentialID, insertPasskey, listPasskeys, updatePasskeyCounter } from "./database"
 import { HttpError, readForm, readJson, requestIP } from "./http"
-import { completeLogin, finalizeLogin, loadLoginIntent } from "./login"
+import { completeLogin, finalizeLogin, hasCurrentPasskey, loadLoginIntent, storePasskeyOffer } from "./login"
 import { consumeRateLimit } from "./rate-limit"
 import type { PasskeyOffer, PasskeyRow } from "./types"
 
@@ -166,6 +166,7 @@ export async function passkeyAuthenticationVerify(c: AppContext): Promise<Respon
   const { rpID, legacyRPID, expectedOrigin } = relyingParty(c.env)
   let verified = false
   let newCounter = passkey.sign_count
+  let assertedRPID = rpID
   try {
     const result = await verifyAuthenticationResponse({
       response,
@@ -177,6 +178,7 @@ export async function passkeyAuthenticationVerify(c: AppContext): Promise<Respon
     })
     verified = result.verified
     newCounter = result.authenticationInfo.newCounter
+    assertedRPID = result.authenticationInfo.rpID
   } catch {
     throw new HttpError(400, "Passkey verification failed")
   }
@@ -190,6 +192,13 @@ export async function passkeyAuthenticationVerify(c: AppContext): Promise<Respon
   if (!owner || owner.disabled_at !== null) throw new HttpError(400, "Passkey verification failed")
 
   await updatePasskeyCounter(c.env.DB, passkey.credential_id, newCounter, Date.now())
+  // Signed in with a passkey bound to the legacy host: offer one for this host
+  // before finishing, so the account stops depending on Related Origin Requests
+  // (and on the old host staying attached) the next time.
+  if (legacyRPID && assertedRPID === legacyRPID && !(await hasCurrentPasskey(c.env, passkey.account_id))) {
+    await storePasskeyOffer(c.env, loginState, passkey.account_id)
+    return c.json({ offer: true })
+  }
   return loginResultJson(c, await finalizeLogin(c, loginState, passkey.account_id))
 }
 
@@ -273,6 +282,7 @@ export async function passkeyRegistrationVerify(c: AppContext): Promise<Response
       user_handle: offer.accountID,
       created_at: now,
       last_used_at: null,
+      rp_id: rpID,
     })
     // Already registered to somebody else. Signing in here would hand this
     // session a passkey that authenticates as a different account, so the

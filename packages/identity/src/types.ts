@@ -86,6 +86,8 @@ export type PasskeyRow = {
   user_handle: string
   created_at: number
   last_used_at: number | null
+  /** NULL: saved before the column existed, under the pre-move issuer host. */
+  rp_id: string | null
 }
 
 export type PasskeyOffer = {

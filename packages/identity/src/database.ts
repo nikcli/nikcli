@@ -290,7 +290,7 @@ export async function getPasskeyByCredentialID(db: D1Database, credentialID: str
 export async function insertPasskey(db: D1Database, row: PasskeyRow): Promise<"inserted" | "already" | "conflict"> {
   const result = await db
     .prepare(
-      "INSERT OR IGNORE INTO passkeys (id, account_id, credential_id, public_key, sign_count, transports, backed_up, device_type, user_handle, created_at, last_used_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT OR IGNORE INTO passkeys (id, account_id, credential_id, public_key, sign_count, transports, backed_up, device_type, user_handle, created_at, last_used_at, rp_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     )
     .bind(
       row.id,
@@ -304,6 +304,7 @@ export async function insertPasskey(db: D1Database, row: PasskeyRow): Promise<"i
       row.user_handle,
       row.created_at,
       row.last_used_at,
+      row.rp_id,
     )
     .run()
   if (changes(result) === 1) return "inserted"
@@ -323,10 +324,20 @@ export async function updatePasskeyCounter(
     .run()
 }
 
-export async function countPasskeys(db: D1Database, accountID: string): Promise<number> {
+/**
+ * Passkeys the account can use under `rpID`. A row without an RP ID was saved
+ * before the column existed: under the legacy issuer host when there is one,
+ * otherwise under the only host there has ever been.
+ */
+export async function countPasskeys(
+  db: D1Database,
+  accountID: string,
+  rpID: string,
+  unlabelledIsCurrent: boolean,
+): Promise<number> {
   const row = await db
-    .prepare("SELECT COUNT(*) AS n FROM passkeys WHERE account_id = ?")
-    .bind(accountID)
+    .prepare("SELECT COUNT(*) AS n FROM passkeys WHERE account_id = ? AND (rp_id = ? OR (? = 1 AND rp_id IS NULL))")
+    .bind(accountID, rpID, unlabelledIsCurrent ? 1 : 0)
     .first<{ n: number }>()
   return row?.n ?? 0
 }

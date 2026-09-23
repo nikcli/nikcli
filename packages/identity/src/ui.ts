@@ -214,6 +214,10 @@ function passkeyScript(loginState: string, mode: "authenticate" | "register"): s
     return json;
   }
   function finish(result) {
+    if (result && result.offer) {
+      location.assign("/login/passkey/offer?login_state=" + encodeURIComponent(loginState));
+      return;
+    }
     if (result && result.redirect) {
       location.assign(result.redirect);
       return;

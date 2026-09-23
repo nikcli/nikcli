@@ -340,6 +340,66 @@ describe("passkey enrollment edge cases", () => {
   })
 })
 
+describe("passkey offer across the issuer move", () => {
+  async function emailSignIn(kit: ReturnType<typeof fixture>) {
+    const loginState = loginStateOf(await kit.get(authorizePath()).then((r) => r.text()))
+    await kit.postForm("/login/email/request", { login_state: loginState, email: "user@example.com" })
+    const response = await kit.postForm("/login/email/verify", {
+      login_state: loginState,
+      code: codeOf(kit.sent.at(-1)!),
+    })
+    return { loginState, response }
+  }
+
+  async function savePasskey(kit: ReturnType<typeof fixture>, credentialID: string, rpID: string | null) {
+    const account = await kit.db
+      .prepare("SELECT id FROM accounts WHERE email = ?")
+      .bind("user@example.com")
+      .first<{ id: string }>()
+    await kit.db
+      .prepare(
+        "INSERT INTO passkeys (id, account_id, credential_id, public_key, user_handle, created_at, rp_id) VALUES (?, ?, ?, ?, ?, ?, ?)",
+      )
+      .bind(`pk_${credentialID}`, account!.id, credentialID, "key", account!.id, Date.now(), rpID)
+      .run()
+  }
+
+  test("still offers a passkey to an account that only has one from the legacy host", async () => {
+    const kit = fixture()
+    const first = await emailSignIn(kit)
+    expect(await first.response.text()).toContain("Save a passkey")
+    await kit.postForm("/login/passkey/skip", { login_state: first.loginState })
+
+    await savePasskey(kit, "legacy-cred", null)
+    const second = await emailSignIn(kit)
+    expect(second.response.status).toBe(200)
+    expect(await second.response.text()).toContain("Save a passkey")
+  })
+
+  test("completes without an offer once the account has a passkey for the current host", async () => {
+    const kit = fixture()
+    const first = await emailSignIn(kit)
+    await kit.postForm("/login/passkey/skip", { login_state: first.loginState })
+
+    await savePasskey(kit, "current-cred", "auth.nikcli-ai.dev")
+    const second = await emailSignIn(kit)
+    expect(second.response.status).toBe(302)
+    expect(second.response.headers.get("location")).toStartWith("nikcli://auth/callback?")
+  })
+
+  test("serves a stored offer and answers a missing one like a stale sign-in", async () => {
+    const kit = fixture()
+    const { loginState } = await emailSignIn(kit)
+    const offered = await kit.get(`/login/passkey/offer?login_state=${encodeURIComponent(loginState)}`)
+    expect(offered.status).toBe(200)
+    expect(await offered.text()).toContain("Save a passkey")
+
+    const missing = await kit.get("/login/passkey/offer?login_state=never-issued")
+    expect(missing.status).toBe(400)
+    expect(await missing.text()).toContain("Session expired")
+  })
+})
+
 describe("passkey authentication verify", () => {
   test("returns 400 for a junk credential", async () => {
     const kit = fixture()
