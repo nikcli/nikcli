@@ -3,6 +3,17 @@ main = "src/api.ts"
 compatibility_date = "2025-01-25"
 compatibility_flags = ["nodejs_compat"]
 
+# Deploys replace every Custom Domain on this Worker with the list below.
+# api.nikcli.store stays attached for released CLIs and GitHub Actions pinned
+# to the old API_BASE_URL.
+[[routes]]
+pattern = "api.nikcli-ai.dev"
+custom_domain = true
+
+[[routes]]
+pattern = "api.nikcli.store"
+custom_domain = true
+
 # Public web origin used to build share URLs (override per environment).
 [vars]
 WEB_DOMAIN = "nikcli-ai.dev"

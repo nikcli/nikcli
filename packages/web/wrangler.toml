@@ -2,6 +2,17 @@ name = "nikcli-web"
 main = "./dist/_worker.js"
 compatibility_date = "2025-01-25"
 
+# Deploys replace every Custom Domain on this Worker with the list below, so it
+# is the whole set: nikcli-ai.dev is canonical, nikcli.store stays attached for
+# installs that still fetch /install, /changelog.json and share pages from it.
+[[routes]]
+pattern = "nikcli-ai.dev"
+custom_domain = true
+
+[[routes]]
+pattern = "nikcli.store"
+custom_domain = true
+
 [vars]
 NIKCLI_AUTH_SERVER = "https://s.nikcli-ai.dev"
 # Docs support assistant (/api/docs-assistant). Any Workers AI text-generation
