@@ -82,3 +82,26 @@ Add transitive boundary/host characterization checks first; clarify capabilities
 critical path and introduce plugin-generation revocation. Reuse existing interfaces and minimize new modules. Roll back
 lazy imports or reload activation behind the same host API, not the extracted-package boundary or permission controls.
 Keep standalone limitations explicit rather than shipping placeholders to match embedded features.
+
+## Aggregate Shutdown Budget — 2026-09-24
+
+Requirement 7 asked for a total shutdown budget as well as the per-plugin one, and there was none.
+`TuiPluginRuntime.dispose()` in `packages/tui/src/plugin/runtime.ts` walks the plugins newest-first and awaits each
+scope's `dispose()`, and each scope waits up to `DISPOSE_TIMEOUT_MS` (5 s) on its own cleanups. Sequential, so exit
+waited up to five seconds **per** wedged plugin: the "sequential sum of many 5-second waits" the requirement names.
+
+Now one deadline, `SHUTDOWN_BUDGET_MS` (5 s, the candidate value above), is computed once per shutdown and handed to
+every scope. A scope waits no longer than its own budget and no later than the shared deadline. The order is
+unchanged, and so is the property `test/tui/plugin-dispose.test.ts` already guarded: every cleanup is still
+**invoked**, including after the budget is spent, because `runCleanup` calls the callback before it races the timer —
+a spent budget skips the wait, never the host's synchronous deregistrations. Crossing the deadline is logged; a
+timed-out cleanup is reported per plugin as before and never claimed as terminated.
+
+Not changed: cleanups still run one at a time rather than with bounded concurrency, and the two awaits `dispose()`
+makes before the loop (the load task and the reload chain) are still unbounded. Plugin reload and enable/disable keep
+the per-plugin budget only, since they dispose one plugin at a time.
+
+`test/tui/plugin-dispose.test.ts` disposes four scopes that each hold a hung cleanup under one 150 ms deadline and
+bounds the whole pass below 600 ms, asserting all four host deregistrations ran. Ignoring the deadline in the scope
+fails it at 1215 ms. A source assertion pins that the runtime computes the deadline once and passes the same value to
+every plugin, since `TuiPluginRuntime.dispose` needs a live host to reach.

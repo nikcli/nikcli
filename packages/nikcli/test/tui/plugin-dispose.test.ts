@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test"
+import path from "node:path"
 import { createPluginScope } from "@tui/plugin/runtime"
+import { TUI_SRC } from "./tui-source"
 
 /**
  * Dispose order is the whole point of this file.
@@ -102,5 +104,48 @@ describe("plugin scope dispose", () => {
       await s.dispose()
       expect(ran).toEqual(["cleanup"])
     }
+  })
+
+  test("a shared deadline bounds several wedged plugins together, not one budget each", async () => {
+    // Shutdown disposes plugins one after another. With only the per-plugin
+    // budget, four wedged plugins held exit for four budgets.
+    const ran: string[] = []
+    const scopes = Array.from({ length: 4 }, (_, index) => {
+      const s = scope(300)
+      s.lifecycle.onDispose(() => {
+        ran.push(`host-unregister-${index}`)
+      })
+      s.lifecycle.onDispose(() => new Promise<void>(() => {}))
+      return s
+    })
+
+    const started = performance.now()
+    const deadline = Date.now() + 150
+    for (const s of scopes) await s.dispose(deadline)
+    const elapsed = performance.now() - started
+
+    // One shared budget plus scheduling slack — far below 4 x 300 ms.
+    expect(elapsed).toBeLessThan(600)
+    // Spending the budget skips the wait, never the host's deregistrations.
+    expect(ran).toEqual(["host-unregister-0", "host-unregister-1", "host-unregister-2", "host-unregister-3"])
+  })
+
+  test("a deadline further out than the scope's own budget does not extend it", async () => {
+    const s = scope(20)
+    s.lifecycle.onDispose(() => new Promise<void>(() => {}))
+    const started = performance.now()
+    await s.dispose(Date.now() + 60_000)
+    expect(performance.now() - started).toBeLessThan(1_000)
+  })
+
+  test("runtime shutdown hands every plugin the same deadline", async () => {
+    // Pinned against the source because `TuiPluginRuntime.dispose` needs a live
+    // host to reach; the scope behaviour it relies on is covered above.
+    const src = await Bun.file(path.join(TUI_SRC, "plugin/runtime.ts")).text()
+    const body = src.slice(src.indexOf("export async function dispose()"))
+    const deadline = body.indexOf("const deadline = Date.now() + SHUTDOWN_BUDGET_MS")
+    const loop = body.indexOf("await deactivatePluginEntry(state, plugin, false, deadline)")
+    expect(deadline).toBeGreaterThan(-1)
+    expect(loop).toBeGreaterThan(deadline)
   })
 })

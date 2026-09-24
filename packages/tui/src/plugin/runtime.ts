@@ -82,7 +82,8 @@ type Api = HostPluginApi
 type PluginScope = {
   lifecycle: TuiPluginApi["lifecycle"]
   track: (fn: (() => void) | undefined) => () => void
-  dispose: () => Promise<void>
+  /** `deadline` is an epoch-ms budget shared across scopes disposed together. */
+  dispose: (deadline?: number) => Promise<void>
 }
 
 type PluginEntry = {
@@ -122,6 +123,19 @@ type RuntimeState = {
 
 const log = Log.create({ service: "tui.plugin" })
 const DISPOSE_TIMEOUT_MS = 5000
+
+/**
+ * How long shutting the runtime down may wait on plugin cleanups, in total.
+ *
+ * `DISPOSE_TIMEOUT_MS` bounds one plugin. Plugins are disposed one after the
+ * other, so on its own that made exit wait up to five seconds *per* wedged
+ * plugin. `specs/effect-tui/08-host-plugins-startup.md` requirement 7 asks for an
+ * aggregate budget as well; this is its candidate value. Once it is spent the
+ * remaining plugins are still disposed — every cleanup is still invoked, and the
+ * synchronous host deregistrations still complete — they are only no longer
+ * waited on. Timed-out cleanups are reported, never claimed as terminated.
+ */
+const SHUTDOWN_BUDGET_MS = 5000
 const KV_KEY = "plugin_enabled"
 
 function fail(message: string, data: Record<string, unknown>) {
@@ -421,13 +435,18 @@ export function createPluginScope(load: PluginLoad, id: string, timeoutMs = DISP
     onDispose,
   }
 
-  const dispose = async () => {
+  /**
+   * `deadline` (epoch ms) is a budget shared with other scopes being disposed in
+   * the same pass: this scope waits no longer than its own `timeoutMs`, and no
+   * later than the deadline.
+   */
+  const dispose = async (deadline?: number) => {
     if (done) return
     done = true
     ctrl.abort()
     const queue = [...list].reverse()
     list = []
-    const until = Date.now() + timeoutMs
+    const until = Math.min(Date.now() + timeoutMs, deadline ?? Number.POSITIVE_INFINITY)
     // The queue holds the host's own deregistrations (commands, routes, event
     // listeners, the plugin host entry) alongside the plugin's callbacks, and
     // it is walked newest-first — so stopping at the first hung or throwing
@@ -521,13 +540,13 @@ function listPluginStatus(state: RuntimeState): TuiPluginStatus[] {
   return tuiPlugins
 }
 
-async function deactivatePluginEntry(state: RuntimeState, plugin: PluginEntry, persist: boolean) {
+async function deactivatePluginEntry(state: RuntimeState, plugin: PluginEntry, persist: boolean, deadline?: number) {
   plugin.enabled = false
   if (persist) writePluginEnabledState(state.api, plugin.id, false)
   if (!plugin.scope) return true
   const scope = plugin.scope
   plugin.scope = undefined
-  await scope.dispose()
+  await scope.dispose(deadline)
   return true
 }
 
@@ -1383,8 +1402,14 @@ export namespace TuiPluginRuntime {
     state.watcher = undefined
     await reloading.catch(() => undefined)
     const queue = [...state.plugins].reverse()
+    const deadline = Date.now() + SHUTDOWN_BUDGET_MS
     for (const plugin of queue) {
-      await deactivatePluginEntry(state, plugin, false)
+      await deactivatePluginEntry(state, plugin, false, deadline)
+    }
+    if (Date.now() > deadline) {
+      log.warn("tui plugin shutdown exceeded its budget; remaining cleanups were not waited on", {
+        budget: SHUTDOWN_BUDGET_MS,
+      })
     }
   }
 
