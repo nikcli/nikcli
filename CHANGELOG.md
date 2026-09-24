@@ -3,6 +3,30 @@
 <!-- UNRELEASED:START -->
 <!-- UNRELEASED:END -->
 
+## v1.393.0 (September 2026)
+
+## Core
+
+- Add repro:startup-hang, the harness the roadmap once claimed (@nikomatt69)
+- The server worker joins the main process's log instead of truncating it (@nikomatt69)
+- Fail worker RPC calls when the worker exits or never listens (@nikomatt69)
+- Record stalled starts instead of aborting the collection (@nikomatt69)
+- Bound plugin shutdown by one budget, not one per plugin (@nikomatt69)
+- Wait before reconnecting after the server closes the stream (@nikomatt69)
+- Hold worker RPC requests until the worker is listening (@nikomatt69)
+
+**Thank you to 1 community contributor:**
+
+- @nikomatt69:
+  - fix(tui): hold worker RPC requests until the worker is listening
+  - fix(tui): wait before reconnecting after the server closes the stream
+  - fix(tui): bound plugin shutdown by one budget, not one per plugin
+  - feat(probe): record stalled starts instead of aborting the collection
+  - docs(specs): open EOT-00 with its root cause, and fix roadmap traceability
+  - fix(tui): fail worker RPC calls when the worker exits or never listens
+  - fix(log): the server worker joins the main process's log instead of truncating it
+  - feat(probe): add repro:startup-hang, the harness the roadmap once claimed
+
 ## v1.392.0 (September 2026)
 
 ## Core

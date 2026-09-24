@@ -1,6 +1,6 @@
 {
   "name": "@nikcli-ai/terminal-control",
-  "version": "1.392.0",
+  "version": "1.393.0",
   "private": true,
   "description": "Control, inspect, capture and test real terminal applications (TUIs) — a custom-built terminal-control engine for nikcli.",
   "license": "MIT",
