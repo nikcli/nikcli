@@ -97,3 +97,43 @@ describe("MobileAuth.requiredCapability", () => {
     }
   })
 })
+
+/**
+ * The routes a `cli-sync` token reaches at all.
+ *
+ * `requiredCapability` leaves `read`/`write` unclassified, so on its own it let
+ * a sync token — a credential handed to a remote hub — reach sessions, config
+ * and files. That scope is an allowlist of the sync transport's own routes.
+ */
+describe("MobileAuth.scopeReaches", () => {
+  it("lets a sync token reach exactly the transport's routes", () => {
+    for (const pathname of ["/sync/event", "/sync/outbox", "/sync/stream", "/sync/snapshot/ses_1", "/sync/outbox/"]) {
+      expect(MobileAuth.scopeReaches("cli-sync", pathname)).toBe(true)
+    }
+  })
+
+  it("keeps a sync token off every other route, sync administration included", () => {
+    for (const pathname of [
+      "/mobile/session",
+      "/session",
+      "/config",
+      "/file/content",
+      "/sync/config",
+      "/sync/connect",
+      "/sync/disconnect",
+      "/sync/drain",
+      "/sync/stats",
+      "/sync/snapshot/ses_1/extra",
+      "/sync/eventually",
+    ]) {
+      expect(MobileAuth.scopeReaches("cli-sync", pathname)).toBe(false)
+    }
+  })
+
+  it("does not narrow the other scopes", () => {
+    for (const scope of ["mobile", "studio"]) {
+      expect(MobileAuth.scopeReaches(scope, "/mobile/session")).toBe(true)
+      expect(MobileAuth.scopeReaches(scope, "/config")).toBe(true)
+    }
+  })
+})

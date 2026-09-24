@@ -247,10 +247,18 @@ describe("mobile bearer authentication", () => {
         expect(denied.ok === false && denied.response.status).toBe(403)
         expect(denied.ok === false && (await denied.response.text())).toContain("pty")
 
-        // The same token on an unguarded path is still fine: the guard refuses
-        // an operation, it does not revoke the token.
-        const allowed = await attempt(sync.token, "/mobile/session")
+        // The same token on its own transport route is still fine: the guard
+        // refuses an operation, it does not revoke the token.
+        const allowed = await attempt(sync.token, "/sync/outbox")
         expect(allowed.ok).toBe(true)
+
+        // Off the transport's routes a sync token reaches nothing — it used to
+        // reach `/mobile/session` and every other route no capability guarded.
+        for (const pathname of ["/mobile/session", "/config", "/sync/connect"]) {
+          const outside = await attempt(sync.token, pathname)
+          expect(outside.ok === false && outside.response.status).toBe(403)
+          expect(outside.ok === false && (await outside.response.text())).toContain("does not reach this route")
+        }
 
         // And the device the capability was written for is not locked out.
         for (const pathname of ["/mobile/pty", "/mobile/teleport", "/mobile/git/status"]) {

@@ -84,15 +84,36 @@ export namespace MobileAuth {
    * session route as one or the other is a larger slice with real blast radius
    * — `/sync/*` in particular moves journal rows for `cli-sync`, whose only
    * capability is `read`, so a hasty `write` rule there would stop sync dead.
-   * Leaving them out means a `cli-sync` token can still reach routes it has no
-   * business on; that hole is narrower than the one a wrong rule opens, and
-   * closing it is its own change.
+   * The hole that left — a `cli-sync` token reaching routes it has no business
+   * on — is closed by `scopeReaches`, an allowlist for that scope alone.
    */
   export function requiredCapability(pathname: string): Capability | undefined {
     if (pathname.startsWith("/mobile/pty") || pathname.startsWith("/pty/")) return "pty"
     if (pathname.includes("/teleport")) return "teleport"
     if (pathname.startsWith("/mobile/git/") || pathname.startsWith("/mobile/github/")) return "git"
     return undefined
+  }
+
+  /**
+   * The only routes a `cli-sync` token reaches: the sync transport's own.
+   *
+   * `requiredCapability` guards the operator surfaces by capability and leaves
+   * `read`/`write` unclassified, so a `cli-sync` token — a credential handed to
+   * a remote hub or peer — could still reach every other route: sessions,
+   * config, files. Classifying all of them is a large, risky slice; the
+   * transport's needs are small and fixed, so this scope is an allowlist
+   * instead. `src/sync/transport.ts` and `src/sync/remote-client.ts` call
+   * `POST /sync/event`, `GET /sync/outbox` and `GET /sync/stream`; the
+   * read-only `GET /sync/snapshot/:aggregateID` cold start belongs with them.
+   * `/sync/config`, `/connect`, `/disconnect` and `/drain` reconfigure *this*
+   * machine and stay out.
+   */
+  const CLI_SYNC_ROUTES = [/^\/sync\/(?:event|outbox|stream)\/?$/, /^\/sync\/snapshot\/[^/]+\/?$/]
+
+  /** Whether a token of `scope` may reach `pathname` at all. */
+  export function scopeReaches(scope: string, pathname: string): boolean {
+    if (scope !== "cli-sync") return true
+    return CLI_SYNC_ROUTES.some((route) => route.test(pathname))
   }
 
   export const Token = z

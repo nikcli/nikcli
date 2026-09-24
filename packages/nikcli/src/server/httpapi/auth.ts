@@ -345,6 +345,10 @@ export namespace Auth {
             log.warn("mobile capability denied", { scope: principal.token.scope, required, pathname })
             return forbidden(required)
           }
+          if (!MobileAuth.scopeReaches(principal.token.scope, pathname)) {
+            log.warn("token scope does not reach this route", { scope: principal.token.scope, pathname })
+            return forbiddenRoute(principal.token.scope)
+          }
         }
         return { ok: true, principal }
       }
@@ -430,6 +434,14 @@ export namespace Auth {
     return {
       ok: false,
       response: new Response(`Forbidden: token scope lacks the "${capability}" capability`, { status: 403 }),
+    }
+  }
+
+  /** A route outside the token's scope altogether — 403 for the same reason as `forbidden`. */
+  function forbiddenRoute(scope: string): AuthenticateResult {
+    return {
+      ok: false,
+      response: new Response(`Forbidden: a "${scope}" token does not reach this route`, { status: 403 }),
     }
   }
 
