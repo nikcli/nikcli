@@ -134,3 +134,16 @@ Two rules for this bridge:
 2. **Every spawn on a request path carries its own deadline.** `exec` has one; a hand-rolled `Bun.spawn` beside it does not, and the difference is invisible at the call site.
 
 `test/server/mobile-pairing-listener.test.ts` was failing its 5s budget on this for the authenticated request — the one that actually reaches the handler. It passed only when another file in the run had already warmed the probes, which is why it read as a flake for as long as it did.
+
+## A Sync Token Reaches Only the Sync Transport — 2026-09-24
+
+Capability gating (`MobileAuth.requiredCapability`) guards pty, teleport and git, and deliberately leaves `read` and
+`write` unclassified. That left a `cli-sync` token — the credential `nikcli sync token create` hands to a remote hub —
+able to reach every route no capability guarded: sessions, config, files.
+
+The fix does not classify the whole API. `MobileAuth.scopeReaches` makes that one scope an allowlist of the transport's
+own routes, taken from its only callers (`src/sync/transport.ts`, `src/sync/remote-client.ts`): `POST /sync/event`,
+`GET /sync/outbox`, `GET /sync/stream`, plus the read-only `GET /sync/snapshot/:aggregateID`. The routes that
+reconfigure this machine — `/sync/config`, `/connect`, `/disconnect`, `/drain` — are outside it. A refused route is a
+403 naming the scope, for the reason the capability refusal is. `mobile` and `studio` tokens are unchanged; classifying
+`read`/`write` for them remains open.

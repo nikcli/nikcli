@@ -4,7 +4,7 @@ Planning baseline: 2026-09-10. Scope: `packages/tui` and `packages/nikcli`, incl
 bridge, and host seams.
 
 Start with the [integrated roadmap](ROADMAP.md). These are implementation specifications, not claims that the proposed
-changes or performance targets have shipped. Every spec except EOT-00 has at least one landed slice — the roadmap's landed-work table
+changes or performance targets have shipped. Every spec has at least one landed slice — the roadmap's landed-work table
 is the record of which — and a landed slice is not a passed release gate; the migrations the specs scope remain open.
 EOT-18 is the one spec whose premise has been overtaken: the yargs surface it was written against is gone, and
 [`cli-framework.md`](cli-framework.md) is the reference for what replaced it. Each spec header carries its own status.

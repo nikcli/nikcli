@@ -37,6 +37,7 @@ export const syncEvent = sqliteTable(
     projectIdx: index("idx_sync_event_project").on(table.projectId),
     aggregateIdx: index("idx_sync_event_aggregate").on(table.projectId, table.aggregate),
     seqIdx: index("idx_sync_event_seq").on(table.projectId, table.aggregate, table.seq),
+    projectSeqIdx: index("idx_sync_event_project_seq").on(table.projectId, table.seq),
     workspaceIdx: index("idx_sync_event_workspace").on(table.workspaceId),
     originIdx: index("idx_sync_event_origin").on(table.origin),
     projectOriginIdx: index("idx_sync_event_project_origin").on(

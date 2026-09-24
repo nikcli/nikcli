@@ -1320,6 +1320,37 @@ export namespace Provider {
   async function buildState(ctx: InstanceContext): Promise<State> {
     using _ = log.time("state")
     const config = await configGet(ctx)
+    const policy = Policy.statements(config)
+
+    function isProviderAllowed(providerID: string): boolean {
+      return Policy.allows(policy, {
+        action: "provider.use",
+        resource: providerID,
+      })
+    }
+
+    // Requesty discovery is a network round trip that needs only config and
+    // auth, not the models.dev catalog. Started here it overlaps the catalog
+    // load instead of following it; the result is still applied at the same
+    // point below. The no-op handler only keeps a rejection from surfacing as
+    // unhandled when the catalog turns out to have no requesty entry — the
+    // await below still sees it.
+    const requestyDiscovery = isProviderAllowed("requesty")
+      ? (async () => {
+          const configured = config.provider?.["requesty"]
+          const auth = await authGet("requesty")
+          const apiKey =
+            (configured?.options?.apiKey as string | undefined) ??
+            (auth?.type === "api" ? auth.key : undefined) ??
+            Env.get("REQUESTY_API_KEY")
+          return cachedRequestyModels({
+            baseURL: configured?.options?.baseURL as string | undefined,
+            apiKey,
+          })
+        })()
+      : undefined
+    requestyDiscovery?.catch(() => {})
+
     const modelsDev = await ModelsDev.get()
     const database = mapValues(modelsDev, fromModelsDevProvider)
 
@@ -1330,15 +1361,6 @@ export namespace Provider {
     // (`filterCodexOAuthModels` in the codex plugin keeps it for OAuth sessions.)
     const openaiAuth = await authGet("openai")
     if (openaiAuth?.type !== "oauth") delete database["openai"]?.models[GPT_RESERVE_ID]
-
-    const policy = Policy.statements(config)
-
-    function isProviderAllowed(providerID: string): boolean {
-      return Policy.allows(policy, {
-        action: "provider.use",
-        resource: providerID,
-      })
-    }
 
     const providers: { [providerID: string]: Info } = {}
     const languages = new Map<string, LanguageModelV2>()
@@ -1351,17 +1373,8 @@ export namespace Provider {
     log.info("init")
 
     const requesty = database["requesty"]
-    if (requesty && isProviderAllowed("requesty")) {
-      const configured = config.provider?.["requesty"]
-      const auth = await authGet("requesty")
-      const apiKey =
-        (configured?.options?.apiKey as string | undefined) ??
-        (auth?.type === "api" ? auth.key : undefined) ??
-        Env.get("REQUESTY_API_KEY")
-      const discovered = await cachedRequestyModels({
-        baseURL: configured?.options?.baseURL as string | undefined,
-        apiKey,
-      })
+    if (requesty && requestyDiscovery) {
+      const discovered = await requestyDiscovery
       if (Object.keys(discovered).length > 0) requesty.models = discovered
     }
 

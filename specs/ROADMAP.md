@@ -289,9 +289,16 @@ appears more than once.
 | EOT-05 | `createPromiseCache`: image and wallpaper memos bounded; a load is cancelled only once every caller has left     | `bb29f838b8`               |
 | EOT-04 | `EventFeed.filtered`: sync, mobile-session and workspace SSE get the lag budget; a stalled reader is evicted     | `bb29f838b8`               |
 | EOT-19 | Mobile session stream re-reads the session on reconnect, which is what heals an eviction or a dropped socket     | `bb29f838b8`               |
+| EOT-00 | Never-paints root cause: RPC requests to the server worker were lost before it listened; handshake added         | `d488723211`               |
+| EOT-00 | A worker that exits or never listens fails its calls instead of leaving the first bootstrap waiting              | `a9167279cf`               |
+| EOT-00 | The probe records a stalled start (`hangRate`, last control sequences) instead of aborting                       | `663170478d`               |
+| EOT-00 | The worker appends to the main process's log instead of truncating it                                            | `e92eac8250`               |
+| EOT-00 | `repro:startup-hang`: 200 consecutive compiled starts, non-zero on any stall                                     | `c004b6ae8d`               |
+| EOT-04 | Reconnect waits after a clean stream end too; jittered, abortable backoff                                        | `5b7777ba2b`               |
+| EOT-08 | One shutdown budget shared by every plugin instead of five seconds each                                          | `b0ab388457`               |
 
 Every spec has been opened and every spec now has at least one landed slice,
-EOT-14 and EOT-19 included.
+EOT-00, EOT-14 and EOT-19 included.
 
 A landed slice is still not a passed release gate. What is landed is, in most
 cases, the **contract** a spec turns on — the delivery-class table, the auth

@@ -512,21 +512,25 @@ function App(props: { checkUpgrade?: () => Promise<UpdateAvailable | undefined> 
     void (async () => {
       // Drive instances use an injected local provider and must not depend on
       // interactive account/onboarding state from the host machine.
+      //
+      // The session is asked for now, alongside `hasUsers`, and nothing before
+      // the plugins waits for it: onboarding never read it. Answering it can
+      // mean renewing and verifying the issuer token over the network — a
+      // second or more on every launch after the token's quarter hour — and a
+      // returning user's plugins, config and prompt have no use for the answer.
+      // What it decides (the sign-in dialog) is applied once they are up.
+      let returningAccount: Promise<Awaited<ReturnType<typeof UserApi.session>>> | undefined
       if (!process.env.NIKCLI_DRIVE) {
         // Account state comes from `/user/*` — the transport is up by now, as
         // the `sdk.client.tui.config` call a few lines below has always relied on.
+        const accountRequest = UserApi.session(sdk)
+        // A first run never awaits it; a returning one does, below, and sees any failure there.
+        accountRequest.catch(() => {})
 
         // `null` means the question could not be asked. Treating that as "no
         // users" would restart onboarding for someone who already has an
         // account, so only an explicit `false` counts as first run.
         const isFirstRun = (await UserApi.hasUsers(sdk)) === false
-
-        // Three answers, and only one of them is a reason to interrupt. The
-        // server is asked whether this machine holds a session; while it is
-        // still booting — or being restarted by an auto-update — it cannot
-        // answer, and reading that silence as "signed out" is what put the
-        // sign-in dialog in front of someone who had never signed out.
-        const account = await UserApi.session(sdk)
 
         if (isFirstRun && !kv.get("onboarding_complete", false)) {
           // First-time user: unified onboarding handles account creation + provider setup
@@ -561,13 +565,8 @@ function App(props: { checkUpgrade?: () => Promise<UpdateAvailable | undefined> 
               variant: "error",
             })
           }
-        } else if (account.status === "signed-out") {
-          // Returning user with no active session: standard login
-          await DialogLogin.run(dialog, sdk)
-        } else if (account.status === "unknown") {
-          log.warn("could not read the account session at startup; not prompting", {
-            service: "tui.account",
-          })
+        } else {
+          returningAccount = accountRequest
         }
       }
 
@@ -620,6 +619,21 @@ function App(props: { checkUpgrade?: () => Promise<UpdateAvailable | undefined> 
         bindings: [{ key: "sync_view", cmd: "sync.open" }],
       })
       setPluginsReady(true)
+
+      // Three answers, and only one of them is a reason to interrupt. The
+      // server is asked whether this machine holds a session; while it is
+      // still booting — or being restarted by an auto-update — it cannot
+      // answer, and reading that silence as "signed out" is what put the
+      // sign-in dialog in front of someone who had never signed out.
+      const account = await returningAccount
+      if (account?.status === "signed-out") {
+        // Returning user with no active session: standard login
+        await DialogLogin.run(dialog, sdk)
+      } else if (account?.status === "unknown") {
+        log.warn("could not read the account session at startup; not prompting", {
+          service: "tui.account",
+        })
+      }
     })().catch((error) => {
       dbgApp("init chain error", String(error))
       setOnboardingActive(false)

@@ -69,6 +69,7 @@ describe("Database.Service", () => {
       { id: "20260814110000_instruction_sync" },
       { id: "20260816000000_session_last_model" },
       { id: "20260824000000_session_directory_key" },
+      { id: "20260924000000_sync_event_project_seq" },
     ])
     expect(result.tables.map((table) => table.name)).toEqual([
       "account",
@@ -88,6 +89,25 @@ describe("Database.Service", () => {
       "users",
       "workspace",
     ])
+  })
+
+  it("serves the newest events of a project from an index, not a sort", async () => {
+    // `GET /sync/stats` runs this every two seconds on the server's thread. A
+    // temp B-tree here means reading every event of the project to return 50.
+    const plan = await runDatabase(
+      Effect.gen(function* () {
+        const database = yield* Database.Service
+        return database.native
+          .query<{ detail: string }, [string]>(
+            "EXPLAIN QUERY PLAN SELECT * FROM sync_event WHERE project_id = ? ORDER BY seq DESC LIMIT 50",
+          )
+          .all("project")
+          .map((row) => row.detail)
+      }),
+    )
+
+    expect(plan.join(" | ")).toContain("idx_sync_event_project_seq")
+    expect(plan.some((detail) => detail.includes("TEMP B-TREE"))).toBe(false)
   })
 
   it("runs Drizzle queries through the central database service", async () => {

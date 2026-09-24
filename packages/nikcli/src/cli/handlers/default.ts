@@ -314,13 +314,18 @@ export default Runtime.handler(Commands, async (input) => {
       const tuiConfig = await TuiConfig.get().catch(() => undefined)
       // Upgrade runs in *this* process, not the service: it replaces the
       // installed binary, and the service is a different (older) copy of it.
-      // Imported inside the callbacks so the upgrade chain — and the instance
-      // bootstrap it needs — stays out of the boot graph; both are rare,
-      // user-initiated, and already slow.
+      // Imported inside the callbacks so the upgrade chain stays out of the
+      // boot graph.
+      //
+      // The check runs on every start, so it gets an instance scope and
+      // nothing more: `upgrade` reads the global config, asks the registry and
+      // publishes on the Bus, none of which needs `InstanceBootstrap`. With it,
+      // this client booted a second engine beside the service's — plugins,
+      // LSP, file watcher, provider state, the brain scheduler, and restored
+      // loops and missions — on the thread that draws the terminal.
       const withUpgradeInstance = async <T>(fn: () => Promise<T>): Promise<T> => {
-        const { InstanceBootstrap } = await import("@/project/bootstrap")
         const { withInstanceAsync } = await import("@/effect")
-        return withInstanceAsync({ directory: cwd, init: InstanceBootstrap }, fn)
+        return withInstanceAsync({ directory: cwd }, fn)
       }
 
       await tui({

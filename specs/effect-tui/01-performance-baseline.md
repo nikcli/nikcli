@@ -155,3 +155,11 @@ cross-host refusal.
 
 Regenerate with `bun run bench:baseline` and review the diff rather than committing it
 blind — the artifact is evidence only for the machine named in it.
+
+## Which Startup the Probe Measures — 2026-09-24
+
+`bench:startup` sets `NIKCLI_TEST_HOME` for isolation, and a test home opts out of the background service
+(`specs/background-service.md`, Rollout). So the probe measures the **private in-process server** path — the one
+`--standalone`, `NIKCLI_SERVICE=0`, `--port` and a failed service start take — not the default path most users run,
+where the TUI attaches to the shared service. Any budget ratified from it describes the private path only; the default
+path needs its own run with `NIKCLI_SERVICE=1` before a startup claim covers it.

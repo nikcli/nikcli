@@ -27,6 +27,7 @@ import sessionPending from "./migration/20260814100000_session_pending"
 import instructionSync from "./migration/20260814110000_instruction_sync"
 import sessionLastModel from "./migration/20260816000000_session_last_model"
 import sessionDirectoryKey from "./migration/20260824000000_session_directory_key"
+import syncEventProjectSeq from "./migration/20260924000000_sync_event_project_seq"
 
 export const migrations = [
   initial,
@@ -57,4 +58,5 @@ export const migrations = [
   instructionSync,
   sessionLastModel,
   sessionDirectoryKey,
+  syncEventProjectSeq,
 ] satisfies DatabaseMigration.Migration[]

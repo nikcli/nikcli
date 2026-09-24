@@ -220,3 +220,23 @@ with no caller, written because the real consumer — the panel — was not foun
 `check-observability-schema.ts` had been made to require its existence. A gate enforcing
 dead code it introduced is circular and certified nothing about the panel anyone sees; the
 gate now asserts the real buffer, its test, and that the panel routes through it.
+
+## The HTTP Runtime Has No Tracer — 2026-09-24
+
+The first slice this spec schedules — span coverage for the `session` route group — cannot start where it was
+assumed to. `HttpApiBridge.layer` in `packages/nikcli/src/server/httpapi/bridge.ts` merges the HttpApi routes with
+`LogRedirect` and nothing else: **`Observability.layer` is not in it.** So every span created while an HTTP handler
+runs on that runtime, including the implicit ones `Effect.fn("…")` opens, is discarded by Effect's default tracer.
+This is Discipline Addendum rule 1 again, one layer up: the brain scheduler's span was lost for the same reason.
+
+Two facts decide how the slice is built once that is fixed:
+
+- Effect's own `HttpMiddleware.tracer` is not usable as-is. It records `url.full`, `url.path` and `url.query` — a
+  concrete path carries session ids (high cardinality) and a query can carry `?token=` — all forbidden dimensions.
+- It is not needed either. `HttpRouter` already sets `http.route` to the matched **template** on the current parent
+  span. A middleware of our own that opens `http.server.<group>` with `http.method`, and records `http.status_code`
+  on exit, gets the allowed schema for free.
+
+Merging `Observability.layer` into the bridge turns tracing on for **every** route's handler spans at once, not one
+group, so the overhead gate (EOT-01: median within 5% of instrumentation-off) has to be measured on that change
+before it lands, with a per-group toggle if the numbers call for one. That measurement is the next slice here.
