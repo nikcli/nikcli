@@ -20,7 +20,14 @@ import os from "node:os"
 import path from "node:path"
 import { fileURLToPath } from "node:url"
 import { spawnPty, type NativePty } from "@nikcli-ai/util/pty"
-import { formatBytes, summarizeSamples, type SampleSummary } from "@tui/util/runtime-samples"
+import {
+  formatBytes,
+  stallRate,
+  summarizeSamples,
+  trailingControlSequences,
+  type SampleSummary,
+  type StartupStall,
+} from "@tui/util/runtime-samples"
 import { formatProbeEnvironment, probeEnvironment } from "@nikcli-ai/util/probe-env"
 
 const BIN = process.argv[2] ?? ""
@@ -104,6 +111,24 @@ type Marks = {
   rssBytes?: number
 }
 
+/**
+ * A start that produced no sample. Recorded, never thrown: one wedged start used
+ * to abort the whole collection, so the probe could not say how often it happens
+ * (`specs/effect-tui/00-startup-hang.md`, requirement 1). `lastSequences` is what
+ * the terminal was last sent, payloads reduced to request names — the evidence
+ * that located the capability-negotiation hang, without carrying screen text or
+ * paths into the report.
+ */
+type Stall = {
+  outcome: StartupStall
+  spawnMs: number
+  /** Present for `no-prompt`: the frame arrived, the prompt did not. */
+  firstPaintMs?: number
+  lastSequences: string[]
+}
+
+type Attempt = { ok: true; marks: Marks } | { ok: false; stall: Stall }
+
 const live = new Set<NativePty>()
 const homes = new Set<string>()
 
@@ -166,7 +191,7 @@ async function reap() {
   homes.clear()
 }
 
-async function once(home: string): Promise<Marks> {
+async function once(home: string): Promise<Attempt> {
   const started = performance.now()
   let firstPaintMs = 0
   let usablePromptMs = 0
@@ -205,9 +230,24 @@ async function once(home: string): Promise<Marks> {
   // child on some hosts, and bootstrap races overlap their migrations.
   await waitForExit(pty)
   live.delete(pty)
-  if (!firstPaintMs) throw new Error("never painted")
-  if (!usablePromptMs) throw new Error("never reached a usable prompt")
-  return { spawnMs, firstPaintMs, usablePromptMs, rssBytes: rss }
+  if (!firstPaintMs || !usablePromptMs) {
+    return {
+      ok: false,
+      stall: {
+        outcome: firstPaintMs ? "no-prompt" : "never-painted",
+        spawnMs,
+        ...(firstPaintMs ? { firstPaintMs } : {}),
+        lastSequences: trailingControlSequences(raw),
+      },
+    }
+  }
+  return { ok: true, marks: { spawnMs, firstPaintMs, usablePromptMs, rssBytes: rss } }
+}
+
+function describeStall(stall: Stall) {
+  const painted = stall.firstPaintMs !== undefined ? ` firstPaint=${stall.firstPaintMs.toFixed(0)}ms` : ""
+  const last = stall.lastSequences.length > 0 ? ` last=[${stall.lastSequences.join(", ")}]` : " last=[]"
+  return `STALLED ${stall.outcome} after ${TIMEOUT_MS}ms${painted}${last}`
 }
 
 function definedNumbers(values: readonly (number | undefined)[]) {
@@ -270,12 +310,21 @@ function samplesLine(label: string, values: number[], format: (value: number) =>
  * samples stay descriptive — EOT-01 already treats them that way, and 10 cold
  * runs on a loaded machine do not support a threshold.
  */
-function compareAgainstBaseline(report: { summary: { warm: WarmSummary | null } }) {
+function compareAgainstBaseline(report: { startup: { hangRate: number }; summary: { warm: WarmSummary | null } }) {
   const file = process.env.BASELINE
   if (!file) return
   if (!existsSync(file)) throw new Error(`BASELINE file not found: ${file}`)
 
-  const previous = JSON.parse(readFileSync(file, "utf8")) as { summary?: { warm?: WarmSummary | null } }
+  const previous = JSON.parse(readFileSync(file, "utf8")) as {
+    startup?: { hangRate?: number }
+    summary?: { warm?: WarmSummary | null }
+  }
+  // A baseline recorded before stalls were counted has no rate; say so rather
+  // than reading its absence as a clean 0.
+  const hangBefore = previous.startup?.hangRate
+  progress(
+    `baseline hangRate: ${hangBefore === undefined ? "not recorded" : hangBefore.toFixed(3)} -> ${report.startup.hangRate.toFixed(3)}`,
+  )
   const before = previous.summary?.warm
   const after = report.summary.warm
   if (!before || !after) {
@@ -352,17 +401,34 @@ try {
   const warm: Marks[] = []
   const cold: Marks[] = []
   let bootstrap: Marks | undefined
+  const stalls: { bootstrap: Stall | null; warm: Stall[]; cold: Stall[] } = { bootstrap: null, warm: [], cold: [] }
+  let attempts = 0
 
   if (WARM_RUNS > 0) {
     const home = scratch()
-    bootstrap = await once(home)
-    const bootstrapRss = bootstrap.rssBytes !== undefined ? ` rss=${formatBytes(bootstrap.rssBytes)}` : ""
-    progress(
-      `bootstrap: spawn=${bootstrap.spawnMs.toFixed(0)}ms firstPaint=${bootstrap.firstPaintMs.toFixed(0)}ms usablePrompt=${bootstrap.usablePromptMs.toFixed(0)}ms${bootstrapRss} (fresh home, not a warm sample)`,
-    )
+    const first = await once(home)
+    attempts++
+    if (first.ok) {
+      bootstrap = first.marks
+      const bootstrapRss = bootstrap.rssBytes !== undefined ? ` rss=${formatBytes(bootstrap.rssBytes)}` : ""
+      progress(
+        `bootstrap: spawn=${bootstrap.spawnMs.toFixed(0)}ms firstPaint=${bootstrap.firstPaintMs.toFixed(0)}ms usablePrompt=${bootstrap.usablePromptMs.toFixed(0)}ms${bootstrapRss} (fresh home, not a warm sample)`,
+      )
+    } else {
+      stalls.bootstrap = first.stall
+      progress(`bootstrap: ${describeStall(first.stall)} (fresh home, not a warm sample)`)
+    }
     await Bun.sleep(500)
     for (let i = 0; i < WARM_RUNS; i++) {
-      const sample = await once(home)
+      const attempt = await once(home)
+      attempts++
+      if (!attempt.ok) {
+        stalls.warm.push(attempt.stall)
+        progress(`warm ${i + 1}/${WARM_RUNS}: ${describeStall(attempt.stall)}`)
+        await Bun.sleep(500)
+        continue
+      }
+      const sample = attempt.marks
       warm.push(sample)
       const rss = sample.rssBytes !== undefined ? ` rss=${formatBytes(sample.rssBytes)}` : ""
       progress(
@@ -374,7 +440,17 @@ try {
 
   for (let i = 0; i < COLD_RUNS; i++) {
     const home = scratch()
-    const sample = await once(home)
+    const attempt = await once(home)
+    attempts++
+    if (!attempt.ok) {
+      stalls.cold.push(attempt.stall)
+      progress(`cold ${i + 1}/${COLD_RUNS}: ${describeStall(attempt.stall)}`)
+      await rm(home, { recursive: true, force: true }).catch(() => {})
+      homes.delete(home)
+      await Bun.sleep(500)
+      continue
+    }
+    const sample = attempt.marks
     cold.push(sample)
     const rss = sample.rssBytes !== undefined ? ` rss=${formatBytes(sample.rssBytes)}` : ""
     progress(
@@ -413,9 +489,14 @@ try {
   const loadavg1AtEnd = os.loadavg()[0]
   progress(`load: start=${environment.os.loadavg1.toFixed(2)} end=${loadavg1AtEnd.toFixed(2)}`)
 
+  const startup = stallRate(attempts, (stalls.bootstrap ? 1 : 0) + stalls.warm.length + stalls.cold.length)
+  progress(`startup: ${startup.stalls}/${startup.attempts} stalled (hangRate=${startup.hangRate.toFixed(3)})`)
+
   const report = {
     environment,
     loadavg1AtEnd,
+    startup,
+    stalls,
     bootstrap: bootstrap ?? null,
     samples: {
       warm: warmSeries,
@@ -442,7 +523,9 @@ try {
   compareAgainstBaseline(report)
   console.log(JSON.stringify(report))
   await reap()
-  process.exit(0)
+  // The report is complete either way; a stalled start still fails the check,
+  // because a startup that sometimes does not happen is not a pass.
+  process.exit(startup.stalls > 0 ? 1 : 0)
 } catch (error) {
   await fail(error)
 }

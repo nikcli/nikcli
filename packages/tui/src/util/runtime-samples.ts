@@ -168,3 +168,71 @@ export function formatBytes(bytes: number): string {
   }
   return `${value < 10 ? value.toFixed(1) : Math.round(value)} ${units[unit]}`
 }
+
+/**
+ * Why a startup attempt produced no sample. `specs/effect-tui/00-startup-hang.md`:
+ * a wedged start is data, not an aborted collection — a probe that throws on the
+ * first one can never report how often it happens.
+ */
+export type StartupStall = "never-painted" | "no-prompt"
+
+export type StallRate = { attempts: number; stalls: number; hangRate: number }
+
+/**
+ * Stalled attempts over all attempts. Zero attempts is a measurement that did not
+ * happen, not a clean run, so it throws rather than reporting a rate of 0.
+ */
+export function stallRate(attempts: number, stalls: number): StallRate {
+  if (!Number.isInteger(attempts) || attempts <= 0) throw new Error("stallRate requires at least one attempt")
+  if (!Number.isInteger(stalls) || stalls < 0 || stalls > attempts) {
+    throw new Error(`stalls must be an integer in [0, ${attempts}], got ${stalls}`)
+  }
+  return { attempts, stalls, hangRate: stalls / attempts }
+}
+
+const ESC = String.fromCharCode(27)
+const BEL = String.fromCharCode(7)
+const CONTROL_SEQUENCE = new RegExp(
+  [
+    `${ESC}\\][^${BEL}${ESC}]*(?:${BEL}|${ESC}\\\\)`,
+    `${ESC}[P_^][^${ESC}]*${ESC}\\\\`,
+    `${ESC}\\[[0-9;?<>=]*[ -/]*[@-~]`,
+    `${ESC}[@-Z\\\\-_]`,
+  ].join("|"),
+  "g",
+)
+const OSC_TERMINATOR = new RegExp(`(?:${BEL}|${ESC}\\\\)$`)
+const STRING_TERMINATOR = new RegExp(`${ESC}\\\\$`)
+
+/**
+ * The last control sequences a terminal was sent, with every payload reduced to
+ * what identifies the request.
+ *
+ * This is what located the never-paints startup: its last output was the block
+ * of capability queries the renderer sends before its first frame. Keeping the
+ * raw tail instead would carry window titles, working directories and screen
+ * text into a shared report, which EOT-01 forbids — so OSC keeps its number and
+ * whether it is a query, DCS and APC keep a short command prefix (enough for
+ * `+q` XTGETTCAP or the Kitty `G` graphics query), and CSI, which carries no
+ * content, is kept whole.
+ */
+export function trailingControlSequences(raw: string, limit = 12): string[] {
+  const labels: string[] = []
+  for (const [sequence] of raw.matchAll(CONTROL_SEQUENCE)) {
+    const introducer = sequence[1]
+    if (introducer === "]") {
+      const body = sequence.slice(2).replace(OSC_TERMINATOR, "")
+      const [command = "", ...rest] = body.split(";")
+      labels.push(`OSC ${command}${rest.includes("?") ? ";?" : ""}`)
+    } else if (introducer === "P" || introducer === "_" || introducer === "^") {
+      const name = introducer === "P" ? "DCS" : introducer === "_" ? "APC" : "PM"
+      const body = sequence.slice(2).replace(STRING_TERMINATOR, "")
+      labels.push(`${name} ${body.slice(0, 8).split(/[;,]/)[0]}`)
+    } else if (introducer === "[") {
+      labels.push(`CSI ${sequence.slice(2)}`)
+    } else {
+      labels.push(`ESC ${sequence.slice(1)}`)
+    }
+  }
+  return limit > 0 ? labels.slice(-limit) : []
+}

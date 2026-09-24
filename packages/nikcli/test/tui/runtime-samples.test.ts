@@ -8,8 +8,10 @@ import {
   retain,
   runtimeStatus,
   statusIcon,
+  stallRate,
   summarizeSamples,
   STATUS_WINDOW_MS,
+  trailingControlSequences,
 } from "@tui/util/runtime-samples"
 
 /**
@@ -156,5 +158,77 @@ describe("relativeDelta", () => {
 
   it("does not turn a missing baseline into Infinity", () => {
     expect(() => relativeDelta(0, 10)).toThrow(/non-zero baseline/)
+  })
+})
+
+describe("stallRate", () => {
+  it("counts a stalled start as data", () => {
+    expect(stallRate(200, 0)).toEqual({ attempts: 200, stalls: 0, hangRate: 0 })
+    expect(stallRate(8, 1)).toEqual({ attempts: 8, stalls: 1, hangRate: 0.125 })
+  })
+
+  it("a run with no attempts is not a clean run", () => {
+    expect(() => stallRate(0, 0)).toThrow()
+  })
+
+  it("refuses counts that cannot come from a real run", () => {
+    expect(() => stallRate(5, 6)).toThrow()
+    expect(() => stallRate(5, -1)).toThrow()
+    expect(() => stallRate(5, 1.5)).toThrow()
+  })
+})
+
+describe("trailingControlSequences", () => {
+  const ESC = "\x1b"
+  const BEL = "\x07"
+  const ST = ESC + "\\"
+
+  it("names the capability queries a renderer sends before its first frame", () => {
+    const raw =
+      ESC +
+      "[?1049h" +
+      ESC +
+      "]11;?" +
+      BEL +
+      ESC +
+      "]4;0;?" +
+      ST +
+      ESC +
+      "P+q544e" +
+      ST +
+      ESC +
+      "_Gi=31337,s=1,v=1,a=q,t=d,f=24;AAAA" +
+      ST +
+      ESC +
+      "[c"
+    expect(trailingControlSequences(raw)).toEqual([
+      "CSI ?1049h",
+      "OSC 11;?",
+      "OSC 4;?",
+      "DCS +q544e",
+      "APC Gi=31337",
+      "CSI c",
+    ])
+  })
+
+  it("keeps screen text and OSC payloads out of the report", () => {
+    const raw =
+      "/Users/someone/secret-project on screen" +
+      ESC +
+      "]0;/Users/someone/secret-project - nikcli" +
+      BEL +
+      ESC +
+      "]7;file://host/Users/someone/secret-project" +
+      ST
+    const labels = trailingControlSequences(raw)
+    expect(labels).toEqual(["OSC 0", "OSC 7"])
+    expect(labels.join(" ")).not.toContain("someone")
+  })
+
+  it("keeps only the last sequences, and none when asked for none", () => {
+    const raw = Array.from({ length: 20 }, (_, index) => ESC + "[" + index + "m").join("")
+    expect(trailingControlSequences(raw, 3)).toEqual(["CSI 17m", "CSI 18m", "CSI 19m"])
+    expect(trailingControlSequences(raw, 0)).toEqual([])
+    expect(trailingControlSequences("plain text only")).toEqual([])
   })
 })
