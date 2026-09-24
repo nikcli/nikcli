@@ -28,6 +28,7 @@
     "dev:bin": "bun run build:single && dist/*/bin/nikcli",
     "smoke:tui": "bun run script/tui-smoke.ts",
     "bench:startup": "bun run script/tui-startup.ts",
+    "repro:startup-hang": "WARM_RUNS=200 COLD_RUNS=0 TIMEOUT_MS=30000 bun run script/tui-startup.ts",
     "bench:baseline": "bun run script/perf-baseline.ts --samples 30 --json specs/perf-baseline.json",
     "generate:httpapi-clients": "bun run script/generate-httpapi-clients.ts",
     "check:routes": "bun run script/check-route-coverage.ts",
