@@ -129,6 +129,55 @@ export async function shutdownWorker(input: {
   }
 }
 
+/**
+ * How long the server worker may take to start listening before the TUI gives
+ * up on it. A safety net, not a budget: a normal start is a few seconds, and
+ * this only turns "waits forever on a worker that will never answer" into an
+ * error the user can see. Generous on purpose, so a slow disk or a loaded
+ * machine is never mistaken for a dead worker.
+ */
+export const WORKER_READY_TIMEOUT_MS = 120_000
+
+/**
+ * Fail the RPC client when its worker cannot answer any more.
+ *
+ * A request to a worker that exited — or crashed while loading, before it ever
+ * listened — used to wait forever: `Rpc.client.call` has no timeout, and the
+ * first bootstrap waiting on it kept the TUI from ever painting
+ * (`specs/effect-tui/00-startup-hang.md`). Closing the client makes those calls
+ * reject, and the bootstrap turns a failed essential request into a visible exit.
+ *
+ * `stopping` is checked so a worker we terminated ourselves is not reported as
+ * a failure. Returns a disposer that stops supervising.
+ */
+export function superviseWorker(input: {
+  worker: Pick<Worker, "addEventListener" | "removeEventListener">
+  client: Pick<RpcClient, "ready" | "close">
+  stopping: () => boolean
+  readyTimeoutMs?: number
+}): () => void {
+  const timeoutMs = input.readyTimeoutMs ?? WORKER_READY_TIMEOUT_MS
+  const onClose = (event: globalThis.Event) => {
+    clearTimeout(timer)
+    if (input.stopping()) return
+    const code = (event as globalThis.Event & { code?: number }).code
+    Log.Default.error("server worker exited", { code })
+    input.client.close(new Error(`The nikcli server worker exited unexpectedly (code ${code ?? "unknown"})`))
+  }
+  const timer = setTimeout(() => {
+    if (input.stopping()) return
+    Log.Default.error("server worker did not start listening", { timeoutMs })
+    input.client.close(new Error(`The nikcli server worker did not start within ${Math.round(timeoutMs / 1000)}s`))
+  }, timeoutMs)
+  timer.unref?.()
+  void input.client.ready.then(() => clearTimeout(timer))
+  input.worker.addEventListener("close", onClose)
+  return () => {
+    clearTimeout(timer)
+    input.worker.removeEventListener("close", onClose)
+  }
+}
+
 /** Attempt chdir for TUI thread bootstrap; false when the path is invalid. */
 export function chdirToThreadDirectory(cwd: string): boolean {
   try {
@@ -362,9 +411,11 @@ export default Runtime.handler(Commands, async (input) => {
   process.on("SIGUSR2", reload)
 
   let stopped = false
+  const unsupervise = superviseWorker({ worker, client, stopping: () => stopped })
   const stop = async () => {
     if (stopped) return
     stopped = true
+    unsupervise()
     process.off("uncaughtException", error)
     process.off("unhandledRejection", error)
     process.off("SIGUSR2", reload)

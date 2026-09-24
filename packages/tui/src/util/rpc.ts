@@ -82,6 +82,13 @@ export namespace Rpc {
     // Requests made before the worker said `rpc.ready`, in call order. See `listen`.
     let ready = false
     let outbox: { id: number; frame: string }[] = []
+    let markReady!: () => void
+    const readiness = new Promise<void>((resolve) => {
+      markReady = resolve
+    })
+    // Set once the worker is gone for good: every call after that fails at once
+    // instead of queueing for a `rpc.ready` that will never come.
+    let closed: Error | undefined
     const send = (requestId: number, frame: string) => {
       try {
         target.postMessage(frame)
@@ -94,8 +101,9 @@ export namespace Rpc {
     target.onmessage = async (evt) => {
       const parsed = JSON.parse(evt.data)
       if (parsed.type === "rpc.ready") {
-        if (ready) return
+        if (ready || closed) return
         ready = true
+        markReady()
         const queued = outbox
         outbox = []
         for (const item of queued) send(item.id, item.frame)
@@ -128,6 +136,10 @@ export namespace Rpc {
       call<Method extends keyof T>(method: Method, input: Parameters<T[Method]>[0]): Promise<ReturnType<T[Method]>> {
         const requestId = id++
         return new Promise((resolve, reject) => {
+          if (closed) {
+            reject(closed)
+            return
+          }
           let frame: string
           try {
             frame = JSON.stringify({ type: "rpc.request", method, input, id: requestId })
@@ -150,6 +162,22 @@ export namespace Rpc {
         return () => {
           handlers!.delete(handler)
         }
+      },
+      /** Settles once the worker has said `rpc.ready`; never, if it dies first. */
+      ready: readiness,
+      /**
+       * The worker will never answer again — it exited, or never started listening.
+       * Fails everything in flight with `error`, and every later call immediately,
+       * so a caller learns that instead of waiting on a reply that cannot come.
+       */
+      close(error: Error) {
+        if (closed) return
+        closed = error
+        outbox = []
+        for (const request of pending.values()) {
+          request.reject(error)
+        }
+        pending.clear()
       },
       rejectPending(error: Error = new Error("RPC client disposed")) {
         outbox = []

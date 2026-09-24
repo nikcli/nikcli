@@ -8,8 +8,10 @@ import {
   resolveThreadDirectory,
   shouldTerminateWorker,
   shutdownWorker,
+  superviseWorker,
   validateSession,
 } from "@/cli/handlers/default"
+import { Rpc } from "@tui/util/rpc"
 import { Process } from "@nikcli-ai/util/process"
 
 describe("TUI thread bootstrap", () => {
@@ -125,5 +127,92 @@ describe("TUI thread bootstrap", () => {
 
     expect(received).toEqual([envelope])
     unsubscribe()
+  })
+})
+
+describe("server worker supervision", () => {
+  // A request to a worker that will never answer used to wait forever, and the
+  // first bootstrap waiting on it kept the TUI from ever painting. Supervision
+  // turns that into a failure the bootstrap can report.
+  const within = <T>(promise: Promise<T>, ms: number) =>
+    Promise.race([promise, new Promise<"still waiting">((resolve) => setTimeout(() => resolve("still waiting"), ms))])
+
+  function spawn(fixture: string, env: Record<string, string> = {}) {
+    return new Worker(new URL(`./fixtures/${fixture}`, import.meta.url).href, { env: Process.sanitizedEnv(env) })
+  }
+
+  it("fails pending calls when the worker dies before it listens", async () => {
+    const worker = spawn("broken-rpc-worker.ts", { RPC_WORKER_MODE: "crash" })
+    worker.onerror = () => {}
+    const client = Rpc.client<{ echo: (input: number) => number }>(worker)
+    const stop = superviseWorker({ worker, client, stopping: () => false })
+    try {
+      const outcome = await within(
+        client.call("echo", 1).then(
+          () => "answered",
+          (error: Error) => error.message,
+        ),
+        3_000,
+      )
+      expect(outcome).toContain("exited unexpectedly")
+      // And every later call fails at once rather than queueing.
+      await expect(client.call("echo", 2)).rejects.toThrow("exited unexpectedly")
+    } finally {
+      stop()
+      worker.terminate()
+    }
+  })
+
+  it("fails pending calls when the worker never starts listening", async () => {
+    const worker = spawn("broken-rpc-worker.ts", { RPC_WORKER_MODE: "never" })
+    const client = Rpc.client<{ echo: (input: number) => number }>(worker)
+    const stop = superviseWorker({ worker, client, stopping: () => false, readyTimeoutMs: 200 })
+    try {
+      const outcome = await within(
+        client.call("echo", 1).then(
+          () => "answered",
+          (error: Error) => error.message,
+        ),
+        3_000,
+      )
+      expect(outcome).toContain("did not start within")
+    } finally {
+      stop()
+      worker.terminate()
+    }
+  })
+
+  it("leaves a healthy worker alone after it is ready", async () => {
+    const worker = spawn("slow-rpc-worker.ts", { RPC_WORKER_DELAY_MS: "100" })
+    const client = Rpc.client<{ echo: (input: number) => number }>(worker)
+    const stop = superviseWorker({ worker, client, stopping: () => false, readyTimeoutMs: 400 })
+    try {
+      expect(await within(client.call("echo", 1), 3_000)).toBe(1)
+      // Past the ready deadline: a worker that became ready must not be closed by it.
+      await new Promise((resolve) => setTimeout(resolve, 600))
+      expect(await within(client.call("echo", 2), 3_000)).toBe(2)
+    } finally {
+      stop()
+      worker.terminate()
+    }
+  })
+
+  it("does not report a worker it was asked to stop", async () => {
+    let closedWith: Error | undefined
+    const listeners = new Set<(event: Event) => void>()
+    const worker = {
+      addEventListener: (_type: string, listener: (event: Event) => void) => listeners.add(listener),
+      removeEventListener: (_type: string, listener: (event: Event) => void) => listeners.delete(listener),
+    } as unknown as Parameters<typeof superviseWorker>[0]["worker"]
+    const stop = superviseWorker({
+      worker,
+      client: { ready: new Promise(() => {}), close: (error) => void (closedWith = error) },
+      stopping: () => true,
+      readyTimeoutMs: 50,
+    })
+    for (const listener of listeners) listener(new Event("close"))
+    await new Promise((resolve) => setTimeout(resolve, 150))
+    stop()
+    expect(closedWith).toBeUndefined()
   })
 })
