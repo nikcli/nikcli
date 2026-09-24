@@ -145,3 +145,31 @@ indistinguishable at the client.
 
 `abandon` is the single silent exit and has to be: the controller is already dead, so
 writing a reason would throw on the way out. That it does not throw is pinned.
+
+## Reconnect Pacing — 2026-09-24
+
+Recovery step 1 says an EOF must not create a tight reconnect loop. It did. The TUI's HTTP stream loop in
+`packages/tui/src/context/sdk.tsx` backed off only when the subscribe **threw**; when the server accepted the stream
+and then closed it cleanly — an eviction, a proxy with a short idle timeout — the loop re-subscribed at once. Upstream
+opencode waits after every stream exit, clean or not; nikcli had dropped that half.
+
+Measured with a server that closes every stream immediately: **270 subscribes in 400 ms**. With a fetch that resolves
+on microtasks alone, the loop never yields to a timer at all and starves the process — the first run of the test hung
+rather than failed, which is the same symptom a user would see as a frozen TUI.
+
+What changed, and what did not:
+
+- Every exit from a stream waits `reconnectDelay(failures)` (`packages/tui/src/util/reconnect.ts`) before the next
+  attempt: 250 ms base, 5 s cap as this spec fixes, with equal jitter — half the step fixed, so no retry is immediate,
+  half random, so clients that lost the same server do not return in lockstep. `failures` still resets on every
+  successful subscribe, exactly as the old `backoff = 250` did, so a healthy reconnect is no slower than before beyond
+  that first floor of 125-250 ms.
+- The wait is `sleepUnlessAborted`, not `Bun.sleep`: closing the provider ends it immediately instead of leaving the
+  loop alive for up to five seconds after cleanup.
+- Not changed: the client batch is still uncapped (its own comment records why — overload has to be observable before a
+  cap is safe, and the queue meter is that observation), auth and schema failures are still retried rather than
+  classified non-retryable, and there is still no restoration barrier. Those remain open under this spec.
+
+`packages/nikcli/test/tui/reconnect-gate.test.ts` mounts the real `SDKProvider` against that server and bounds the
+subscribes in a 400 ms window to three. Removing the post-EOF wait fails it (270 against a limit of 3). Its fake
+`fetch` yields one macrotask per subscribe on purpose: without it the unfixed loop hangs the test instead of failing it.

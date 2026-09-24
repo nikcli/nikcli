@@ -5,6 +5,7 @@ import { batch, createSignal, onCleanup, onMount } from "solid-js"
 import { createWakeDedup, type WakeDedup } from "../util/wake-dedup"
 import { createQueueMeter } from "../util/event-queue-meter"
 import { Log } from "@nikcli-ai/util/log"
+import { reconnectDelay, sleepUnlessAborted } from "../util/reconnect"
 
 const log = Log.create({ service: "tui.sdk" })
 
@@ -230,8 +231,11 @@ export const { use: useSDK, provider: SDKProvider } = createSimpleContext({
       sse?.abort()
       const ctrl = new AbortController()
       sse = ctrl
-      let backoff = 250
-      const maxBackoff = 5000
+      const stopped = AbortSignal.any([abort.signal, ctrl.signal])
+      // Consecutive reconnects without a successful subscribe. Every exit from a
+      // stream waits before the next attempt — a clean EOF included, as upstream
+      // does — so a server that closes on every connect cannot spin this loop.
+      let failures = 0
       void (async () => {
         try {
           while (true) {
@@ -243,7 +247,7 @@ export const { use: useSDK, provider: SDKProvider } = createSimpleContext({
                 signal: ctrl.signal,
               })
               // successful connect → reset backoff
-              backoff = 250
+              failures = 0
               markConnected()
 
               await consumeGlobalEventStream({
@@ -257,22 +261,23 @@ export const { use: useSDK, provider: SDKProvider } = createSimpleContext({
               if (queue.length > 0) flush()
 
               // The stream ended without throwing (server closed it cleanly).
-              // The loop reconnects immediately, but the UI should already say
-              // so — otherwise a dead server looks like a frozen TUI.
-              if (ctrl.signal.aborted || abort.signal.aborted) break
+              // The UI should say so at once — otherwise a dead server looks
+              // like a frozen TUI — and the retry still waits its turn.
+              if (stopped.aborted) break
               markReconnecting(undefined)
+              await sleepUnlessAborted(reconnectDelay(++failures), stopped)
             } catch (loopError) {
-              if (ctrl.signal.aborted || abort.signal.aborted) break
+              if (stopped.aborted) break
               markReconnecting(loopError)
+              const delay = reconnectDelay(++failures)
               console.warn(
                 "[sse]",
                 "subscribe failed, retrying in",
-                backoff,
+                Math.round(delay),
                 "ms",
                 loopError instanceof Error ? loopError.message : loopError,
               )
-              await Bun.sleep(backoff)
-              backoff = Math.min(backoff * 2, maxBackoff)
+              await sleepUnlessAborted(delay, stopped)
             }
           }
         } catch (fatalError) {
