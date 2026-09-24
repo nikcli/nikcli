@@ -59,3 +59,26 @@ describe("worker rpc errors", () => {
     expect((error as Error).message).toBe("plain failure")
   })
 })
+
+describe("worker rpc startup", () => {
+  it("a request made before the worker is listening is answered, not lost", async () => {
+    // `default.ts` starts calling the worker as soon as it is constructed, while
+    // the worker is still evaluating an import graph with a top-level `await`.
+    // A request posted in that window used to vanish, and with no timeout on
+    // `call` the caller — the TUI's first bootstrap — waited forever: the
+    // never-paints startup (`specs/effect-tui/00-startup-hang.md`).
+    const worker = new Worker(new URL("./fixtures/slow-rpc-worker.ts", import.meta.url).href, {
+      env: { ...process.env, RPC_WORKER_DELAY_MS: "200" },
+    })
+    try {
+      const client = Rpc.client<{ echo: (input: number) => number }>(worker)
+      const answer = await Promise.race([
+        client.call("echo", 42),
+        new Promise<"lost">((resolve) => setTimeout(() => resolve("lost"), 3_000)),
+      ])
+      expect(answer).toBe(42)
+    } finally {
+      worker.terminate()
+    }
+  })
+})
