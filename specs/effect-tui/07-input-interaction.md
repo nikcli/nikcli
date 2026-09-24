@@ -86,3 +86,31 @@ Landed follow-ups on the 0.5.11 pin, still behind this spec's remaining gate:
 - Shared list/select scrolling uses `scrollChildIntoView` and `viewportCulling`.
 - `DialogPrompt` can submit a blank value when `allowEmpty` is set (display-name clear).
 - Leader-key timeout and toast timers are cleaned up on unmount.
+
+## Requirement 2 Is Not Wireable As Written — 2026-09-21
+
+`packages/tui/src/util/input-precedence.ts` holds requirement 2's order as data (`ownerOf`, `owns`,
+`superseded`), and it has no production call site. The attempt to give it one (`1e2d0b06ec`) found the reason
+rather than an oversight, so the finding is the deliverable and this section is where the spec records it.
+
+There is no central dispatcher to wire the table into: 48 files subscribed to `useKeyboard` directly at the time,
+and each decides for itself. The one place that genuinely arbitrates is the Ctrl+C branch in `ui/dialog.tsx`, which
+asks exactly the table's question — is a modal open, is an editable focused — and resolves it **against** the
+declared order: with both active, the focused editor gets the key, not the modal.
+
+That is not a bug in the dialog. Escape and Ctrl+C legitimately resolve in opposite directions at the same site:
+Escape must close the dialog even while a text field has focus, and Ctrl+C must reach the field. A single flat
+order cannot serve both, and expressing the dialog's rule through `ownerOf` means passing
+`modal: stack.length > 0 && !editable` — the same `if`, wearing a table.
+
+So the precedence is **key-aware or wrong**, and that decision comes before any call site. Until it is made:
+
+- `packages/nikcli/test/tui/input-precedence.test.ts` pins the mismatch, so nobody closes the gap by making the
+  dialog follow the flat table — which would send Ctrl+C to the modal while the user is typing, the behaviour the
+  comment in `ui/dialog.tsx` records having already been fixed once.
+- `packages/nikcli/test/tui/dialog-ctrl-c.test.ts` already characterises the shipped arbitration, which is the
+  precondition requirement 3 asks for before any refactor.
+
+The next slice here is therefore a decision, not a migration: rewrite requirement 2 as a per-key precedence (at
+minimum distinguishing Escape from Ctrl+C), and only then choose whether a central dispatcher is worth building for
+the 48 direct subscribers.

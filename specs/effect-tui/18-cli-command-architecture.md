@@ -160,3 +160,20 @@ script that checks `$?`. None does: the fatal handler in `cli/main-effect.ts` se
 `process.exitCode = 1` before calling it, and the only other bare exit is the `SIGHUP`
 handler, where `0` is right. No change needed, and now recorded so the next audit does not
 start from the same suspicion.
+
+## Headless Posture, First Slice — 2026-09-21
+
+Requirement 12 has one consumer, not a policy. `src/cli/headless.ts` (`0a9444cbcf`) defines `isHeadless`:
+`NIKCLI_HEADLESS=1` (or `true`) always wins, `NIKCLI_TERMINAL=1` — the managed-PTY signal mobile uses — forces
+interactive, and otherwise a non-TTY stdin is headless. `resolvePermissionPrompt` builds on it and fails closed: with
+no TTY and no `--auto` it prints why and answers `reject`, never "yes".
+
+Its only call site is the permission prompt in `src/cli/handlers/run.ts`. Nothing else reads `isHeadless`: the
+`@clack/prompts` wrapper in `src/cli/effect/prompt.ts` does not consult it, so every other interactive prompt in the
+CLI keeps its pre-existing non-TTY behaviour, and there is no typed `CommandError.HeadlessFailure` or documented
+exit code for a prompt that had no default. `isReplExit` / `isReplHelp` in the same file are tested but have no
+consumer, because the REPL they are for does not exist.
+
+What remains of requirement 12 is therefore the wrapper, not the rule: route `cli/effect/prompt.ts` through
+`isHeadless`, give a prompt with no default a typed failure, and map that failure onto requirement 9's exit codes —
+which are themselves still unimplemented (every failure exits `1`).

@@ -10,7 +10,8 @@ preserving the standalone TUI, CLI/worker/HTTP/mobile modes, existing user workf
 pins. Deliver vertical slices with measured outcomes; do not rewrite every Promise into Effect or every Solid signal
 into a service.
 
-Twenty specifications organize the work across three horizons that match the phase column below: a correctness,
+Twenty-one specifications organize the work. EOT-00 is a single released-defect gate that blocks every promotion
+until it passes; the other twenty span three horizons that match the phase column below: a correctness,
 contract, and evidence baseline (EOT-01..03, EOT-10, EOT-12, EOT-13, EOT-20), a bounded data/state/isolation layer
 (EOT-04, EOT-05, EOT-08, EOT-09, EOT-11, EOT-14..17), and the user-visible experience and bridge surface (EOT-06,
 EOT-07, EOT-18, EOT-19). Implementation lands in dependency order, one slice at a time; each spec header carries its
@@ -79,7 +80,8 @@ promised.
 
 | ID                                                        | Tier | Phase | Dependencies                   | Effort | Risk   | Primary owner               | Release gate                                                        |
 | --------------------------------------------------------- | ---- | ----- | ------------------------------ | ------ | ------ | --------------------------- | ------------------------------------------------------------------- |
-| [EOT-01](effect-tui/01-performance-baseline.md)           | 1    | P0    | none                           | M      | Low    | Performance/test            | Reproducible measurements and failure-sensitive assertions          |
+| [EOT-00](effect-tui/00-startup-hang.md)                   | 1    | P0    | none                           | M      | High   | TUI host/renderer           | `hangRate == 0` over 200 compiled starts across a PTY matrix        |
+| [EOT-01](effect-tui/01-performance-baseline.md)           | 1    | P0    | EOT-00                         | M      | Low    | Performance/test            | Reproducible measurements and failure-sensitive assertions          |
 | [EOT-02](effect-tui/02-effect-boundaries.md)              | 1    | P1    | EOT-01                         | L      | High   | Effect/domain               | Typed boundary and multi-instance teardown tests                    |
 | [EOT-03](effect-tui/03-tui-lifecycle.md)                  | 1    | P1    | EOT-02                         | M      | High   | TUI lifecycle               | No stale commits or surviving owner work                            |
 | [EOT-10](effect-tui/10-contracts-errors-security.md)      | 1    | P1    | EOT-01                         | L      | High   | HttpApi/security            | Error/encoding/auth parity and clean generated output               |
@@ -100,6 +102,9 @@ promised.
 | [EOT-06](effect-tui/06-terminal-rendering.md)             | 2    | P3    | EOT-05                         | L      | High   | TUI rendering               | Streaming virtualization, anchor fidelity, measured latency         |
 | [EOT-07](effect-tui/07-input-interaction.md)              | 2    | P3    | EOT-03, EOT-05                 | M      | High   | TUI interaction             | Keyboard/focus/permission matrix on real terminals                  |
 
+EOT-00 is the one hard stop: while a compiled start can silently fail to paint, no startup or rendering budget may
+be ratified and no spec may be promoted past its current phase. Characterization work continues; promotion does not.
+
 Dependencies are exit gates, not permission to stall unrelated characterization tests. After P0, EOT-02, EOT-10,
 EOT-12, EOT-13, and EOT-20 may characterize existing behavior in parallel, but each release gate still requires all
 dependencies listed above to pass.
@@ -111,7 +116,8 @@ prerequisites. Run memory-heavy verification serially even when implementation w
 
 ### P0: Establish Truth
 
-**Status 2026-09-20: closed.** The baseline artifact exists at
+**Status 2026-09-20: closed for the server-route baseline; the TUI startup half waits on EOT-00.** The
+baseline artifact exists at
 `packages/nikcli/specs/perf-baseline.json` and `check:perf-baseline` gates it in
 `script/ci-validate.ts`. It had not been closed because the probe never returned —
 `perf-baseline.ts` finished measuring in under a second and then hung on open handles, so
@@ -168,32 +174,12 @@ to P0. Leave any unpassed spec proposed/in-progress rather than claiming the arc
    `BASELINE_MAX_REGRESSION`). Collect the 30-warm / 10-cold baseline on a compiled binary
    and ratify candidate budgets before optimization. No production behavior changes.
 
-   **Not ratifiable yet, and the reason turned out to be a defect.** On 2026-09-12 the compiled
-   binary was observed to **intermittently never paint** — roughly one startup in three to eight,
-   reproduced repeatedly at the same load as runs that finished in 4.5-5.8s, so not contention.
-
-   A hung instance was sampled. Its last output before going silent is the terminal capability
-   negotiation `@opentui/core` performs at renderer creation: OSC 10/11 and OSC 4 colour queries,
-   XTGETTCAP, the OSC 99 notification probe, the iTerm2 OSC 1337 feature query, the Kitty graphics
-   query `ESC_Gi=31337`, and the OSC 66 text-sizing probes. Then nothing, for as long as it is left
-   running, with the main thread parked in `kevent64` — idle, waiting for an event, not spinning.
-
-   So the startup blocks on replies a terminal is supposed to send. Two things that look like
-   workarounds are not: `--print-logs` appears to fix it but only defeats the probe's
-   "has it painted" threshold, because the log text itself crosses it; and forcing
-   `OPENTUI_GRAPHICS` / `OPENTUI_NOTIFICATIONS` / `OTUI_PALETTE_IDLE_TIMEOUT_MS` still hangs, with
-   the same query block as the last output.
-
-   Fix the hang before ratifying anything. A budget averaged over the samples that _did_ paint
-   certifies a startup that sometimes does not happen. Two observations stand regardless: warm
-   firstPaint sits around 4.8-5.2s median with RSS around 500-620MB, and `firstPaint` and
-   `usablePrompt` differ by under a millisecond in every sample, so on this binary the second metric
-   carries no information the first does not.
-
-   Fix the hang first; the baseline is a measurement of it until then. Two observations stand
-   regardless: warm firstPaint sits around 4.8-5.2s median with RSS around 500-620MB, and
-   `firstPaint` and `usablePrompt` differ by under a millisecond in every sample, so on this binary
-   the second metric carries no information the first does not.
+   **Not ratifiable yet.** The compiled binary intermittently never paints — roughly one start in
+   three to eight on 2026-09-12. A budget averaged over the samples that _did_ paint certifies a
+   startup that sometimes does not happen, so ratification waits on
+   [EOT-00](effect-tui/00-startup-hang.md), which holds the evidence and the gate. One observation
+   stands regardless: `firstPaint` and `usablePrompt` differed by under a millisecond in every
+   sample, so on that binary the second metric carried no information the first did not.
 
 2. EOT-02: type one `runService` caller chain without widening requirements; exercise finalizers and concurrent instances.
 3. EOT-10: characterize standalone TUI-config 401, malformed response, and offline failure; forbid empty-config success.
@@ -229,81 +215,80 @@ exists and is guarded by a test, not that the spec has passed its release gate.
 Nothing here is marked complete. Rows are in the order they landed, so a spec
 appears more than once.
 
-| Spec   | What landed                                                                                                      | Commit                                                  |
-| ------ | ---------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------- | -------------- |
-| EOT-01 | One probe-environment block shared by both probes; `loadavg1` added                                              | `dc3cab7fd`                                             |
-| EOT-01 | Probe progress moved to stderr; `BASELINE` comparison with an opt-in regression gate                             | working tree                                            |
-| EOT-01 | `repro:startup-hang`: the intermittent never-paints startup, reproduced on demand                                | working tree                                            |
-| EOT-02 | `runService` requirement typing; `any` and the cast removed                                                      | `3ec56934`                                              |
-| EOT-02 | `runPromiseWithLayer` requires `R extends ROut`; four latent missing-service runs fixed                          | working tree                                            |
-| EOT-03 | `useAttempts`: supersession guard for restartable dialog flows                                                   | `4495840e1`                                             |
-| EOT-03 | `attempt.adopt`: a resource acquired by a superseded attempt is released, not leaked                             | working tree                                            |
-| EOT-04 | Queue depth meter; refetch on reconnect instead of resuming into a gap                                           | `3ec56934`, `4a767a5f9`                                 |
-| EOT-04 | Delivery-class registry on the event declaration, ahead of admission caps                                        | working tree                                            |
-| EOT-04 | Per-connection frame and byte accounting, including server-generated frames                                      | working tree                                            |
-| EOT-05 | Optional bootstrap requests settle; `sync.degraded` replaces a pinned `partial`                                  | `12d8ef764`                                             |
-| EOT-05 | Replay equivalence verified: a snapshot reaches the same state as a cold journal                                 | working tree                                            |
-| EOT-06 | Windowing math pinned by tests, including two properties                                                         | `92dc72d2a`                                             |
-| EOT-06 | Windowing heights derived per turn from content instead of a flat constant                                       | working tree                                            |
-| EOT-07 | Ctrl+C asks the renderer for focus instead of a source string and a missing DOM                                  | `2744425ad`                                             |
-| EOT-07 | Input precedence as an ordered table: modal > editable > route > application                                     | working tree                                            |
-| EOT-08 | Import-cost probe; one dialog moved off the critical path against a measured delta                               | `a9725f1d7`                                             |
-| EOT-08 | Four more dialogs off the critical path: eager set 3344ms -> 1552-2003ms                                         | working tree                                            |
-| EOT-09 | `isTerminal`/`canTransition` for background-run outcomes                                                         | `3ec56934`                                              |
-| EOT-09 | Post-commit publication moved from an ambient queue to the transaction's `ctx`                                   | working tree                                            |
-| EOT-10 | Standalone and CLI hosts stop turning a config failure into an empty config                                      | `3ec56934`, `67a2b811b`                                 |
-| EOT-10 | Open-payload inventory pinned per file; a new `Schema.Unknown` fails a test                                      | working tree                                            |
-| EOT-11 | `suppressEmptyTextResult` covered: a rejection still reaches an awaiting caller                                  | `9483b4645`                                             |
-| EOT-11 | A whole native turn pinned as one ordered processor sequence                                                     | working tree                                            |
-| EOT-12 | Onboarding retry bounded; typed `incomplete` outcome instead of a parked startup                                 | `a6b1c758c`                                             |
-| EOT-12 | Auth lifecycle as a legal-transition table, shared contract for server and TUI                                   | working tree                                            |
-| EOT-13 | `span-schema.ts`: fixed attribute schema, forbidden segments, redact-then-truncate                               | `3ec56934`                                              |
-| EOT-13 | Span `statusMessage` redacted; `nku_` and opaque bearer tokens added to the redactor                             | working tree                                            |
-| EOT-14 | v2 manifest is the v1/v2 discriminator; host-range and capability checks at load                                 | working tree                                            |
-| EOT-14 | Per-plugin activation budget: one wedged `setup` no longer holds the whole startup                               | working tree                                            |
-| EOT-15 | `detectSequenceGap`: a replay resuming across a compacted range is now reported                                  | `34ed8b55a`                                             |
-| EOT-15 | A projection replayed across a hole is no longer persisted as a snapshot                                         | working tree                                            |
-| EOT-16 | LSP and provider refreshes scoped to the active workspace                                                        | `41b718d16`                                             |
-| EOT-16 | Session directory survives a remote workspace target; corrupt records stop reading as missing                    | working tree                                            |
-| EOT-17 | Precedence corrected to the shipped contract; ordering guarded by a test                                         | `3ec56934`, `67a2b811b`                                 |
-| EOT-17 | Every permission decision audited with the rule that produced it; denials at info                                | working tree                                            |
-| EOT-18 | Command-surface gate restored and repointed                                                                      | `f5783a970`                                             |
-| EOT-18 | `cmd()` takes `bootstrap`/`teardown`; teardown runs in a finally without masking the handler                     | working tree                                            |
-| EOT-19 | Per-device capabilities the bridge advertises; an unknown scope grants nothing                                   | working tree                                            |
-| EOT-20 | Test layers made disjoint; barrier helpers; one flaky test migrated to a barrier                                 | `3ec56934`, `4035590e2`                                 |
-| EOT-20 | `preserveTestEnv` discipline enforced: a module-scope `NIKCLI_*` write fails a test                              | working tree                                            |
-| EOT-01 | Lifecycle counters on the bridge; a cancel counted once, synchronously, and a finalizer-leak watchdog            | `644a8f28`                                              |
-| EOT-02 | Bridge exits classified; two `WorkspaceRef`s on one directory torn down without interleaving                     | `644a8f28`                                              |
-| EOT-04 | `BYTE_BUDGET` enforced **per frame**; a lifetime budget would evict every healthy long-lived reader              | `644a8f28`                                              |
-| EOT-10 | Open-payload gate in CI, keyed by declaration text so an unrelated edit above a site is not a failure            | `644a8f28`                                              |
-| EOT-12 | Typed account state machine + guard; the empty privileged-route list is the finding, with evidence               | `644a8f28`, `6d880fc3`                                  |
-| EOT-12 | Verifier env read at call time: 8 "flaky" auth tests were `Flag` constants captured at first import              | `48344aa4`                                              |
-| EOT-13 | Span-schema gate; bounded telemetry consumer; the brain span moved onto a runtime that has the layer             | `644a8f28`                                              |
-| EOT-14 | Plugin-v2 gate: manifest exports, the tags consumers catch on, and autoload as a hard opt-in                     | `644a8f28`                                              |
-| EOT-16 | Workspace-isolation gate, including the bridge comment that records the open B31 sharing gap                     | `644a8f28`                                              |
-| EOT-17 | Network egress accounted (45 modules) rather than choked through a layer nothing routes through                  | `644a8f28`                                              |
-| EOT-19 | `/mobile/bootstrap` probes bounded and de-networked: 8s+ -> 950ms on the app's connect path                      | `d1e2f99e`                                              |
-| EOT-20 | `withFixture` as the shared harness; both new gates driven by tests that make them fail                          | `644a8f28`, `6d880fc3`                                  |
-| EOT-12 | Flag capture-at-import is a CI gate, not four fixes; the legacy-credential pair moves together                   | `ac52fff3`                                              |
-| EOT-20 | TUI tests already lived in `packages/nikcli/test/tui` (55 files); a duplicate directory removed, `adopt` covered | `995fff77ba`                                            |
-| EOT-01 | P0 closed: the probe never returned, so no baseline existed; artifact + gate now in CI                           | `7376aed1e1`                                            |
-| EOT-13 | Redaction fuzz: camelCase keys, `:`/space/`                                                                      | ` separators, URL userinfo and glued tokens all escaped | `936ae2289a06` |
-| EOT-13 | OTLP smoke: the exporter was shipping span attributes unredacted; panel now coalesced too                        | `46b4b5d1ae`                                            |
-| EOT-10 | Fresh-install sweep over all 89 parameterless GETs — the state where both shipped 400s hit                       | `2f839ef7f4`                                            |
-| EOT-09 | Durable recovery against a real database: a crashed owner's row, re-read, not a pure predicate                   | `a1069153ab`                                            |
-| EOT-09 | `Semaphore`/`workMap` were uncovered; `work()` dropped items after a nullable one                                | `ff7e7badc5`                                            |
-| EOT-04 | No-silent-loss as a property over every eviction path; the three have different radius                           | `149d9745aa`                                            |
-| EOT-02 | The bridge cannot tell a defect from an interruption; counters said every one was a failure                      | `88c404b2ca`                                            |
-| EOT-18 | `Lifecycle<T>` had zero registered commands; the guarantee lives in `cli/bootstrap.ts`                           | `1377a04033`                                            |
-| EOT-15 | Cross-process seq uniqueness pinned; SSE documented as _not_ a replay protocol                                   | `430b6472f4`                                            |
-| —      | `check:spec-paths`: 22 cited files did not resolve; the rot that produced four stale claims                      | `628f69111d`                                            |
-| EOT-03 | The replace-not-push contract pinned; the dialog host was testable after all                                     | `d0e9b0032d`                                            |
-| EOT-20 | A test literal containing an `import` statement was rewritten by the transform                                   | `d0e9b0032d`                                            |
-| EOT-03 | `useAbortOnCleanup` cannot guard a dialog that opens dialogs — two reverted rounds, and why                      | `29735847d4fc`                                          |
-| EOT-03 | Owner-bound calls after an `await` gated by an AST scan; the support dialog leaked three listeners per open      | working tree                                            |
-| EOT-05 | `createPromiseCache`: image and wallpaper memos bounded; a load is cancelled only once every caller has left     | working tree                                            |
-| EOT-04 | `EventFeed.filtered`: sync, mobile-session and workspace SSE get the lag budget; a stalled reader is evicted     | working tree                                            |
-| EOT-19 | Mobile session stream re-reads the session on reconnect, which is what heals an eviction or a dropped socket     | working tree                                            |
+| Spec   | What landed                                                                                                      | Commit                     |
+| ------ | ---------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| EOT-01 | One probe-environment block shared by both probes; `loadavg1` added                                              | `dc3cab7fd`                |
+| EOT-01 | Probe progress moved to stderr; `BASELINE` comparison with an opt-in regression gate                             | `dd27545efd`               |
+| EOT-02 | `runService` requirement typing; `any` and the cast removed                                                      | `3ec56934`                 |
+| EOT-02 | `runPromiseWithLayer` requires `R extends ROut`; four latent missing-service runs fixed                          | `dd27545efd`               |
+| EOT-03 | `useAttempts`: supersession guard for restartable dialog flows                                                   | `4495840e1`                |
+| EOT-03 | `attempt.adopt`: a resource acquired by a superseded attempt is released, not leaked                             | `3ecef498c0`               |
+| EOT-04 | Queue depth meter; refetch on reconnect instead of resuming into a gap                                           | `3ec56934`, `4a767a5f9`    |
+| EOT-04 | Delivery-class registry on the event declaration, ahead of admission caps                                        | `2b48957306`               |
+| EOT-04 | Per-connection frame and byte accounting, including server-generated frames                                      | `2b48957306`               |
+| EOT-05 | Optional bootstrap requests settle; `sync.degraded` replaces a pinned `partial`                                  | `12d8ef764`                |
+| EOT-05 | Replay equivalence verified: a snapshot reaches the same state as a cold journal                                 | `3ecef498c0`               |
+| EOT-06 | Windowing math pinned by tests, including two properties                                                         | `92dc72d2a`                |
+| EOT-06 | Windowing heights derived per turn from content instead of a flat constant                                       | `3ecef498c0`               |
+| EOT-07 | Ctrl+C asks the renderer for focus instead of a source string and a missing DOM                                  | `2744425ad`                |
+| EOT-07 | Input precedence as an ordered table: modal > editable > route > application                                     | `3ecef498c0`               |
+| EOT-08 | Import-cost probe; one dialog moved off the critical path against a measured delta                               | `a9725f1d7`                |
+| EOT-08 | Four more dialogs off the critical path: eager set 3344ms -> 1552-2003ms                                         | `3ecef498c0`               |
+| EOT-09 | `isTerminal`/`canTransition` for background-run outcomes                                                         | `3ec56934`                 |
+| EOT-09 | Post-commit publication moved from an ambient queue to the transaction's `ctx`                                   | `84ffbe798b`               |
+| EOT-10 | Standalone and CLI hosts stop turning a config failure into an empty config                                      | `3ec56934`, `67a2b811b`    |
+| EOT-10 | Open-payload inventory pinned per file; a new `Schema.Unknown` fails a test                                      | `dd27545efd`               |
+| EOT-11 | `suppressEmptyTextResult` covered: a rejection still reaches an awaiting caller                                  | `9483b4645`                |
+| EOT-11 | A whole native turn pinned as one ordered processor sequence                                                     | `3ecef498c0`               |
+| EOT-12 | Onboarding retry bounded; typed `incomplete` outcome instead of a parked startup                                 | `a6b1c758c`                |
+| EOT-12 | Auth lifecycle as a legal-transition table, shared contract for server and TUI                                   | `3ecef498c0`               |
+| EOT-13 | `span-schema.ts`: fixed attribute schema, forbidden segments, redact-then-truncate                               | `3ec56934`                 |
+| EOT-13 | Span `statusMessage` redacted; `nku_` and opaque bearer tokens added to the redactor                             | `2b48957306`, `eac4ca76a6` |
+| EOT-14 | v2 manifest is the v1/v2 discriminator; host-range and capability checks at load                                 | `dd27545efd`               |
+| EOT-14 | Per-plugin activation budget: one wedged `setup` no longer holds the whole startup                               | `3ecef498c0`               |
+| EOT-15 | `detectSequenceGap`: a replay resuming across a compacted range is now reported                                  | `34ed8b55a`                |
+| EOT-15 | A projection replayed across a hole is no longer persisted as a snapshot                                         | `3ecef498c0`               |
+| EOT-16 | LSP and provider refreshes scoped to the active workspace                                                        | `41b718d16`                |
+| EOT-16 | Session directory survives a remote workspace target; corrupt records stop reading as missing                    | `2b48957306`               |
+| EOT-17 | Precedence corrected to the shipped contract; ordering guarded by a test                                         | `3ec56934`, `67a2b811b`    |
+| EOT-17 | Every permission decision audited with the rule that produced it; denials at info                                | `3ecef498c0`               |
+| EOT-18 | Command-surface gate restored and repointed                                                                      | `f5783a970`                |
+| EOT-18 | `cmd()` takes `bootstrap`/`teardown`; teardown runs in a finally without masking the handler                     | `3ecef498c0`               |
+| EOT-19 | Per-device capabilities the bridge advertises; an unknown scope grants nothing                                   | `3ecef498c0`               |
+| EOT-20 | Test layers made disjoint; barrier helpers; one flaky test migrated to a barrier                                 | `3ec56934`, `4035590e2`    |
+| EOT-20 | `preserveTestEnv` discipline enforced: a module-scope `NIKCLI_*` write fails a test                              | `dd27545efd`               |
+| EOT-01 | Lifecycle counters on the bridge; a cancel counted once, synchronously, and a finalizer-leak watchdog            | `644a8f28`                 |
+| EOT-02 | Bridge exits classified; two `WorkspaceRef`s on one directory torn down without interleaving                     | `644a8f28`                 |
+| EOT-04 | `BYTE_BUDGET` enforced **per frame**; a lifetime budget would evict every healthy long-lived reader              | `644a8f28`                 |
+| EOT-10 | Open-payload gate in CI, keyed by declaration text so an unrelated edit above a site is not a failure            | `644a8f28`                 |
+| EOT-12 | Typed account state machine + guard; the empty privileged-route list is the finding, with evidence               | `644a8f28`, `6d880fc3`     |
+| EOT-12 | Verifier env read at call time: 8 "flaky" auth tests were `Flag` constants captured at first import              | `48344aa4`                 |
+| EOT-13 | Span-schema gate; bounded telemetry consumer; the brain span moved onto a runtime that has the layer             | `644a8f28`                 |
+| EOT-14 | Plugin-v2 gate: manifest exports, the tags consumers catch on, and autoload as a hard opt-in                     | `644a8f28`                 |
+| EOT-16 | Workspace-isolation gate, including the bridge comment that records the open B31 sharing gap                     | `644a8f28`                 |
+| EOT-17 | Network egress accounted (45 modules) rather than choked through a layer nothing routes through                  | `644a8f28`                 |
+| EOT-19 | `/mobile/bootstrap` probes bounded and de-networked: 8s+ -> 950ms on the app's connect path                      | `d1e2f99e`                 |
+| EOT-20 | `withFixture` as the shared harness; both new gates driven by tests that make them fail                          | `644a8f28`, `6d880fc3`     |
+| EOT-12 | Flag capture-at-import is a CI gate, not four fixes; the legacy-credential pair moves together                   | `ac52fff3`                 |
+| EOT-20 | TUI tests already lived in `packages/nikcli/test/tui` (55 files); a duplicate directory removed, `adopt` covered | `995fff77ba`               |
+| EOT-01 | P0 closed: the probe never returned, so no baseline existed; artifact + gate now in CI                           | `7376aed1e1`               |
+| EOT-13 | Redaction fuzz: camelCase keys, `:`/space/`\|` separators, URL userinfo and glued tokens all escaped             | `936ae2289a06`             |
+| EOT-13 | OTLP smoke: the exporter was shipping span attributes unredacted; panel now coalesced too                        | `46b4b5d1ae`               |
+| EOT-10 | Fresh-install sweep over all 89 parameterless GETs — the state where both shipped 400s hit                       | `2f839ef7f4`               |
+| EOT-09 | Durable recovery against a real database: a crashed owner's row, re-read, not a pure predicate                   | `a1069153ab`               |
+| EOT-09 | `Semaphore`/`workMap` were uncovered; `work()` dropped items after a nullable one                                | `ff7e7badc5`               |
+| EOT-04 | No-silent-loss as a property over every eviction path; the three have different radius                           | `149d9745aa`               |
+| EOT-02 | The bridge cannot tell a defect from an interruption; counters said every one was a failure                      | `88c404b2ca`               |
+| EOT-18 | `Lifecycle<T>` had zero registered commands; the guarantee lives in `cli/bootstrap.ts`                           | `1377a04033`               |
+| EOT-15 | Cross-process seq uniqueness pinned; SSE documented as _not_ a replay protocol                                   | `430b6472f4`               |
+| —      | `check:spec-paths`: 22 cited files did not resolve; the rot that produced four stale claims                      | `628f69111d`               |
+| EOT-03 | The replace-not-push contract pinned; the dialog host was testable after all                                     | `d0e9b0032d`               |
+| EOT-20 | A test literal containing an `import` statement was rewritten by the transform                                   | `d0e9b0032d`               |
+| EOT-03 | `useAbortOnCleanup` cannot guard a dialog that opens dialogs — two reverted rounds, and why                      | `29735847d4fc`             |
+| EOT-03 | Owner-bound calls after an `await` gated by an AST scan; the support dialog leaked three listeners per open      | `bb29f838b8`               |
+| EOT-05 | `createPromiseCache`: image and wallpaper memos bounded; a load is cancelled only once every caller has left     | `bb29f838b8`               |
+| EOT-04 | `EventFeed.filtered`: sync, mobile-session and workspace SSE get the lag budget; a stalled reader is evicted     | `bb29f838b8`               |
+| EOT-19 | Mobile session stream re-reads the session on reconnect, which is what heals an eviction or a dropped socket     | `bb29f838b8`               |
 
 Every spec has been opened and every spec now has at least one landed slice,
 EOT-14 and EOT-19 included.
