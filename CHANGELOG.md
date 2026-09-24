@@ -3,6 +3,17 @@
 <!-- UNRELEASED:START -->
 <!-- UNRELEASED:END -->
 
+## v1.394.0 (September 2026)
+
+## Core
+
+- A cli-sync token reaches the sync transport's routes and nothing else (@nikomatt69)
+
+**Thank you to 1 community contributor:**
+
+- @nikomatt69:
+  - fix(mobile): a cli-sync token reaches the sync transport's routes and nothing else
+
 ## v1.393.0 (September 2026)
 
 ## Core
