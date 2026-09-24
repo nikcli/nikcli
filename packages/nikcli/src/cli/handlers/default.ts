@@ -84,6 +84,8 @@ export function createWorkerEnv(overrides: Record<string, string> = {}) {
   return Process.sanitizedEnv({
     [Process.ROLE_ENV]: "worker",
     [Process.RUN_ID_ENV]: Process.ensureRunID(),
+    // One log per session: the worker appends to ours instead of truncating it.
+    ...(Log.file() ? { [Log.FILE_ENV]: Log.file() } : {}),
     ...overrides,
   })
 }

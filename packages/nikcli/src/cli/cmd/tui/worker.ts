@@ -21,7 +21,10 @@ Process.ensureMetadata("worker")
 // process would miss every token of streaming work. Arm the worker separately.
 Diagnostics.listen()
 
+// The main process already opened today's log; join it rather than open (and
+// truncate) a file of our own. Absent when the main process prints logs instead.
 await Log.init({
+  file: process.env[Log.FILE_ENV] || undefined,
   print: process.argv.includes("--print-logs"),
   dev: Installation.isLocal(),
   level: (() => {

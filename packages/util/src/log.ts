@@ -1,5 +1,6 @@
 import path from "path"
 import fs from "fs/promises"
+import { openSync, writeSync } from "fs"
 import { Global } from "./global"
 import { zod } from "./effect-zod"
 import { isRedactedKey, REDACTED, redactString, safeStringify } from "./redact"
@@ -55,7 +56,18 @@ export namespace Log {
     print: boolean
     dev?: boolean
     level?: Level
+    /**
+     * Join this existing log file instead of starting one: it is appended to,
+     * never truncated. The TUI's server worker passes the main process's file
+     * here (via `FILE_ENV`) — opening its own truncated the main process's log,
+     * which is why every stalled start in `specs/effect-tui/00-startup-hang.md`
+     * left an empty `dev.log` behind.
+     */
+    file?: string
   }
+
+  /** Environment variable carrying the main process's log file to its worker. */
+  export const FILE_ENV = "NIKCLI_LOG_FILE"
 
   let logpath = ""
   export function file() {
@@ -70,17 +82,22 @@ export namespace Log {
     if (options.level) level = options.level
     cleanup(Global.Path.log)
     if (options.print) return
-    logpath = path.join(
-      Global.Path.log,
-      options.dev ? "dev.log" : new Date().toISOString().split(".")[0].replace(/:/g, "") + ".log",
-    )
-    const logfile = Bun.file(logpath)
-    await fs.truncate(logpath).catch(() => {})
-    const writer = logfile.writer()
-    write = async (msg: any) => {
-      const num = writer.write(msg)
-      writer.flush()
-      return num
+    if (options.file) {
+      logpath = options.file
+    } else {
+      logpath = path.join(
+        Global.Path.log,
+        options.dev ? "dev.log" : new Date().toISOString().split(".")[0].replace(/:/g, "") + ".log",
+      )
+      await fs.truncate(logpath).catch(() => {})
+    }
+    // Append mode, for every writer: a file two threads write to — the TUI and
+    // its server worker — must not have each overwrite the other from its own
+    // offset. O_APPEND makes every write land at the current end.
+    const fd = openSync(logpath, "a")
+    write = (msg: any) => {
+      writeSync(fd, msg)
+      return msg.length
     }
   }
 
