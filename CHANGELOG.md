@@ -3,6 +3,17 @@
 <!-- UNRELEASED:START -->
 <!-- UNRELEASED:END -->
 
+## v1.395.0 (September 2026)
+
+## Core
+
+- Streamline upgrade instance handling and improve comments (@nikomatt69)
+
+**Thank you to 1 community contributor:**
+
+- @nikomatt69:
+  - refactor(cli): streamline upgrade instance handling and improve comments
+
 ## v1.394.0 (September 2026)
 
 ## Core
