@@ -1,4 +1,4 @@
-import { HttpRouter } from "effect/unstable/http"
+import { HttpMiddleware, HttpRouter } from "effect/unstable/http"
 import { OpenApi } from "effect/unstable/httpapi"
 import { BunFileSystem, BunHttpServer, BunPath } from "@effect/platform-bun"
 import { Context, Effect, Layer } from "effect"
@@ -227,6 +227,23 @@ export namespace HttpApiBridge {
   }
 
   /**
+   * Turn off Effect's built-in server span.
+   *
+   * `HttpEffect` wraps every request in `HttpMiddleware.tracer`
+   * unconditionally — `disableLogger` does not reach it. That span records
+   * `url.full`, `url.query`, `client.address`, `user_agent.original` and every
+   * request and response header, which is most of EOT-13's forbidden list: the
+   * sanitizer drops the `url.*` keys, but `x-forwarded-for` (an IP) and
+   * `referer` (a full URL with a session id in it) survived it. On this runtime
+   * no tracer is installed, so the span is built, filled and discarded on every
+   * request, and nothing in `src` reads it. Leaving it on is the trap for
+   * whoever wires a real tracer in next: the forbidden attributes arrive with
+   * it. A server span for this bridge belongs to a middleware that records
+   * only the allowed schema. `specs/effect-tui/13-observability-pipeline.md`.
+   */
+  const builtinServerSpanOff = Layer.succeed(HttpMiddleware.TracerDisabledWhen)(() => true)
+
+  /**
    * Shared Effect HttpApi layer used by `Server.fetch`. `LogRedirect` replaces
    * Effect's console default logger so router-internal logs (HttpApi spans,
    * encode errors) land in nikcli's `Log` sink instead of corrupting the TUI's
@@ -237,6 +254,7 @@ export namespace HttpApiBridge {
       Layer.provide(Layer.mergeAll(BunHttpServer.layerHttpServices, BunFileSystem.layer, BunPath.layer)),
     ),
     LogRedirect,
+    builtinServerSpanOff,
   )
 
   /**

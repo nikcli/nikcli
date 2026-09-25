@@ -83,6 +83,15 @@ const FORBIDDEN_SEGMENTS: ReadonlySet<string> = new Set([
   "host",
   "user",
   "account",
+  // HTTP header names that carry an IP or a URL under a word none of the
+  // above matches. Effect's own server span records every request and
+  // response header, and `http.request.header.x-forwarded-for` and
+  // `http.request.header.referer` both walked past this list.
+  "forwarded",
+  "referer",
+  "referrer",
+  "origin",
+  "location",
 ])
 
 const MAX_ATTRIBUTES = 32

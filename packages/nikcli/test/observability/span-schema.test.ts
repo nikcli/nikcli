@@ -32,6 +32,21 @@ describe("isForbiddenSpanAttribute", () => {
     }
   })
 
+  it("drops the header keys Effect's server span records that carry an IP or a URL", () => {
+    // Each of these reached a sanitized span intact before the header words
+    // were added: `x-forwarded-for` is a client IP, the others are URLs.
+    for (const key of [
+      "http.request.header.x-forwarded-for",
+      "http.request.header.forwarded",
+      "http.request.header.referer",
+      "http.request.header.referrer",
+      "http.request.header.origin",
+      "http.response.header.location",
+    ]) {
+      expect(isForbiddenSpanAttribute(key)).toBe(true)
+    }
+  })
+
   it("matches per segment, so an innocent key is not caught by a substring", () => {
     // "http.route" survives even though "route" is adjacent to forbidden keys,
     // and "description" is not dropped for containing "ip".
