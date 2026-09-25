@@ -1598,6 +1598,13 @@ function App(props: { checkUpgrade?: () => Promise<UpdateAvailable | undefined> 
           duration: 5000,
         })
       }),
+      sdk.event.on("permission.blocked", (evt) => {
+        toast.show({
+          message: `${evt.properties.permission} denied by auto mode · [${evt.properties.rule}] · ${keybind.print("permission_mode")} to review`,
+          variant: "warning",
+          duration: 5000,
+        })
+      }),
       sdk.event.on("permission.asked", () => {
         const tuiCfg = sync.data.config?.tui as { sound?: boolean } | undefined
         if (tuiCfg?.sound === false) return

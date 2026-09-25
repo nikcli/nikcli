@@ -35,6 +35,7 @@ export type Agent = {
   temperature?: number | undefined
   color?: string | undefined
   permission: Array<{ permission: string; pattern: string; action: "allow" | "deny" | "ask" }>
+  permissionMode?: "default" | "auto" | undefined
   model?: { modelID: string; providerID: string } | undefined
   advisor?: { model: { modelID: string; providerID: string }; maxUses?: number | undefined } | undefined
   variant?: string | undefined
@@ -332,6 +333,8 @@ export type ReferenceConfig =
 
 export type PermissionActionConfig = "ask" | "allow" | "deny"
 
+export type PermissionModeConfig = "default" | "auto"
+
 export type ProviderConfig = {
   api?: string | undefined
   name?: string | undefined
@@ -448,6 +451,16 @@ export type ConnectorGChat = { type: "gchat"; botToken?: string | undefined; ena
 export type ConnectorLinear = { type: "linear"; botToken?: string | undefined; enabled?: boolean | undefined }
 
 export type LayoutConfig = "auto" | "stretch"
+
+export type AutoModeConfig = {
+  environment?: Array<string> | undefined
+  allow?: Array<string> | undefined
+  soft_deny?: Array<string> | undefined
+  hard_deny?: Array<string> | undefined
+  classify_all_shell?: boolean | undefined
+  model?: string | undefined
+  disable?: boolean | undefined
+}
 
 export type PolicyStatementConfig = { effect: "allow" | "deny"; action: string; resource: string }
 
@@ -891,6 +904,8 @@ export type ReferenceConfig1 =
   | { type: "git"; repository: string; branch?: string | undefined; description?: string | undefined }
   | { type: "local"; path: string; description?: string | undefined }
 
+export type PermissionModeConfig1 = "default" | "auto"
+
 export type ProviderConfig1 = {
   api?: string | undefined
   name?: string | undefined
@@ -1007,6 +1022,16 @@ export type ConnectorGChat1 = { type: "gchat"; botToken?: string | undefined; en
 export type ConnectorLinear1 = { type: "linear"; botToken?: string | undefined; enabled?: boolean | undefined }
 
 export type LayoutConfig1 = "auto" | "stretch"
+
+export type AutoModeConfig1 = {
+  environment?: Array<string> | undefined
+  allow?: Array<string> | undefined
+  soft_deny?: Array<string> | undefined
+  hard_deny?: Array<string> | undefined
+  classify_all_shell?: boolean | undefined
+  model?: string | undefined
+  disable?: boolean | undefined
+}
 
 export type PolicyStatementConfig1 = { effect: "allow" | "deny"; action: string; resource: string }
 
@@ -1840,6 +1865,17 @@ export type PermissionRequest1 = {
   tool?: { messageID: string; callID: string } | undefined
 }
 
+export type PermissionBlocked = {
+  id: string
+  sessionID: string
+  permission: string
+  patterns: Array<string>
+  rule: string
+  reason: string
+  time: number
+  tool?: { messageID: string; callID: string } | undefined
+}
+
 export type Pty1 = {
   id: string
   title: string
@@ -2154,6 +2190,17 @@ export type PermissionRequest2 = {
 export type EventPermissionReplied = {
   type: "permission.replied"
   properties: { sessionID: string; requestID: string; reply: "once" | "always" | "reject" }
+}
+
+export type PermissionBlocked1 = {
+  id: string
+  sessionID: string
+  permission: string
+  patterns: Array<string>
+  rule: string
+  reason: string
+  time: number
+  tool?: { messageID: string; callID: string } | undefined
 }
 
 export type QuestionOption2 = { label: string; description: string }
@@ -3095,6 +3142,8 @@ export type EventProjectUpdated = { type: "project.updated"; properties: Project
 
 export type EventPermissionAsked = { type: "permission.asked"; properties: PermissionRequest2 }
 
+export type EventPermissionBlocked = { type: "permission.blocked"; properties: PermissionBlocked1 }
+
 export type QuestionInfo2 = {
   question: string
   header: string
@@ -3672,6 +3721,7 @@ export type AgentConfig = {
   order?: number | undefined
   maxSteps?: number | undefined
   permission?: PermissionConfig | undefined
+  permission_mode?: PermissionModeConfig | undefined
   advisor?: string | undefined
   advisor_max_uses?: number | undefined
 } & { [x: string]: any | undefined }
@@ -3693,6 +3743,7 @@ export type AgentConfig1 = {
   order?: number | undefined
   maxSteps?: number | undefined
   permission?: PermissionConfig | undefined
+  permission_mode?: PermissionModeConfig1 | undefined
   advisor?: string | undefined
   advisor_max_uses?: number | undefined
 } & { [x: string]: any | undefined }
@@ -3879,6 +3930,8 @@ export type Config = {
   instructions?: Array<string> | undefined
   layout?: LayoutConfig | undefined
   permission?: PermissionConfig | undefined
+  permission_mode?: PermissionModeConfig | undefined
+  auto_mode?: AutoModeConfig | undefined
   tools?: { [x: string]: boolean } | undefined
   tool?: { allow?: Array<string> | undefined; pin?: { [x: string]: string } | undefined } | undefined
   enterprise?: { url?: string | undefined } | undefined
@@ -4126,6 +4179,8 @@ export type MobileConfigInfo = {
   instructions?: Array<string> | undefined
   layout?: LayoutConfig1 | undefined
   permission?: PermissionConfig | undefined
+  permission_mode?: PermissionModeConfig1 | undefined
+  auto_mode?: AutoModeConfig1 | undefined
   tools?: { [x: string]: boolean } | undefined
   tool?: { allow?: Array<string> | undefined; pin?: { [x: string]: string } | undefined } | undefined
   enterprise?: { url?: string | undefined } | undefined
@@ -4383,6 +4438,7 @@ export type Event =
   | EventServerInstanceDisposed
   | EventPermissionAsked
   | EventPermissionReplied
+  | EventPermissionBlocked
   | EventQuestionAsked
   | EventQuestionReplied
   | EventQuestionRejected
@@ -4451,6 +4507,7 @@ export type Event1 =
   | EventServerInstanceDisposed
   | EventPermissionAsked
   | EventPermissionReplied
+  | EventPermissionBlocked
   | EventQuestionAsked
   | EventQuestionReplied
   | EventQuestionRejected
@@ -6280,6 +6337,7 @@ export type ConfigUpdateInput = {
                         | undefined
                     }
                   | undefined
+                readonly permission_mode?: ("default" | "auto") | undefined
                 readonly advisor?: string | undefined
                 readonly advisor_max_uses?: number | undefined
               } & { readonly [x: string]: any | undefined })
@@ -6308,6 +6366,7 @@ export type ConfigUpdateInput = {
                         | undefined
                     }
                   | undefined
+                readonly permission_mode?: ("default" | "auto") | undefined
                 readonly advisor?: string | undefined
                 readonly advisor_max_uses?: number | undefined
               } & { readonly [x: string]: any | undefined })
@@ -6337,6 +6396,7 @@ export type ConfigUpdateInput = {
                         | undefined
                     }
                   | undefined
+                readonly permission_mode?: ("default" | "auto") | undefined
                 readonly advisor?: string | undefined
                 readonly advisor_max_uses?: number | undefined
               } & { readonly [x: string]: any | undefined })
@@ -6369,6 +6429,7 @@ export type ConfigUpdateInput = {
                         | undefined
                     }
                   | undefined
+                readonly permission_mode?: ("default" | "auto") | undefined
                 readonly advisor?: string | undefined
                 readonly advisor_max_uses?: number | undefined
               } & { readonly [x: string]: any | undefined })
@@ -6397,6 +6458,7 @@ export type ConfigUpdateInput = {
                         | undefined
                     }
                   | undefined
+                readonly permission_mode?: ("default" | "auto") | undefined
                 readonly advisor?: string | undefined
                 readonly advisor_max_uses?: number | undefined
               } & { readonly [x: string]: any | undefined })
@@ -6425,6 +6487,7 @@ export type ConfigUpdateInput = {
                         | undefined
                     }
                   | undefined
+                readonly permission_mode?: ("default" | "auto") | undefined
                 readonly advisor?: string | undefined
                 readonly advisor_max_uses?: number | undefined
               } & { readonly [x: string]: any | undefined })
@@ -6453,6 +6516,7 @@ export type ConfigUpdateInput = {
                         | undefined
                     }
                   | undefined
+                readonly permission_mode?: ("default" | "auto") | undefined
                 readonly advisor?: string | undefined
                 readonly advisor_max_uses?: number | undefined
               } & { readonly [x: string]: any | undefined })
@@ -6481,6 +6545,7 @@ export type ConfigUpdateInput = {
                         | undefined
                     }
                   | undefined
+                readonly permission_mode?: ("default" | "auto") | undefined
                 readonly advisor?: string | undefined
                 readonly advisor_max_uses?: number | undefined
               } & { readonly [x: string]: any | undefined })
@@ -6509,6 +6574,7 @@ export type ConfigUpdateInput = {
                         | undefined
                     }
                   | undefined
+                readonly permission_mode?: ("default" | "auto") | undefined
                 readonly advisor?: string | undefined
                 readonly advisor_max_uses?: number | undefined
               } & { readonly [x: string]: any | undefined })
@@ -6537,6 +6603,7 @@ export type ConfigUpdateInput = {
                         | undefined
                     }
                   | undefined
+                readonly permission_mode?: ("default" | "auto") | undefined
                 readonly advisor?: string | undefined
                 readonly advisor_max_uses?: number | undefined
               } & { readonly [x: string]: any | undefined })
@@ -6565,6 +6632,7 @@ export type ConfigUpdateInput = {
                         | undefined
                     }
                   | undefined
+                readonly permission_mode?: ("default" | "auto") | undefined
                 readonly advisor?: string | undefined
                 readonly advisor_max_uses?: number | undefined
               } & { readonly [x: string]: any | undefined })
@@ -6594,6 +6662,7 @@ export type ConfigUpdateInput = {
                         | undefined
                     }
                   | undefined
+                readonly permission_mode?: ("default" | "auto") | undefined
                 readonly advisor?: string | undefined
                 readonly advisor_max_uses?: number | undefined
               } & { readonly [x: string]: any | undefined })
@@ -6800,6 +6869,18 @@ export type ConfigUpdateInput = {
           readonly [x: string]:
             | (("ask" | "allow" | "deny") | { readonly [x: string]: "ask" | "allow" | "deny" })
             | undefined
+        }
+      | undefined
+    readonly permission_mode?: ("default" | "auto") | undefined
+    readonly auto_mode?:
+      | {
+          readonly environment?: ReadonlyArray<string> | undefined
+          readonly allow?: ReadonlyArray<string> | undefined
+          readonly soft_deny?: ReadonlyArray<string> | undefined
+          readonly hard_deny?: ReadonlyArray<string> | undefined
+          readonly classify_all_shell?: boolean | undefined
+          readonly model?: string | undefined
+          readonly disable?: boolean | undefined
         }
       | undefined
     readonly tools?: { readonly [x: string]: boolean } | undefined
@@ -8058,6 +8139,8 @@ export type QuestionRejectInput = { readonly requestID: { readonly requestID: st
 export type QuestionRejectOutput = boolean
 
 export type PermissionListOutput = Array<PermissionRequest1>
+
+export type PermissionBlockedOutput = Array<PermissionBlocked>
 
 export type PermissionReplyInput = {
   readonly requestID: { readonly requestID: string }["requestID"]

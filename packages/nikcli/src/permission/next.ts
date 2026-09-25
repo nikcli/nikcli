@@ -9,6 +9,7 @@ import { Context, Effect, Layer, Schema } from "effect"
 import z from "zod"
 import { PermissionRepo } from "./permission-repo"
 import { PermissionRuleset } from "./ruleset"
+import { AutoMode } from "./auto"
 import { Flag } from "@nikcli-ai/util/flag"
 
 export namespace PermissionNext {
@@ -55,6 +56,25 @@ export namespace PermissionNext {
   export const Reply = zod(ReplySchema)
   export type Reply = Schema.Schema.Type<typeof ReplySchema>
 
+  const BlockedSchema = Schema.Struct({
+    id: Schema.String,
+    sessionID: Schema.String,
+    permission: Schema.String,
+    patterns: Schema.Array(Schema.String),
+    rule: Schema.String,
+    reason: Schema.String,
+    time: Schema.Number,
+    tool: Schema.optional(
+      Schema.Struct({
+        messageID: Schema.String,
+        callID: Schema.String,
+      }),
+    ),
+  }).annotate({ identifier: "PermissionBlocked" })
+  export const BlockedInfo = zodObject(BlockedSchema)
+  export type Blocked = DeepMutable<Schema.Schema.Type<typeof BlockedSchema>>
+  export const BlockedInfoSchema = BlockedSchema
+
   export const Approval = zodObject(
     Schema.Struct({
       projectID: Schema.String,
@@ -75,6 +95,8 @@ export namespace PermissionNext {
         reply: ReplySchema,
       }),
     ),
+    /** The auto mode classifier denied an action. Notification only: nothing waits on it. */
+    Blocked: BusEvent.schema("permission.blocked", BlockedSchema),
   }
 
   type PendingEntry = {
@@ -86,10 +108,21 @@ export namespace PermissionNext {
   type State = {
     pending: Record<string, PendingEntry>
     approved: Ruleset
+    /** Auto mode denial counters, per session. */
+    denials: Record<string, AutoMode.Denials>
+    /** Recent auto mode denials, newest last — the "Recently blocked" list. */
+    blocked: Blocked[]
   }
+
+  const MAX_BLOCKED = 50
 
   export const AskInput = Request.partial({ id: true }).extend({
     ruleset: Ruleset,
+    /**
+     * The agent making the request, when the caller knows it. Auto mode is a
+     * per-agent setting; without this the agent is read from the transcript.
+     */
+    agent: z.string().optional(),
   })
   export type AskInput = z.infer<typeof AskInput>
 
@@ -101,12 +134,20 @@ export namespace PermissionNext {
   export type ReplyInput = z.infer<typeof ReplyInput>
 
   export interface Interface {
-    readonly ask: (input: AskInput) => Effect.Effect<void, DeniedError | RejectedError | CorrectedError>
+    readonly ask: (input: AskInput) => Effect.Effect<void, DeniedError | RejectedError | CorrectedError | BlockedError>
     readonly reply: (input: ReplyInput) => Effect.Effect<void>
     readonly hydrateAsk: (request: Request) => Effect.Effect<void>
     readonly hydrateReply: (requestID: string) => Effect.Effect<void>
     readonly list: () => Effect.Effect<Request[]>
+    /** Recent auto mode denials, newest first. */
+    readonly blocked: () => Effect.Effect<Blocked[]>
   }
+
+  // `session/auto-mode.ts` reaches the session, agent and provider services,
+  // all of which import this module; loading it on first use keeps the import
+  // graph acyclic. Nothing loads it until a session is actually in auto mode
+  // or a decision could depend on it.
+  const autoRuntime = () => import("@/session/auto-mode").then((module) => module.SessionAutoMode)
 
   export class Service extends Context.Service<Service, Interface>()("@nikcli/PermissionNext") {}
 
@@ -121,29 +162,180 @@ export namespace PermissionNext {
           return {
             pending: {},
             approved: yield* approved,
+            denials: {},
+            blocked: [],
           }
         }),
       )
 
       const getState = () => InstanceState.get(state)
 
+      type Pending = Omit<AskInput, "ruleset" | "agent">
+      type Evaluated = { pattern: string; rule: Rule }
+
+      /** Publish a request and wait for the user's answer. */
+      const prompt = (s: State, request: Pending) => {
+        const id = request.id ?? Identifier.ascending("permission")
+        return Effect.callback<void, RejectedError | CorrectedError>((resume) => {
+          const info: Request = {
+            id,
+            ...request,
+          }
+          s.pending[id] = {
+            info,
+            resolve: () => resume(Effect.void),
+            reject: (error: RejectedError | CorrectedError) => resume(Effect.fail(error)),
+          }
+          void Bus.publish(Event.Asked, info)
+          return Effect.sync(() => {
+            delete s.pending[id]
+          })
+        })
+      }
+
+      const denied = (ruleset: Ruleset, permission: string) =>
+        new DeniedError({
+          ruleset: ruleset.filter((r: Rule) => Wildcard.match(permission, r.permission)),
+        })
+
+      const autoActive = (sessionID: string, agent: string | undefined) =>
+        Effect.promise(() =>
+          autoRuntime()
+            .then((runtime) => runtime.active({ sessionID, agent }))
+            .catch((error) => {
+              log.warn("auto mode resolution failed; using default mode", { error })
+              return false
+            }),
+        )
+
+      /**
+       * The auto mode decision order (`permission/auto.ts`): denials first, then
+       * explicit asks to the user, then the fast path, then the classifier.
+       */
+      const askAuto = Effect.fn("PermissionNext.askAuto")(function* (
+        s: State,
+        ruleset: Ruleset,
+        request: Pending,
+        evaluated: Evaluated[],
+        agent: string | undefined,
+      ) {
+        if (evaluated.some((entry) => entry.rule.action === "deny")) {
+          return yield* Effect.fail(denied(ruleset, request.permission))
+        }
+        const ctx = yield* InstanceState.context
+        const runtime = yield* Effect.promise(autoRuntime)
+        const classifyAllShell = yield* Effect.promise(() => runtime.classifyAllShell())
+        const routes = evaluated.map((entry) =>
+          AutoMode.route({
+            permission: request.permission,
+            pattern: entry.pattern,
+            rule: entry.rule,
+            worktree: ctx.worktree,
+            directory: ctx.directory,
+            classifyAllShell,
+          }),
+        )
+        log.info("auto mode routed", { permission: request.permission, routes })
+        if (routes.includes("ask")) return yield* prompt(s, request)
+        if (!routes.includes("classify")) return
+
+        const verdict = yield* Effect.promise((signal) =>
+          runtime.classify({
+            sessionID: request.sessionID,
+            permission: request.permission,
+            patterns: request.patterns,
+            metadata: request.metadata,
+            tool: request.tool,
+            abort: signal,
+          }),
+        )
+
+        // The mode changed while the classifier was thinking: a verdict the new
+        // mode would never have asked for is discarded, and the request gets
+        // exactly the treatment the default mode gives it.
+        if (!(yield* autoActive(request.sessionID, agent))) {
+          if (evaluated.some((entry) => entry.rule.action === "ask")) return yield* prompt(s, request)
+          return
+        }
+
+        const denials = (s.denials[request.sessionID] ??= AutoMode.emptyDenials())
+        if (verdict.kind === "allow") {
+          AutoMode.recordAllowed(denials)
+          return
+        }
+        if (verdict.kind === "unavailable") {
+          // No verdict is never a pass. It is not counted toward the fallback
+          // thresholds either: the classifier did not judge the action.
+          log.warn("auto mode classifier unavailable", { permission: request.permission, reason: verdict.reason })
+          return yield* Effect.fail(
+            new BlockedError({
+              rule: "Unavailable",
+              reason: verdict.reason,
+              detail: AutoMode.unavailableMessage(verdict.reason),
+            }),
+          )
+        }
+
+        const entry: Blocked = {
+          id: Identifier.ascending("permission"),
+          sessionID: request.sessionID,
+          permission: request.permission,
+          patterns: [...request.patterns],
+          rule: verdict.rule,
+          reason: verdict.reason,
+          time: Date.now(),
+          ...(request.tool ? { tool: request.tool } : {}),
+        }
+        s.blocked.push(entry)
+        if (s.blocked.length > MAX_BLOCKED) s.blocked.splice(0, s.blocked.length - MAX_BLOCKED)
+        void Bus.publish(Event.Blocked, entry)
+
+        if (AutoMode.recordBlocked(denials)) {
+          // Three in a row or twenty in the session: auto mode pauses and the
+          // user decides. Approving resumes auto mode from a clean streak.
+          log.info("auto mode paused at denial limit", { sessionID: request.sessionID })
+          yield* prompt(s, {
+            ...request,
+            metadata: {
+              ...request.metadata,
+              auto_mode: { fallback: true, rule: verdict.rule, reason: verdict.reason },
+            },
+          })
+          AutoMode.recordApproved(denials)
+          return
+        }
+        return yield* Effect.fail(
+          new BlockedError({ rule: verdict.rule, reason: verdict.reason, detail: AutoMode.blockedMessage(verdict) }),
+        )
+      })
+
       const ask = Effect.fn("PermissionNext.ask")(function* (input: AskInput) {
         const parsed = AskInput.parse(input)
         const s = yield* getState()
-        const { ruleset, ...request } = parsed
-        for (const pattern of request.patterns ?? []) {
+        const { ruleset, agent, ...request } = parsed
+        const evaluated: Evaluated[] = (request.patterns ?? []).map((pattern) => {
           const rule = evaluate(request.permission, pattern, ruleset, s.approved)
           log.info("evaluated", {
             permission: request.permission,
             pattern,
             action: rule,
           })
+          return { pattern, rule }
+        })
+
+        // Auto mode only matters when a decision could change under it; a safe
+        // tool the ruleset already allows never pays for the mode lookup.
+        if (
+          !Flag.NIKCLI_DANGEROUSLY_SKIP_PERMISSIONS &&
+          evaluated.some((entry) => AutoMode.relevant(request.permission, entry.rule)) &&
+          (yield* autoActive(request.sessionID, agent))
+        ) {
+          return yield* askAuto(s, ruleset, request, evaluated, agent)
+        }
+
+        for (const { pattern, rule } of evaluated) {
           if (rule.action === "deny") {
-            return yield* Effect.fail(
-              new DeniedError({
-                ruleset: ruleset.filter((r: Rule) => Wildcard.match(request.permission, r.permission)),
-              }),
-            )
+            return yield* Effect.fail(denied(ruleset, request.permission))
           }
           if (rule.action === "ask") {
             // Opencode #22047: --dangerously-skip-permissions auto-approves `ask` rules
@@ -155,22 +347,7 @@ export namespace PermissionNext {
               })
               continue
             }
-            const id = parsed.id ?? Identifier.ascending("permission")
-            return yield* Effect.callback<void, RejectedError | CorrectedError>((resume) => {
-              const info: Request = {
-                id,
-                ...request,
-              }
-              s.pending[id] = {
-                info,
-                resolve: () => resume(Effect.void),
-                reject: (error: RejectedError | CorrectedError) => resume(Effect.fail(error)),
-              }
-              void Bus.publish(Event.Asked, info)
-              return Effect.sync(() => {
-                delete s.pending[id]
-              })
-            })
+            return yield* prompt(s, request)
           }
           if (rule.action === "allow") continue
         }
@@ -264,12 +441,18 @@ export namespace PermissionNext {
         return Object.values(s.pending).map((x) => x.info)
       })
 
+      const blocked = Effect.fn("PermissionNext.blocked")(function* () {
+        const s = yield* getState()
+        return s.blocked.toReversed()
+      })
+
       return Service.of({
         ask,
         reply,
         hydrateAsk,
         hydrateReply,
         list,
+        blocked,
       })
     }),
   )
@@ -290,6 +473,21 @@ export namespace PermissionNext {
   }) {
     override get message() {
       return `The user rejected permission to use this specific tool call with the following feedback: ${this.feedback}`
+    }
+  }
+
+  /**
+   * The auto mode classifier denied the action (or could not judge it). Unlike
+   * {@link RejectedError} it does not end the turn: the agent reads the reason
+   * and continues with a safer approach, the way it does after a denial rule.
+   */
+  export class BlockedError extends Schema.TaggedError<BlockedError>()("PermissionBlockedError", {
+    rule: Schema.String,
+    reason: Schema.String,
+    detail: Schema.String,
+  }) {
+    override get message() {
+      return this.detail
     }
   }
 

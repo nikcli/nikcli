@@ -16,6 +16,12 @@ export const Handlers = Runtime.handlers(Commands, {
     logout: () => import("./handlers/mcp/logout"),
     debug: () => import("./handlers/mcp/debug"),
   },
+  "auto-mode": {
+    defaults: () => import("./handlers/auto-mode/defaults"),
+    config: () => import("./handlers/auto-mode/config"),
+    critique: () => import("./handlers/auto-mode/critique"),
+    reset: () => import("./handlers/auto-mode/reset"),
+  },
   ads: {
     create: () => import("./handlers/ads/create"),
     list: () => import("./handlers/ads/list"),

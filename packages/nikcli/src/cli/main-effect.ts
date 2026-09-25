@@ -51,6 +51,9 @@ async function bootstrap(): Promise<void> {
   // Passed through the environment because the TUI runs the session in a worker
   // thread, which never sees this argv.
   if (has("--auto", "--yolo", "--dangerously-skip-permissions")) process.env.NIKCLI_AUTO_APPROVE = "1"
+  const modeFlag = argv.find((arg) => arg === "--permission-mode" || arg.startsWith("--permission-mode="))
+  const mode = modeFlag?.includes("=") ? modeFlag.split("=")[1] : modeFlag && argv[argv.indexOf(modeFlag) + 1]
+  if (mode === "auto" || mode === "default") process.env.NIKCLI_PERMISSION_MODE = mode
 
   // `IslandBridge.start()` is called from inside `Bus.publish` — the one choke
   // point every session/permission/tool event flows through in any realm — so

@@ -759,6 +759,55 @@ export namespace Config {
     }),
   )
 
+  /**
+   * The permission mode a session starts in. `default` prompts for `ask`
+   * decisions; `auto` sends them to the auto mode classifier instead (see
+   * `permission/auto.ts`). The ruleset itself is the same in both.
+   */
+  export const PermissionMode = z.enum(["default", "auto"]).meta({
+    ref: "PermissionModeConfig",
+  })
+  export type PermissionMode = z.infer<typeof PermissionMode>
+
+  /**
+   * Auto mode classifier settings. Read from the global config only: a
+   * project's `nikcli.json` is checked into the repo it describes, and a repo
+   * must not be able to widen what the classifier lets through.
+   */
+  export const AutoMode = z
+    .object({
+      environment: z
+        .array(z.string())
+        .optional()
+        .describe('Trusted infrastructure, as prose. Include "$defaults" to keep the built-in entries.'),
+      allow: z
+        .array(z.string())
+        .optional()
+        .describe('Exceptions to soft_deny rules, as prose. Include "$defaults" to keep the built-in rules.'),
+      soft_deny: z
+        .array(z.string())
+        .optional()
+        .describe('Block rules that explicit user intent can clear. Include "$defaults" to keep the built-in rules.'),
+      hard_deny: z
+        .array(z.string())
+        .optional()
+        .describe('Unconditional block rules. Include "$defaults" to keep the built-in rules.'),
+      classify_all_shell: z
+        .boolean()
+        .optional()
+        .describe("Suspend every shell allow rule in auto mode, so the classifier reviews every command"),
+      model: z
+        .string()
+        .optional()
+        .describe("Classifier model in provider/model format. Defaults to the session's model"),
+      disable: z.boolean().optional().describe("Turn auto mode off: sessions set to auto run in default mode"),
+    })
+    .strict()
+    .meta({
+      ref: "AutoModeConfig",
+    })
+  export type AutoMode = z.infer<typeof AutoMode>
+
   export const Command = z.object({
     template: z.string().optional(),
     description: z.string().optional(),
@@ -832,6 +881,9 @@ export namespace Config {
       order: z.number().int().optional().describe("Sorting priority for agent cycling. Lower = earlier."),
       maxSteps: z.number().int().positive().optional().describe("@deprecated Use 'steps' field instead."),
       permission: Permission.optional(),
+      permission_mode: PermissionMode.optional().describe(
+        "Permission mode for this agent; overrides the top-level one",
+      ),
       advisor: z
         .string()
         .optional()
@@ -862,6 +914,7 @@ export namespace Config {
         "maxSteps",
         "options",
         "permission",
+        "permission_mode",
         "disable",
         "tools",
         "advisor",
@@ -1655,6 +1708,8 @@ export namespace Config {
       instructions: z.array(z.string()).optional().describe("Additional instruction files or patterns to include"),
       layout: Layout.optional().describe("@deprecated Always uses stretch layout."),
       permission: Permission.optional(),
+      permission_mode: PermissionMode.optional().describe("Permission mode sessions start in (default: default)"),
+      auto_mode: AutoMode.optional().describe("Auto mode classifier settings (read from the global config only)"),
       tools: z.record(z.string(), z.boolean()).optional(),
       /**
        * Custom tool-file load policy for `{tool,tools}/*.{js,ts}` under

@@ -42,6 +42,7 @@ import { useGlobalSync } from "@/context/global-sync"
 import {
   detectPermissionMode,
   permissionPresetPatch,
+  presetPermissionMode,
   PERMISSION_PRESETS,
   toPermissionMap,
   type PermissionMode,
@@ -955,7 +956,9 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
     }
   }
 
-  const permissionMode = createMemo(() => detectPermissionMode(globalSync.data.config.permission))
+  const permissionMode = createMemo(() =>
+    detectPermissionMode(globalSync.data.config.permission, globalSync.data.config.permission_mode),
+  )
 
   const permissionModeTitle = (mode: PermissionMode) => {
     switch (mode) {
@@ -965,6 +968,8 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
         return language.t("prompt.permissions.approveForMe.title")
       case "full_access":
         return language.t("prompt.permissions.fullAccess.title")
+      case "auto":
+        return language.t("prompt.permissions.auto.title")
       case "custom":
         return language.t("prompt.permissions.custom.title")
     }
@@ -978,6 +983,8 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
         return language.t("prompt.permissions.approveForMe.description")
       case "full_access":
         return language.t("prompt.permissions.fullAccess.description")
+      case "auto":
+        return language.t("prompt.permissions.auto.description")
       case "custom":
         return language.t("prompt.permissions.custom.description")
     }
@@ -989,6 +996,8 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
         return "circle-ban-sign" as const
       case "full_access":
         return "circle-check" as const
+      case "auto":
+        return "magnifying-glass" as const
       default:
         return "checklist" as const
     }
@@ -996,13 +1005,17 @@ export const PromptInput: Component<PromptInputProps> = (props) => {
 
   const setPermissionPreset = (preset: PermissionPreset) => {
     const before = globalSync.data.config.permission
+    const beforeMode = globalSync.data.config.permission_mode
     const patch = permissionPresetPatch(preset)
+    const mode = presetPermissionMode(preset)
 
     globalSync.set("config", "permission", { ...toPermissionMap(before), ...patch })
+    globalSync.set("config", "permission_mode", mode)
     if (params.id) permission.disableAutoAccept(params.id, sdk.directory)
 
-    globalSync.updateConfig({ permission: patch }).catch((err: unknown) => {
+    globalSync.updateConfig({ permission: patch, permission_mode: mode }).catch((err: unknown) => {
       globalSync.set("config", "permission", before)
+      globalSync.set("config", "permission_mode", beforeMode)
       const message = err instanceof Error ? err.message : String(err)
       showToast({ title: language.t("prompt.permissions.toast.updateFailed.title"), description: message })
     })

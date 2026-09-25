@@ -1804,17 +1804,21 @@ export interface QuestionApi<E = never> {
 export type Endpoint20_0Output = EffectValue<ReturnType<RawClient["permission"]["list"]>>
 export type PermissionListOperation<E = never> = () => Effect.Effect<Endpoint20_0Output, E>
 
-type Endpoint20_1Request = Parameters<RawClient["permission"]["reply"]>[0]
-export type Endpoint20_1Input = {
-  readonly requestID: Endpoint20_1Request["params"]["requestID"]
-  readonly reply: Endpoint20_1Request["payload"]["reply"]
-  readonly message?: Endpoint20_1Request["payload"]["message"]
+export type Endpoint20_1Output = EffectValue<ReturnType<RawClient["permission"]["blocked"]>>
+export type PermissionBlockedOperation<E = never> = () => Effect.Effect<Endpoint20_1Output, E>
+
+type Endpoint20_2Request = Parameters<RawClient["permission"]["reply"]>[0]
+export type Endpoint20_2Input = {
+  readonly requestID: Endpoint20_2Request["params"]["requestID"]
+  readonly reply: Endpoint20_2Request["payload"]["reply"]
+  readonly message?: Endpoint20_2Request["payload"]["message"]
 }
-export type Endpoint20_1Output = EffectValue<ReturnType<RawClient["permission"]["reply"]>>
-export type PermissionReplyOperation<E = never> = (input: Endpoint20_1Input) => Effect.Effect<Endpoint20_1Output, E>
+export type Endpoint20_2Output = EffectValue<ReturnType<RawClient["permission"]["reply"]>>
+export type PermissionReplyOperation<E = never> = (input: Endpoint20_2Input) => Effect.Effect<Endpoint20_2Output, E>
 
 export interface PermissionApi<E = never> {
   readonly list: PermissionListOperation<E>
+  readonly blocked: PermissionBlockedOperation<E>
   readonly reply: PermissionReplyOperation<E>
 }
 

@@ -237,6 +237,7 @@ export const PublicClientCompat = {
   patchUserId: ["result", "users.update"],
   "path.get": ["result0", "top-level.path"],
   "permission.list": ["result0", "permission.list"],
+  "permission.blocked": ["result0", "permission.blocked"],
   "permission.reply": ["result", "permission.reply"],
   "permission.respond": ["result", "session.permissionRespond"],
   postConfigMcp: ["result", "config-management.mcpAdd"],

@@ -1874,9 +1874,54 @@ export namespace SessionPrompt {
     }
   }
 
+  /**
+   * Tell the agent when auto mode turns on or off. Inserted on transitions
+   * only, like the plan-mode reminders below: the last reminder in the
+   * history is the mode the agent believes it is in.
+   */
+  async function insertAutoModeReminder(input: {
+    messages: MessageV2.WithParts[]
+    userMessage: MessageV2.WithParts
+    agent: Agent.Info
+    session: Session.Info
+  }) {
+    const { SessionAutoMode } = await import("./auto-mode")
+    const active = await SessionAutoMode.active({ sessionID: input.session.id, agent: input.agent.name }).catch(
+      () => false,
+    )
+    let last: "on" | "off" | undefined
+    for (const message of input.messages.toReversed()) {
+      for (const part of message.parts.toReversed()) {
+        if (part.type !== "text" || !part.synthetic) continue
+        if (part.text === SessionAutoMode.REMINDER_ON) last = "on"
+        else if (part.text === SessionAutoMode.REMINDER_OFF) last = "off"
+        if (last) break
+      }
+      if (last) break
+    }
+    const text =
+      active && last !== "on"
+        ? SessionAutoMode.REMINDER_ON
+        : !active && last === "on"
+          ? SessionAutoMode.REMINDER_OFF
+          : undefined
+    if (!text) return
+    const part = await sessionUpdatePart({
+      id: Identifier.ascending("part"),
+      messageID: input.userMessage.info.id,
+      sessionID: input.userMessage.info.sessionID,
+      type: "text",
+      text,
+      synthetic: true,
+    })
+    input.userMessage.parts.push(part)
+  }
+
   async function insertReminders(input: { messages: MessageV2.WithParts[]; agent: Agent.Info; session: Session.Info }) {
     const userMessage = input.messages.findLast((msg) => msg.info.role === "user")
     if (!userMessage) return input.messages
+
+    await insertAutoModeReminder({ ...input, userMessage })
 
     // The plan-file workflow below is the only plan mode. The older path — a
     // `plan.txt` preamble pushed onto the last user message, with no plan file

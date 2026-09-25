@@ -54,7 +54,19 @@ export const DangerouslySkipPermissions = GlobalFlag.setting("dangerously-skip-p
  * `DEBUG` — so `normalizeLogLevel` below folds the argv value before the parser
  * sees it, and `main-effect.ts`'s bootstrap still reads the original spelling.
  */
-export const GlobalFlags = [PrintLogs, Island, Auto, Yolo, DangerouslySkipPermissions]
+/**
+ * `--permission-mode auto` starts every session in auto mode: `ask` decisions go
+ * to the auto mode classifier instead of a prompt. Not to be confused with
+ * `--auto`, which approves every prompt with no review at all.
+ */
+export const PermissionMode = GlobalFlag.setting("permission-mode")({
+  flag: Flag.choice("permission-mode", ["default", "auto"]).pipe(
+    Flag.withDescription("permission mode for sessions: default (prompt) or auto (classifier review)"),
+    Flag.optional,
+  ),
+})
+
+export const GlobalFlags = [PrintLogs, Island, Auto, Yolo, DangerouslySkipPermissions, PermissionMode]
 
 /**
  * Fix up an argv before the parser sees it.

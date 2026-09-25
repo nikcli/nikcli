@@ -91,6 +91,36 @@ const SpecMcp = Spec.make("mcp", {
   commands: [SpecMcpAdd, SpecMcpList, SpecMcpAuth, SpecMcpLogout, SpecMcpDebug],
 })
 
+const SpecAutoModeDefaults = Spec.make("defaults", {
+  description: "print the built-in auto mode classifier rules as JSON",
+  params: {
+    label: Flag.string("label").pipe(
+      Flag.withDescription("only print rules whose label starts with this (case-insensitive)"),
+      Flag.optional,
+    ),
+  },
+})
+
+const SpecAutoModeConfig = Spec.make("config", {
+  description: "print the classifier rules auto mode actually uses, with your settings applied",
+})
+
+const SpecAutoModeCritique = Spec.make("critique", {
+  description: "get AI feedback on your custom auto mode rules",
+})
+
+const SpecAutoModeReset = Spec.make("reset", {
+  description: "remove your auto mode settings and return to the built-in rules",
+  params: {
+    yes: Flag.boolean("yes").pipe(Flag.withDescription("skip the confirmation"), Flag.withDefault(false)),
+  },
+})
+
+const SpecAutoMode = Spec.make("auto-mode", {
+  description: "inspect and manage the auto mode classifier rules",
+  commands: [SpecAutoModeDefaults, SpecAutoModeConfig, SpecAutoModeCritique, SpecAutoModeReset],
+})
+
 const SpecAdsCreate = Spec.make("create", {
   description: "create a new ad",
   params: {
@@ -1531,6 +1561,7 @@ export const Commands = Spec.make("nikcli", {
     SpecGenerate,
     SpecAcp,
     SpecMcp,
+    SpecAutoMode,
     SpecAds,
     SpecRun,
     SpecGoal,

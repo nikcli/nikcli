@@ -3,10 +3,13 @@ export type PermissionAction = "allow" | "ask" | "deny"
 export type PermissionObject = Record<string, PermissionAction>
 export type PermissionValue = PermissionAction | PermissionObject | string[] | undefined
 export type PermissionMap = Record<string, PermissionValue>
-export type PermissionPreset = "require_approval" | "approve_for_me" | "full_access"
+export type PermissionPreset = "require_approval" | "approve_for_me" | "auto" | "full_access"
 export type PermissionMode = PermissionPreset | "custom"
 
-export const PERMISSION_PRESETS = ["require_approval", "approve_for_me", "full_access"] as const
+export const PERMISSION_PRESETS = ["require_approval", "approve_for_me", "auto", "full_access"] as const
+
+/** The server-side permission mode (`permission_mode` in nikcli.json). */
+export type PermissionModeSetting = "default" | "auto"
 
 const PERMISSION_TOOL_KEYS = [
   "read",
@@ -237,13 +240,25 @@ function clonePermissionMap(map: PermissionMap): PermissionMap {
   )
 }
 
+/**
+ * Auto is a permission *mode*, not a ruleset: it keeps the current rules and
+ * sends what they would prompt for to the auto mode classifier. Selecting it
+ * writes `permission_mode: "auto"` and leaves the permission map alone; every
+ * other preset writes its map and sets the mode back to `default`.
+ */
+export function presetPermissionMode(preset: PermissionPreset): PermissionModeSetting {
+  return preset === "auto" ? "auto" : "default"
+}
+
 export function permissionPresetPatch(preset: PermissionPreset): PermissionMap {
+  if (preset === "auto") return {}
   if (preset === "require_approval") return uniformPermissionPatch("ask")
   if (preset === "full_access") return uniformPermissionPatch("allow")
   return clonePermissionMap(APPROVE_FOR_ME_PERMISSIONS)
 }
 
-export function detectPermissionMode(value: unknown): PermissionMode {
+export function detectPermissionMode(value: unknown, permissionMode?: unknown): PermissionMode {
+  if (permissionMode === "auto") return "auto"
   const map = toPermissionMap(value)
   if (Object.keys(map).length === 0) return "approve_for_me"
 
@@ -284,6 +299,8 @@ export function permissionModeTitle(mode: PermissionMode) {
       return "Approve for me"
     case "full_access":
       return "Full access"
+    case "auto":
+      return "Auto"
     case "custom":
       return "Custom"
   }
@@ -297,6 +314,8 @@ export function permissionModeDescription(mode: PermissionMode) {
       return "Ask for shell commands, internet access, external files, and sensitive reads."
     case "full_access":
       return "Allow tool actions without approval prompts."
+    case "auto":
+      return "A classifier reviews risky actions instead of asking you. Denials and explicit asks still apply."
     case "custom":
       return "Permissions are customized in settings."
   }

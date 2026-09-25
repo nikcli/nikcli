@@ -498,6 +498,19 @@ async function summarizeSubtaskSession(sessionID: string, result?: MessageV2.Wit
   }
 }
 
+/**
+ * Auto mode's return check: before the parent reads a subagent's report, the
+ * classifier reviews the subagent's work and the report itself. A subagent
+ * that was benign at delegation can be steered mid-run by content it read, so
+ * a flagged report arrives with a security warning in front of it.
+ */
+async function reviewSubagentReport(ctx: Tool.Context, childSessionID: string, text: string) {
+  const { SessionAutoMode } = await import("@/session/auto-mode")
+  const active = await SessionAutoMode.active({ sessionID: ctx.sessionID, agent: ctx.agent }).catch(() => false)
+  if (!active || !text.trim()) return text
+  return SessionAutoMode.reviewReport({ sessionID: childSessionID, report: text, abort: ctx.abort })
+}
+
 function formatTaskOutput(text: string, sessionID: string, delegationID?: string) {
   const metadata = ["<task_metadata>", `session_id: ${sessionID}`]
   if (delegationID) metadata.push(`delegation_id: ${delegationID}`)
@@ -1431,7 +1444,7 @@ export async function runSubtask(params: TaskParams, ctx: Tool.Context<TaskMetad
         sourceCount: agent.name === RESEARCH_AGENT ? extractSourceCount(summary.text) : undefined,
         confidence: agent.name === RESEARCH_AGENT ? extractConfidence(summary.text) : undefined,
       },
-      output: formatTaskOutput(summary.text, session.id),
+      output: formatTaskOutput(await reviewSubagentReport(ctx, session.id, summary.text), session.id),
     }
   } finally {
     foregroundMetadata.flush()

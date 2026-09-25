@@ -42,8 +42,10 @@ import {
   detectPermissionMode,
   permissionModeTitle,
   permissionPresetPatch,
+  presetPermissionMode,
   toPermissionMap,
   type PermissionMap,
+  type PermissionModeSetting,
   type PermissionPreset,
 } from "@/lib/permission-presets"
 import { SessionTeleportSheet } from "@/components/session/SessionTeleportSheet"
@@ -268,6 +270,7 @@ export default function SessionScreen() {
   const artifactViewerRef = useActionSheetRef()
   const permissionSheetRef = useActionSheetRef()
   const [permissionMap, setPermissionMap] = useState<PermissionMap>({})
+  const [permissionModeSetting, setPermissionModeSetting] = useState<PermissionModeSetting | undefined>()
   const [permissionSaving, setPermissionSaving] = useState(false)
   const [selectedArtifact, setSelectedArtifact] = useState<SessionPreview | null>(null)
 
@@ -749,7 +752,10 @@ export default function SessionScreen() {
     void triggerHaptic("selection")
   }, [])
 
-  const permissionMode = useMemo(() => detectPermissionMode(permissionMap), [permissionMap])
+  const permissionMode = useMemo(
+    () => detectPermissionMode(permissionMap, permissionModeSetting),
+    [permissionMap, permissionModeSetting],
+  )
 
   useEffect(() => {
     if (!client) return
@@ -757,7 +763,9 @@ export default function SessionScreen() {
     client
       .getConfig()
       .then((config) => {
-        if (!cancelled) setPermissionMap(toPermissionMap(config.permission))
+        if (cancelled) return
+        setPermissionMap(toPermissionMap(config.permission))
+        setPermissionModeSetting(config.permission_mode as PermissionModeSetting | undefined)
       })
       .catch(() => {})
     return () => {
@@ -769,21 +777,27 @@ export default function SessionScreen() {
     async (preset: PermissionPreset) => {
       if (!client || permissionSaving) return
       const before = permissionMap
+      const beforeMode = permissionModeSetting
       const patch = permissionPresetPatch(preset)
+      const nextMode = presetPermissionMode(preset)
       setPermissionMap({ ...toPermissionMap(before), ...patch })
+      setPermissionModeSetting(nextMode)
       try {
         setPermissionSaving(true)
-        await client.updateConfig({ permission: patch } as Parameters<typeof client.updateConfig>[0])
+        await client.updateConfig({ permission: patch, permission_mode: nextMode } as Parameters<
+          typeof client.updateConfig
+        >[0])
         void triggerHaptic("success")
         permissionSheetRef.current?.dismiss()
       } catch (error) {
         setPermissionMap(before)
+        setPermissionModeSetting(beforeMode)
         setError(error instanceof Error ? error.message : String(error))
       } finally {
         setPermissionSaving(false)
       }
     },
-    [client, permissionMap, permissionSaving],
+    [client, permissionMap, permissionModeSetting, permissionSaving],
   )
   const slashInput = useMemo(() => parseSlashCommand(input), [input])
   const slashSuggestions = useMemo(() => {

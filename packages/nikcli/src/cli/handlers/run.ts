@@ -9,7 +9,7 @@ import { bootstrap } from "@/cli/bootstrap"
 import { Command } from "@/command"
 import { EOL } from "os"
 import { pathToFileURL } from "url"
-import { resolvePermissionPrompt } from "@/cli/headless"
+import { isHeadless, resolvePermissionPrompt } from "@/cli/headless"
 import { createNikcliClient, type Event as SdkEvent, type NikcliClient } from "@nikcli-ai/sdk/httpapi"
 import { Server } from "@/server/server"
 import { Provider } from "@/provider/provider"
@@ -505,6 +505,20 @@ export async function executeTurn(input: ExecuteTurnInput): Promise<{ error?: st
       if (event.type === "permission.asked") {
         const permission = event.properties
         if (permission.sessionID !== sessionID) continue
+        // Auto mode handed this decision back after repeated denials. A headless
+        // run has nobody to answer, so the action does not run — but the turn
+        // keeps going: a reply with feedback lets the agent continue, where a
+        // bare rejection would stop it.
+        if (permission.metadata?.["auto_mode"] && !Flag.autoApprove() && isHeadless()) {
+          UI.error(`Auto mode blocked ${permission.permission} (${permission.patterns.join(", ")}) repeatedly.`)
+          await sdk.permission.reply({
+            requestID: permission.id,
+            reply: "reject",
+            message:
+              "Auto mode blocked this action repeatedly and no one is available to approve it. Do not retry it; continue with work that does not need it.",
+          })
+          continue
+        }
         const response = await resolvePermissionPrompt({
           permission: permission.permission,
           patterns: permission.patterns,

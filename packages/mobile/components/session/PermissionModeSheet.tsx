@@ -1,6 +1,6 @@
 import type { RefObject } from "react"
 import { Pressable, StyleSheet, Text, View } from "react-native"
-import { Ban, Check, CircleCheck, ListChecks, Settings, type LucideIcon } from "lucide-react-native"
+import { Ban, Check, CircleCheck, ListChecks, Settings, ShieldCheck, type LucideIcon } from "lucide-react-native"
 import { ActionSheet, ActionSheetDivider, type ActionSheetRef } from "@/components/BottomSheet"
 import { triggerHaptic } from "@/lib/haptics"
 import {
@@ -27,6 +27,8 @@ function iconForMode(mode: PermissionMode): LucideIcon {
       return Ban
     case "full_access":
       return CircleCheck
+    case "auto":
+      return ShieldCheck
     case "custom":
       return Settings
     default:
@@ -42,6 +44,8 @@ function toneForMode(mode: PermissionMode, palette: ReturnType<typeof useAppThem
       return palette.success
     case "approve_for_me":
       return palette.accentLight
+    case "auto":
+      return palette.info
     default:
       return palette.soft
   }

@@ -129,6 +129,16 @@ function TextBody(props: { title: string; description?: string; icon?: string })
   )
 }
 
+/**
+ * Auto mode hands a decision back to the user after repeated blocks; the
+ * prompt says so, with the rule that blocked it, instead of a generic title.
+ */
+function autoModeTitle(metadata: PermissionRequest["metadata"] | undefined) {
+  const auto = metadata?.["auto_mode"] as { rule?: string; reason?: string } | undefined
+  if (!auto) return undefined
+  return `Auto mode paused after repeated blocks · [${auto.rule ?? "Blocked"}] ${auto.reason ?? ""}`.trim()
+}
+
 export function PermissionPrompt(props: { request: PermissionRequest }) {
   const sdk = useSDK()
   const sync = useSync()
@@ -213,7 +223,7 @@ export function PermissionPrompt(props: { request: PermissionRequest }) {
         {(() => {
           const body = (
             <Prompt
-              title="Permission required"
+              title={autoModeTitle(props.request.metadata) ?? "Permission required"}
               body={
                 <Switch>
                   <Match when={props.request.permission === "edit"}>

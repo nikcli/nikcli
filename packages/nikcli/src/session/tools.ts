@@ -265,6 +265,7 @@ export async function resolveTools(input: {
           callID: options.toolCallId,
         },
         ruleset: effectiveRuleset(),
+        agent: input.agent.name,
       })
     },
   })

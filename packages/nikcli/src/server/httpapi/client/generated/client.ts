@@ -1935,19 +1935,25 @@ const adaptGroup19 = (raw: RawClient["question"]) => ({
 
 const Endpoint20_0 = (raw: RawClient["permission"]) => () => raw["list"]({}).pipe(Effect.mapError(mapClientError))
 
-type Endpoint20_1Request = Parameters<RawClient["permission"]["reply"]>[0]
-type Endpoint20_1Input = {
-  readonly requestID: Endpoint20_1Request["params"]["requestID"]
-  readonly reply: Endpoint20_1Request["payload"]["reply"]
-  readonly message?: Endpoint20_1Request["payload"]["message"]
+const Endpoint20_1 = (raw: RawClient["permission"]) => () => raw["blocked"]({}).pipe(Effect.mapError(mapClientError))
+
+type Endpoint20_2Request = Parameters<RawClient["permission"]["reply"]>[0]
+type Endpoint20_2Input = {
+  readonly requestID: Endpoint20_2Request["params"]["requestID"]
+  readonly reply: Endpoint20_2Request["payload"]["reply"]
+  readonly message?: Endpoint20_2Request["payload"]["message"]
 }
-const Endpoint20_1 = (raw: RawClient["permission"]) => (input: Endpoint20_1Input) =>
+const Endpoint20_2 = (raw: RawClient["permission"]) => (input: Endpoint20_2Input) =>
   raw["reply"]({
     params: { requestID: input["requestID"] },
     payload: { reply: input["reply"], message: input["message"] },
   }).pipe(Effect.mapError(mapClientError))
 
-const adaptGroup20 = (raw: RawClient["permission"]) => ({ list: Endpoint20_0(raw), reply: Endpoint20_1(raw) })
+const adaptGroup20 = (raw: RawClient["permission"]) => ({
+  list: Endpoint20_0(raw),
+  blocked: Endpoint20_1(raw),
+  reply: Endpoint20_2(raw),
+})
 
 const Endpoint21_0 = (raw: RawClient["pty"]) => () => raw["list"]({}).pipe(Effect.mapError(mapClientError))
 

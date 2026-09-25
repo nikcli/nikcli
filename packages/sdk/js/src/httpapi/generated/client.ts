@@ -381,6 +381,7 @@ import type {
   QuestionRejectInput,
   QuestionRejectOutput,
   PermissionListOutput,
+  PermissionBlockedOutput,
   PermissionReplyInput,
   PermissionReplyOutput,
   PtyListOutput,
@@ -3162,6 +3163,11 @@ export function make(options: ClientOptions) {
       list: (requestOptions?: RequestOptions) =>
         request<PermissionListOutput>(
           { method: "GET", path: `/permission`, successStatus: 200, declaredStatuses: [], empty: false },
+          requestOptions,
+        ),
+      blocked: (requestOptions?: RequestOptions) =>
+        request<PermissionBlockedOutput>(
+          { method: "GET", path: `/permission/blocked`, successStatus: 200, declaredStatuses: [], empty: false },
           requestOptions,
         ),
       reply: (input: PermissionReplyInput, requestOptions?: RequestOptions) =>

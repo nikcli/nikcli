@@ -17,8 +17,10 @@ export type PermissionAction = PermissionActionConfig
 export type PermissionObject = PermissionObjectConfig
 export type PermissionValue = PermissionRuleConfig | undefined
 export type PermissionMap = PermissionConfig
-export type PermissionPreset = "require_approval" | "approve_for_me" | "full_access"
+export type PermissionPreset = "require_approval" | "approve_for_me" | "auto" | "full_access"
 export type PermissionMode = PermissionPreset | "custom"
+/** The server-side permission mode (`permission_mode` in nikcli.json). */
+export type PermissionModeSetting = "default" | "auto"
 
 type PermissionItem = {
   id: string
@@ -107,7 +109,7 @@ const APPROVE_FOR_ME_PERMISSIONS: PermissionMap = {
   plan_exit: "deny",
 }
 
-export const PERMISSION_PRESETS = ["require_approval", "approve_for_me", "full_access"] as const
+export const PERMISSION_PRESETS = ["require_approval", "approve_for_me", "auto", "full_access"] as const
 
 const ACTIONS = [
   { value: "allow", label: "settings.permissions.action.allow" },
@@ -255,13 +257,25 @@ function clonePermissionMap(map: PermissionMap): PermissionMap {
   )
 }
 
+/**
+ * Auto is a permission *mode*, not a ruleset: it keeps the current rules and
+ * sends what they would prompt for to the auto mode classifier. Selecting it
+ * writes `permission_mode: "auto"` and leaves the permission map alone; every
+ * other preset writes its map and sets the mode back to `default`.
+ */
+export function presetPermissionMode(preset: PermissionPreset): PermissionModeSetting {
+  return preset === "auto" ? "auto" : "default"
+}
+
 export function permissionPresetPatch(preset: PermissionPreset): PermissionMap {
+  if (preset === "auto") return {}
   if (preset === "require_approval") return uniformPermissionPatch("ask")
   if (preset === "full_access") return uniformPermissionPatch("allow")
   return clonePermissionMap(APPROVE_FOR_ME_PERMISSIONS)
 }
 
-export function detectPermissionMode(value: unknown): PermissionMode {
+export function detectPermissionMode(value: unknown, permissionMode?: unknown): PermissionMode {
+  if (permissionMode === "auto") return "auto"
   const map = toPermissionMap(value)
   if (Object.keys(map).length === 0) return "approve_for_me"
 

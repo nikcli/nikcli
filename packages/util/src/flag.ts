@@ -15,6 +15,17 @@ export namespace Flag {
     return truthy("NIKCLI_AUTO_APPROVE")
   }
 
+  /**
+   * The permission mode forced for this process by `--permission-mode`, or
+   * `undefined` to use the configured one. Read on every access for the same
+   * reason as `autoApprove`.
+   */
+  export function permissionMode(): "default" | "auto" | undefined {
+    const value = process.env["NIKCLI_PERMISSION_MODE"]?.toLowerCase()
+    if (value === "auto" || value === "default") return value
+    return undefined
+  }
+
   export const NIKCLI_AUTO_SHARE = truthy("NIKCLI_AUTO_SHARE")
   export const NIKCLI_GIT_BASH_PATH = process.env["NIKCLI_GIT_BASH_PATH"]
   export const NIKCLI_CONFIG = process.env["NIKCLI_CONFIG"]

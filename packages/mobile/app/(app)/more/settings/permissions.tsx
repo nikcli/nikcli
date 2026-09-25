@@ -15,9 +15,11 @@ import {
   permissionModeDescription,
   permissionModeTitle,
   permissionPresetPatch,
+  presetPermissionMode,
   toPermissionMap,
   type PermissionAction,
   type PermissionMap,
+  type PermissionModeSetting,
   type PermissionPreset,
 } from "@/lib/permission-presets"
 import { triggerHaptic } from "@/lib/haptics"
@@ -29,11 +31,15 @@ export default function PermissionsSettingsScreen() {
   const { client } = useServer()
   const { palette, isDark } = useAppTheme()
   const [permission, setPermission] = useState<PermissionMap>({})
+  const [permissionModeSetting, setPermissionModeSetting] = useState<PermissionModeSetting | undefined>()
   const [loading, setLoading] = useState(false)
   const [saving, setSaving] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
 
-  const mode = useMemo(() => detectPermissionMode(permission), [permission])
+  const mode = useMemo(
+    () => detectPermissionMode(permission, permissionModeSetting),
+    [permission, permissionModeSetting],
+  )
 
   const load = useCallback(async () => {
     if (!client) return
@@ -42,6 +48,7 @@ export default function PermissionsSettingsScreen() {
       setMessage(null)
       const config = await client.getConfig()
       setPermission(toPermissionMap(config.permission))
+      setPermissionModeSetting(config.permission_mode as PermissionModeSetting | undefined)
     } catch (error) {
       setMessage(error instanceof Error ? error.message : String(error))
     } finally {
@@ -58,16 +65,20 @@ export default function PermissionsSettingsScreen() {
   async function applyPreset(preset: PermissionPreset) {
     if (!client || saving) return
     const before = permission
+    const beforeMode = permissionModeSetting
     const patch = permissionPresetPatch(preset)
+    const nextMode = presetPermissionMode(preset)
     const next = { ...toPermissionMap(before), ...patch }
     setPermission(next)
+    setPermissionModeSetting(nextMode)
     try {
       setSaving(true)
       setMessage(null)
       void triggerHaptic("selection")
-      await client.updateConfig({ permission: patch } as HostConfigSnapshot)
+      await client.updateConfig({ permission: patch, permission_mode: nextMode } as HostConfigSnapshot)
     } catch (error) {
       setPermission(before)
+      setPermissionModeSetting(beforeMode)
       setMessage(error instanceof Error ? error.message : String(error))
     } finally {
       setSaving(false)

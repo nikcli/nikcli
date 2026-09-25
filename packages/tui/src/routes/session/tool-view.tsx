@@ -436,11 +436,24 @@ function InlineTool(props: {
 
   const error = createMemo(() => (props.part.state.status === "error" ? props.part.state.error : undefined))
 
+  // Auto mode denials name the rule that fired, the way Claude Code shows
+  // "denied by auto mode · [Rule]" under the call; the full reason is for the
+  // agent and stays in the transcript.
+  const autoBlocked = createMemo(() => {
+    const text = error()
+    if (!text) return undefined
+    const match = text.match(/denied by the auto mode classifier\. \[([^\]]+)\]/)
+    if (match) return `denied by auto mode · [${match[1]}]`
+    if (text.includes("Auto mode could not determine the safety")) return "auto mode could not review this action"
+    return undefined
+  })
+
   const denied = createMemo(
     () =>
       error()?.includes("rejected permission") ||
       error()?.includes("specified a rule") ||
-      error()?.includes("user dismissed"),
+      error()?.includes("user dismissed") ||
+      autoBlocked() !== undefined,
   )
 
   return (
@@ -477,6 +490,11 @@ function InlineTool(props: {
       </text>
       <Show when={error() && !denied()}>
         <text fg={theme.status.error.fg}>{error()}</text>
+      </Show>
+      <Show when={autoBlocked()}>
+        <text paddingLeft={3} fg={theme.status.warning.fg}>
+          {autoBlocked()}
+        </text>
       </Show>
     </box>
   )

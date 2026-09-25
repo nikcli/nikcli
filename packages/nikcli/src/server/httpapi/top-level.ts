@@ -72,6 +72,7 @@ export namespace TopLevelHttpApi {
         action: Schema.Literals(["allow", "deny", "ask"]),
       }),
     ),
+    permissionMode: Schema.optional(Schema.Literals(["default", "auto"])),
     model: Schema.optional(ModelRef),
     advisor: Schema.optional(
       Schema.Struct({

@@ -93,6 +93,7 @@ export namespace PublicHttpApi {
   const PermissionHandlersLive = HttpApiBuilder.group(Api, "permission", (handlers) =>
     handlers
       .handle("list", () => PermissionHttpApi.handlers.list())
+      .handle("blocked", () => PermissionHttpApi.handlers.blocked())
       .handle("reply", (request) => PermissionHttpApi.handlers.reply(request)),
   )
 

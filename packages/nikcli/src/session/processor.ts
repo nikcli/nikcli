@@ -151,6 +151,7 @@ export namespace SessionProcessor {
           },
           always: [toolName],
           ruleset: agent.permission,
+          agent: agent.name,
         })
       }
     }

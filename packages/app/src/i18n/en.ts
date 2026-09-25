@@ -299,6 +299,9 @@ export const dict = {
   "prompt.permissions.approveForMe.title": "Approve for me",
   "prompt.permissions.approveForMe.description":
     "Ask for shell commands, internet access, external files, and sensitive reads.",
+  "prompt.permissions.auto.title": "Auto",
+  "prompt.permissions.auto.description":
+    "A classifier reviews risky actions instead of asking you. Denials and explicit asks still apply.",
   "prompt.permissions.fullAccess.title": "Full access",
   "prompt.permissions.fullAccess.description": "Allow tool actions without approval prompts.",
   "prompt.permissions.custom.title": "Custom",

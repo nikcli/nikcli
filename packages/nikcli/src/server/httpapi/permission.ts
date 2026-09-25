@@ -31,6 +31,7 @@ export namespace PermissionHttpApi {
 
   export const Group = HttpApiGroup.make("permission")
     .add(HttpApiEndpoint.get("list", "/", { success: Schema.Array(Request) }))
+    .add(HttpApiEndpoint.get("blocked", "/blocked", { success: Schema.Array(PermissionNext.BlockedInfoSchema) }))
     .add(
       HttpApiEndpoint.post("reply", "/:requestID/reply", {
         params: RequestPath,
@@ -50,6 +51,11 @@ export namespace PermissionHttpApi {
         const permission = yield* PermissionNext.Service
         return yield* permission.list()
       }),
+    blocked: () =>
+      Effect.gen(function* () {
+        const permission = yield* PermissionNext.Service
+        return yield* permission.blocked()
+      }),
     reply: ({ params, payload }: { params: { requestID: string }; payload: typeof ReplyInput.Type }) =>
       Effect.gen(function* () {
         const permission = yield* PermissionNext.Service
@@ -63,7 +69,7 @@ export namespace PermissionHttpApi {
   }
 
   export const HandlersLive = HttpApiBuilder.group(Api, "permission", (builder) =>
-    builder.handle("list", handlers.list).handle("reply", handlers.reply),
+    builder.handle("list", handlers.list).handle("blocked", handlers.blocked).handle("reply", handlers.reply),
   )
 
   export const layer = ApiLive.pipe(Layer.provide(HandlersLive), Layer.provide(PermissionNext.defaultLayer))
