@@ -116,7 +116,9 @@ prerequisites. Run memory-heavy verification serially even when implementation w
 
 ### P0: Establish Truth
 
-**Status 2026-09-20: closed for the server-route baseline; the TUI startup half waits on EOT-00.** The
+**Status 2026-09-20: closed for the server-route baseline; the TUI startup half waits on EOT-00.** On
+2026-09-25 EOT-00 ran 603 compiled starts across three of its four terminals with no stall; Ghostty is still owed,
+so the wait stands. The
 baseline artifact exists at
 `packages/nikcli/specs/perf-baseline.json` and `check:perf-baseline` gates it in
 `script/ci-validate.ts`. It had not been closed because the probe never returned —
@@ -296,6 +298,7 @@ appears more than once.
 | EOT-00 | `repro:startup-hang`: 200 consecutive compiled starts, non-zero on any stall                                     | `c004b6ae8d`               |
 | EOT-04 | Reconnect waits after a clean stream end too; jittered, abortable backoff                                        | `5b7777ba2b`               |
 | EOT-08 | One shutdown budget shared by every plugin instead of five seconds each                                          | `b0ab388457`               |
+| EOT-13 | Effect's built-in server span off on the bridge; `x-forwarded-for`/`referer` forbidden at the choke point        | `4fe8d73926`               |
 
 Every spec has been opened and every spec now has at least one landed slice,
 EOT-00, EOT-14 and EOT-19 included.

@@ -240,3 +240,77 @@ Two facts decide how the slice is built once that is fixed:
 Merging `Observability.layer` into the bridge turns tracing on for **every** route's handler spans at once, not one
 group, so the overhead gate (EOT-01: median within 5% of instrumentation-off) has to be measured on that change
 before it lands, with a per-group toggle if the numbers call for one. That measurement is the next slice here.
+
+## The Built-in Server Span, and What Tracing the Bridge Costs — 2026-09-25
+
+The section above planned "a middleware of our own" beside Effect's `HttpMiddleware.tracer`, on the reading that
+the built-in one is optional. It is not. `HttpEffect.toHandled` wraps every request in it unconditionally —
+`toWebHandler`'s `disableLogger` does not reach it — and it runs on this bridge today. Only
+`HttpMiddleware.TracerDisabledWhen` (or `TracerEnabled`) turns it off. A second middleware would have opened two
+server spans per request.
+
+### Two holes, closed before a tracer arrives (`4fe8d73926`)
+
+The built-in span records `url.full`, `url.path`, `url.query`, `client.address`, `user_agent.original` and every
+request and response header. The sanitizer dropped the `url.*` keys, but four header words were in no list:
+`http.request.header.x-forwarded-for` and `…forwarded` (a client IP), and `…referer` and
+`http.response.header.location` (URLs, with the session id in the path) went through unchanged, as did `origin`.
+Nothing leaks today: `HttpApiBridge.layer` installs no tracer, so the span is built, filled and thrown away on
+every request, and nothing in `src` reads the current span or `traceparent`. It was a trap, not a leak. Whoever merged
+`Observability.layer` in, as this spec asks, would have shipped IPs to the live panel and to the exporter.
+
+- `HttpApiBridge.layer` now sets `TracerDisabledWhen` to always, so the built-in span does not run at all.
+  `test/server/httpapi-bridge.test.ts` asserts that no `http.server …` span opens under a capturing tracer. Its
+  control case switches the span back on and shows that it carries `x-forwarded-for`, so the first case cannot pass
+  just because the override never reached the request fiber. Removing the override fails the first case.
+- `forwarded`, `referer`, `referrer`, `origin` and `location` are forbidden segments now, at the choke point, so the
+  rule holds for any span that records headers, not only this one. No emitter in `src` used them as a key.
+  Removing them fails `test/observability/span-schema.test.ts` and the control case above.
+
+`Server.listenEffect`, the other Effect listener, is gone (`1a796f1dec`): its only caller was a test of itself, it
+was never wired in after the Hono removal, and it had already drifted from `Server.listen` (it ignored
+`NIKCLI_SERVER_CORS_ORIGINS`).
+
+### The overhead measurement this section owed
+
+Method: one process, one instance, the bridge built four ways over the same `HttpApiBridge.layer` and memo map,
+called in random order within each round, 300 warm-up rounds and 3000 measured rounds on `GET /session` and
+`GET /question`, three separate runs. For the denominator, the same routes were also measured through
+`Server.fetch`, the production path (router, auth, instance selection, then the bridge). Medians, macOS arm64,
+8 cores, Bun 1.4.2, load average 2.6–3.3:
+
+| Variant, against the bridge as it now ships                                        | `/session` (`Server.fetch` ≈ 80 µs) | `/question` (≈ 63 µs)        |
+| ---------------------------------------------------------------------------------- | ----------------------------------- | ---------------------------- |
+| Built-in span on, no tracer (the bridge before this change)                        | +2.8 – 3.2 µs (3.5–3.9%)            | +2.0 – 2.4 µs (3.2–3.7%)     |
+| Our middleware (`http.server.<group>`, allowed keys only), Effect's native tracer¹ | +5.5 – 5.8 µs (6.8–7.3%)            | +4.5 – 4.9 µs (7.2–7.9%)     |
+| Our middleware + `Observability.layer` (live bus tracer, the default)              | +14.2 – 16.0 µs (17.5–19.7%)        | +16.2 – 18.5 µs (25.5–28.8%) |
+
+¹ Runs two and three only; the variant was added after the first run.
+
+**Tracing the bridge as specified fails EOT-01's budget** (median within 5% of instrumentation-off) by three and a half
+to six times, so it does not land. By EOT-01's own rule the detailed probe stays test-only until that changes. The
+same runs support three more observations:
+
+- The attribute contract works. Every `http.server.*` record carried only `http.method`, `http.route` (the matched
+  template, which the router sets on the parent span) and `http.status_code`.
+- Two thirds of the cost is the live panel, not the span. Each record goes through `Bus.publish`, which runs a
+  `runPromise` on another runtime per span. And tracing the bridge also turns every `Effect.fn` a handler reaches
+  into a published span: `GET /question` produced two records (`http.server.question`, `Question.list`), and the
+  first request on a fresh instance produced nineteen bootstrap spans (`Config.get` seven times, `LSP.init`,
+  `FileWatcher.init`, `Vcs.init`, …).
+- The span alone is already over budget on the cheapest routes. A lean middleware in the style of the built-in one
+  (`onExit` with no `tap`/`tapCause` layers) is the first thing to try. The built-in one records every header and
+  still costs half of ours.
+
+Three questions have to be answered before the next attempt, and none of them is about speed:
+
+1. **Delivery class.** `telemetry.record` is declared without one, so it takes the conservative `ordered` default
+   (`src/bus/bus-event.ts`) and reaches every SSE subscriber. One record per request is a volume EOT-04's admission
+   policy has not been asked to carry, and a telemetry record is the one event that could be lost without harm.
+2. **Instance-less routes.** `Bus.publish` is per instance, and a span that ends without a live one cannot be
+   published; it logs `publish failed` instead. That already happens today: three times in
+   `test/server/httpapi-bridge.test.ts` on HEAD, all `instance has been disposed`, from spans that ended after their
+   instance. `/global/*` and `/user/*` run with no instance bound at all, so by reading `withCurrentInstance` (not yet
+   by measurement) tracing them would log that on every request.
+3. **Scope of the toggle.** The rollback plan asks for a per-group toggle. These numbers argue for the default
+   being the other way round: HTTP server spans off unless an OTLP endpoint is set or a group is explicitly on.

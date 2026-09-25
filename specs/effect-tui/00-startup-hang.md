@@ -152,3 +152,33 @@ owed — Ghostty in particular cannot be driven from a headless PTY here — and
 harness exists only as a scratch script, not as a checked-in check. A separate hazard seen while diagnosing: the
 worker's `Log.init({ dev })` truncates the same `dev.log` the main process writes in local builds, which is why every
 sampled stall had an empty log. It did not cause the hang, but it hid it.
+
+## Gate Evidence — 2026-09-25
+
+Two claims in the section above are out of date. Requirement 2's harness **is** checked in:
+`bun run repro:startup-hang <binary>` (`c004b6ae8d`) drives `script/tui-startup.ts` through `spawnPty`
+(`packages/util/src/pty.ts`), which attaches no responder, so the PTY never answers a capability query. It runs 200
+warm starts plus the bootstrap start with a 30 s deadline and exits non-zero on any stall. And the matrix has now been
+run against a binary built from `c5d5229e0` (`0.0.0-live-main-202609251440`, a clean tree; later probe headers read
+"dirty" because the source tree moved while the same binary ran):
+
+| Terminal                            | Starts | Stalls | Warm firstPaint median / p95 / max | Load (start → end) |
+| ----------------------------------- | ------ | ------ | ---------------------------------- | ------------------ |
+| `TERM=xterm-256color`               | 201    | 0      | 4086 / 7360 / 7619 ms              | 2.58 → 3.32        |
+| `TERM=tmux-256color`, `TMUX` set    | 201    | 0      | 4274 / 14972 / 27646 ms            | 1.73 → 3.02        |
+| `TERM=nikcli-unknown` (no terminfo) | 201    | 0      | 3118 / 4530 / 7591 ms              | 2.72 → 2.35        |
+
+**603 compiled starts, `hangRate` 0 on each row**, in the non-answering PTY, on one macOS arm64 host with 8 cores.
+
+What that does and does not establish:
+
+- **`tmux` is emulated, not real.** tmux is not installed on this host. `@opentui/core` forwards `TMUX` to its native
+  renderer (`DEFAULT_FORWARDED_ENV_KEYS`), so the row sets both `TERM` and `TMUX`. It shows the renderer's tmux path does
+  not stall. It does not exercise a tmux server in between.
+- **The tmux row ran under extra load, by accident rather than design:** a root typecheck and the `test/server/`
+  suite overlapped it. That is harsher for this defect, whose window widened under CPU load, and it is also why its
+  p95 and max are high. The slowest start painted at 27.6 s, 2.4 s inside the probe's 30 s deadline. Under that load
+  the deadline, not the startup, is the thin margin, and a stall reported under similar load should be checked against
+  it before it is read as a hang.
+- **Ghostty is still owed.** It cannot be driven from a headless PTY here, so the gate's matrix is three of four rows.
+  The gate stays open until it is run.
