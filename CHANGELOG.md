@@ -3,6 +3,20 @@
 <!-- UNRELEASED:START -->
 <!-- UNRELEASED:END -->
 
+## v1.396.0 (September 2026)
+
+## Core
+
+- Remove dead listenEffect and five unused util modules (@nikomatt69)
+- Turn off Effect's built-in server span on the bridge (@nikomatt69)
+
+**Thank you to 1 community contributor:**
+
+- @nikomatt69:
+  - fix(observability): turn off Effect's built-in server span on the bridge
+  - refactor(server): remove dead listenEffect and five unused util modules
+  - docs(specs): EOT-00 gate evidence and what tracing the bridge costs (EOT-13)
+
 ## v1.395.0 (September 2026)
 
 ## Core

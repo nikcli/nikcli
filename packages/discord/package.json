@@ -1,6 +1,6 @@
 {
   "name": "@nikcli-ai/discord",
-  "version": "1.395.0",
+  "version": "1.396.0",
   "type": "module",
   "license": "MIT",
   "exports": {
