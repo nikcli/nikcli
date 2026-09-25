@@ -1,6 +1,11 @@
 {
   "name": "@nikcli-ai/discord",
   "version": "1.397.0",
+  "files": [
+    "src",
+    "README.md",
+    "SETUP_GUIDE.md"
+  ],
   "type": "module",
   "license": "MIT",
   "exports": {

@@ -8,5 +8,9 @@
   "exports": {
     ".": "./src/index.ts"
   },
-  "version": "1.397.0"
+  "version": "1.397.0",
+  "files": [
+    "src",
+    "sst-env.d.ts"
+  ]
 }

@@ -19,5 +19,10 @@
     "@types/node": "catalog:",
     "cloudflare": "5.2.0"
   },
-  "version": "1.397.0"
+  "version": "1.397.0",
+  "files": [
+    "resource.cloudflare.ts",
+    "resource.node.ts",
+    "sst-env.d.ts"
+  ]
 }
