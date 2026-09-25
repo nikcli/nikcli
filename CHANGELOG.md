@@ -3,6 +3,18 @@
 <!-- UNRELEASED:START -->
 <!-- UNRELEASED:END -->
 
+## v1.398.0 (September 2026)
+
+## Core
+
+- Self-extension — a plugin tool that writes, hot-reloads and loads nikcli plugins (@nikomatt69)
+
+**Thank you to 1 community contributor:**
+
+- @nikomatt69:
+  - feat(plugin): self-extension — a plugin tool that writes, hot-reloads and loads nikcli plugins
+  - chore(packages): whitelist published files for the standalone packages
+
 ## v1.397.0 (September 2026)
 
 ## Core

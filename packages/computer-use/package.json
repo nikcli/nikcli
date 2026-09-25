@@ -1,6 +1,6 @@
 {
   "name": "@nikcli-ai/computer-use",
-  "version": "1.397.0",
+  "version": "1.398.0",
   "private": true,
   "description": "Control, inspect, capture and test real desktop sessions via a background headless desktop daemon — a computer-use engine for nikcli, sibling to @nikcli-ai/browser-control and @nikcli-ai/terminal-control.",
   "license": "MIT",
