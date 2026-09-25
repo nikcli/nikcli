@@ -165,11 +165,6 @@
       "note": "Remote workspace HTTP + WebSocket proxy."
     },
     { "file": "packages/nikcli/src/server/public.ts", "purpose": "proxy", "note": "Public share/proxy fetch." },
-    {
-      "file": "packages/nikcli/src/server/server.ts",
-      "purpose": "proxy",
-      "note": "Server-side outbound used by the request pipeline."
-    },
     { "file": "packages/nikcli/src/service/service.ts", "purpose": "probe", "note": "Service-registry health probe." },
     {
       "file": "packages/nikcli/src/session/instruction.ts",

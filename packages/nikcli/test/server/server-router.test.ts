@@ -167,19 +167,6 @@ describe("framework-neutral server router", () => {
       data: { message: "boom" },
     })
   })
-
-  it("serves the framework-neutral facade through BunHttpServer", async () => {
-    const server = await Server.listenEffect({
-      port: 0,
-      hostname: "127.0.0.1",
-    })
-    try {
-      const response = await fetch(new URL("/global/health", server.url))
-      expect(response.status).toBe(200)
-    } finally {
-      await server.stop()
-    }
-  })
 })
 
 describe("server request context", () => {

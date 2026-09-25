@@ -5,9 +5,7 @@ import { bunUtils, onMemoryPressure } from "@/bun"
 import { Installation } from "@/installation"
 import { Project } from "@/project/project"
 import { Workspace } from "@/workspace"
-import { BunHttpServer } from "@effect/platform-bun"
-import { Effect, Layer, ManagedRuntime } from "effect"
-import { HttpServer, HttpServerRequest, HttpServerResponse } from "effect/unstable/http"
+import { Effect } from "effect"
 import { OpenApi } from "effect/unstable/httpapi"
 import { Log } from "@nikcli-ai/util/log"
 import { HttpApiBridge } from "./httpapi/bridge"
@@ -292,44 +290,6 @@ export namespace Server {
     mobileListener = listener
     log.info("mobile listener started", listener)
     return listener
-  }
-
-  export async function listenEffect(opts: {
-    port: number
-    hostname: string
-    cors?: string[]
-    mobileAuthRequired?: boolean
-  }) {
-    _corsWhitelist = opts.cors ?? []
-    _listenHostname = opts.hostname
-    _mobileAuthRequired = opts.mobileAuthRequired ?? false
-    requestHandler = undefined
-
-    const serverLayer = BunHttpServer.layer({
-      hostname: opts.hostname,
-      port: opts.port,
-      idleTimeout: 0,
-      maxRequestBodySize: Flag.NIKCLI_SERVER_MAX_BODY ?? 2 * 1024 * 1024 * 1024,
-      gracefulShutdownTimeout: STOP_DRAIN_MS,
-    })
-    const app = Effect.gen(function* () {
-      const request = yield* HttpServerRequest.HttpServerRequest
-      return HttpServerResponse.fromWeb(yield* Effect.promise(() => fetch(request.source as Request)))
-    })
-    const runtime = ManagedRuntime.make(HttpServer.serve(app).pipe(Layer.provideMerge(serverLayer)))
-    const server = await runtime.runPromise(
-      Effect.gen(function* () {
-        return yield* HttpServer.HttpServer
-      }),
-    )
-    if (server.address._tag !== "TcpAddress") throw new Error("BunHttpServer did not bind a TCP address")
-    _url = new URL(`http://${server.address.hostname}:${server.address.port}`)
-    return {
-      hostname: server.address.hostname,
-      port: server.address.port,
-      url: _url,
-      stop: async () => runtime.dispose(),
-    }
   }
 
   export async function ready(server: ReturnType<typeof listen>, timeoutMs = 5000) {
