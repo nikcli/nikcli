@@ -16282,6 +16282,62 @@
         ]
       }
     },
+    "/permission/blocked": {
+      "get": {
+        "tags": ["permission"],
+        "operationId": "permission.blocked",
+        "parameters": [
+          {
+            "name": "directory",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "workspace",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "security": [
+          {
+            "bearerAuth": []
+          },
+          {
+            "auth_token": []
+          },
+          {
+            "basicAuth": []
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Success",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "$ref": "#/components/schemas/PermissionBlocked"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "x-codeSamples": [
+          {
+            "lang": "js",
+            "source": "import { createNikcliClient } from \"@nikcli-ai/sdk/httpapi\"\n\nconst client = createNikcliClient()\nawait client.permission.blocked({\n  ...\n})"
+          }
+        ]
+      }
+    },
     "/permission/{requestID}/reply": {
       "post": {
         "tags": ["permission"],
@@ -25236,6 +25292,17 @@
               "additionalProperties": false
             }
           },
+          "permissionMode": {
+            "anyOf": [
+              {
+                "type": "string",
+                "enum": ["default", "auto"]
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
           "model": {
             "anyOf": [
               {
@@ -29567,6 +29634,10 @@
           ]
         }
       },
+      "PermissionModeConfig": {
+        "type": "string",
+        "enum": ["default", "auto"]
+      },
       "AgentConfig": {
         "type": "object",
         "properties": {
@@ -29768,6 +29839,16 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/PermissionConfig"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "permission_mode": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PermissionModeConfig"
               },
               {
                 "type": "null"
@@ -31061,6 +31142,94 @@
       "LayoutConfig": {
         "type": "string",
         "enum": ["auto", "stretch"]
+      },
+      "AutoModeConfig": {
+        "type": "object",
+        "properties": {
+          "environment": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "allow": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "soft_deny": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "hard_deny": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "classify_all_shell": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "disable": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
       },
       "PolicyStatementConfig": {
         "type": "object",
@@ -32432,6 +32601,26 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/PermissionConfig"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "permission_mode": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PermissionModeConfig"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "auto_mode": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AutoModeConfig"
               },
               {
                 "type": "null"
@@ -39048,6 +39237,10 @@
           }
         ]
       },
+      "PermissionModeConfig_1": {
+        "type": "string",
+        "enum": ["default", "auto"]
+      },
       "AgentConfig_1": {
         "type": "object",
         "properties": {
@@ -39249,6 +39442,16 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/PermissionConfig"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "permission_mode": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PermissionModeConfig_1"
               },
               {
                 "type": "null"
@@ -40542,6 +40745,94 @@
       "LayoutConfig_1": {
         "type": "string",
         "enum": ["auto", "stretch"]
+      },
+      "AutoModeConfig_1": {
+        "type": "object",
+        "properties": {
+          "environment": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "allow": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "soft_deny": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "hard_deny": {
+            "anyOf": [
+              {
+                "type": "array",
+                "items": {
+                  "type": "string"
+                }
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "classify_all_shell": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "model": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "disable": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "additionalProperties": false
       },
       "PolicyStatementConfig_1": {
         "type": "object",
@@ -41913,6 +42204,26 @@
             "anyOf": [
               {
                 "$ref": "#/components/schemas/PermissionConfig"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "permission_mode": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PermissionModeConfig_1"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "auto_mode": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/AutoModeConfig_1"
               },
               {
                 "type": "null"
@@ -58295,6 +58606,65 @@
           }
         },
         "required": ["id", "sessionID", "permission", "patterns", "metadata", "always"],
+        "additionalProperties": false
+      },
+      "PermissionBlocked": {
+        "type": "object",
+        "properties": {
+          "id": {
+            "type": "string"
+          },
+          "sessionID": {
+            "type": "string"
+          },
+          "permission": {
+            "type": "string"
+          },
+          "patterns": {
+            "type": "array",
+            "items": {
+              "type": "string"
+            }
+          },
+          "rule": {
+            "type": "string"
+          },
+          "reason": {
+            "type": "string"
+          },
+          "time": {
+            "anyOf": [
+              {
+                "type": "number"
+              },
+              {
+                "type": "string",
+                "enum": ["Infinity", "-Infinity", "NaN"]
+              }
+            ]
+          },
+          "tool": {
+            "anyOf": [
+              {
+                "type": "object",
+                "properties": {
+                  "messageID": {
+                    "type": "string"
+                  },
+                  "callID": {
+                    "type": "string"
+                  }
+                },
+                "required": ["messageID", "callID"],
+                "additionalProperties": false
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": ["id", "sessionID", "permission", "patterns", "rule", "reason", "time"],
         "additionalProperties": false
       },
       "PermissionReply": {

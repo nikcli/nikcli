@@ -3,6 +3,19 @@
 <!-- UNRELEASED:START -->
 <!-- UNRELEASED:END -->
 
+## v1.397.0 (September 2026)
+
+## Core
+
+- Auto mode — a classifier reviews actions instead of prompting (@nikomatt69)
+- Streamline token management and improve error handling (@nikomatt69)
+
+**Thank you to 1 community contributor:**
+
+- @nikomatt69:
+  - refactor(auth): streamline token management and improve error handling
+  - feat(permission): auto mode — a classifier reviews actions instead of prompting
+
 ## v1.396.0 (September 2026)
 
 ## Core
