@@ -30,9 +30,13 @@ function getStderr(err: any): string {
   return String(s)
 }
 
+// The exact tarball this version packs to, as the SDK script does. Picking the
+// last line of `ls *.tgz` published whatever stale tarball the directory
+// listing happened to end on — 1.389.0 went out for the 1.398.0 release.
+const tgz = `${pkg.name.replace("@", "").replace("/", "-")}-${pkg.version}.tgz`
+
 try {
   await $`bun pm pack`
-  const tgz = (await $`ls *.tgz`.text()).trim().split("\n").pop()!
   await $`npm publish ${tgz} --tag ${Script.channel} --access public`
 } catch (err: any) {
   // Bun's ShellError puts the npm output in err.stderr, not err.message, so the
