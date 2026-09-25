@@ -2,6 +2,7 @@ import type { Hooks, PluginInput } from "@nikcli-ai/plugin"
 import { Flag } from "@nikcli-ai/util/flag"
 import { Log } from "@nikcli-ai/util/log"
 import { OAUTH_DUMMY_KEY } from "../auth"
+import { ProviderOAuth } from "./oauth-refresh"
 import { OpenAIWebSocketPool } from "./openai/ws-pool"
 
 export interface CodexAuthPluginOptions {
@@ -291,7 +292,15 @@ async function refreshAccessToken(refreshToken: string): Promise<TokenResponse> 
     }).toString(),
   })
   if (!response.ok) {
-    throw new Error(`Token refresh failed: ${response.status}`)
+    const detail = await response.text().catch(() => "")
+    // 400/401: the refresh token was revoked, already spent, or is too old.
+    // Retrying cannot fix that; only a new sign-in can.
+    if (response.status === 400 || response.status === 401) {
+      throw new Error(
+        `ChatGPT sign-in expired (${response.status}). Run \`nikcli auth login openai\` to reconnect.${detail ? ` ${detail}` : ""}`,
+      )
+    }
+    throw new Error(`Token refresh failed: ${response.status}${detail ? `: ${detail}` : ""}`)
   }
   return response.json()
 }
@@ -537,6 +546,38 @@ export async function CodexAuthPlugin(input: PluginInput, options: CodexAuthPlug
           }
         }
 
+        // The credential lives under this plugin's provider id. Writing it
+        // anywhere else leaves the stored pair holding a refresh token OpenAI
+        // has already rotated, and every renewal after that is refused.
+        const renew = (rejected?: string) =>
+          ProviderOAuth.renew({
+            providerID: "openai",
+            read: getAuth,
+            rejected,
+            async exchange(stored) {
+              const tokens = await refreshAccessToken(stored.refresh)
+              return {
+                access: tokens.access_token,
+                refresh: tokens.refresh_token || stored.refresh,
+                expires: Date.now() + (tokens.expires_in ?? 3600) * 1000,
+                accountId: extractAccountId(tokens) || stored.accountId,
+              }
+            },
+            async write(tokens) {
+              const result = await input.client.auth.set({
+                providerID: "openai",
+                payload: {
+                  type: "oauth",
+                  refresh: tokens.refresh,
+                  access: tokens.access,
+                  expires: tokens.expires,
+                  ...(tokens.accountId && { accountId: tokens.accountId }),
+                },
+              })
+              if (result.error) throw result.error
+            },
+          })
+
         return {
           apiKey: OAUTH_DUMMY_KEY,
           async fetch(requestInput: RequestInfo | URL, init?: RequestInit) {
@@ -556,28 +597,10 @@ export async function CodexAuthPlugin(input: PluginInput, options: CodexAuthPlug
             if (currentAuth.type !== "oauth")
               return websocketFetch ? websocketFetch(requestInput, init) : fetch(requestInput, init)
 
-            const authWithAccount = currentAuth as typeof currentAuth & { accountId?: string }
-
-            // The stored credential is readonly, so the refreshed token is held
+            // The stored credential is readonly, so a renewed one is held
             // locally for the rest of this request.
-            let access = currentAuth.access
-            if (!access || currentAuth.expires < Date.now()) {
-              log.info("refreshing codex access token")
-              const tokens = await refreshAccessToken(currentAuth.refresh)
-              const newAccountId = extractAccountId(tokens) || authWithAccount.accountId
-              await input.client.auth.set({
-                providerID: "codex",
-                payload: {
-                  type: "oauth",
-                  refresh: tokens.refresh_token,
-                  access: tokens.access_token,
-                  expires: Date.now() + (tokens.expires_in ?? 3600) * 1000,
-                  ...(newAccountId && { accountId: newAccountId }),
-                },
-              })
-              access = tokens.access_token
-              authWithAccount.accountId = newAccountId
-            }
+            let session: ProviderOAuth.Tokens = currentAuth as ProviderOAuth.Stored
+            if (ProviderOAuth.expiring(session)) session = await renew()
 
             const headers = new Headers()
             if (init?.headers) {
@@ -594,11 +617,11 @@ export async function CodexAuthPlugin(input: PluginInput, options: CodexAuthPlug
               }
             }
 
-            headers.set("authorization", `Bearer ${access}`)
-
-            if (authWithAccount.accountId) {
-              headers.set("ChatGPT-Account-Id", authWithAccount.accountId)
+            const authorize = () => {
+              headers.set("authorization", `Bearer ${session.access}`)
+              if (session.accountId) headers.set("ChatGPT-Account-Id", session.accountId)
             }
+            authorize()
 
             const parsed =
               requestInput instanceof URL
@@ -614,10 +637,29 @@ export async function CodexAuthPlugin(input: PluginInput, options: CodexAuthPlug
               headers,
             }
 
-            const send = (body?: string) => {
-              const next = body === undefined ? requestInit : { ...requestInit, body }
+            const dispatch = (next: RequestInit) => {
               if (websocketFetch && parsed.pathname.includes("/v1/responses")) return websocketFetch(url, next)
               return fetch(url, OpenAIWebSocketPool.withoutInternalHeaders(next))
+            }
+
+            // A 401 on a token the deadline still called valid means OpenAI
+            // retired it early; renew once and replay, rather than failing the
+            // turn on something the next request would have fixed.
+            const send = async (body?: string) => {
+              const next = body === undefined ? requestInit : { ...requestInit, body }
+              const response = await dispatch(next)
+              if (response.status !== 401 || !ProviderOAuth.replayable(next.body)) return response
+              const renewed = await renew(session.access).catch((error: unknown) => {
+                log.warn("codex token renewal after 401 failed", {
+                  error: error instanceof Error ? error.message : String(error),
+                })
+                return undefined
+              })
+              if (!renewed) return response
+              await response.body?.cancel().catch(() => {})
+              session = renewed
+              authorize()
+              return dispatch(next)
             }
 
             // Only model calls can fall back, and only when we can read the

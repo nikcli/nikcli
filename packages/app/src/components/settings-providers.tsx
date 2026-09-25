@@ -61,37 +61,13 @@ export const SettingsProviders: Component = () => {
     return true
   }
 
-  const disableProvider = async (providerID: string, name: string) => {
-    const before = globalSync.data.config.disabled_providers ?? []
-    const next = before.includes(providerID) ? before : [...before, providerID]
-    globalSync.set("config", "disabled_providers", next)
-
-    await globalSync
-      .updateConfig({ disabled_providers: next })
-      .then(() => {
-        showToast({
-          variant: "success",
-          icon: "circle-check",
-          title: language.t("provider.disconnect.toast.disconnected.title", { provider: name }),
-          description: language.t("provider.disconnect.toast.disconnected.description", { provider: name }),
-        })
-      })
-      .catch((err: unknown) => {
-        globalSync.set("config", "disabled_providers", before)
-        const message = err instanceof Error ? err.message : String(err)
-        showToast({ title: language.t("common.requestFailed"), description: message })
-      })
-  }
-
+  // Disconnecting removes the stored credential and nothing else: the config
+  // is never marked with the provider as disabled.
   const disconnect = async (providerID: string, name: string) => {
-    if (isConfigCustom(providerID)) {
-      await globalSDK.client.auth.remove({ providerID }).catch(() => undefined)
-      await disableProvider(providerID, name)
-      return
-    }
     await globalSDK.client.auth
       .remove({ providerID })
-      .then(async () => {
+      .then(async (result) => {
+        if (result.error) throw result.error
         await globalSDK.client.global.dispose()
         showToast({
           variant: "success",

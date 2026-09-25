@@ -1,6 +1,7 @@
 import type { Hooks, PluginInput } from "@nikcli-ai/plugin"
 import { Log } from "@nikcli-ai/util/log"
 import { OAUTH_DUMMY_KEY } from "../auth"
+import { ProviderOAuth } from "./oauth-refresh"
 import { createServer } from "http"
 import type { IncomingMessage, ServerResponse } from "http"
 import type { AddressInfo } from "net"
@@ -198,7 +199,15 @@ async function refreshAccessToken(refreshToken: string, tokenEndpoint: string): 
     }).toString(),
   })
   if (!response.ok) {
-    throw new Error(`Token refresh failed: ${response.status}: ${await response.text().catch(() => "")}`)
+    const detail = await response.text().catch(() => "")
+    // 400/401: the refresh token was revoked, already spent, or is too old.
+    // Retrying cannot fix that; only a new sign-in can.
+    if (response.status === 400 || response.status === 401) {
+      throw new Error(
+        `SuperGrok sign-in expired (${response.status}). Run \`nikcli auth login xai\` to reconnect.${detail ? ` ${detail}` : ""}`,
+      )
+    }
+    throw new Error(`Token refresh failed: ${response.status}: ${detail}`)
   }
   const tokens = (await response.json()) as TokenResponse
   if (!tokens.access_token) throw new Error("Token refresh failed: missing access_token")
@@ -484,7 +493,28 @@ export async function XAIAuthPlugin(input: PluginInput): Promise<Hooks> {
         const auth = await getAuth()
         if (auth.type !== "oauth") return {}
 
-        let tokenEndpointCached: string | undefined
+        const renew = (rejected?: string) =>
+          ProviderOAuth.renew({
+            providerID: "xai",
+            read: getAuth,
+            rejected,
+            async exchange(stored) {
+              const endpoints = await discoverEndpoints()
+              const tokens = await refreshAccessToken(stored.refresh, endpoints.token_endpoint)
+              return {
+                access: tokens.access_token,
+                refresh: tokens.refresh_token || stored.refresh,
+                expires: Date.now() + (tokens.expires_in ?? 3600) * 1000,
+              }
+            },
+            async write(tokens) {
+              const result = await input.client.auth.set({
+                providerID: "xai",
+                payload: { type: "oauth", refresh: tokens.refresh, access: tokens.access, expires: tokens.expires },
+              })
+              if (result.error) throw result.error
+            },
+          })
 
         return {
           apiKey: OAUTH_DUMMY_KEY,
@@ -504,28 +534,10 @@ export async function XAIAuthPlugin(input: PluginInput): Promise<Hooks> {
             const currentAuth = await getAuth()
             if (currentAuth.type !== "oauth") return fetch(requestInput, init)
 
-            if (!tokenEndpointCached) {
-              const endpoints = await discoverEndpoints()
-              tokenEndpointCached = endpoints.token_endpoint
-            }
-
-            // The stored credential is readonly, so the refreshed token is held
+            // The stored credential is readonly, so a renewed one is held
             // locally for the rest of this request.
-            let access = currentAuth.access
-            if (!access || currentAuth.expires < Date.now()) {
-              log.info("refreshing xai access token")
-              const tokens = await refreshAccessToken(currentAuth.refresh, tokenEndpointCached)
-              await input.client.auth.set({
-                providerID: "xai",
-                payload: {
-                  type: "oauth",
-                  refresh: tokens.refresh_token ?? currentAuth.refresh,
-                  access: tokens.access_token,
-                  expires: Date.now() + (tokens.expires_in ?? 3600) * 1000,
-                },
-              })
-              access = tokens.access_token
-            }
+            let session: ProviderOAuth.Tokens = currentAuth as ProviderOAuth.Stored
+            if (ProviderOAuth.expiring(session)) session = await renew()
 
             const headers = new Headers()
             if (init?.headers) {
@@ -542,10 +554,25 @@ export async function XAIAuthPlugin(input: PluginInput): Promise<Hooks> {
               }
             }
 
-            headers.set("authorization", `Bearer ${access}`)
+            headers.set("authorization", `Bearer ${session.access}`)
             headers.set("User-Agent", USER_AGENT)
 
-            return fetch(requestInput, { ...init, headers })
+            const next = { ...init, headers }
+            const response = await fetch(requestInput, next)
+            // A 401 on a token the deadline still called valid means xAI retired
+            // it early; renew once and replay rather than fail the turn.
+            if (response.status !== 401) return response
+            if (requestInput instanceof Request || !ProviderOAuth.replayable(init?.body)) return response
+            const renewed = await renew(session.access).catch((error: unknown) => {
+              log.warn("xai token renewal after 401 failed", {
+                error: error instanceof Error ? error.message : String(error),
+              })
+              return undefined
+            })
+            if (!renewed) return response
+            await response.body?.cancel().catch(() => {})
+            headers.set("authorization", `Bearer ${renewed.access}`)
+            return fetch(requestInput, next)
           },
         }
       },

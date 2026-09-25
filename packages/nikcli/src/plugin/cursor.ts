@@ -1890,11 +1890,13 @@ export async function CursorAuthPlugin(input: PluginInput): Promise<Hooks> {
           async fetch(requestInput: RequestInfo | URL, init?: RequestInit) {
             const currentAuth = await getAuth()
             if (currentAuth?.type === "oauth" && (!currentAuth.access || currentAuth.expires < Date.now() - 30_000)) {
+              // cursor-agent owns this session and renews it itself; the copy
+              // here is only a mirror. Newer CLIs keep the token in the OS
+              // keychain, so a missing cli-config.json does not mean signed
+              // out — the proxy answers a real logout with CURSOR_AUTH_HINT.
               log.info("cursor token expired, reloading from cli config")
               const refreshed = await refreshFromCliConfig(input)
-              if (!refreshed) {
-                throw new Error("Cursor token expired. Run `/login` again or refresh via `cursor-agent login`.")
-              }
+              if (!refreshed) log.info("no cursor cli config to mirror; deferring to cursor-agent's own session")
             }
 
             return handleCursorProxyRequest(new Request(requestInput, init), workspaceDirectory)
