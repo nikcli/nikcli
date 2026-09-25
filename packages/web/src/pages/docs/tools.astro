@@ -49,6 +49,7 @@ const toolIndex = [
   { id: "apply_patch", file: "src/tool/apply_patch.ts", desc: "Patch files with structured diffs." },
   { id: "speak", file: "src/tool/speak.ts", desc: "Convert text to speech and play audio." },
   { id: "opentui", file: "src/tool/opentui.ts", desc: "Render terminal dashboards and rich visualizations." },
+  { id: "plugin", file: "src/tool/plugin.ts", desc: "Create, update, list, reload and remove nikcli plugins; new plugins load without a restart." },
   { id: "artifact", file: "src/tool/artifact.ts", desc: "Publish a local file as a hosted page on nikcli-ai.dev, openable in a browser or the mobile app." },
   { id: "lsp", file: "src/tool/lsp.ts", desc: "LSP tool exposed behind experimental flags." },
   { id: "batch", file: "src/tool/batch.ts", desc: "Batch tool calls behind experimental flags." },
@@ -133,6 +134,9 @@ const toolIndex = [
       </DocCard>
       <DocCard title="opentui" eyebrow="Visualization">
         <p>Render tables, charts, timelines, and progress widgets directly in the terminal UI.</p>
+      </DocCard>
+      <DocCard title="plugin" eyebrow="Self-extension" href="/docs/guides/plugins#self-extend">
+        <p>Write a plugin into its own folder, install its dependencies and hot-reload it, so nikcli gains hooks and tools on request. Asks the <code>plugin</code> permission by default.</p>
       </DocCard>
     </div>
   </section>

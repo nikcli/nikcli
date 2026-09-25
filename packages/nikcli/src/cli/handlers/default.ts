@@ -239,8 +239,9 @@ export default Runtime.handler(Commands, async (input) => {
   const cwd = resolveThreadDirectory(args.project)
   // Three layouts, in the order they are tried below: a compiled binary (the
   // `NIKCLI_WORKER_PATH` define, resolved against the bunfs root), a published dist where this
-  // command is inlined into the root entry, and a dev checkout where it is a sibling file.
-  const localWorker = new URL("./worker.ts", import.meta.url)
+  // command is inlined into the root entry, and a dev checkout, where this file sits in
+  // `cli/handlers/` and the worker in `cli/cmd/tui/` (the path `script/build.ts` bundles).
+  const localWorker = new URL("../cmd/tui/worker.ts", import.meta.url)
   const distWorker = new URL("./cli/cmd/tui/worker.js", import.meta.url)
   const workerPath = await iife(async () => {
     if (typeof NIKCLI_WORKER_PATH !== "undefined") return NIKCLI_WORKER_PATH

@@ -53,6 +53,7 @@ import {
   type ComputerShape,
   type Diagnostic,
   type EditShape,
+  type PluginShape,
   type GlobShape,
   type GrepShape,
   type ListShape,
@@ -267,6 +268,9 @@ export function ToolPartView(props: { last: boolean; streaming: boolean; entry: 
           </Match>
           <Match when={toolName() === "artifact"}>
             <ArtifactView {...toolprops} />
+          </Match>
+          <Match when={toolName() === "plugin"}>
+            <PluginView {...toolprops} />
           </Match>
           <Match when={true}>
             <GenericTool {...toolprops} />
@@ -1973,6 +1977,84 @@ function Monitor(props: ToolProps<any>) {
           part={props.part}
         >
           Monitor {title()}
+        </InlineTool>
+      </Match>
+    </Switch>
+  )
+}
+
+/**
+ * `plugin` writes code nikcli then runs, so the transcript shows the code (as
+ * a diff of the entry file) and whether it actually loaded — not the source
+ * flattened into one line of arguments, which is what the generic view drew.
+ */
+function PluginView(props: ToolProps<PluginShape>) {
+  const ctx = use()
+  const { theme, syntax } = useTheme()
+  const action = createMemo(() => props.metadata.action ?? props.input.action ?? "")
+  const name = createMemo(() => props.metadata.name ?? props.input.name ?? "")
+  const view = createMemo(() => {
+    if (ctx.sync.data.config.tui?.diff_style === "stacked") return "unified"
+    return ctx.width > 120 ? "split" : "unified"
+  })
+  const title = createMemo(() => {
+    const verb = action() === "update" ? "Updated" : "Created"
+    const state = props.metadata.loaded ? "loaded" : "not loaded"
+    return `⚙ ${verb} plugin ${name()} · ${state}`
+  })
+  const loadError = createMemo(() => {
+    if (props.metadata.loaded !== false) return undefined
+    return props.metadata.plugins?.find((plugin) => plugin.name === name())?.error ?? "The plugin was not picked up."
+  })
+  const summary = createMemo(() => {
+    const plugins = props.metadata.plugins ?? []
+    const failed = plugins.filter((plugin) => plugin.error).length
+    return `${plugins.length} plugin${plugins.length === 1 ? "" : "s"}` + (failed > 0 ? ` · ${failed} failed` : "")
+  })
+
+  return (
+    <Switch>
+      <Match when={props.metadata.diff !== undefined}>
+        <BlockTool title={title()} part={props.part}>
+          <box paddingLeft={1}>
+            <diff
+              diff={props.metadata.diff!}
+              view={view()}
+              filetype={filetype(props.metadata.filepath)}
+              syntaxStyle={syntax()}
+              showLineNumbers={true}
+              width="100%"
+              wrapMode={ctx.diffWrapMode()}
+              fg={theme.foreground.default}
+              addedBg={theme.diff.addedBg}
+              removedBg={theme.diff.removedBg}
+              contextBg={theme.diff.contextBg}
+              addedSignColor={theme.diff.highlightAdded}
+              removedSignColor={theme.diff.highlightRemoved}
+              lineNumberFg={theme.diff.lineNumber}
+              lineNumberBg={theme.diff.contextBg}
+              addedLineNumberBg={theme.diff.addedLineNumberBg}
+              removedLineNumberBg={theme.diff.removedLineNumberBg}
+            />
+          </box>
+          <Show when={loadError()}>
+            <text fg={theme.status.error.fg}>{loadError()}</text>
+          </Show>
+        </BlockTool>
+      </Match>
+      <Match when={action() === "remove"}>
+        <InlineTool icon="✕" pending="Removing plugin..." complete={props.metadata.folder} part={props.part}>
+          Removed plugin {name()}
+        </InlineTool>
+      </Match>
+      <Match when={action() === "list" || action() === "reload"}>
+        <InlineTool icon="⚙" pending="Reading plugins..." complete={props.metadata.plugins} part={props.part}>
+          {action() === "reload" ? "Reloaded" : "Listed"} plugins · {summary()}
+        </InlineTool>
+      </Match>
+      <Match when={true}>
+        <InlineTool icon="⚙" pending="Writing plugin..." complete={props.metadata.action} part={props.part}>
+          Plugin {name()} {input({ action: action(), scope: props.input.scope })}
         </InlineTool>
       </Match>
     </Switch>

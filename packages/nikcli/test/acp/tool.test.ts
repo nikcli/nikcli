@@ -18,6 +18,7 @@ describe("acp/tool", () => {
     expect(toToolKind("bash")).toBe("execute")
     expect(toToolKind("edit")).toBe("edit")
     expect(toToolKind("write")).toBe("edit")
+    expect(toToolKind("plugin")).toBe("edit")
     expect(toToolKind("read")).toBe("read")
     expect(toToolKind("grep")).toBe("search")
     expect(toToolKind("webfetch")).toBe("fetch")

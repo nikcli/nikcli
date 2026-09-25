@@ -69,6 +69,20 @@ export type EditShape = ToolShape<
 
 export type ApplyPatchShape = ToolShape<Record<string, unknown>, { files?: PatchedFile[] }>
 
+/** `plugin`: create/update report the entry file and its diff; every action reports what is loaded. */
+export type PluginShape = ToolShape<
+  { action?: string; name?: string; scope?: string },
+  {
+    action?: string
+    name?: string
+    folder?: string
+    filepath?: string
+    diff?: string
+    loaded?: boolean
+    plugins?: { name: string; error?: string }[]
+  }
+>
+
 /** `command` and `description` also arrive as metadata, published when execution starts. */
 export type BashShape = ToolShape<
   { command?: string; description?: string; workdir?: string },

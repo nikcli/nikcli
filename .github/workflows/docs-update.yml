@@ -63,13 +63,13 @@ jobs:
             Steps:
             1. For each commit that looks like a new feature or significant change:
                - Read the changed files to understand what was added
-               - Check if the feature is already documented in packages/web/src/content/docs/*
+               - Check if the feature is already documented in packages/web/src/pages/docs/** (Astro pages)
             2. If you find undocumented features:
-               - Update the relevant documentation files in packages/web/src/content/docs/*
+               - Update the relevant documentation pages in packages/web/src/pages/docs/**
                - Follow the existing documentation style and structure
                - Make sure to document the feature clearly with examples where appropriate
             3. If all new features are already documented, report that no updates are needed
-            4. If you are creating a new documentation file be sure to update packages/web/astro.config.mjs too.
+            4. If you create a new page, add it to packages/web/src/data/docsSidebar.ts and packages/web/src/data/docsIndex.ts. A new built-in tool also needs an entry in the toolIndex of packages/web/src/pages/docs/tools.astro.
 
             Focus on user-facing features and API changes. Skip internal refactors, bug fixes, and test updates unless they affect user-facing behavior.
             Don't feel the need to document every little thing. It is perfectly okay to make 0 changes at all.
@@ -80,6 +80,10 @@ jobs:
             --agent docs \
             --model minimax-coding-plan/MiniMax-M3 \
             "$PROMPT"
+
+      - name: Check documentation
+        if: steps.commits.outputs.has_commits == 'true'
+        run: bun run --cwd packages/web check
 
       - name: Open documentation pull request
         if: steps.commits.outputs.has_commits == 'true'
@@ -96,7 +100,7 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git switch -c "$BRANCH"
-          git add packages/web/src/content/docs packages/web/astro.config.mjs
+          git add packages/web/src/pages/docs packages/web/src/data/docsSidebar.ts packages/web/src/data/docsIndex.ts
           git commit -m "docs: update documentation from recent changes"
           git push origin "HEAD:$BRANCH"
           gh pr create \

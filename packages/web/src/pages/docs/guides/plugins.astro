@@ -8,6 +8,8 @@ import DocRelated from "../../../components/docs/DocRelated.astro";
 
 const toc = [
   { title: "What a plugin is", href: "#what", depth: 2 },
+  { title: "Let nikcli write it", href: "#self-extend", depth: 2 },
+  { title: "Folder plugins and hot reload", href: "#folders", depth: 2 },
   { title: "1. Write the file", href: "#step-1", depth: 2 },
   { title: "2. Point config at it", href: "#step-2", depth: 2 },
   { title: "3. Check it loaded", href: "#step-3", depth: 2 },
@@ -46,6 +48,67 @@ const toc = [
         working plugin. npm is for sharing it later.
       </p>
     </DocCallout>
+  </section>
+
+  <section id="self-extend" class="doc-section">
+    <h2>Let nikcli write it</h2>
+    <p>
+      You do not have to write the file yourself. Ask for the capability in the TUI — "create a
+      plugin that sends me a desktop notification when a session finishes" — and the agent uses the
+      built-in <code>plugin</code> tool: it writes the plugin into its own folder, installs its
+      dependencies, reloads it and reports whether it loaded, with the hooks and tools it
+      registered. The plugin runs from that moment on, no restart; tools it defines are callable
+      from the agent's next step.
+    </p>
+    <table class="doc-table">
+      <thead><tr><th>Action</th><th>What it does</th></tr></thead>
+      <tbody>
+        <tr><td><code>create</code></td><td>Writes <code>index.ts</code> and <code>package.json</code> for a new plugin, then loads it.</td></tr>
+        <tr><td><code>update</code></td><td>Replaces the source; the old version's <code>dispose()</code> runs before the new one loads.</td></tr>
+        <tr><td><code>list</code></td><td>Every configured plugin with its hooks and tools, or its load error.</td></tr>
+        <tr><td><code>reload</code></td><td>Re-reads plugins from disk after you edited them some other way.</td></tr>
+        <tr><td><code>remove</code></td><td>Disposes the plugin and deletes its folder.</td></tr>
+      </tbody>
+    </table>
+    <p>
+      Scope <code>global</code> (the default) writes under <code>~/.config/nikcli/plugins/</code>
+      and applies to every project; <code>project</code> writes under the project's
+      <code>.nikcli/plugins/</code>. When a plugin fails to load, the error goes back to the agent,
+      which fixes the source and calls <code>update</code>.
+    </p>
+    <DocCallout type="warn" title="Writing a plugin is its own permission">
+      <p>
+        Plugin code runs inside nikcli with your privileges, so the <code>plugin</code> permission
+        asks by default and the prompt shows the code as a diff. The <code>plan</code> agent is
+        denied it. Set <code>"permission": {"{"} "plugin": "allow" {"}"}</code> only if you want the
+        agent to extend nikcli without asking.
+      </p>
+    </DocCallout>
+  </section>
+
+  <section id="folders" class="doc-section">
+    <h2>Folder plugins and hot reload</h2>
+    <p>
+      Besides single files, every folder under a config directory's <code>plugins/</code> is a
+      plugin: <code>plugins/&lt;name&gt;/</code> with a <code>package.json</code> and its own
+      <code>node_modules</code>. The entry is <code>package.json</code> <code>main</code> when it
+      names a file inside the folder, else <code>index.ts</code>, else <code>index.js</code>. The
+      folder name is the plugin's name; <code>plugins/tui/</code> is reserved for
+      <a href="/docs/tui-plugins">TUI plugins</a>.
+    </p>
+    <DocCode language="text">{`~/.config/nikcli/plugins/
+  desktop-notify/
+    package.json      # "main": "index.ts", dependencies
+    index.ts
+  hello.ts            # single-file plugins still work`}</DocCode>
+    <p>
+      Plugins in <code>plugins/</code> are discovered without a <code>nikcli.json</code> entry,
+      and they reload while nikcli runs. Editing a plugin's files, adding one or removing one
+      reconciles plugin by plugin: a changed plugin is disposed and loaded again, a removed one is
+      disposed, and every other plugin keeps running untouched. Anything long-lived a plugin starts
+      — timers, servers, watchers — must be released in <code>dispose()</code>, or a reload
+      leaves the old copy running beside the new one.
+    </p>
   </section>
 
   <section id="step-1" class="doc-section">
@@ -334,8 +397,9 @@ nikcli plugin @scope/my-plugin@1.2.3 --force
         can look like it simply did nothing. Check the log before assuming it never ran.
       </li>
       <li>
-        <strong>Iterate on a path, not a package.</strong> A <code>file://</code> or relative entry
-        is re-imported on restart with no install step in between.
+        <strong>Iterate on a path, not a package.</strong> A local plugin is re-imported as soon as
+        its files change — no restart, no install step. npm plugins reload only when their specifier
+        changes.
       </li>
       <li>
         <strong>Confirm tools registered</strong> with
@@ -355,6 +419,7 @@ nikcli plugin @scope/my-plugin@1.2.3 --force
         <tr><td>Tool missing from the model</td><td>Registered, but gated — check permission mode and the tool gating rules in <a href="/docs/tools">Tools</a>.</td></tr>
         <tr><td>Entry resolves outside the package</td><td>The <code>./server</code> export points outside the plugin directory; the loader refuses it on purpose.</td></tr>
         <tr><td>Hook edits are ignored</td><td>You returned a new object instead of mutating <code>output</code>.</td></tr>
+        <tr><td>A reload leaves duplicates running</td><td>The plugin starts a timer, server or watcher and does not stop it in <code>dispose()</code>.</td></tr>
       </tbody>
     </table>
   </section>

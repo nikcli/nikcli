@@ -1,0 +1,51 @@
+Create, update, list, reload and remove nikcli plugins — the way nikcli extends itself.
+
+Use this when the user asks nikcli to gain a new capability that should outlive the session: "create a plugin that sends me desktop notifications", "add a tool that queries our Jira", "log every bash command to a file". The plugin is written to its own folder, its dependencies are installed, and nikcli hot-reloads it immediately — no restart. Its hooks run from then on and any tools it defines are callable from your next step.
+
+Actions:
+- create: write a new plugin. Requires `name`, `source`; `description`, `dependencies`, `scope` optional. Fails if the plugin already exists.
+- update: replace an existing plugin's `source` (and optionally `description`/`dependencies`). Use it to fix a plugin that failed to load.
+- list: every configured plugin with the hooks and tools it registered, or its load error.
+- reload: re-read plugins from disk (after editing a plugin's files with other tools).
+- remove: delete a plugin folder created here and unload it.
+
+Layout: `<config>/plugins/<name>/index.ts` + `package.json`, where `<config>` is `~/.config/nikcli` for scope "global" (default: every project on this machine) or the project's `.nikcli/` for scope "project". Read the files with the read tool when you need to change a plugin incrementally.
+
+Writing `source` (TypeScript, ESM, runs inside nikcli on Bun — Bun APIs and Node built-ins are available):
+
+```ts
+import type { Plugin } from "@nikcli-ai/plugin"
+import { tool } from "@nikcli-ai/plugin" // only if you define tools
+
+export const MyPlugin: Plugin = async ({ client, project, directory, worktree, serverUrl, $ }) => {
+  // one-time setup; `$` is Bun's shell: await $`osascript -e ${script}`.quiet()
+  return {
+    event: async ({ event }) => {
+      if (event.type === "session.idle") { /* event.properties.sessionID */ }
+    },
+    tool: {
+      my_tool: tool({
+        description: "What the tool does",
+        args: { query: tool.schema.string().describe("…") }, // tool.schema is zod
+        async execute(args, ctx) { return `result for ${args.query}` }, // string or { title, output, metadata }
+      }),
+    },
+    dispose: async () => { /* clear timers, close sockets, unsubscribe */ },
+  }
+}
+```
+
+Every exported function is initialised as a plugin, so export only plugin functions. Hooks available on the returned object:
+- `event({ event })` — every bus event. Useful types: `session.idle`, `session.status` (properties.status.type busy|idle|retry), `session.error`, `permission.asked`, `question.asked`, `message.updated`, `message.part.updated`, `file.edited`, `todo.updated`, `session.created`.
+- `config(config)` — the resolved nikcli config, on load and after config changes.
+- `tool` — tools the agent can call, keyed by tool id.
+- `"tool.execute.before"(input, output)` / `"tool.execute.after"(input, output)` — observe or rewrite tool calls (`output.args` before, `output.output` after).
+- `"shell.env"(input, output)` — add env vars to shells (`output.env`).
+- `"chat.params"`, `"chat.headers"`, `"chat.message"`, `"permission.ask"` (set `output.status` to allow|deny|ask), `"command.execute.before"`, `"experimental.chat.system.transform"` (push to `output.system`), `"experimental.session.compacting"`.
+- `dispose()` — called before the plugin is reloaded or removed. Anything long-lived you start (setInterval, servers, watchers, child processes) MUST be released here, or a reload will leave duplicates running.
+
+Rules:
+- `name` is kebab-case and becomes the folder name; tool ids should be snake_case and prefixed with the plugin's purpose to avoid collisions.
+- Put npm packages in `dependencies` (e.g. {"node-notifier": "^10.0.1"}); prefer built-ins and OS commands when they suffice.
+- Never swallow the whole plugin in try/catch silently; log with `console.error` sparingly — stdout/stderr are shared with the TUI.
+- The result tells you whether the plugin loaded and what it registered. If it failed, read the error, fix the source and call `update`. Do not report success to the user until the result says the plugin is loaded.

@@ -45,6 +45,7 @@ import { PlanExitTool, PlanEnterTool } from "./plan"
 import { ApplyPatchTool } from "./apply_patch"
 import { SpeakTool } from "./speak"
 import { OpenTUIVizTool } from "./opentui"
+import { PluginTool } from "./plugin"
 import { DelegationTool } from "./delegation"
 import { AdvisorTool } from "./advisor"
 import { DelegatorTool } from "./delegator"
@@ -436,6 +437,7 @@ export namespace ToolRegistry {
           SpeakTool,
           VoiceTool,
           OpenTUIVizTool,
+          PluginTool,
           AdvisorTool,
           DelegatorTool,
           SearchToolsTool,

@@ -227,6 +227,12 @@ export function getToolInfo(tool: string, input: any = {}): ToolInfo {
         title: "Computer Use",
         subtitle: input.action,
       }
+    case "plugin":
+      return {
+        icon: "code-lines",
+        title: "Plugin",
+        subtitle: [input.action, input.name].filter(Boolean).join(" "),
+      }
     case "task":
       return {
         icon: "task",

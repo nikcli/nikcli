@@ -161,6 +161,8 @@ export namespace Agent {
       browser_control: "ask",
       computer: "ask",
       doom_loop: "ask",
+      // Plugin code runs in-process with the user's privileges once loaded.
+      plugin: "ask",
       external_directory: {
         "*": "ask",
         [Truncate.DIR]: "allow",
@@ -228,6 +230,7 @@ You have access to subagents that can be launched as background tasks.${PRIMARY_
           PermissionNext.fromConfig({
             question: "allow",
             plan_exit: "allow",
+            plugin: "deny",
             external_directory: {
               [path.join(Global.Path.data, "plans", "*")]: "allow",
             },

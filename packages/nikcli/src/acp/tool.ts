@@ -76,6 +76,8 @@ export function toToolKind(toolName: string): ToolKind {
     case "apply_patch":
     case "patch":
     case "write":
+    // Writes a plugin's code into its own folder.
+    case "plugin":
       return "edit"
 
     case "grep":

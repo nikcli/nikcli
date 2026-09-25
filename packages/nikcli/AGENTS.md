@@ -151,6 +151,19 @@ Adding or changing an endpoint:
   `{ "tool": { "allow": ["my-tool.ts"], "pin": { "my-tool.ts": "<sha256>" } } }`.
 - `Plugin.Service` hook tools still load as before.
 
+### Plugin hot reload and the `plugin` tool
+
+- Config dirs load `{plugin,plugins}/*.{ts,js}` and folder plugins
+  `{plugin,plugins}/<name>/` (entry: package.json `main`, else `index.ts`/`index.js`;
+  `tui/` is reserved for TUI plugins). A folder plugin is named after its folder.
+- `InstanceReload` reconciles external plugins per plugin (`Plugin.Service.reload()`):
+  changed → `dispose()` then load, removed → `dispose()`, unchanged → untouched.
+  Internal plugins never reload. Local plugins import through a fresh specifier and
+  their folder's modules are evicted, because Bun caches failed resolutions outside
+  `require.cache`.
+- The `plugin` tool (`src/tool/plugin.ts`) writes, reloads and reports plugins. Its
+  permission `plugin` asks by default and is denied to `plan`.
+
 ### Permission coupling
 
 - Explicit map: `PermissionRuleset.TOOL_PERMISSION` (e.g. `monitor` → `bash`, edit-family → `edit`).

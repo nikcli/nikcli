@@ -267,7 +267,7 @@ const meta: Record<string, DocsIndexMeta> = {
   },
   "/docs/guides/plugins": {
     summary:
-      "Step-by-step guide to writing a nikcli plugin: the local file, the config entry, the two accepted module shapes, the plugin input, every hook, adding a custom tool with tool(), publishing to npm and debugging.",
+      "Step-by-step guide to writing a nikcli plugin: asking nikcli to write one with the plugin tool, folder plugins and hot reload, the local file, the config entry, the two accepted module shapes, the plugin input, every hook, adding a custom tool with tool(), publishing to npm and debugging.",
     keywords: [
       "write a plugin",
       "create plugin",
@@ -280,6 +280,10 @@ const meta: Record<string, DocsIndexMeta> = {
       "publish plugin",
       "plugin not loading",
       "extend nikcli",
+      "plugin tool",
+      "self-extending",
+      "hot reload plugin",
+      "folder plugin",
     ],
   },
   "/docs/guides/plugin-recipes": {

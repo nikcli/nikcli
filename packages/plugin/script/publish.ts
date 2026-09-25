@@ -8,9 +8,13 @@ process.chdir(dir)
 await $`bun tsc`
 const pkg = await import("../package.json").then((m) => m.default)
 const original = JSON.parse(JSON.stringify(pkg))
+// The tarball ships `dist/` only, so every export has to point there. Entries
+// are `{ import, types }` objects here (upstream uses bare strings); skipping
+// non-strings published a package whose every export named a missing file.
 for (const [key, value] of Object.entries(pkg.exports)) {
-  if (typeof value !== "string") continue
-  const file = value.replace("./src/", "./dist/").replace(".ts", "")
+  const source = typeof value === "string" ? value : (value as { import?: string }).import
+  if (!source?.startsWith("./src/")) continue
+  const file = source.replace("./src/", "./dist/").replace(/\.ts$/, "")
   // @ts-ignore
   pkg.exports[key] = {
     import: file + ".js",

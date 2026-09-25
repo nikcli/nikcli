@@ -84,9 +84,33 @@ export namespace InstanceReload {
     const started = Date.now()
     await Bus.publish(Event.Started, { directory, files })
     await Effect.runPromise(InstanceState.invalidateReloadable(directory))
+    // Plugins are not a reloadable cache — they own live resources (timers,
+    // sockets, bus handlers) that a blanket invalidation would drop without
+    // disposing. They reconcile per plugin instead, against the config the
+    // invalidation above just made fresh, and only a changed plugin restarts.
+    const plugins = await reloadPlugins().catch((error) => {
+      log.warn("plugin reload failed", { directory, error })
+      return undefined
+    })
+    // The tool registry derives plugin tools from the hooks list; a registry
+    // rebuilt by a request that raced the plugin reload holds the old ones.
+    if (plugins?.changed) await Effect.runPromise(InstanceState.invalidateReloadable(directory))
     const durationMs = Date.now() - started
     await Bus.publish(Event.Completed, { directory, files, durationMs })
     log.info("instance reloaded", { directory, files, durationMs })
+  }
+
+  async function reloadPlugins() {
+    const { Plugin } = await import("@/plugin")
+    return runPromiseWithLayer(
+      Plugin.defaultLayer,
+      withCurrentInstance(
+        Effect.gen(function* () {
+          const plugin = yield* Plugin.Service
+          return yield* plugin.reload()
+        }),
+      ),
+    )
   }
 
   async function configDirectories(): Promise<string[]> {
@@ -126,12 +150,11 @@ export namespace InstanceReload {
     watchFile(path.join(Global.Path.config, "nikcli.json"))
     watchFile(path.join(directory, "nikcli.json"))
     if (worktree !== "/" && worktree !== directory) watchFile(path.join(worktree, "nikcli.json"))
-    for (const dir of await configDirectories().catch((error): string[] => {
+    const configDirs = await configDirectories().catch((error): string[] => {
       log.warn("failed to resolve config directories for hot reload", { directory, error })
       return []
-    })) {
-      watchDir(dir)
-    }
+    })
+    for (const dir of configDirs) watchDir(dir)
 
     const watchers: fs.FSWatcher[] = []
     let pending: Set<string> | undefined
@@ -143,6 +166,7 @@ export namespace InstanceReload {
       const files = [...(pending ?? [])]
       pending = undefined
       if (stopped || !Instance.has(directory)) return
+      armPluginRoots()
       void withInstanceAsync({ directory }, async () => reload(directory, files)).catch((error) => {
         log.warn("hot reload failed", { directory, error })
       })
@@ -153,6 +177,32 @@ export namespace InstanceReload {
       if (timer) clearTimeout(timer)
       timer = setTimeout(flush, DEBOUNCE_MS)
       timer.unref?.()
+    }
+
+    // Folder plugins (`plugins/<name>/…`) keep their code one level below the
+    // config dir, out of reach of the flat watch above. Watched recursively,
+    // minus their node_modules, and armed again after every reload so a
+    // plugin directory created after startup is picked up too.
+    const pluginRoots = configDirs.flatMap((dir) => [path.join(dir, "plugin"), path.join(dir, "plugins")])
+    const armed = new Set<string>()
+    const armPluginRoots = () => {
+      for (const root of pluginRoots) {
+        if (armed.has(root) || stopped || !fs.existsSync(root)) continue
+        try {
+          const watcher = fs.watch(root, { recursive: true }, (_eventType, filename) => {
+            if (!filename) return
+            if (filename.split(/[\\/]/).includes("node_modules")) return
+            schedule(path.join(root, filename))
+          })
+          watcher.on("error", (error) => {
+            log.warn("plugin watcher error", { dir: root, error })
+          })
+          watchers.push(watcher)
+          armed.add(root)
+        } catch (error) {
+          log.warn("failed to watch plugin directory", { dir: root, error })
+        }
+      }
     }
 
     for (const [dir, accepts] of targets) {
@@ -171,6 +221,8 @@ export namespace InstanceReload {
         log.warn("failed to watch config path", { dir, error })
       }
     }
+
+    armPluginRoots()
 
     log.info("watching config for hot reload", { directory, paths: watchers.length })
 

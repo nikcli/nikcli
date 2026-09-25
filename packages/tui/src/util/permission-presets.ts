@@ -40,6 +40,7 @@ const PERMISSION_TOOL_KEYS = [
   "context_diagnostics",
   "speak",
   "voice",
+  "plugin",
 ] as const
 
 const INTERNAL_DENY_PERMISSION_KEYS = ["question", "plan_enter", "plan_exit"] as const
@@ -81,6 +82,8 @@ const APPROVE_FOR_ME_PERMISSIONS: PermissionMap = {
   // Opens the microphone and ships the audio off for transcription — never
   // silently allowed, even under "approve for me".
   voice: "ask",
+  // Writes code that nikcli loads and runs in-process from then on.
+  plugin: "ask",
   question: "deny",
   plan_enter: "deny",
   plan_exit: "deny",

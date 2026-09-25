@@ -126,6 +126,7 @@ export const apiExamples: Record<string, unknown> = {
     "speak",
     "voice",
     "opentui",
+    "plugin",
     "advisor",
     "delegator",
     "search_tools",

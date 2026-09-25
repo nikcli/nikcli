@@ -2,6 +2,7 @@ import type { Hooks, PluginInput, Plugin as PluginInstance } from "@nikcli-ai/pl
 import { createNikcliClient } from "@nikcli-ai/sdk/httpapi"
 import os from "os"
 import path from "path"
+import { realpathSync } from "fs"
 import { fileURLToPath } from "url"
 import { EventError } from "../session/event-error"
 import { errorMessage } from "@nikcli-ai/util/error-format"
@@ -667,6 +668,38 @@ export namespace Plugin {
     ): Effect.Effect<Output, unknown>
     list(): Effect.Effect<Hooks[], unknown>
     init(): Effect.Effect<void, unknown>
+    /**
+     * Re-read the configured plugin list and reconcile the loaded external
+     * plugins against it: new ones load, removed ones are disposed, ones whose
+     * source changed on disk are disposed and loaded again, and the rest are
+     * left running untouched. Internal plugins never reload.
+     */
+    reload(): Effect.Effect<ReloadResult, unknown>
+    /** The configured external plugins and what each one contributed. */
+    status(): Effect.Effect<Status[], unknown>
+  }
+
+  export type Status = {
+    /** Canonical name, as `Config.getPluginName` derives it. */
+    name: string
+    /** The specifier as configured (`file://…` or `pkg@version`). */
+    spec: string
+    source: "file" | "npm"
+    /** Hook names the plugin registered, `tool` excluded. */
+    hooks: string[]
+    /** Tool ids the plugin contributed. */
+    tools: string[]
+    /** Why the plugin failed to load, when it did. */
+    error?: string
+  }
+
+  export type ReloadResult = {
+    loaded: string[]
+    reloaded: string[]
+    removed: string[]
+    failed: { name: string; error: string }[]
+    /** Whether the set of active hooks changed at all. */
+    changed: boolean
   }
 
   export class Service extends Context.Service<Service, Interface>()("Plugin.Service") {}
@@ -675,21 +708,37 @@ export namespace Plugin {
     return input.enabled || ["local", "dev", "beta"].includes(input.channel ?? Installation.CHANNEL)
   }
 
-  type State = {
+  /** One configured external plugin and the hooks it produced. */
+  type External = {
+    spec: string
+    name: string
+    /** What the source looked like when it was loaded; see {@link fingerprint}. */
+    fingerprint: string
     hooks: Hooks[]
+    error?: string
+  }
+
+  type State = {
+    /**
+     * Internal hooks, then external hooks in config order. Mutated in place on
+     * reload, never replaced: the bus subscription and every `list()` caller
+     * hold this array, so a reload reaches them without re-subscribing.
+     */
+    hooks: Hooks[]
+    internal: Hooks[]
+    external: External[]
     input: PluginInput
+    /** `init()` ran, so plugins loaded later need their `config` hook called. */
+    initialized: boolean
     subscribed: boolean
     unsubscribe?: () => void
     disposed: boolean
+    /** Reloads run one at a time; each chains behind the previous one. */
+    reloading: Promise<unknown>
   }
 
-  async function disposeHooks(state: State) {
-    if (state.disposed) return
-    state.disposed = true
-    state.unsubscribe?.()
-    state.unsubscribe = undefined
-
-    for (const hook of state.hooks) {
+  async function disposeEach(hooks: readonly Hooks[]) {
+    for (const hook of hooks) {
       try {
         await hook.dispose?.()
       } catch (error) {
@@ -698,6 +747,236 @@ export namespace Plugin {
         })
       }
     }
+  }
+
+  async function disposeHooks(state: State) {
+    if (state.disposed) return
+    state.disposed = true
+    state.unsubscribe?.()
+    state.unsubscribe = undefined
+    await disposeEach(state.hooks)
+  }
+
+  /**
+   * The directory a local plugin's code lives in when it is a folder plugin
+   * (`…/plugins/<name>/…`, the same rule `Config.getPluginName` names it by),
+   * else the entry file itself. Reload fingerprints and module-cache eviction
+   * both cover exactly this.
+   */
+  export function sourceRoot(entry: string): string {
+    const segments = entry.split(path.sep)
+    const root = segments.findLastIndex((segment) => segment === "plugin" || segment === "plugins")
+    if (root >= 0 && root <= segments.length - 3) return segments.slice(0, root + 2).join(path.sep)
+    return entry
+  }
+
+  const SOURCE_GLOB = new Bun.Glob("**/*.{ts,tsx,mts,cts,js,jsx,mjs,cjs,json}")
+  const FINGERPRINT_MAX_FILES = 500
+
+  /**
+   * What a plugin's source looks like on disk, as a string that changes when
+   * any of its files is edited, added or removed. npm plugins are immutable
+   * for a given specifier, so the specifier is their fingerprint.
+   */
+  export async function fingerprint(spec: string): Promise<string> {
+    if (!spec.startsWith("file://")) return spec
+    const entry = fileURLToPath(spec)
+    const root = sourceRoot(entry)
+    const files =
+      root === entry
+        ? [entry]
+        : (await Array.fromAsync(SOURCE_GLOB.scan({ cwd: root, absolute: true, followSymlinks: false, dot: false })))
+            .filter((file) => !file.split(path.sep).includes("node_modules"))
+            .sort()
+            .slice(0, FINGERPRINT_MAX_FILES)
+    const parts = await Promise.all(
+      files.map(async (file) => {
+        const stat = await Bun.file(file)
+          .stat()
+          .catch(() => undefined)
+        return stat ? `${file}:${stat.mtimeMs}:${stat.size}` : `${file}:missing`
+      }),
+    )
+    return parts.join("\n")
+  }
+
+  function realpathOr(file: string) {
+    try {
+      return realpathSync(file)
+    } catch {
+      return file
+    }
+  }
+
+  /**
+   * Drop a local plugin's modules from the module registry so the next
+   * `import()` evaluates the source on disk instead of the cached module.
+   * Covers the entry and, for a folder plugin, its helper files; its
+   * `node_modules` stay cached — dependencies do not change under a reload.
+   */
+  export function evictModules(spec: string) {
+    if (!spec.startsWith("file://")) return
+    const entry = fileURLToPath(spec)
+    const root = sourceRoot(entry)
+    // The registry is keyed by real path (`/var` is `/private/var` on macOS),
+    // so match against both spellings of the root.
+    const roots = new Set([root, realpathOr(root)])
+    const single = root === entry
+    for (const key of Object.keys(require.cache)) {
+      const file = key.split("?")[0]!
+      const inside = [...roots].some((dir) => (single ? file === dir : file.startsWith(dir + path.sep)))
+      if (!inside || file.split(path.sep).includes("node_modules")) continue
+      delete require.cache[key]
+    }
+  }
+
+  let generation = 0
+
+  /**
+   * What to hand `import()` for a plugin. A local plugin gets a specifier no
+   * earlier load used: Bun keeps a module that failed to *resolve* outside
+   * `require.cache`, so eviction alone would replay the old failure after the
+   * missing piece appeared. Same shape as the TUI's `freshSpecifier` — a plain
+   * path, because Bun ignores the query on a `file://` URL.
+   */
+  export function importSpecifier(target: string): string {
+    if (!target.startsWith("file://")) return target
+    return `${fileURLToPath(target).replaceAll("\\", "/")}?generation=${++generation}`
+  }
+
+  /**
+   * Load one configured plugin. A plugin that fails — install, import or its
+   * own initialisation — is reported and skipped; it never takes the other
+   * plugins down with it.
+   */
+  async function loadExternal(spec: string, input: PluginInput): Promise<External> {
+    const name = Config.getPluginName(spec)
+    const print = await fingerprint(spec)
+    let plugin = spec
+    try {
+      log.info("loading plugin", { path: plugin })
+      if (!plugin.startsWith("file://")) {
+        const lastAtIndex = plugin.lastIndexOf("@")
+        const pkg = lastAtIndex > 0 ? plugin.substring(0, lastAtIndex) : plugin
+        const version = lastAtIndex > 0 ? plugin.substring(lastAtIndex + 1) : "latest"
+        plugin = await BunProc.install(pkg, version)
+      }
+      evictModules(spec)
+      const mod = await import(importSpecifier(plugin))
+      const hooks: Hooks[] = []
+      const v1 = readV1Plugin(mod, spec, "server", "detect")
+      if (v1) {
+        const source = pluginSource(spec)
+        const id = readPluginId(v1.id, spec)
+        await resolvePluginId(source, spec, plugin, id)
+        hooks.push(await (v1 as PluginModule).server!(input, Config.pluginOptions(spec)))
+      } else {
+        // Prevent duplicate initialization when plugins export the same function
+        // as both a named export and default export (e.g., `export const X` and `export default X`).
+        // Object.entries(mod) would return both entries pointing to the same function reference.
+        const seen = new Set<PluginInstance>()
+        for (const [_name, fn] of Object.entries<PluginInstance>(mod)) {
+          if (typeof fn !== "function" || seen.has(fn)) continue
+          seen.add(fn)
+          const init = await fn(input)
+          hooks.push(init)
+        }
+      }
+      return { spec, name, fingerprint: print, hooks }
+    } catch (error) {
+      const message = errorMessage(error)
+      log.error("failed to load plugin", { path: spec, error: message })
+      Bus.publish(Session.Event.Error, {
+        error: EventError.unknown(`Failed to load plugin ${name}: ${message}`),
+      })
+      return { spec, name, fingerprint: print, hooks: [], error: message }
+    }
+  }
+
+  function pluginSpecs(config: Config.Info) {
+    // ignore old codex plugin since it is supported first party now
+    const specs = [...(config.plugin ?? [])].filter((spec) => !isDeprecatedPlugin(spec))
+    if (!Flag.NIKCLI_DISABLE_DEFAULT_PLUGINS) specs.push(...BUILTIN)
+    return specs
+  }
+
+  function flatten(state: State) {
+    state.hooks.splice(0, state.hooks.length, ...state.internal, ...state.external.flatMap((entry) => entry.hooks))
+  }
+
+  async function configHooks(hooks: readonly Hooks[], config: Config.Info) {
+    for (let i = 0; i < hooks.length; i++) {
+      const hook = hooks[i]!
+      // The internal Config.Info schema keeps `command.*.template` optional,
+      // while the plugin SDK's Config type expects a required template field.
+      // The runtime shape is valid for the SDK contract; widen with a cast.
+      try {
+        await hook.config?.(config as unknown as Parameters<NonNullable<Hooks["config"]>>[0])
+      } catch (error) {
+        log.warn("plugin config failed", {
+          pluginIndex: i,
+          error: errorMessage(error),
+        })
+      }
+    }
+  }
+
+  async function reloadImpl(state: State, ctx: InstanceContext): Promise<ReloadResult> {
+    const result: ReloadResult = { loaded: [], reloaded: [], removed: [], failed: [], changed: false }
+    if (state.disposed) return result
+    const config = await configGetFor(ctx)
+    const previous = new Map(state.external.map((entry) => [entry.spec, entry]))
+    const next: External[] = []
+    const fresh: Hooks[] = []
+
+    for (const spec of pluginSpecs(config)) {
+      const current = previous.get(spec)
+      previous.delete(spec)
+      // A local plugin that failed is retried even when its own files are
+      // unchanged: what broke it often lives outside them (a dependency that
+      // was missing, a helper elsewhere), and retrying is a local import. A
+      // failed npm plugin waits for its specifier to change instead of
+      // reinstalling from the network on every reload.
+      const retry = current?.error !== undefined && pluginSource(spec) === "file"
+      if (current && !retry && current.fingerprint === (await fingerprint(spec))) {
+        next.push(current)
+        continue
+      }
+      // Dispose before loading the new version, so a plugin holding a port,
+      // a timer or a file handle releases it before its successor wants it.
+      if (current) await disposeEach(current.hooks)
+      const loaded = await loadExternal(spec, state.input)
+      next.push(loaded)
+      fresh.push(...loaded.hooks)
+      if (loaded.error) result.failed.push({ name: loaded.name, error: loaded.error })
+      else (current ? result.reloaded : result.loaded).push(loaded.name)
+    }
+    for (const gone of previous.values()) {
+      await disposeEach(gone.hooks)
+      result.removed.push(gone.name)
+    }
+
+    result.changed = result.loaded.length + result.reloaded.length + result.removed.length > 0 || fresh.length > 0
+    if (state.disposed) {
+      await disposeEach(fresh)
+      return result
+    }
+    state.external = next
+    flatten(state)
+    if (state.initialized) await configHooks(fresh, config)
+    if (result.changed) log.info("plugins reloaded", result)
+    return result
+  }
+
+  function statusOf(state: State): Status[] {
+    return state.external.map((entry) => ({
+      name: entry.name,
+      spec: entry.spec,
+      source: pluginSource(entry.spec),
+      hooks: [...new Set(entry.hooks.flatMap((hook) => Object.keys(hook).filter((key) => key !== "tool")))],
+      tools: entry.hooks.flatMap((hook) => Object.keys(hook.tool ?? {})),
+      ...(entry.error ? { error: entry.error } : {}),
+    }))
   }
 
   async function buildState(ctx: InstanceContext): Promise<State> {
@@ -745,65 +1024,20 @@ export namespace Plugin {
       hooks.push(init)
     }
 
-    const plugins = [...(config.plugin ?? [])]
-    if (!Flag.NIKCLI_DISABLE_DEFAULT_PLUGINS) {
-      plugins.push(...BUILTIN)
-    }
-
-    for (let plugin of plugins) {
-      // ignore old codex plugin since it is supported first party now
-      if (isDeprecatedPlugin(plugin)) continue
-      const spec = plugin
-      log.info("loading plugin", { path: plugin })
-      if (!plugin.startsWith("file://")) {
-        const lastAtIndex = plugin.lastIndexOf("@")
-        const pkg = lastAtIndex > 0 ? plugin.substring(0, lastAtIndex) : plugin
-        const version = lastAtIndex > 0 ? plugin.substring(lastAtIndex + 1) : "latest"
-        const builtin = BUILTIN.some((x) => x.startsWith(pkg + "@"))
-        plugin = await BunProc.install(pkg, version).catch((err) => {
-          if (!builtin) throw err
-
-          const message = err instanceof Error ? err.message : String(err)
-          log.error("failed to install builtin plugin", {
-            pkg,
-            version,
-            error: message,
-          })
-          Bus.publish(Session.Event.Error, {
-            error: EventError.unknown(`Failed to install built-in plugin ${pkg}@${version}: ${message}`),
-          })
-
-          return ""
-        })
-        if (!plugin) continue
-      }
-      const mod = await import(plugin)
-      const v1 = readV1Plugin(mod, spec, "server", "detect")
-      if (v1) {
-        const source = pluginSource(spec)
-        const id = readPluginId(v1.id, spec)
-        await resolvePluginId(source, spec, plugin, id)
-        hooks.push(await (v1 as PluginModule).server!(input, Config.pluginOptions(spec)))
-      } else {
-        // Prevent duplicate initialization when plugins export the same function
-        // as both a named export and default export (e.g., `export const X` and `export default X`).
-        // Object.entries(mod) would return both entries pointing to the same function reference.
-        const seen = new Set<PluginInstance>()
-        for (const [_name, fn] of Object.entries<PluginInstance>(mod)) {
-          if (seen.has(fn)) continue
-          seen.add(fn)
-          const init = await fn(input)
-          hooks.push(init)
-        }
-      }
-    }
+    const external: External[] = []
+    for (const spec of pluginSpecs(config)) external.push(await loadExternal(spec, input))
 
     const state: State = {
-      hooks,
+      hooks: [],
+      internal: hooks,
+      external,
       input,
+      initialized: false,
       subscribed: false,
       disposed: false,
+      reloading: Promise.resolve(),
     }
+    flatten(state)
     Instance.registerDisposer(() => disposeHooks(state))
     return state
   }
@@ -883,22 +1117,8 @@ export namespace Plugin {
   }
 
   async function initImpl(state: State) {
-    const hooks = state.hooks
-    const config = await configGet()
-    for (let i = 0; i < hooks.length; i++) {
-      const hook = hooks[i]!
-      // The internal Config.Info schema keeps `command.*.template` optional,
-      // while the plugin SDK's Config type expects a required template field.
-      // The runtime shape is valid for the SDK contract; widen with a cast.
-      try {
-        await hook.config?.(config as unknown as Parameters<NonNullable<Hooks["config"]>>[0])
-      } catch (error) {
-        log.warn("plugin config failed", {
-          pluginIndex: i,
-          error: errorMessage(error),
-        })
-      }
-    }
+    state.initialized = true
+    await configHooks(state.hooks, await configGet())
     if (state.disposed) return
     if (state.subscribed) return
     state.subscribed = true
@@ -923,6 +1143,17 @@ export namespace Plugin {
           getState().pipe(Effect.flatMap((state) => Effect.tryPromise(() => triggerImpl(state, name, input, output)))),
         list: () => getState().pipe(Effect.map((state) => state.hooks)),
         init: () => getState().pipe(Effect.flatMap((state) => Effect.tryPromise(() => initImpl(state)))),
+        reload: () =>
+          Effect.gen(function* () {
+            const state = yield* getState()
+            const ctx = yield* InstanceState.context
+            return yield* Effect.tryPromise(() => {
+              const next = state.reloading.catch(() => undefined).then(() => reloadImpl(state, ctx))
+              state.reloading = next
+              return next
+            })
+          }),
+        status: () => getState().pipe(Effect.map(statusOf)),
       })
     }),
   )
