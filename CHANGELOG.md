@@ -3,6 +3,20 @@
 <!-- UNRELEASED:START -->
 <!-- UNRELEASED:END -->
 
+## v1.400.0 (September 2026)
+
+## SDK
+
+- Untrack the 1.399.0 tarballs the release committed before *.tgz was ignored (@nikomatt69)
+- Publish the tarball this release packed, not a stale one (@nikomatt69)
+
+**Thank you to 1 community contributor:**
+
+- @nikomatt69:
+  - fix(plugin): publish the tarball this release packed, not a stale one
+  - docs: workspace analysis 2026-09-25
+  - chore(packages): untrack the 1.399.0 tarballs the release committed before *.tgz was ignored
+
 ## v1.399.0 (September 2026)
 
 ## Core

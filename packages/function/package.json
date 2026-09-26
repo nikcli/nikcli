@@ -14,7 +14,7 @@
     "@cloudflare/workers-types": "catalog:",
     "wrangler": "^4.103.0"
   },
-  "version": "1.399.0",
+  "version": "1.400.0",
   "files": [
     "src",
     "sst-env.d.ts"

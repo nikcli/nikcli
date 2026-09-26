@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@nikcli-ai/identity",
-  "version": "1.399.0",
+  "version": "1.400.0",
   "private": true,
   "type": "module",
   "scripts": {
