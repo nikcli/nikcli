@@ -1,6 +1,6 @@
 {
   "name": "@nikcli-ai/mobile",
-  "version": "1.398.0",
+  "version": "1.399.0",
   "private": true,
   "main": "expo-router/entry",
   "scripts": {

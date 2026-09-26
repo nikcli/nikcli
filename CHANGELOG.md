@@ -3,6 +3,17 @@
 <!-- UNRELEASED:START -->
 <!-- UNRELEASED:END -->
 
+## v1.399.0 (September 2026)
+
+## Core
+
+- Pin catalog overrides so EAS installs resolve (#269) (@nikomatt69)
+
+**Thank you to 1 community contributor:**
+
+- @nikomatt69:
+  - fix(mobile): pin catalog overrides so EAS installs resolve (#269)
+
 ## v1.398.0 (September 2026)
 
 ## Core

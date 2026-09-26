@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@nikcli-ai/remote",
-  "version": "1.398.0",
+  "version": "1.399.0",
   "description": "NikCLI remote terminal server - Mobile access via WebSocket with QR code",
   "private": true,
   "type": "module",
