@@ -635,7 +635,7 @@ function App(props: { checkUpgrade?: () => Promise<UpdateAvailable | undefined> 
         })
       }
     })().catch((error) => {
-      dbgApp("init chain error", String(error))
+      dbgApp("init chain error", () => String(error))
       setOnboardingActive(false)
       setPluginsReady(true)
       toast.error(error)

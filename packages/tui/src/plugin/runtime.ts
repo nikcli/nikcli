@@ -1496,7 +1496,7 @@ export namespace TuiPluginRuntime {
           })
         }
 
-        dbg("runtime: internal plugins", INTERNAL_TUI_PLUGINS.map((x) => x.id).join(","))
+        dbg("runtime: internal plugins", () => INTERNAL_TUI_PLUGINS.map((x) => x.id).join(","))
         for (const item of INTERNAL_TUI_PLUGINS) {
           log.info("loading internal tui plugin", { id: item.id })
           const entry = loadInternalPlugin(item)
@@ -1547,7 +1547,7 @@ export namespace TuiPluginRuntime {
         }
       }
     } catch (error) {
-      dbg("load() failed", String(error))
+      dbg("load() failed", () => String(error))
       fail("failed to load tui plugins", { directory: cwd, error })
     }
 

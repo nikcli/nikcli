@@ -33,7 +33,11 @@ export async function listImages(directory: string) {
  * are offered: a "Wallpapers" row that opens on "Cannot read this folder" is
  * a dead end, not a shortcut.
  */
-export function suggestedFolders(cwd = process.cwd(), home = os.homedir(), exists = existsSync) {
+export function suggestedFolders(
+  cwd = process.cwd(),
+  home = os.homedir(),
+  exists: (directory: string) => boolean = existsSync,
+) {
   const folders = [
     { label: "Project", directory: cwd },
     { label: "Pictures", directory: path.join(home, "Pictures") },

@@ -168,6 +168,15 @@ export namespace BackgroundRun {
     return Instance.project.id
   }
 
+  /** One line, at most 50 characters: a multi-line prompt collapses to its words. */
+  function titleOf(text: string) {
+    return text
+      .replace(/\s*\n\s*/g, " ")
+      .trim()
+      .slice(0, 50)
+      .trim()
+  }
+
   function missing(id: string): never {
     throw new Error(`Background run "${id}" not found.`)
   }
@@ -403,7 +412,7 @@ ${result}
       createdAt: Date.now(),
       updatedAt: Date.now(),
       artifactPath: artifactPath(params.parentSessionID, id),
-      title: (params.title ?? params.prompt).replace(/\s*\n\s*/g, " ").trim().slice(0, 50).trim() || id,
+      title: titleOf(params.title ?? params.prompt) || id,
       workspaceID: params.session?.workspaceID,
       source: params.source,
       metadata: params.metadata,
