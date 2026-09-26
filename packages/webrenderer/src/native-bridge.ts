@@ -1,4 +1,4 @@
-import { dlopen, FFIType, ptr as rawPtr, toArrayBuffer, CString, suffix, JSCallback } from "bun:ffi"
+import { dlopen, FFIType, ptr as rawPtr, toArrayBuffer, CString, suffix, JSCallback, type Pointer } from "bun:ffi"
 import { resolve, dirname } from "path"
 import { fileURLToPath } from "url"
 
@@ -86,10 +86,10 @@ export interface RgbaBuffer {
 
 // Singleton App Instance
 
-let appPtr: number | null = null
+let appPtr: Pointer | bigint | null = null
 let pumpTimer: ReturnType<typeof setInterval> | null = null
 
-function getApp(): number {
+function getApp(): Pointer | bigint {
   if (!appPtr) {
     appPtr = lib.symbols.wr_init()
     if (!appPtr || appPtr === 0) {
