@@ -68,16 +68,13 @@ export function BackgroundImage() {
   })
 
   const pixels = createMemo(() => {
-    dbg(
-      "pixels memo",
-      JSON.stringify({
-        visible: untrack(visible),
-        settings: untrack(settings),
-        dims: dimensions(),
-        loading: image.loading,
-        error: String(image.error ?? ""),
-      }),
-    )
+    dbg("pixels memo", () => ({
+      visible: untrack(visible),
+      settings: untrack(settings),
+      dims: dimensions(),
+      loading: image.loading,
+      error: String(image.error ?? ""),
+    }))
     // Reading a failed resource re-throws, and nothing above us catches it: a
     // missing or undecodable image would kill the whole TUI. The toast above
     // already reported it, so paint no background instead.

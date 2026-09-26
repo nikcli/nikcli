@@ -18,6 +18,7 @@
 import type { TuiPlugin, TuiPluginModule } from "@nikcli-ai/plugin/tui"
 import { sourceLabel } from "./settings"
 import { readSettings, rotation, writeSettings } from "./store"
+import { isLocalSource } from "./source"
 import { DialogBackground, DialogBackgroundPicker } from "./dialog"
 import { dbg } from "./__debug"
 
@@ -67,8 +68,10 @@ const tui: TuiPlugin = async (api) => {
           title: "Shuffle background image",
           namespace: "Appearance",
           description: "Pick the next image when the source is a folder",
-          enabled: settings.source !== "",
-          hidden: settings.source === "",
+          // Rotation only means something for a path on this machine; a URL
+          // or an attached image has nothing to rotate through.
+          enabled: isLocalSource(settings.source),
+          hidden: !isLocalSource(settings.source),
           run() {
             rotation.next()
           },

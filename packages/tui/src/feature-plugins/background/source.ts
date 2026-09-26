@@ -6,14 +6,19 @@
  * is what makes `/background` → Shuffle useful.
  */
 import fs from "fs/promises"
+import { existsSync } from "fs"
 import os from "os"
 import path from "path"
+import { fileURLToPath } from "url"
 import { pickDecoder, type PixelImage } from "@nikcli-ai/tui-image"
 import { IMAGE_EXTENSIONS, isImagePath } from "./settings"
 import { prepare } from "./pixels"
 import { createPromiseCache } from "@tui/util/lru-cache"
 
 const MAX_BYTES = 25 * 1024 * 1024
+
+/** How long a remote image may take to arrive before the source is reported as failed. */
+const FETCH_TIMEOUT_MS = 15_000
 
 export async function listImages(directory: string) {
   const found = await fs.readdir(directory, { withFileTypes: true })
@@ -23,8 +28,12 @@ export async function listImages(directory: string) {
     .sort()
 }
 
-/** Folders offered by the picker, most specific first. */
-export function suggestedFolders(cwd = process.cwd(), home = os.homedir()) {
+/**
+ * Folders offered by the picker, most specific first. Only folders that exist
+ * are offered: a "Wallpapers" row that opens on "Cannot read this folder" is
+ * a dead end, not a shortcut.
+ */
+export function suggestedFolders(cwd = process.cwd(), home = os.homedir(), exists = existsSync) {
   const folders = [
     { label: "Project", directory: cwd },
     { label: "Pictures", directory: path.join(home, "Pictures") },
@@ -37,8 +46,24 @@ export function suggestedFolders(cwd = process.cwd(), home = os.homedir()) {
     const key = path.resolve(folder.directory)
     if (seen.has(key)) return false
     seen.add(key)
-    return true
+    return exists(folder.directory)
   })
+}
+
+/**
+ * Where the picker opens for a configured local source: the folder itself when
+ * the source is one (a rotation), otherwise the folder holding the image.
+ */
+export function pickerStart(source: string, cwd = process.cwd()) {
+  const local = localPath(source)
+  if (!local || !isLocalSource(local)) return cwd
+  const resolved = path.resolve(local)
+  return isImagePath(resolved) ? path.dirname(resolved) : resolved
+}
+
+/** A path on this machine, as opposed to a `data:` or `scheme://` URL. */
+export function isLocalSource(source: string) {
+  return source !== "" && !source.startsWith("data:") && !/^[a-z][a-z0-9+.-]*:\/\//i.test(source)
 }
 
 export type DirectoryEntry = { name: string; path: string; kind: "directory" | "image" }
@@ -89,7 +114,15 @@ export async function resolveSource(source: string, index = 0): Promise<string> 
   return images[((index % images.length) + images.length) % images.length]!
 }
 
-async function readBytes(location: string): Promise<Uint8Array> {
+/** The local path a `file://` URL names, on either platform. Anything else is returned as is. */
+export function localPath(location: string) {
+  if (!location.startsWith("file://")) return location
+  // `new URL(...).pathname` keeps the leading slash of `/C:/...` on Windows and
+  // drops a `file://host/share` host; `fileURLToPath` handles both.
+  return fileURLToPath(location)
+}
+
+async function readBytes(location: string, signal?: AbortSignal): Promise<Uint8Array> {
   if (location.startsWith("data:")) {
     const match = location.match(/^data:([^;,]+)?((?:;[^,]*)?),(.*)$/s)
     if (!match) throw new Error("invalid data URL")
@@ -100,14 +133,23 @@ async function readBytes(location: string): Promise<Uint8Array> {
   }
 
   if (location.startsWith("http://") || location.startsWith("https://")) {
-    const response = await fetch(location, { headers: { Accept: "image/*" } })
+    // Bounded on both axes. Without a deadline a host that accepts the
+    // connection and never answers leaves the resource loading forever — no
+    // toast, no fallback, and the next shuffle still waits on it. The size
+    // check on the declared length refuses a large body before it is pulled;
+    // the one on the buffer covers servers that do not declare it.
+    const signals = [AbortSignal.timeout(FETCH_TIMEOUT_MS)]
+    if (signal) signals.push(signal)
+    const response = await fetch(location, { headers: { Accept: "image/*" }, signal: AbortSignal.any(signals) })
     if (!response.ok) throw new Error(`HTTP ${response.status}`)
+    const declared = Number(response.headers.get("content-length"))
+    if (Number.isFinite(declared) && declared > MAX_BYTES) throw new Error("image is too large")
     const buffer = await response.arrayBuffer()
     if (buffer.byteLength > MAX_BYTES) throw new Error("image is too large")
     return new Uint8Array(buffer)
   }
 
-  const filename = location.startsWith("file://") ? decodeURIComponent(new URL(location).pathname) : location
+  const filename = localPath(location)
   const file = Bun.file(filename)
   if (!(await file.exists())) throw new Error(`not found: ${filename}`)
   if (file.size > MAX_BYTES) throw new Error("image is too large")
@@ -123,8 +165,8 @@ const cache = createPromiseCache<PixelImage>({ maxEntries: 4 })
  * switching routes or resizing the terminal must never re-decode a photo.
  */
 export function loadImage(location: string): Promise<PixelImage> {
-  return cache.load(location, async () => {
-    const bytes = await readBytes(location)
+  return cache.load(location, async (signal) => {
+    const bytes = await readBytes(location, signal)
     // WebP wallpapers are common and Jimp cannot read them; the fallback to
     // photon only works once its wasm asset has been located.
     const decoder = await pickDecoder()

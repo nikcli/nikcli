@@ -64,7 +64,7 @@ export class BackgroundRenderable extends FrameBufferRenderable {
   }
 
   set pixels(value: Uint8Array | undefined) {
-    dbg("set pixels", value?.byteLength ?? 0)
+    dbg("set pixels", () => value?.byteLength ?? 0)
     if (this._pixels === value) return
     this._pixels = value
     this._painted = false
@@ -108,14 +108,14 @@ export class BackgroundRenderable extends FrameBufferRenderable {
   }
 
   set paintEnabled(value: boolean) {
-    dbg("set paint enabled", value)
+    dbg("set paint enabled", () => value)
     if (this._paintEnabled === value) return
     this._paintEnabled = value
     this.requestRender()
   }
 
   protected override onResize(width: number, height: number) {
-    dbg("onResize", width, height)
+    dbg("onResize", () => [width, height])
     super.onResize(width, height)
     this._painted = false
   }
@@ -130,7 +130,7 @@ export class BackgroundRenderable extends FrameBufferRenderable {
     // mismatch here means the terminal resized and the new pixels have not
     // been composed yet — keep the previous frame instead.
     if (pixels.byteLength !== bufferSize(buffer.width, buffer.height)) {
-      dbg("paint size mismatch", pixels.byteLength, bufferSize(buffer.width, buffer.height))
+      dbg("paint size mismatch", () => [pixels.byteLength, bufferSize(buffer.width, buffer.height)])
       return false
     }
     buffer.clear(this._base)
@@ -152,40 +152,18 @@ export class BackgroundRenderable extends FrameBufferRenderable {
     // rebuild layout/render ordering when a node re-enters the visible tree;
     // keeping this node present and only skipping its blit preserves z-order.
     if (!this._paintEnabled) return
-    dbg(
-      "renderSelf",
-      JSON.stringify({
-        painted: this._painted,
-        x: this.x,
-        y: this.y,
-        w: this.width,
-        h: this.height,
-        fb: [this.frameBuffer.width, this.frameBuffer.height],
-        px: this._pixels?.byteLength ?? 0,
-        visible: this.visible,
-        target: [buffer.width, buffer.height],
-      }),
-    )
     if (!this._painted) {
       this._painted = this.paint()
+      dbg("paint", () => ({
+        painted: this._painted,
+        size: [this.width, this.height],
+        fb: [this.frameBuffer.width, this.frameBuffer.height],
+        px: this._pixels?.byteLength ?? 0,
+        target: [buffer.width, buffer.height],
+      }))
       if (!this._painted) return
     }
     super.renderSelf(buffer)
-    const probe = (b: OptimizedBuffer, x: number, y: number) => {
-      const i = y * b.width + x
-      return {
-        char: String.fromCodePoint(b.buffers.char[i] ?? 32),
-        bg: [b.buffers.bg[i * 4], b.buffers.bg[i * 4 + 1], b.buffers.bg[i * 4 + 2], b.buffers.bg[i * 4 + 3]].map((v) =>
-          Math.round((v ?? 0) * 255),
-        ),
-      }
-    }
-    dbg(
-      "after blit fb(5,5)",
-      JSON.stringify(probe(this.frameBuffer, 5, 5)),
-      "target(5,5)",
-      JSON.stringify(probe(buffer, 5, 5)),
-    )
   }
 }
 

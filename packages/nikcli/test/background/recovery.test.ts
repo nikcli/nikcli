@@ -266,6 +266,63 @@ describe("background run recovery (EOT-09)", () => {
     })
   })
 
+  it("reopen backs off when another process already took the run", async () => {
+    // Two nikcli processes recovering the same project both see `orphaned` and
+    // race to reopen. The loser must not start a second driver for the run.
+    await project(`race${counter}`, async () => {
+      const projectId = Instance.project.id
+      await put(projectId, "bg_race", { status: "running", ownerID: "another-process", heartbeatAt: Date.now() })
+
+      expect(await BackgroundRun.reopen("bg_race")).toBeUndefined()
+
+      const row = await runPromise(BackgroundRunRepo.get(projectId, "bg_race"))
+      expect(row?.ownerID).toBe("another-process")
+      expect(row?.resumeCount).toBeUndefined()
+    })
+  })
+
+  it("finalize settles the row even when the artifact cannot be written", async () => {
+    // The row is the outcome; the markdown file is a rendering of it. A data
+    // directory that refuses the write must not make `finalize` throw after the
+    // status already changed, because the caller then never wakes the parent.
+    await project(`artifact${counter}`, async () => {
+      const projectId = Instance.project.id
+      const blocker = path.join(testHome, `blocker-${counter}`)
+      await fs.writeFile(blocker, "a regular file where a directory is needed")
+      await runPromise(
+        BackgroundRunRepo.upsert(projectId, {
+          ...record("bg_artifact"),
+          // `mkdir -p` of a path under a regular file fails with ENOTDIR.
+          artifactPath: path.join(blocker, "nested", "bg_artifact.md"),
+          parentSessionID: "ses_parent",
+        } as never),
+      )
+
+      const finalized = await BackgroundRun.finalize("bg_artifact", "complete", "done")
+
+      expect(finalized?.status).toBe("complete")
+      expect(await statusOf(projectId, "bg_artifact")).toBe("complete")
+      // And the artifact is still readable, rebuilt from the row.
+      expect(await BackgroundRun.readArtifact("bg_artifact")).toContain("done")
+    })
+  })
+
+  it("create collapses newlines in the title and never leaves it empty", async () => {
+    await project(`title${counter}`, async () => {
+      const multiline = await BackgroundRun.create({
+        parentSessionID: "ses_parent",
+        agent: "explore",
+        prompt: "Find every caller\n\n  of the lease predicate and list them",
+      })
+      const blank = await BackgroundRun.create({ parentSessionID: "ses_parent", agent: "explore", prompt: "   \n " })
+
+      expect(multiline.title).toBe("Find every caller of the lease predicate and list")
+      expect(multiline.title.length).toBeLessThanOrEqual(50)
+      expect(blank.title).toBe(blank.id)
+      expect(multiline.id).not.toBe(blank.id)
+    })
+  })
+
   it("is idempotent: sweeping twice does not change a settled outcome", async () => {
     await project(`twice${counter}`, async () => {
       const projectId = Instance.project.id

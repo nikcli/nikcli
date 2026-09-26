@@ -25,6 +25,13 @@ export namespace BackgroundRunRepo {
     }
   }
 
+  function readRows(rows: { data: string }[]): BackgroundRun.Record[] {
+    return rows.flatMap((row) => {
+      const record = readRecord(row.data)
+      return record ? [record] : []
+    })
+  }
+
   function readRecord(data: string): BackgroundRun.Record | undefined {
     try {
       const parsed = JSON.parse(data) as BackgroundRun.Record
@@ -74,21 +81,35 @@ export namespace BackgroundRunRepo {
     )
   }
 
-  /** Mutate-in-place, matching `Storage.update`. Returns undefined when missing. */
+  /**
+   * Mutate-in-place, matching `Storage.update`. Returns undefined when missing.
+   *
+   * Read and write happen in one immediate transaction. Every status change a
+   * run goes through (lease heartbeat, progress, finalize, reopen) is a
+   * read-modify-write of the same row, and the writers are not one process:
+   * the completion path and the stall watchdog race inside nikcli, and a
+   * second nikcli recovering the same project races from outside. Without the
+   * write lock taken up front, two of them read the same `running` row and the
+   * later upsert overwrites the earlier outcome. When the caller is already in
+   * a transaction, it is joined rather than nested.
+   */
   export function update(
     projectId: string,
     id: string,
     fn: (draft: BackgroundRun.Record) => void,
     executor?: Executor,
   ): Effect.Effect<BackgroundRun.Record | undefined, Database.QueryError> {
-    return Effect.gen(function* () {
-      const current = yield* get(projectId, id, executor)
-      if (!current) return undefined
-      const draft = structuredClone(current)
-      fn(draft)
-      yield* upsert(projectId, draft, executor)
-      return draft
-    })
+    const apply = (db: Executor) =>
+      Effect.gen(function* () {
+        const current = yield* get(projectId, id, db)
+        if (!current) return undefined
+        const draft = structuredClone(current)
+        fn(draft)
+        yield* upsert(projectId, draft, db)
+        return draft
+      })
+    if (executor) return apply(executor)
+    return Database.transaction((tx) => apply(tx))
   }
 
   /** Oldest first, matching the previous JSON-list sort. */
@@ -102,10 +123,7 @@ export namespace BackgroundRunRepo {
           .where(eq(backgroundRun.projectId, projectId))
           .orderBy(asc(backgroundRun.createdAt))
           .all()
-        return rows.flatMap((row) => {
-          const record = readRecord(row.data)
-          return record ? [record] : []
-        })
+        return readRows(rows)
       },
       executor,
     )
@@ -121,10 +139,7 @@ export namespace BackgroundRunRepo {
           .where(and(eq(backgroundRun.projectId, projectId), eq(backgroundRun.status, "running")))
           .orderBy(asc(backgroundRun.createdAt))
           .all()
-        return rows.flatMap((row) => {
-          const record = readRecord(row.data)
-          return record ? [record] : []
-        })
+        return readRows(rows)
       },
       executor,
     )
@@ -140,10 +155,7 @@ export namespace BackgroundRunRepo {
           .where(and(eq(backgroundRun.projectId, projectId), eq(backgroundRun.parentSessionId, parentSessionId)))
           .orderBy(asc(backgroundRun.createdAt))
           .all()
-        return rows.flatMap((row) => {
-          const record = readRecord(row.data)
-          return record ? [record] : []
-        })
+        return readRows(rows)
       },
       executor,
     )

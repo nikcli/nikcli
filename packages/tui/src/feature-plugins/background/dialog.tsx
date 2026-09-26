@@ -15,13 +15,9 @@ import { DialogPrompt } from "@tui/ui/dialog-prompt"
 import { DialogSelect, type DialogSelectOption } from "@tui/ui/dialog-select"
 import { cleanSource, detailLabel, opacityLabel, sourceLabel, stepOpacity } from "./settings"
 import { readSettings, rotation, writeSettings } from "./store"
-import { listDirectory, shortenPath, suggestedFolders } from "./source"
+import { isLocalSource, listDirectory, pickerStart, shortenPath, suggestedFolders } from "./source"
 
 type Row = "browse" | "path" | "shuffle" | "opacity" | "fit" | "grayscale" | "detail" | "scope" | "enabled" | "clear"
-
-function isLocal(source: string) {
-  return source !== "" && !source.startsWith("data:") && !/^[a-z][a-z0-9+.-]*:\/\//i.test(source)
-}
 
 type PickerRow =
   | { kind: "up"; path: string }
@@ -41,12 +37,7 @@ export function DialogBackgroundPicker() {
   const kv = useKV()
   const { theme } = useTheme()
 
-  const start = () => {
-    const source = readSettings(kv).source
-    if (source && isLocal(source)) return path.dirname(path.resolve(source))
-    return process.cwd()
-  }
-  const [directory, setDirectory] = createSignal(start())
+  const [directory, setDirectory] = createSignal(pickerStart(readSettings(kv).source))
   const [entries] = createResource(directory, listDirectory)
 
   const save = (file: string, ctx: DialogContext) => {
@@ -211,7 +202,7 @@ export function DialogBackground() {
       },
     ]
 
-    if (isLocal(current.source)) {
+    if (isLocalSource(current.source)) {
       rows.push({
         value: "shuffle",
         title: "Shuffle",

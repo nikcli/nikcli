@@ -146,6 +146,23 @@ export namespace BackgroundRun {
     })
   }
 
+  /**
+   * Generated names are only unique by chance, and the repository upserts: a
+   * collision would silently overwrite another run's record and artifact.
+   * Draw again while the name is taken; a handful of tries is plenty against a
+   * dictionary of ~25 million names.
+   */
+  const ID_ATTEMPTS = 8
+
+  function allocateID(): string {
+    let id = generateID()
+    for (let attempt = 1; attempt < ID_ATTEMPTS; attempt++) {
+      if (!Effect.runSync(BackgroundRunRepo.get(projectID(), id))) return id
+      id = generateID()
+    }
+    return id
+  }
+
   /** R2 boundary: module funnel — one repo key for every export; threading would leave this file. */
   function projectID() {
     return Instance.project.id
@@ -270,8 +287,9 @@ export namespace BackgroundRun {
       }
     },
   ) {
-    const summaryLines = result.summary.split("\n").slice(0, 100).join("\n")
-    const truncated = result.summary.split("\n").length > 100
+    const allLines = result.summary.split("\n")
+    const summaryLines = allLines.slice(0, 100).join("\n")
+    const truncated = allLines.length > 100
     const lines = [
       `Background task "${result.description}" finished.`,
       `Status: ${result.status}`,
@@ -332,11 +350,26 @@ ${result}
 `
   }
 
+  /**
+   * Best effort. The record in the database is the outcome; the markdown file
+   * is a rendering of it that {@link readArtifact} can rebuild on demand. A
+   * full disk or a read-only data directory must not turn a finalized run back
+   * into a failure for its caller — that would drop the parent wake-up while
+   * the row already says the job is over.
+   */
   async function persistArtifact(record: Record, result: string, error?: string) {
-    await ensureArtifactDirectory(record.parentSessionID)
-    const content = renderArtifact(record, result, error)
-
-    await fs.writeFile(record.artifactPath, content, "utf8")
+    try {
+      await ensureArtifactDirectory(record.parentSessionID)
+      await fs.writeFile(record.artifactPath, renderArtifact(record, result, error), "utf8")
+      return true
+    } catch (cause) {
+      log.warn("failed to write background run artifact", {
+        id: record.id,
+        path: record.artifactPath,
+        error: cause instanceof Error ? cause.message : String(cause),
+      })
+      return false
+    }
   }
 
   export async function create(params: {
@@ -356,7 +389,7 @@ ${result}
     parentDelegationID?: string
     role?: Role
   }): Promise<Record> {
-    const id = generateID()
+    const id = allocateID()
     const rootDelegationID = params.rootDelegationID ?? id
     const jobID = params.jobID ?? rootDelegationID
     const record: Record = {
@@ -370,7 +403,7 @@ ${result}
       createdAt: Date.now(),
       updatedAt: Date.now(),
       artifactPath: artifactPath(params.parentSessionID, id),
-      title: (params.title ?? params.prompt).slice(0, 50).replace(/\n/g, " "),
+      title: (params.title ?? params.prompt).replace(/\s*\n\s*/g, " ").trim().slice(0, 50).trim() || id,
       workspaceID: params.session?.workspaceID,
       source: params.source,
       metadata: params.metadata,
@@ -509,7 +542,8 @@ ${result}
   }
 
   export async function countRunningForParent(parentSessionID: string) {
-    return filtered((r) => r.parentSessionID === parentSessionID && r.status === "running").then((r) => r.length)
+    const records = await filtered((r) => r.parentSessionID === parentSessionID && r.status === "running")
+    return records.length
   }
 
   export async function summarizeSession(sessionID: string, result?: MessageV2.WithParts) {
@@ -601,6 +635,11 @@ ${result}
     if (!isResumable(record.status)) return undefined
     if ((record.resumeCount ?? 0) >= MAX_RESUME_ATTEMPTS) return undefined
     const reopened = mutate(id, (draft) => {
+      // Re-checked on the row the write sees: two processes recovering the
+      // same project both read `orphaned` above, and only the first to get
+      // here may take the run. The second finds it `running` and backs off.
+      if (!isResumable(draft.status)) return
+      if ((draft.resumeCount ?? 0) >= MAX_RESUME_ATTEMPTS) return
       draft.status = "running"
       draft.resumeCount = (draft.resumeCount ?? 0) + 1
       draft.completedAt = undefined
@@ -612,6 +651,7 @@ ${result}
       draft.updatedAt = Date.now()
     })
     invalidateListCache()
+    if (reopened.status !== "running" || reopened.ownerID !== OWNER_ID) return undefined
     return reopened
   }
 
@@ -655,7 +695,12 @@ ${result}
         return false
       })
       if (finalized) continue
-      await markOrphaned(record.id)
+      await markOrphaned(record.id).catch((error) => {
+        log.warn("failed to orphan background run", {
+          id: record.id,
+          error,
+        })
+      })
     }
   }
 

@@ -238,22 +238,26 @@ export function compose(image: PixelImage, options: ComposeOptions): Uint8Array 
  * terminal-side cost that comes with it.
  */
 function flatten(pixels: Uint8Array, columns: number, rows: number) {
-  const width = columns * SAMPLES_PER_CELL
+  const stride = bufferStride(columns)
   const samples = SAMPLES_PER_CELL * SAMPLES_PER_CELL
+  // Sample offsets relative to a cell's top-left sample, computed once: this
+  // runs over every cell of the terminal on each compose, and an array per
+  // cell was most of what it allocated.
+  const offsets = new Int32Array(samples)
+  for (let sampleY = 0; sampleY < SAMPLES_PER_CELL; sampleY++) {
+    for (let sampleX = 0; sampleX < SAMPLES_PER_CELL; sampleX++) {
+      offsets[sampleY * SAMPLES_PER_CELL + sampleX] = sampleY * stride + sampleX * 4
+    }
+  }
 
   for (let row = 0; row < rows; row++) {
     for (let column = 0; column < columns; column++) {
-      const offsets: number[] = []
-      for (let sampleY = 0; sampleY < SAMPLES_PER_CELL; sampleY++) {
-        for (let sampleX = 0; sampleX < SAMPLES_PER_CELL; sampleX++) {
-          offsets.push(((row * SAMPLES_PER_CELL + sampleY) * width + column * SAMPLES_PER_CELL + sampleX) * 4)
-        }
-      }
+      const origin = row * SAMPLES_PER_CELL * stride + column * SAMPLES_PER_CELL * 4
       for (let channel = 0; channel < 3; channel++) {
         let total = 0
-        for (const offset of offsets) total += pixels[offset + channel] ?? 0
+        for (let i = 0; i < samples; i++) total += pixels[origin + offsets[i]! + channel]!
         const average = Math.round(total / samples)
-        for (const offset of offsets) pixels[offset + channel] = average
+        for (let i = 0; i < samples; i++) pixels[origin + offsets[i]! + channel] = average
       }
     }
   }

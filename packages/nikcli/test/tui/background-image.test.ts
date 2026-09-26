@@ -16,7 +16,16 @@ import {
   stepOpacity,
 } from "@tui/feature-plugins/background/settings"
 import { bufferSize, bufferStride, compose, placement, prepare, resample } from "@tui/feature-plugins/background/pixels"
-import { listDirectory, listImages, resolveSource, shortenPath } from "@tui/feature-plugins/background/source"
+import {
+  isLocalSource,
+  listDirectory,
+  listImages,
+  localPath,
+  pickerStart,
+  resolveSource,
+  shortenPath,
+  suggestedFolders,
+} from "@tui/feature-plugins/background/source"
 import { readSettings, writeSettings } from "@tui/feature-plugins/background/store"
 import { shouldUseRendererThread } from "@nikcli-ai/util/win32"
 
@@ -270,6 +279,40 @@ describe("background source", () => {
     expect(await resolveSource("https://example.com/a.png")).toBe("https://example.com/a.png")
     await expect(resolveSource(path.join(root, "missing.png"))).rejects.toThrow("not found")
     await expect(resolveSource(nested + "/empty")).rejects.toThrow("not found")
+  })
+
+  test("maps file URLs to local paths on either platform", () => {
+    expect(localPath("/tmp/a.png")).toBe("/tmp/a.png")
+    expect(localPath("https://example.com/a.png")).toBe("https://example.com/a.png")
+    const url = Bun.pathToFileURL(path.resolve("my image.png")).href
+    expect(url).toContain("%20")
+    expect(localPath(url)).toBe(path.resolve("my image.png"))
+  })
+
+  test("tells local paths from URLs", () => {
+    expect(isLocalSource("/tmp/a.png")).toBe(true)
+    expect(isLocalSource("C:\\Users\\me\\a.png")).toBe(true)
+    expect(isLocalSource("")).toBe(false)
+    expect(isLocalSource("data:image/png;base64,AAAA")).toBe(false)
+    expect(isLocalSource("https://example.com/a.png")).toBe(false)
+    expect(isLocalSource("file:///tmp/a.png")).toBe(false)
+  })
+
+  test("the picker opens on the configured folder, or on the image's folder", () => {
+    const cwd = path.resolve("/work")
+    // A rotation source is a folder: opening its *parent* would show the user a
+    // list of folders when they came to pick among that folder's images.
+    expect(pickerStart(path.join(cwd, "wallpapers"), cwd)).toBe(path.join(cwd, "wallpapers"))
+    expect(pickerStart(path.join(cwd, "wallpapers", "a.png"), cwd)).toBe(path.join(cwd, "wallpapers"))
+    expect(pickerStart("", cwd)).toBe(cwd)
+    expect(pickerStart("https://example.com/a.png", cwd)).toBe(cwd)
+  })
+
+  test("only suggests folders that exist, without duplicates", () => {
+    const home = path.resolve("/home/nik")
+    const present = new Set([home, path.join(home, "Pictures"), path.join(home, "Downloads")])
+    const folders = suggestedFolders(home, home, (target) => present.has(path.resolve(target)))
+    expect(folders.map((folder) => folder.label)).toEqual(["Project", "Pictures", "Downloads"])
   })
 
   test("shortens paths under the home directory", () => {
