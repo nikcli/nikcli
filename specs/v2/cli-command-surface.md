@@ -38,6 +38,7 @@ Source: the `commands` field of the root `Spec.make("nikcli", …)` in `src/cli/
 | `auth`            | `list`, `login [url]`, `logout`                                                                    | Credentials                                            |
 | `account`         | `login`, `logout`, `list`, `switch`, `orgs`                                                        |                                                        |
 | `agent`           | `create`, `list`                                                                                   |                                                        |
+| `auto-mode`       | `defaults`, `config`, `critique`, `reset`                                                          | Auto mode classifier rules: inspect, critique, reset   |
 | `upgrade`         | `[target]`                                                                                         | Replaces the binary                                    |
 | `uninstall`       | —                                                                                                  |                                                        |
 | `doctor`          | —                                                                                                  | Diagnostic                                             |
