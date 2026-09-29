@@ -1,4 +1,4 @@
-import { Cause, Exit, Runtime } from "effect"
+import { Cause, Exit, Runtime, Schema } from "effect"
 import { CliError } from "effect/unstable/cli"
 
 /**
@@ -37,6 +37,30 @@ export namespace ExitCode {
   export const Unavailable = 69
   /** The user interrupted the command, or cancelled the prompt it was waiting on. */
   export const Interrupted = 130
+
+  /**
+   * A failure a handler raises on purpose: the message the user should read
+   * and the code a script should see.
+   *
+   * It replaces the `UI.error(message); process.exit(1)` pair. The throw
+   * unwinds through `bootstrap`'s teardown and the command's finalizers, which
+   * `process.exit` skipped; the dispatcher (`framework/runtime.ts`) prints the
+   * message once; `fromExit` reads the code off effect's own marker. The
+   * `errorReported` marker is false so `runMain` does not also dump the cause
+   * — the message is the whole report, exactly as it was before.
+   */
+  export class CommandError extends Schema.TaggedError<CommandError>()("CliCommandError", {
+    message: Schema.String,
+    code: Schema.Number,
+  }) {
+    override readonly [Runtime.errorExitCode] = this.code
+    override readonly [Runtime.errorReported] = false
+  }
+
+  /** `throw ExitCode.fail("what went wrong")`; the code defaults to 1. */
+  export function fail(message: string, code: number = Failure): CommandError {
+    return new CommandError({ message, code })
+  }
 
   /**
    * The tagged domain failures with a documented code. Keyed by `_tag` so the

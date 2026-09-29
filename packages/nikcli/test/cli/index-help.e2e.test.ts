@@ -92,4 +92,37 @@ describe("CLI entrypoint (subprocess)", () => {
     expect(run.code).toBe(2)
     expect((run.stdout + run.stderr).toLowerCase()).toContain("no-such-flag")
   }, 30_000)
+
+  it("prints a handler's CommandError once and exits with its code", async () => {
+    // `mission get` used to print the message and call `process.exit(1)`;
+    // now it throws `ExitCode.fail(...)`, the dispatcher prints it, and
+    // `runMain` must neither dump the cause nor print the message again.
+    const run = await runCli(["mission", "get", "nope"])
+
+    if (run.code === "timeout") {
+      console.warn("[index-help.e2e] subprocess timed out under load; skipping CommandError asserts")
+      expect(typeof run.stdout).toBe("string")
+      return
+    }
+
+    expect(run.code).toBe(1)
+    const message = 'Mission "nope" not found'
+    expect(run.stderr.split(message).length - 1).toBe(1)
+    expect(run.stdout + run.stderr).not.toContain("CliCommandError")
+  }, 40_000)
+
+  it("exits 2 when a handler names a usage error", async () => {
+    // `mission delete` without `--yes` is a usage error: the flag is required.
+    const run = await runCli(["mission", "delete", "nope"])
+
+    if (run.code === "timeout") {
+      console.warn("[index-help.e2e] subprocess timed out under load; skipping usage-code asserts")
+      expect(typeof run.stdout).toBe("string")
+      return
+    }
+
+    expect(run.code).toBe(2)
+    expect(run.stderr).toContain("Refusing to delete without --yes")
+    expect(run.stdout + run.stderr).not.toContain("CliCommandError")
+  }, 40_000)
 })

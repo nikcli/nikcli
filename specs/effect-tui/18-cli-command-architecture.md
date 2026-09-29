@@ -216,3 +216,39 @@ reporting is not part of this slice: a failure is logged by `runMain` exactly as
 producer yet and is listed so the reservation is visible.
 
 `test/cli/index-help.e2e.test.ts` observes the mapping from outside the process: `nikcli --no-such-flag` exits `2`.
+
+### A handler's own failure: `ExitCode.CommandError` — 2026-09-29
+
+The `UI.error(message); process.exit(1)` pair is what most handlers did on a failure they had already
+diagnosed, and it is why the exit code was decided per command: `process.exit` leaves the process before
+`bootstrap`'s teardown, before any finalizer, and before the dispatcher can say anything about the code. Its
+replacement is `throw ExitCode.fail(message, code?)`: a `Schema.TaggedError` carrying effect's own
+`errorExitCode` marker (so `fromExit` needs no special case) and `errorReported = false` (so `runMain` does not
+dump the cause). `framework/runtime.ts` prints the message once, with the same `UI.error`, at the point the
+handler failed, and lets it unwind. The user sees exactly what they saw before; the difference is that the
+teardown runs and the code is the contract's.
+
+Converted in this slice, one group per the migration rule: `mission` (`get`, `start`, `resume`, `pause`,
+`cancel`, `delete`, `new`, and `readBrief` in `shared.ts`), `pr`, `export`, `teleport` — 18 sites. The codes
+chosen: a missing required flag or value (`--name`, `--url`, `--token`, `--yes`) is `2`; a brief that came from
+no source at all is `66`; a remote that did not answer is `69`; a missing mission or session, a failed checkout
+or upload stay `1`. Not converted, on purpose: `run` (9 sites, several inside stream callbacks where a throw
+and an exit are not the same thing), `serve`, `default`, `agent create`, `upgrade` (its exit follows an
+`outro`), `doctor` (a report whose exit code is the verdict) and `debug agent` (writes to `stderr` without the
+`Error:` prefix, which the conversion would add). Those are the next groups, each with its own e2e case.
+
+### Requirements 5 and 12: no producer, no chokepoint — 2026-09-29
+
+Two requirements were checked before being built and are recorded as not buildable from this tree:
+
+- **Plugin command scoping (5).** No plugin surface can register a CLI command. `@nikcli-ai/plugin`'s
+  `Hooks` carry tool, auth, provider, chat and command-execution hooks, but nothing that adds a command to
+  the `Spec` tree; the v2 `commands` capability and `register(command)` in `plugin/src/v2/ade/context.ts` are
+  the ADE's palette, not the CLI. A dispatcher that scoped `<plugin-id>:<command>` would scope nothing. It
+  lands with the first plugin hook that registers one, as the v2 todo's plugin-API note already requires.
+- **Headless posture at the dispatcher (12).** `src/cli/headless.ts` fails the permission prompt closed for
+  `run`, and that is the only prompt the dispatcher can see. 46 handler files call `@clack/prompts` directly;
+  `cli/effect/prompt.ts`, the wrapper requirement 8 names, has no importer in `src`; `UI.input` has no caller.
+  There is no chokepoint to guard, so a dispatcher-level `NIKCLI_HEADLESS` would not reach a single prompt.
+  The honest shape is per handler: each prompt gets its documented non-interactive default, or fails closed
+  through `ExitCode.fail` — the same migration rule as the exit sites above, and the same order.

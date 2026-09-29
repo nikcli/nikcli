@@ -2,6 +2,7 @@ import { Runtime } from "../framework/runtime"
 import { passthrough } from "../framework/args"
 import { Commands } from "../commands"
 import { UI } from "@/cli/ui"
+import { ExitCode } from "@/cli/exit-code"
 import { withInstanceAsync } from "@/effect"
 import { $ } from "bun"
 import { Git } from "@/git"
@@ -17,8 +18,7 @@ export default Runtime.handler(Commands.commands["pr"], async (input) => {
     {
       const project = instance.project
       if (project.vcs !== "git") {
-        UI.error("Could not find git repository. Please run this command from a git repository.")
-        process.exit(1)
+        throw ExitCode.fail("Could not find git repository. Please run this command from a git repository.")
       }
 
       const prNumber = args.number
@@ -28,8 +28,9 @@ export default Runtime.handler(Commands.commands["pr"], async (input) => {
       const result = await $`gh pr checkout ${prNumber} --branch ${localBranchName} --force`.nothrow()
 
       if (result.exitCode !== 0) {
-        UI.error(`Failed to checkout PR #${prNumber}. Make sure you have gh CLI installed and authenticated.`)
-        process.exit(1)
+        throw ExitCode.fail(
+          `Failed to checkout PR #${prNumber}. Make sure you have gh CLI installed and authenticated.`,
+        )
       }
 
       const prInfoResult =

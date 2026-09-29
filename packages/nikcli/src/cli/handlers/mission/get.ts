@@ -2,7 +2,7 @@ import { Runtime } from "../../framework/runtime"
 import { passthrough } from "../../framework/args"
 import { Commands } from "../../commands"
 import { bootstrap } from "@/cli/bootstrap"
-import { UI } from "@/cli/ui"
+import { ExitCode } from "@/cli/exit-code"
 import * as Manager from "@/mission/manager"
 import * as Orchestrator from "@/mission/orchestrator"
 import { progressOf } from "@/mission/schema"
@@ -19,8 +19,7 @@ export default Runtime.handler(Commands.commands["mission"].commands["get"], asy
   await bootstrap(process.cwd(), async (instance) => {
     const mission = await Manager.get(instance.project.id, String(args.id))
     if (!mission) {
-      UI.error(`Mission "${args.id}" not found`)
-      process.exit(1)
+      throw ExitCode.fail(`Mission "${args.id}" not found`)
     }
     if (args.format === "json") {
       console.log(JSON.stringify({ ...mission, runtime: Orchestrator.getRuntime(mission.id) }, null, 2))

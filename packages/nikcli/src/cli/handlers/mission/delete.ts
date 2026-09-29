@@ -3,7 +3,7 @@ import { Runtime } from "../../framework/runtime"
 import { passthrough } from "../../framework/args"
 import { Commands } from "../../commands"
 import { bootstrap } from "@/cli/bootstrap"
-import { UI } from "@/cli/ui"
+import { ExitCode } from "@/cli/exit-code"
 import * as Manager from "@/mission/manager"
 
 export default Runtime.handler(Commands.commands["mission"].commands["delete"], async (input) => {
@@ -16,8 +16,7 @@ export default Runtime.handler(Commands.commands["mission"].commands["delete"], 
   }
   await bootstrap(process.cwd(), async (instance) => {
     if (!args.yes) {
-      UI.error("Refusing to delete without --yes (mission deletion is destructive).")
-      process.exit(1)
+      throw ExitCode.fail("Refusing to delete without --yes (mission deletion is destructive).", ExitCode.Usage)
     }
     const removed = await Manager.remove(instance.project.id, instance.directory, String(args.id))
     console.log(removed ? `Deleted mission ${args.id}` : `Mission ${args.id} not found`)

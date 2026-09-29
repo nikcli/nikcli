@@ -11,6 +11,7 @@ import { Config } from "@/config/config"
 import { Global } from "@nikcli-ai/util/global"
 import { bootstrap } from "@/cli/bootstrap"
 import { UI } from "@/cli/ui"
+import { ExitCode } from "@/cli/exit-code"
 import { runPromiseWithLayer, withCurrentInstance } from "@/effect"
 import { createWorkspaceArchive, uploadWorkspaceArchive } from "@nikcli-ai/util/teleport-archive"
 import type { MessageV2 } from "@/session/message-v2"
@@ -100,8 +101,7 @@ export default Runtime.handler(Commands.commands["teleport"], async (input) => {
     }
     const base = url ? normalizeBaseUrl(url) : null
     if (!base) {
-      UI.error("A valid --url (or NIKCLI_TELEPORT_URL) is required")
-      process.exit(1)
+      throw ExitCode.fail("A valid --url (or NIKCLI_TELEPORT_URL) is required", ExitCode.Usage)
     }
 
     if (!token && process.stderr.isTTY) {
@@ -114,8 +114,7 @@ export default Runtime.handler(Commands.commands["teleport"], async (input) => {
     }
     token = token?.trim()
     if (!token) {
-      UI.error("A --token (or NIKCLI_TELEPORT_TOKEN) is required")
-      process.exit(1)
+      throw ExitCode.fail("A --token (or NIKCLI_TELEPORT_TOKEN) is required", ExitCode.Usage)
     }
 
     // Resolve which session to teleport.
@@ -129,8 +128,7 @@ export default Runtime.handler(Commands.commands["teleport"], async (input) => {
         }),
       )
       if (sessions.length === 0) {
-        UI.error("No sessions found to teleport")
-        process.exit(1)
+        throw ExitCode.fail("No sessions found to teleport")
       }
       sessions.sort((a: Session.Info, b: Session.Info) => b.time.updated - a.time.updated)
 
@@ -166,8 +164,7 @@ export default Runtime.handler(Commands.commands["teleport"], async (input) => {
       info = result.info
       messages = result.messages
     } catch {
-      UI.error(`Session not found: ${sessionID}`)
-      process.exit(1)
+      throw ExitCode.fail(`Session not found: ${sessionID}`)
     }
 
     // Archive only what's needed to keep coding: non-ignored source/text files,
@@ -202,8 +199,7 @@ export default Runtime.handler(Commands.commands["teleport"], async (input) => {
           process.stderr.write(os.EOL)
         } catch (error) {
           await archive.cleanup()
-          UI.error(`Workspace upload failed: ${error instanceof Error ? error.message : String(error)}`)
-          process.exit(1)
+          throw ExitCode.fail(`Workspace upload failed: ${error instanceof Error ? error.message : String(error)}`)
         } finally {
           await archive.cleanup()
         }
@@ -231,18 +227,19 @@ export default Runtime.handler(Commands.commands["teleport"], async (input) => {
         body: payload,
       })
     } catch (error) {
-      UI.error(`Failed to reach ${base}: ${error instanceof Error ? error.message : String(error)}`)
-      process.exit(1)
+      throw ExitCode.fail(
+        `Failed to reach ${base}: ${error instanceof Error ? error.message : String(error)}`,
+        ExitCode.Unavailable,
+      )
     }
 
     if (!response.ok) {
       const detail = await response.text().catch(() => "")
-      UI.error(
+      throw ExitCode.fail(
         response.status === 401
           ? "Unauthorized — check the auth token"
           : `Server error ${response.status}${detail ? `: ${detail.slice(0, 200)}` : ""}`,
       )
-      process.exit(1)
     }
 
     const result = (await response.json().catch(() => null)) as {

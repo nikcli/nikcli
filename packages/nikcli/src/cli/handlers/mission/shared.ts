@@ -1,6 +1,6 @@
 import path from "path"
 import fs from "fs/promises"
-import { UI } from "@/cli/ui"
+import { ExitCode } from "@/cli/exit-code"
 import { Log } from "@nikcli-ai/util/log"
 import * as Orchestrator from "@/mission/orchestrator"
 import { definitionFromGeneratedText, type MissionDefinition } from "@/mission/schema"
@@ -54,8 +54,10 @@ export async function readBrief(file: string | undefined, inline: string | undef
     const text = await Bun.stdin.text()
     if (text.trim()) return text
   }
-  UI.error('Mission requires a brief. Pass --brief "..." or --file <path>, or pipe via stdin.')
-  process.exit(1)
+  throw ExitCode.fail(
+    'Mission requires a brief. Pass --brief "..." or --file <path>, or pipe via stdin.',
+    ExitCode.NoInput,
+  )
 }
 
 export async function tailUntilDone(missionID: string, timeoutMs = 10 * 60_000): Promise<void> {

@@ -4,6 +4,7 @@ import { passthrough } from "../../framework/args"
 import { Commands } from "../../commands"
 import { bootstrap } from "@/cli/bootstrap"
 import { UI } from "@/cli/ui"
+import { ExitCode } from "@/cli/exit-code"
 import * as Manager from "@/mission/manager"
 import * as Orchestrator from "@/mission/orchestrator"
 import { definitionFromGenerated, type MissionDefinition } from "@/mission/schema"
@@ -42,10 +43,10 @@ export default Runtime.handler(Commands.commands["mission"].commands["new"], asy
     } else {
       const brief = await readBrief(args.file, args.brief)
       if (!args.name) {
-        UI.error(
+        throw ExitCode.fail(
           "Mission --name is required when creating from a brief (use --from-description for an LLM-authored name).",
+          ExitCode.Usage,
         )
-        process.exit(1)
       }
       // A single-feature, single-milestone stub keeps the file-based path
       // usable without forcing the user through plan mode for trivial cases.

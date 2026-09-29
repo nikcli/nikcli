@@ -62,6 +62,16 @@ describe("ExitCode.fromExit", () => {
     expect(ExitCode.fromExit(Exit.die(new UI.CancelledError()))).toBe(ExitCode.Interrupted)
   })
 
+  it("carries a handler's CommandError to its code, reported once", () => {
+    const error = ExitCode.fail('Mission "x" not found')
+    expect(error.message).toBe('Mission "x" not found')
+    expect(ExitCode.fromExit(Exit.die(error))).toBe(ExitCode.Failure)
+    expect(ExitCode.fromExit(Exit.fail(ExitCode.fail("no brief", ExitCode.NoInput)))).toBe(ExitCode.NoInput)
+    // The dispatcher prints the message; runMain must not also dump the cause.
+    expect(Runtime.getErrorReported(error)).toBe(false)
+    expect(Runtime.getErrorExitCode(ExitCode.fail("usage", ExitCode.Usage))).toBe(ExitCode.Usage)
+  })
+
   it("honours effect's own exit-code marker over the tag table", () => {
     const marked = Object.assign(new Config.JsonError({ path: "/p" }), { [Runtime.errorExitCode]: 7 })
     expect(ExitCode.fromExit(Exit.fail(marked))).toBe(7)

@@ -5,6 +5,7 @@ import { Commands } from "../commands"
 import { Session } from "@/session"
 import { bootstrap } from "@/cli/bootstrap"
 import { UI } from "@/cli/ui"
+import { ExitCode } from "@/cli/exit-code"
 import * as prompts from "@clack/prompts"
 import { EOL } from "os"
 import { Effect } from "effect"
@@ -97,8 +98,7 @@ export default Runtime.handler(Commands.commands["export"], async (input) => {
       process.stdout.write(JSON.stringify(exportData, null, 2))
       process.stdout.write(EOL)
     } catch {
-      UI.error(`Session not found: ${sessionID!}`)
-      process.exit(1)
+      throw ExitCode.fail(`Session not found: ${sessionID!}`)
     }
   })
 })

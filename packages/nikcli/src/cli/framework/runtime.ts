@@ -1,6 +1,8 @@
 import { Effect } from "effect"
 import { Command } from "effect/unstable/cli"
 import { GlobalFlags, normalizeArgv } from "../global-flags"
+import { ExitCode } from "../exit-code"
+import { UI } from "../ui"
 import type { Spec } from "./spec"
 
 /**
@@ -82,7 +84,17 @@ function provide(node: Spec.Any, handlers: ReadonlyArray<LazyHandler>): Command.
         Command.withHandler((input: unknown) =>
           Effect.promise(async () => {
             const module = await found.load()
-            await module.default(input)
+            try {
+              await module.default(input)
+            } catch (error) {
+              // A `CommandError` is the handler's own answer: print it once,
+              // here, and let it unwind. `runMain` skips the cause dump (its
+              // `errorReported` marker is false) and the teardown in
+              // `main-effect.ts` reads the exit code off the error. Anything
+              // else keeps today's path: a defect, logged by `runMain`, exit 1.
+              if (error instanceof ExitCode.CommandError) UI.error(error.message)
+              throw error
+            }
           }),
         ),
       )
