@@ -1,7 +1,7 @@
 # EOT-18: CLI Command Architecture and Dispatch
 
-Status: partially landed — the parser, lifecycle and daemon/attach requirements shipped; exit-code mapping,
-headless posture at the dispatcher and plugin command scoping have not.
+Status: partially landed — the parser, lifecycle, daemon/attach and exit-code requirements shipped; headless
+posture at the dispatcher and plugin command scoping have not.
 Tier: 2. Phase: P3. Dependencies: EOT-02, EOT-08.
 Owner: `packages/nikcli/src/cli/framework/*`, `packages/nikcli/src/cli/handlers/*` and
 `packages/nikcli/src/cli/effect/*` maintainers. [Roadmap](../ROADMAP.md).
@@ -28,8 +28,8 @@ What shipped, and what this spec can therefore stop asking for:
   `test/cli/command-surface.test.ts` fails if a command is added or removed without updating it.
 
 What remains open is dispatch-adjacent **policy**, which the parser migration did not address and which is still decided
-per command: there is no exit-code mapping (no documented `64`/`66`/`69` contract in `src/`) and no plugin command
-scoping. The headless posture exists for `nikcli run` only — `src/cli/headless.ts` reads `NIKCLI_HEADLESS` and its
+per command: there is no plugin command scoping, and the exit-code mapping only landed on 2026-09-29 (see the
+section at the end). The headless posture exists for `nikcli run` only — `src/cli/headless.ts` reads `NIKCLI_HEADLESS` and its
 permission prompt fails closed — not at the dispatcher, and `cli/effect/prompt.ts` wraps `@clack/prompts` in Effect
 with an implicit non-TTY fallback. The daemon/attach lifecycle shipped separately as the background service
 ([`specs/background-service.md`](../background-service.md)); requirement 6 below records that. The rest are the
@@ -77,10 +77,10 @@ start/stop/status/restart` are the commands; the default command connects to the
    `UI.spinner`, `UI.text`, and `UI.log` are the canonical writers; raw `console.log` is forbidden in handlers. The
    `clack/prompts` integration goes through `cli/effect/prompt.ts`; prompts in non-TTY environments fall back to
    non-interactive defaults that fail closed.
-9. Errors flow through `FormatError` and `Log`, with redacted sinks. Stack traces honor `NIKCLI_DEBUG`. Exit codes
-   follow the documented mapping: `0` success, `1` generic failure, `2` invalid usage, `64` config error, `66` no input,
-   `69` service unavailable, `130` interrupted (matches SIGINT convention). The mapping is typed and consistent across
-   commands.
+9. Errors flow through `FormatError` and `Log`, with redacted sinks. Stack traces honor `NIKCLI_DEBUG`. **(landed,
+   the exit codes)** Exit codes follow the documented mapping: `0` success, `1` generic failure, `2` invalid usage,
+   `64` config error, `66` no input, `69` service unavailable, `130` interrupted (matches SIGINT convention). The
+   mapping is typed and consistent across commands: `src/cli/exit-code.ts`, handed to `runMain` as its teardown.
 10. Long-running commands (`serve`, `run --watch`, `mobile connect`) coordinate shutdown via `Effect.scoped` plus a
     shutdown signal handler. The handler catches `SIGINT`/`SIGTERM`, signals the scope to close, and runs finalizers
     with a deadline. Commands that ignore the shutdown signal are defects.
@@ -133,8 +133,8 @@ a non-zero code and a typed message; it never silently continues.
 
 The parser migration is done; see [`specs/cli-framework.md`](../cli-framework.md) for how it was staged and for the
 four parser divergences it documents. What remains is policy, and it lands per concern rather than per command: the
-exit-code mapping first (it is observable and cheap to test), then headless posture, then plugin command scoping;
-daemon/attach is done. Each is additive and independently revertible — a command that has not adopted the new policy keeps its
+exit-code mapping first (done, 2026-09-29), then headless posture, then plugin command scoping; daemon/attach is
+done. Each is additive and independently revertible — a command that has not adopted the new policy keeps its
 current behaviour. Bootstrap changes stay additive; never delete a previously-installed global or DB connection as part
 of a dispatch refactor.
 
@@ -187,3 +187,32 @@ consumer, because the REPL they are for does not exist.
 What remains of requirement 12 is therefore the wrapper, not the rule: route `cli/effect/prompt.ts` through
 `isHeadless`, give a prompt with no default a typed failure, and map that failure onto requirement 9's exit codes —
 which are themselves still unimplemented (every failure exits `1`).
+
+## Exit Codes — 2026-09-29
+
+Requirement 9's mapping is `src/cli/exit-code.ts`, and it is applied in one place: `main-effect.ts` hands
+`ExitCode.fromExit` to `BunRuntime.runMain` as its `teardown`, so the number a shell sees is computed from the
+main fiber's `Exit` rather than decided by whichever handler ran. Effect's own runtime already carried most of
+the shape — `Runtime.defaultTeardown` returns `0`, `130` for an interruption-only cause, and honours a
+`Runtime.errorExitCode` marker on the squashed error — so the module keeps that contract and adds the table.
+The one marker it overrides is the parser's own: effect stamps `ShowHelp` with a flat `1` when it carries
+errors, which is precisely the number this requirement replaces, so `ShowHelp` with errors is `2` and without
+them `0`; every other `CliError` the parser raises is `2` except `UserError`, which is a handler's own failure
+wrapped for display; `ConfigJsonError`, `ConfigInvalidError` and `ConfigDirectoryTypoError` are `64`; `ConfigRemoteFetch`
+is `69`; `UICancelledError` is `130`; everything else stays `1`. The table is keyed by `_tag` so the entrypoint
+imports no domain module for it.
+
+Two properties were checked rather than assumed. The squashed cause is the first failure if there is one and the
+first defect otherwise, and nikcli's handlers are plain async functions run under `Effect.promise`, so a handler
+that _throws_ a tagged error reaches the teardown as a `Die`; `test/cli/exit-code.test.ts` pins the defect rows
+beside the failure rows for that reason. And `runMain` calls `process.exit` only for a non-zero code, so a
+handler that sets `process.exitCode` and returns still exits with what it set, as before.
+
+What this changes for a script: a usage error now exits `2` where it exited `1`, a config that did not parse
+`64`, a cancelled prompt `130`. An interrupted command already exited `130` under the runtime's default teardown
+and still does. A handler that calls `process.exit(1)` itself — `run` and `debug agent` still do, 48 sites in all — is untouched;
+converting those to typed failures is the rest of this requirement, one handler group per change. Error
+reporting is not part of this slice: a failure is logged by `runMain` exactly as before. `66` (no input) has no
+producer yet and is listed so the reservation is visible.
+
+`test/cli/index-help.e2e.test.ts` observes the mapping from outside the process: `nikcli --no-such-flag` exits `2`.

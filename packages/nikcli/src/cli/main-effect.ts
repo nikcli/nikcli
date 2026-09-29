@@ -10,6 +10,7 @@ import { Handlers } from "./handlers"
 import { Runtime } from "./framework/runtime"
 import { Diagnostics } from "./diagnostics"
 import { UI } from "./ui"
+import { ExitCode } from "./exit-code"
 import { Installation } from "@/installation"
 
 /**
@@ -111,5 +112,12 @@ export async function runEffectCli(): Promise<void> {
     Runtime.run(Commands, Handlers, { version: Installation.VERSION }).pipe(
       Effect.provide(BunServices.layer),
     ) as Effect.Effect<void, unknown, never>,
+    {
+      // The exit code is the documented mapping (`cli/exit-code.ts`) rather
+      // than runMain's flat 1: a usage error is 2, a config that did not parse
+      // is 64, an interrupted command is 130. Error reporting is untouched —
+      // a failure is still logged exactly as before; only the number changes.
+      teardown: (exit, onExit) => onExit(ExitCode.fromExit(exit)),
+    },
   )
 }

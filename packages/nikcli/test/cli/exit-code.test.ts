@@ -30,6 +30,12 @@ describe("ExitCode.fromExit", () => {
     expect(
       ExitCode.fromExit(Exit.fail(new CliError.UnknownSubcommand({ subcommand: "servee", suggestions: ["serve"] }))),
     ).toBe(ExitCode.Usage)
+    // effect stamps `ShowHelp` with its own `errorExitCode` of 1 when it carries
+    // errors and 0 when it does not; the contract keeps the 0 (help was asked
+    // for, nothing went wrong) and replaces the 1 with 2.
+    expect(ExitCode.fromExit(Exit.fail(new CliError.ShowHelp({ commandPath: ["nikcli"], errors: [] })))).toBe(
+      ExitCode.Success,
+    )
     // A handler's own failure, wrapped by the framework for display, is not a
     // usage error: the user typed the command correctly and it failed.
     expect(ExitCode.fromExit(Exit.fail(new CliError.UserError({ cause: new Error("nope") })))).toBe(ExitCode.Failure)
