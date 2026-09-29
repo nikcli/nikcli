@@ -303,6 +303,8 @@ appears more than once.
 | EOT-05 | Retained transcript elements capped at 20,000 across sessions, the dimension the per-session LRU could not see   | `487fbd6`                  |
 | EOT-04 | Client event batch capped at 512 envelopes, flushed early rather than dropped                                    | `487fbd6`                  |
 | EOT-14 | Plugin storage quota (32 MB, a write past it is refused, not evicted) and eviction on unload                     | `487fbd6`                  |
+| —      | `Database.syncDb` export deleted: tests take the shared client through `testDb`, the namespace check guards it   | `68b94fc7`                 |
+| EOT-18 | Exit codes typed and applied once, as `runMain`'s teardown: usage 2, config 64, unavailable 69, cancelled 130    | `30f3a179`                 |
 
 Every spec has been opened and every spec now has at least one landed slice,
 EOT-00, EOT-14 and EOT-19 included.
