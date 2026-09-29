@@ -299,6 +299,10 @@ appears more than once.
 | EOT-04 | Reconnect waits after a clean stream end too; jittered, abortable backoff                                        | `5b7777ba2b`               |
 | EOT-08 | One shutdown budget shared by every plugin instead of five seconds each                                          | `b0ab388457`               |
 | EOT-13 | Effect's built-in server span off on the bridge; `x-forwarded-for`/`referer` forbidden at the choke point        | `4fe8d73926`               |
+| EOT-08 | Plugin shutdown deadline computed on entry: a wedged load or reload can no longer hold the exit path open        | `487fbd6`                  |
+| EOT-05 | Retained transcript elements capped at 20,000 across sessions, the dimension the per-session LRU could not see   | `487fbd6`                  |
+| EOT-04 | Client event batch capped at 512 envelopes, flushed early rather than dropped                                    | `487fbd6`                  |
+| EOT-14 | Plugin storage quota (32 MB, a write past it is refused, not evicted) and eviction on unload                     | `487fbd6`                  |
 
 Every spec has been opened and every spec now has at least one landed slice,
 EOT-00, EOT-14 and EOT-19 included.

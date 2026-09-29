@@ -1,5 +1,10 @@
 # Background service
 
+| Field  | Value                                                                                                                                                                                                                                                                                                                                              |
+| ------ | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Status | **Implemented.** The shared service is the TUI's default path: `BackgroundService.ensure` in `src/cli/handlers/default.ts`, with `--standalone` or `NIKCLI_SERVICE=0` keeping the private in-process server. `nikcli service start/stop/status/restart` are registered. Supervision and idle shutdown stay out of scope, as the last section says. |
+| Scope  | `packages/nikcli/src/service/`, `src/cli/handlers/service/`, the default command and `nikcli attach`.                                                                                                                                                                                                                                              |
+
 ## Why
 
 Every `nikcli` invocation evaluates the whole engine graph in its own process:

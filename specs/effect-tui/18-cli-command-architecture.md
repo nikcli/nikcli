@@ -1,6 +1,7 @@
 # EOT-18: CLI Command Architecture and Dispatch
 
-Status: partially landed — the parser and lifecycle requirements shipped; the policy requirements have not.
+Status: partially landed — the parser, lifecycle and daemon/attach requirements shipped; exit-code mapping,
+headless posture at the dispatcher and plugin command scoping have not.
 Tier: 2. Phase: P3. Dependencies: EOT-02, EOT-08.
 Owner: `packages/nikcli/src/cli/framework/*`, `packages/nikcli/src/cli/handlers/*` and
 `packages/nikcli/src/cli/effect/*` maintainers. [Roadmap](../ROADMAP.md).
@@ -27,9 +28,12 @@ What shipped, and what this spec can therefore stop asking for:
   `test/cli/command-surface.test.ts` fails if a command is added or removed without updating it.
 
 What remains open is dispatch-adjacent **policy**, which the parser migration did not address and which is still decided
-per command: there is no exit-code mapping (no `NIKCLI_HEADLESS`, no documented `64`/`66`/`69` contract in `src/`), no
-plugin command scoping, and no shared daemon/attach lifecycle. `cli/effect/prompt.ts` wraps `@clack/prompts` in Effect
-but its non-TTY fallback is implicit. Those are the requirements below that are still proposed.
+per command: there is no exit-code mapping (no documented `64`/`66`/`69` contract in `src/`) and no plugin command
+scoping. The headless posture exists for `nikcli run` only — `src/cli/headless.ts` reads `NIKCLI_HEADLESS` and its
+permission prompt fails closed — not at the dispatcher, and `cli/effect/prompt.ts` wraps `@clack/prompts` in Effect
+with an implicit non-TTY fallback. The daemon/attach lifecycle shipped separately as the background service
+([`specs/background-service.md`](../background-service.md)); requirement 6 below records that. The rest are the
+requirements below that are still proposed.
 
 ## Scope and Non-Goals
 
@@ -55,7 +59,13 @@ the on-disk layout, or break existing command flags.
 5. Plugin commands are registered through the plugin runtime (EOT-14). The CLI dispatcher exposes the registered
    commands under their plugin scope (`<plugin-id>:<command>`); conflicts with built-in commands resolve through the
    plugin's `priority` field, never by silent registration order.
-6. Daemon/attach coordination is a typed lifecycle:
+6. **(landed, as the background service)** Daemon/attach coordination is a typed lifecycle. What shipped is
+   [`specs/background-service.md`](../background-service.md): `src/service/service.ts` owns the per-channel
+   registration file, the readiness handshake, the version-skew restart and `stop`; `nikcli service
+start/stop/status/restart` are the commands; the default command connects to the service and `nikcli attach <url>`
+   runs the TUI against any server. The bullets below are the original requirement, kept for the record; where
+   they differ from the shipped document (registration is a `service.json` owned by the service module, not
+   `InstanceState`), the shipped document wins.
    - `nikcli serve` and `nikcli workspace-serve` start a long-running server with the HTTP/mDNS/mobile transports.
    - `nikcli run` and `nikcli session` connect to an existing server, fall back to spawning one if none is reachable.
    - `nikcli attach` is a typed attach to an existing browser daemon.
@@ -123,8 +133,8 @@ a non-zero code and a typed message; it never silently continues.
 
 The parser migration is done; see [`specs/cli-framework.md`](../cli-framework.md) for how it was staged and for the
 four parser divergences it documents. What remains is policy, and it lands per concern rather than per command: the
-exit-code mapping first (it is observable and cheap to test), then headless posture, then plugin command scoping, then
-daemon/attach. Each is additive and independently revertible — a command that has not adopted the new policy keeps its
+exit-code mapping first (it is observable and cheap to test), then headless posture, then plugin command scoping;
+daemon/attach is done. Each is additive and independently revertible — a command that has not adopted the new policy keeps its
 current behaviour. Bootstrap changes stay additive; never delete a previously-installed global or DB connection as part
 of a dispatch refactor.
 

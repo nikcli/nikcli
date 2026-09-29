@@ -113,13 +113,15 @@ Manual `child.y - scroll.y` is wrong on `ScrollBoxRenderable`: `y` is the box or
 The EOT catalog above is one program. These documents describe subsystems that already shipped, or
 decisions that are not part of that program. They are not EOT specs and carry their own status.
 
-| Document                                                                        | Job                                                                                                                  |
-| ------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------------- |
-| [Project, directory binding, and copies](project.md)                            | How one server serves many projects and worktrees: directory-bound instances, project identity, git-worktree copies. |
-| [TUI package extraction](tui-package.md)                                        | The completed move of the terminal application into `packages/tui`.                                                  |
-| [Retire `src/storage/storage.ts`](storage/remove-json-storage.md)               | The completed retirement of the JSON key-value store.                                                                |
-| [Retire the synchronous `Database` wrapper](storage/retire-database-wrapper.md) | **Groups 1-4 landed.** `Database.syncDb()` has no callers in `src`; what remains is deleting the export.             |
-| [V2 specifications](v2/README.md)                                               | The v2 contracts, decisions, and working documents, with their own status rule.                                      |
+| Document                                                                        | Job                                                                                                                                        |
+| ------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------ |
+| [Project, directory binding, and copies](project.md)                            | How one server serves many projects and worktrees: directory-bound instances, project identity, git-worktree copies.                       |
+| [TUI package extraction](tui-package.md)                                        | The completed move of the terminal application into `packages/tui`.                                                                        |
+| [Retire `src/storage/storage.ts`](storage/remove-json-storage.md)               | The completed retirement of the JSON key-value store.                                                                                      |
+| [Retire the synchronous `Database` wrapper](storage/retire-database-wrapper.md) | **Groups 1-4 landed.** `Database.syncDb()` has no callers in `src`; what remains is deleting the export.                                   |
+| [V2 specifications](v2/README.md)                                               | The v2 contracts, decisions, and working documents, with their own status rule.                                                            |
+| [Background service](background-service.md)                                     | **Implemented.** The shared per-channel engine process the TUI connects to by default; `--standalone` keeps the private in-process server. |
+| [Integration plan](integration-plan.md)                                         | What the specs still owe the code and the order to pay it in. Its Tier 1 defects landed in `487fbd6`; Tier 2 is the open work.             |
 
 ## Existing Plans and Compatibility
 
