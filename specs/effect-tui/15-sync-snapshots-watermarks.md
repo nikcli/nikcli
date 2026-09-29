@@ -151,3 +151,29 @@ load-bearing on the strength of this file.
 Why the property matters beyond ordering: `detectSequenceGap` reads consecutiveness as
 proof that nothing was deleted. Two appends colliding on one `seq` would leave the next
 reader's gap check quietly wrong — no hole to find, and an event gone.
+
+## What the Journal Carries, and What the Store Applies — 2026-09-29
+
+The roadmap's next slice for this spec is the consumer: a per-aggregate cursor on `session` in the TUI,
+so that a reconnect resumes from the journal instead of refetching. Before writing it, the two sides
+were compared, and they do not meet.
+
+`session/sync-bridge.ts` journals seven bus event types for the `session` aggregate: `session.status`,
+`session.idle`, `permission.asked`, `permission.replied`, `question.asked`, `question.replied` and
+`question.rejected`. The TUI store (`packages/tui/src/context/sync.tsx`) applies twenty-five from the
+live stream, and the ones a reconnect actually loses are the transcript itself: `message.updated`,
+`message.part.updated`, `message.part.removed`, `session.updated`, `session.entry.*`, `todo.updated`,
+`session.diff`, the monitor and delegation events. None of those reach the journal, so a cursor over it
+would replay a session's status and its permission and question traffic and nothing the user reads.
+
+The producer is therefore complete for what it was built for — the mobile companion's per-aggregate
+state and the snapshot machinery — and incomplete for the TUI's reconnect. Closing that gap is a
+producer decision, not a consumer slice: journaling every part delta multiplies the journal's write
+rate by the streaming rate, moves `SNAPSHOT_INTERVAL` and the per-connection byte budgets, and has to
+answer whether the journal or `session_pending` is the transcript's system of record. That is an L
+change with its own spec addendum, and the TUI's blind refetch on reconnect (EOT-04's prescription,
+`refetchAfterReconnect`) stays correct until it lands.
+
+What this section rules out: a consumer that reads the journal as it stands and reports the store as
+caught up. It would be caught up on status and prompts, with the hole EOT-04 forbids in the middle of
+the transcript, while the UI says "connected".
