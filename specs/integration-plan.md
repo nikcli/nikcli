@@ -104,8 +104,11 @@ quota exhaustion — and `evictPluginStorage(id)` runs from `deactivatePluginEnt
   inventory is accounting, not enforcement. Building a chokepoint around a layer
   nothing calls would add a policy check no traffic passes through.
 - `specs/v2/config.md` renames. The highest-risk change class in the catalog for
-  zero runtime value. Two of its entries are cheap and honest on their own:
-  `teleport` and `logLevel` are published in the config schema with no reader.
+  zero runtime value. The two entries that looked free — `teleport` and `logLevel`,
+  listed as published with no reader — each turned out to have one outside `src`
+  (`packages/tui/src/component/dialog-mobile-connect.tsx` reads and writes `teleport`;
+  `packages/sdk/js/src/server.ts` forwards `logLevel` as `--log-level`), so both are
+  `keep` as of 2026-09-29. Nothing in that ledger is a cheap removal.
 - Deleting the `Database.syncDb` export. Gated at zero for `src` already; 24 test
   files still call it. Mechanical, but it is cleanup, not a fix.
 
