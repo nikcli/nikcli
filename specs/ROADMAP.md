@@ -305,6 +305,7 @@ appears more than once.
 | EOT-14 | Plugin storage quota (32 MB, a write past it is refused, not evicted) and eviction on unload                     | `487fbd6`                  |
 | —      | `Database.syncDb` export deleted: tests take the shared client through `testDb`, the namespace check guards it   | `68b94fc7`                 |
 | EOT-18 | Exit codes typed and applied once, as `runMain`'s teardown: usage 2, config 64, unavailable 69, cancelled 130    | `30f3a179`                 |
+| EOT-18 | `ExitCode.CommandError` printed once at the dispatcher; four handler groups taken off `process.exit(1)`          | `215e51e8`                 |
 
 Every spec has been opened and every spec now has at least one landed slice,
 EOT-00, EOT-14 and EOT-19 included.

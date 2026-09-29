@@ -121,3 +121,30 @@ cache eviction is additive; never delete shared keys as part of the scope tighte
 2. `WorkspaceRef` and `locallyWorkspace` stay exported from `effect/instance-ref.ts`, and `effect/instance-scope.ts` still pins a workspace through `locallyWorkspace` when `input.workspaceID` is present.
 3. The bridge comment still cites the open B31 gap. This one is unusual and deliberate: the comment records that two workspaces on one directory currently _share_ the instance scope's resources. A refactor that promotes the workspace to its own owning `Scope` changes what disposal releases, and the gate forces that refactor to update the note rather than leave a stale explanation next to changed behaviour.
 4. `workspace/index.ts` registers no SIGINT/SIGTERM handlers of its own — connection lifecycle owns them, and a second handler is how a shutdown ends up racing itself.
+
+## Sizing the First Real Slice — 2026-09-29
+
+The roadmap's first slice for this spec — scope one operation to the active workspace — landed twice (LSP and
+provider refreshes, then the session directory). What is left is the model itself, and it was sized before being
+started, against the code rather than the prose.
+
+Today a workspace is a value. `InstanceScope.with` pins a `WorkspaceRef` through `locallyWorkspace` when
+`input.workspaceID` is present, and nothing else changes: `Instance.provide` keys its AsyncLocalStorage scope by
+directory, `InstanceState`'s `ScopedCache` is keyed by directory, `invalidateReloadable(directory)` and
+`Instance.dispose` take a directory, and the bridge's own header comment records this as the open B31 gap —
+`check:workspace-isolation` fails if that comment goes, so the gap cannot be forgotten, only closed. Two
+workspaces on one directory therefore share config, caches, watchers, LSP and MCP clients and disposal; the
+`WorkspaceRef` tells a reader which workspace asked, not which resources answer.
+
+Promoting the workspace to the owning scope, as requirements 1, 2 and 6 ask, means re-keying that state by
+`(directory, workspaceID)` — or nesting a workspace scope under the instance scope — and deciding for each
+resource family whether it is per-workspace (config, caches, watchers, plugin generations) or per-directory
+(the SQLite connection, the git worktree). Every one of those decisions changes what `dispose` releases, and
+`multi-instance-teardown.test.ts` pins today's ordering. That is the L change the roadmap scopes across several
+verified PRs, and it lists EOT-02, EOT-03 and EOT-09 as its exit gates; none of the three has passed. Starting
+it now would be the "speculative rewrite" the Domain Adoption Map rules out, so it was not started.
+
+What the first PR of that migration looks like, when the gates pass: key `InstanceState` by `WorkspaceRef` for
+one resource family (config, whose per-instance invalidation already exists), prove with a test that two
+workspaces on one directory read different config after one reloads, and prove with the teardown test that
+disposing one leaves the other's config alive. The isolation gate and the bridge comment change in the same PR.
