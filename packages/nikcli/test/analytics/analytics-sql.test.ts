@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test"
 import { existsSync } from "fs"
 import fs from "fs/promises"
 import path from "path"
-import { withIsolatedDatabase } from "../helpers/sqlite"
+import { testDb, withIsolatedDatabase } from "../helpers/sqlite"
 
 function at(day: string, hour = 12) {
   return Date.parse(`${day}T${String(hour).padStart(2, "0")}:00:00.000Z`)
@@ -231,7 +231,7 @@ describe("analytics SQL", () => {
     await withIsolatedDatabase(async ({ home }) => {
       const { Database } = await import("@/database/database")
       const { Analytics } = await import("@/analytics/analytics")
-      Database.syncDb()
+      testDb(Database)
       await Analytics.recordSession({
         sessionID: "ses_no_json",
         projectID: "proj",
@@ -267,7 +267,7 @@ describe("analytics SQL", () => {
       )
 
       const { Database } = await import("@/database/database")
-      Database.syncDb()
+      testDb(Database)
       const row = Database.syncNative()
         .query<{ install_id: string }, []>(`SELECT install_id FROM analytics_share WHERE id = 'local'`)
         .get()

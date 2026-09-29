@@ -3,7 +3,7 @@ import { Effect } from "effect"
 import { existsSync } from "fs"
 import fs from "fs/promises"
 import path from "path"
-import { withIsolatedDatabase } from "../helpers/sqlite"
+import { testDb, withIsolatedDatabase } from "../helpers/sqlite"
 
 function runRecord(id = "happy-blue-fox", parentSessionID = "ses_parent_1") {
   return {
@@ -33,7 +33,7 @@ describe("background run SQL", () => {
 
       const { Database } = await import("@/database/database")
       const { BackgroundRunRepo } = await import("@/background/repo")
-      Database.syncDb()
+      testDb(Database)
 
       expect(Effect.runSync(BackgroundRunRepo.get(projectID, record.id))?.prompt).toBe("Inspect the tree")
       expect(Effect.runSync(BackgroundRunRepo.listRunning(projectID)).map((row) => row.id)).toEqual([record.id])
@@ -52,7 +52,7 @@ describe("background run SQL", () => {
     await withIsolatedDatabase(async ({ home }) => {
       const { Database } = await import("@/database/database")
       const { BackgroundRunRepo } = await import("@/background/repo")
-      Database.syncDb()
+      testDb(Database)
 
       const projectID = "proj_no_json"
       const record = runRecord("quiet-red-owl")
@@ -68,7 +68,7 @@ describe("background run SQL", () => {
     await withIsolatedDatabase(async ({ home }) => {
       const { Database } = await import("@/database/database")
       const { BackgroundRunRepo } = await import("@/background/repo")
-      Database.syncDb()
+      testDb(Database)
 
       const projectID = "proj_trap"
       const record = runRecord("stale-json-run")
@@ -96,7 +96,7 @@ describe("background run SQL", () => {
     await withIsolatedDatabase(async () => {
       const { Database } = await import("@/database/database")
       const { BackgroundRunRepo } = await import("@/background/repo")
-      Database.syncDb()
+      testDb(Database)
 
       const projectID = "proj_mutate"
       const running = runRecord("keep-running", "ses_a")

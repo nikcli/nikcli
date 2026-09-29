@@ -3,7 +3,7 @@ import { Effect } from "effect"
 import { existsSync } from "fs"
 import fs from "fs/promises"
 import path from "path"
-import { withIsolatedDatabase } from "../helpers/sqlite"
+import { testDb, withIsolatedDatabase } from "../helpers/sqlite"
 
 function routineRecord(id = "hourly-blue-fox", projectID = "proj_rt_1") {
   return {
@@ -31,7 +31,7 @@ describe("routine SQL", () => {
 
       const { Database } = await import("@/database/database")
       const { RoutineRepo } = await import("@/mobile/repo")
-      Database.syncDb()
+      testDb(Database)
 
       expect(Effect.runSync(RoutineRepo.get(projectID, record.id))?.name).toBe("hourly check")
       expect(Effect.runSync(RoutineRepo.list(projectID)).map((row) => row.id)).toEqual([record.id])
@@ -50,7 +50,7 @@ describe("routine SQL", () => {
     await withIsolatedDatabase(async ({ home }) => {
       const { Database } = await import("@/database/database")
       const { RoutineRepo } = await import("@/mobile/repo")
-      Database.syncDb()
+      testDb(Database)
 
       const projectID = "proj_no_json"
       const record = routineRecord("quiet-red-owl", projectID)
@@ -66,7 +66,7 @@ describe("routine SQL", () => {
     await withIsolatedDatabase(async ({ home }) => {
       const { Database } = await import("@/database/database")
       const { RoutineRepo } = await import("@/mobile/repo")
-      Database.syncDb()
+      testDb(Database)
 
       const projectID = "proj_trap"
       const record = routineRecord("stale-json-rt", projectID)
@@ -91,7 +91,7 @@ describe("routine SQL", () => {
     await withIsolatedDatabase(async () => {
       const { Database } = await import("@/database/database")
       const { RoutineRepo } = await import("@/mobile/repo")
-      Database.syncDb()
+      testDb(Database)
 
       const projectID = "proj_mutate"
       const record = routineRecord("keep-going", projectID)

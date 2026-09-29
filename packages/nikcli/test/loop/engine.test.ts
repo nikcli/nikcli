@@ -13,6 +13,7 @@ import * as Manager from "@/loop/manager"
 import * as Engine from "@/loop/engine"
 import { MAX_CONCURRENT_RUNS, MIN_RUN_TIMEOUT_MS, generateID, type LoopDefinition, type LoopRun } from "@/loop/schema"
 import { InstanceState, type InstanceContext } from "@/effect"
+import { testDb } from "../helpers/sqlite"
 
 const testHome = await fs.mkdtemp(path.join(os.tmpdir(), "nikcli-loop-engine-home-"))
 process.env.NIKCLI_TEST_HOME = testHome
@@ -51,7 +52,7 @@ afterEach(async () => {
   })
   // Loops live in SQL; the run counter is a column on `loop`, so dropping
   // both tables is the whole teardown (there is no separate meta record).
-  const db = Database.syncDb()
+  const db = testDb(Database)
   db.delete(loopRun).run()
   db.delete(loop).run()
 })

@@ -9,6 +9,7 @@ import { removeTestDir } from "../helpers/fs"
 import { preserveTestEnv } from "../helpers/env"
 import { account } from "@/database/schema"
 import { Database } from "@/database/database"
+import { testDb } from "../helpers/sqlite"
 
 /**
  * The two semantics `specs/storage/retire-database-wrapper.md` calls load-bearing.
@@ -22,7 +23,7 @@ import { Database } from "@/database/database"
  * transaction body receives, not a module-level `Database.effect`. The
  * behavior below is unchanged — that is the point of the fence.
  *
- * This exercises the **synchronous** surface (`syncDb` / `transaction`), which
+ * This exercises the **synchronous** surface (`transaction`, with `testDb` for the reads), which
  * reads the process singleton rather than the Effect layer, so the database is
  * selected through `NIKCLI_DB` rather than `layerFromPath`.
  *
@@ -62,7 +63,7 @@ function insert(tx: Database.TxOrDb, id: string) {
 }
 
 function exists(id: string) {
-  return Database.syncDb().select().from(account).where(eq(account.id, id)).get() !== undefined
+  return testDb(Database).select().from(account).where(eq(account.id, id)).get() !== undefined
 }
 
 describe("Database.transaction — nesting", () => {

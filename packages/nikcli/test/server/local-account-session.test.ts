@@ -5,6 +5,7 @@ import fs from "fs/promises"
 import os from "os"
 import path from "path"
 import { SignJWT } from "jose"
+import { testDb } from "../helpers/sqlite"
 
 const testHome = await fs.mkdtemp(path.join(os.tmpdir(), "nikcli-local-account-home-"))
 process.env.NIKCLI_TEST_HOME = testHome
@@ -222,7 +223,7 @@ describe("a password-protected loopback server", () => {
     // whose bearer the server then admits without the password. The machine's
     // account is admin whenever it was the database's first identity or is
     // on the admin allowlist — the usual single-owner machine.
-    Database.syncDb().update(users).set({ role: "admin" }).where(eq(users.email, EMAIL)).run()
+    testDb(Database).update(users).set({ role: "admin" }).where(eq(users.email, EMAIL)).run()
     await withPassword(async () => {
       const response = await overService("/user/register", {
         method: "POST",

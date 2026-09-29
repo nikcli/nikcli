@@ -135,8 +135,16 @@ export namespace Database {
     return service
   }
 
-  /** Shared Drizzle client for all domain modules. Safe to call from synchronous code. */
-  export function syncDb(): Client {
+  /**
+   * The shared Drizzle client, for `query` and `transaction` only.
+   *
+   * This used to be exported as `syncDb()`, the synchronous handle every
+   * domain module reached for. `specs/storage/retire-database-wrapper.md`
+   * retired that shape: `query` hands its `run` an executor and reports a
+   * failure as `QueryError`, so a repository's failure mode is in its type.
+   * Tests that want the handle itself take it through `test/helpers/sqlite.ts`.
+   */
+  function client(): Client {
     return singleton().db
   }
 
@@ -262,7 +270,7 @@ export namespace Database {
    */
   export function query<A>(operation: string, run: (db: TxOrDb) => A, executor?: TxOrDb): Effect.Effect<A, QueryError> {
     return Effect.try({
-      try: () => run(executor ?? (syncDb() as TxOrDb)),
+      try: () => run(executor ?? (client() as TxOrDb)),
       catch: (error) => new QueryError({ operation, message: describe(error) }),
     })
   }
@@ -316,14 +324,14 @@ export namespace Database {
     return Effect.suspend(() => {
       // Set while an outermost transaction is open, so a nested `transaction`
       // can find the queue to join. Nothing outside this function reads it.
-      if (activeQueue) return fn(syncDb() as TxOrDb, contextFor(activeQueue))
+      if (activeQueue) return fn(client() as TxOrDb, contextFor(activeQueue))
 
       const queue: PostCommitQueue = []
       activeQueue = queue
 
       let exit: Exit.Exit<A, E> | undefined
       try {
-        syncDb().transaction(
+        client().transaction(
           (tx) => {
             // The body is evaluated here rather than returned, because the
             // driver commits when this callback returns. A body that suspends

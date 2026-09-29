@@ -1,6 +1,6 @@
 import { Effect } from "effect"
 import { describe, expect, it } from "bun:test"
-import { withIsolatedDatabase } from "../helpers/sqlite"
+import { testDb, withIsolatedDatabase } from "../helpers/sqlite"
 import {
   InstructionKey,
   canonicalJson,
@@ -186,7 +186,7 @@ describe("instruction sync", () => {
       const { Database } = await import("../../src/database/database")
       const { instructionBlob } = await import("../../src/session/instruction.sql")
       InstructionSync.commit(sessionID, projectID, [fileRead("same", "/tmp/a.md"), fileRead("same", "/tmp/b.md")])
-      const count = Database.syncDb().select().from(instructionBlob).all().length
+      const count = testDb(Database).select().from(instructionBlob).all().length
       expect(count).toBe(1)
       const hash = hashInstructionBody({ kind: "file", text: "same" })
       expect(Effect.runSync(InstructionRepo.getBlob(hash))).toBeDefined()

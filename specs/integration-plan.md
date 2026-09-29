@@ -109,8 +109,9 @@ quota exhaustion — and `evictPluginStorage(id)` runs from `deactivatePluginEnt
   (`packages/tui/src/component/dialog-mobile-connect.tsx` reads and writes `teleport`;
   `packages/sdk/js/src/server.ts` forwards `logLevel` as `--log-level`), so both are
   `keep` as of 2026-09-29. Nothing in that ledger is a cheap removal.
-- Deleting the `Database.syncDb` export. Gated at zero for `src` already; 24 test
-  files still call it. Mechanical, but it is cleanup, not a fix.
+- ~~Deleting the `Database.syncDb` export.~~ Done 2026-09-29: the 24 test files take the
+  shared client through `test/helpers/sqlite.ts` and the export is gone. It was cleanup,
+  not a fix, and it closes `specs/storage/retire-database-wrapper.md`.
 
 ## Non-goals
 

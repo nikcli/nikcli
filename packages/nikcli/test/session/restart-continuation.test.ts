@@ -6,6 +6,7 @@ import os from "os"
 import path from "path"
 import { afterAll, afterEach, describe, expect, it } from "bun:test"
 import type { Session } from "@/session"
+import { testDb } from "../helpers/sqlite"
 
 const testHome = await fs.mkdtemp(path.join(os.tmpdir(), "nikcli-restart-continuation-home-"))
 process.env.NIKCLI_TEST_HOME = testHome
@@ -19,7 +20,7 @@ const { SessionRepo } = await import("@/session/repo")
 const { sessionInfo } = await import("@/session/session.sql")
 
 afterEach(() => {
-  Database.syncDb().delete(sessionInfo).run()
+  testDb(Database).delete(sessionInfo).run()
 })
 
 afterAll(async () => {

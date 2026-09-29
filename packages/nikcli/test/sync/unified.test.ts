@@ -12,6 +12,7 @@ import { and, eq } from "drizzle-orm"
 import { mkdtempSync } from "fs"
 import { tmpdir } from "os"
 import { join } from "path"
+import { testDb } from "../helpers/sqlite"
 
 const tempDir = mkdtempSync(join(tmpdir(), "nikcli-sync-test-"))
 process.env.NIKCLI_DB = join(tempDir, "test.db")
@@ -248,7 +249,7 @@ describe("SyncReducer — replay with snapshot cache", () => {
       name: "gamma",
     })
     // Manually corrupt the snapshot row in the DB
-    const db = Database.syncDb()
+    const db = testDb(Database)
     db.update(syncSnapshot)
       .set({ state: "not-json{" })
       .where(

@@ -40,8 +40,11 @@ const BASELINE = {
   rawSql: 2,
   /**
    * Groups 3-4 are done: no production module reaches for the synchronous
-   * singleton. It was 32 call sites across 28 modules. `syncDb` itself stays
-   * on the namespace for tests and tooling; what is gated is `src`.
+   * singleton. It was 32 call sites across 28 modules. The export itself is
+   * gone as of 2026-09-29 — tests take the shared client through
+   * `test/helpers/sqlite.ts`'s `testDb`, which asks `Database.query` for its
+   * executor — so this count can only ever be zero, and the namespace check
+   * below is what now guards the retirement.
    */
   syncDb: 0,
 } as const
@@ -101,6 +104,16 @@ describe("Database wrapper inventory", () => {
     // `syncDb()` call. Lower this in the same change that removes them; a rise
     // means a new module reached for the process-global handle instead.
     expect(counts.get("syncDb") ?? 0).toBeLessThanOrEqual(BASELINE.syncDb)
+  })
+
+  it("no longer offers the synchronous singleton at all", async () => {
+    // The last step of the retirement: `syncDb` is not a member of the
+    // namespace, so a new module cannot reach for it. Its callers went through
+    // `query` (production) or `testDb` (tests), and `query` keeps the shared
+    // connection as a private accessor.
+    const { Database } = await import("@/database/database")
+    expect("syncDb" in Database).toBe(false)
+    expect(typeof Database.query).toBe("function")
   })
 
   it("keeps the native handle out of production code", async () => {

@@ -3,7 +3,7 @@ import { Effect } from "effect"
 import { existsSync } from "fs"
 import fs from "fs/promises"
 import path from "path"
-import { withIsolatedDatabase } from "../helpers/sqlite"
+import { testDb, withIsolatedDatabase } from "../helpers/sqlite"
 
 function missionDef(id = "mission_sql_1") {
   return {
@@ -124,7 +124,7 @@ describe("domain SQL (missions, monitors, shares, artifacts)", () => {
       const { ShareRepo } = await import("@/share/repo")
       const { ArtifactRepo } = await import("@/artifact/repo")
 
-      Database.syncDb()
+      testDb(Database)
 
       expect(Effect.runSync(MissionRepo.get("proj_sql", def.id))?.name).toBe("sql mission")
       expect(Effect.runSync(MissionRepo.listExecs("proj_sql", def.id)).map((row) => row.id)).toEqual([exec.id])
@@ -170,7 +170,7 @@ describe("domain SQL (missions, monitors, shares, artifacts)", () => {
       const { MonitorRepo } = await import("@/monitor/repo")
       const { ShareRepo } = await import("@/share/repo")
       const { ArtifactRepo } = await import("@/artifact/repo")
-      Database.syncDb()
+      testDb(Database)
 
       const def = missionDef("mission_no_json")
       Effect.runSync(MissionRepo.upsert("proj_live", def))
@@ -237,7 +237,7 @@ describe("domain SQL (missions, monitors, shares, artifacts)", () => {
       const { MonitorRepo } = await import("@/monitor/repo")
       const { ShareRepo } = await import("@/share/repo")
       const { ArtifactRepo } = await import("@/artifact/repo")
-      Database.syncDb()
+      testDb(Database)
 
       const def = missionDef("mission_trap")
       Effect.runSync(MissionRepo.upsert("proj_trap", def))
@@ -339,7 +339,7 @@ describe("domain SQL (missions, monitors, shares, artifacts)", () => {
       const { MonitorRepo } = await import("@/monitor/repo")
       const { ShareRepo } = await import("@/share/repo")
       const { ArtifactRepo } = await import("@/artifact/repo")
-      Database.syncDb()
+      testDb(Database)
 
       const monitor = {
         id: "mon_live",
@@ -413,7 +413,7 @@ describe("domain SQL (missions, monitors, shares, artifacts)", () => {
     await withIsolatedDatabase(async () => {
       const { Database } = await import("@/database/database")
       const { MissionRepo } = await import("@/mission/repo")
-      Database.syncDb()
+      testDb(Database)
 
       const def = missionDef("mission_live")
       Effect.runSync(MissionRepo.upsert("proj_live", def))
@@ -438,7 +438,7 @@ describe("domain SQL (missions, monitors, shares, artifacts)", () => {
     await withIsolatedDatabase(async () => {
       const { Database } = await import("@/database/database")
       const { MissionRepo } = await import("@/mission/repo")
-      Database.syncDb()
+      testDb(Database)
 
       const def = missionDef("mission_trim")
       Effect.runSync(MissionRepo.upsert("proj_trim", def))
@@ -498,7 +498,7 @@ describe("loop SQL", () => {
 
       const { Database } = await import("@/database/database")
       const { LoopRepo } = await import("@/loop/repo")
-      Database.syncDb()
+      testDb(Database)
 
       expect(Effect.runSync(LoopRepo.get("proj_loop", def.id))?.name).toBe("sql loop")
       expect(Effect.runSync(LoopRepo.startedRuns("proj_loop", def.id))).toBe(7)
@@ -518,7 +518,7 @@ describe("loop SQL", () => {
     await withIsolatedDatabase(async ({ home }) => {
       const { Database } = await import("@/database/database")
       const { LoopRepo } = await import("@/loop/repo")
-      Database.syncDb()
+      testDb(Database)
 
       const def = loopDef("loop_no_json")
       Effect.runSync(LoopRepo.upsert("proj_live", def))
@@ -533,7 +533,7 @@ describe("loop SQL", () => {
     await withIsolatedDatabase(async ({ home }) => {
       const { Database } = await import("@/database/database")
       const { LoopRepo } = await import("@/loop/repo")
-      Database.syncDb()
+      testDb(Database)
 
       const def = loopDef("loop_trap")
       Effect.runSync(LoopRepo.upsert("proj_trap", def))

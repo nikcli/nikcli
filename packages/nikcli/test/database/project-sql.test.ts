@@ -3,7 +3,7 @@ import { Effect } from "effect"
 import { existsSync } from "fs"
 import fs from "fs/promises"
 import path from "path"
-import { withIsolatedDatabase } from "../helpers/sqlite"
+import { testDb, withIsolatedDatabase } from "../helpers/sqlite"
 
 function projectInfo(id = "proj_sql_1") {
   return {
@@ -31,7 +31,7 @@ describe("project SQL", () => {
 
       const { Database } = await import("@/database/database")
       const { ProjectRepo } = await import("@/project/repo")
-      Database.syncDb()
+      testDb(Database)
 
       expect(Effect.runSync(ProjectRepo.get(info.id))?.name).toBe("sql project")
       expect(Effect.runSync(ProjectRepo.list()).map((row) => row.id)).toEqual([info.id])
@@ -53,7 +53,7 @@ describe("project SQL", () => {
     await withIsolatedDatabase(async ({ home }) => {
       const { Database } = await import("@/database/database")
       const { ProjectRepo } = await import("@/project/repo")
-      Database.syncDb()
+      testDb(Database)
 
       const info = projectInfo("proj_no_json")
       Effect.runSync(ProjectRepo.upsert(info))
@@ -71,7 +71,7 @@ describe("project SQL", () => {
     await withIsolatedDatabase(async ({ home }) => {
       const { Database } = await import("@/database/database")
       const { ProjectRepo } = await import("@/project/repo")
-      Database.syncDb()
+      testDb(Database)
 
       const info = projectInfo("proj_trap")
       Effect.runSync(ProjectRepo.upsert({ ...info, name: "sql-title" }))
@@ -91,7 +91,7 @@ describe("project SQL", () => {
     await withIsolatedDatabase(async () => {
       const { Database } = await import("@/database/database")
       const { ProjectRepo } = await import("@/project/repo")
-      Database.syncDb()
+      testDb(Database)
 
       const info = projectInfo("proj_dirs")
       Effect.runSync(ProjectRepo.upsert(info))

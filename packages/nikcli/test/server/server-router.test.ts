@@ -14,7 +14,7 @@ import { WorkspaceDB } from "@/workspace/db"
 import { workspace } from "@/workspace/workspace.sql"
 import { SandboxRegistry } from "@/sandbox/registry"
 import { Database } from "@/database/database"
-import { withIsolatedDatabase } from "../helpers/sqlite"
+import { testDb, withIsolatedDatabase } from "../helpers/sqlite"
 import { eq } from "drizzle-orm"
 import fs from "fs/promises"
 import path from "path"
@@ -275,7 +275,7 @@ describe("server request context", () => {
         type: "worktree",
         directory: session.directory,
       })
-      Database.syncDb().update(sessionInfo).set({ data: "{" }).where(eq(sessionInfo.id, session.id)).run()
+      testDb(Database).update(sessionInfo).set({ data: "{" }).where(eq(sessionInfo.id, session.id)).run()
       const query = contextRequest(`/session/${session.id}`, directory, space.id)
       const header = new Request(contextRequest(`/session/${session.id}`, directory), {
         headers: { "x-nikcli-workspace": space.id },
@@ -293,7 +293,7 @@ describe("server request context", () => {
 
   it("does not dispatch under request context after a session read fails", async () => {
     await withContextFixture(async ({ directory, session }) => {
-      Database.syncDb().update(sessionInfo).set({ data: "{" }).where(eq(sessionInfo.id, session.id)).run()
+      testDb(Database).update(sessionInfo).set({ data: "{" }).where(eq(sessionInfo.id, session.id)).run()
       const request = contextRequest(`/session/${session.id}/context-probe`, directory)
       await expect(ServerRouter.context(request)).rejects.toBeInstanceOf(SessionError.IOError)
       let dispatched = false
@@ -313,7 +313,7 @@ describe("server request context", () => {
   it("does not disguise a malformed workspace record as a missing workspace", async () => {
     await withContextFixture(async ({ directory, session }) => {
       const space = putWorkspace(session, { type: "worktree", directory })
-      Database.syncDb().update(workspace).set({ config: "{" }).where(eq(workspace.id, space.id)).run()
+      testDb(Database).update(workspace).set({ config: "{" }).where(eq(workspace.id, space.id)).run()
       const request = contextRequest("/path", directory, space.id)
       // The decode failure used to reach here as the `SyntaxError` that
       // `JSON.parse` threw. `WorkspaceDB.get` is an Effect now, so it travels

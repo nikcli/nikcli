@@ -10,7 +10,7 @@
  * Usage:
  *
  *   import { describe, expect, it } from "bun:test"
- *   import { withIsolatedDatabase } from "../helpers/sqlite"
+ *   import { testDb, withIsolatedDatabase } from "../helpers/sqlite"
  *
  *   describe("workspace/config", () => {
  *     it("parses config", async () => {
@@ -29,6 +29,8 @@
 import fs from "fs/promises"
 import os from "os"
 import path from "path"
+import { Effect } from "effect"
+import type { Database } from "@/database/database"
 
 export type IsolatedDatabaseOptions = {
   /**
@@ -87,4 +89,30 @@ export async function withIsolatedDatabase<T>(
     else process.env.NIKCLI_DB = previousDatabase
     await fs.rm(home, { recursive: true, force: true }).catch(() => {})
   }
+}
+
+/**
+ * The shared Drizzle client, for fixtures and assertions.
+ *
+ * `Database.syncDb()` is gone (`specs/storage/retire-database-wrapper.md`);
+ * `Database.query` is the one access shape, and it hands `run` an executor.
+ * A test that seeds a row or reads one back wants that handle rather than an
+ * Effect per statement, so this asks `query` for its executor: the same shared
+ * connection the code under test uses, which `Database.close` in
+ * `withIsolatedDatabase` closes with everything else.
+ *
+ * The namespace is a parameter rather than an import. The tests that use this
+ * load the database module inside `withIsolatedDatabase`, after
+ * `NIKCLI_TEST_HOME` and `NIKCLI_DB` are set, and the first open runs the
+ * migrations and the JSON backfill against the home those name. A static
+ * import here would move that load before either is set, and a `require` at
+ * call time was tried and produced a second module instance with its own
+ * connection, so the first open happened on a handle the code under test never
+ * read. Passing the caller's own namespace keeps one instance.
+ *
+ * Calling it also opens the database, which is how a few tests run the
+ * migrations before reading through a repository.
+ */
+export function testDb(database: typeof Database): Database.Client {
+  return Effect.runSync(database.query("test fixture", (executor) => executor as Database.Client))
 }

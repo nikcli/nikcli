@@ -20,6 +20,7 @@ import {
   type MissionFeature,
   type MissionMilestone,
 } from "@/mission/schema"
+import { testDb } from "../helpers/sqlite"
 
 /**
  * The lifecycle invariants in `src/mission/orchestrator.ts`
@@ -60,7 +61,7 @@ afterEach(async () => {
   await withInstance(async () => {
     Orchestrator.dispose()
   })
-  const db = Database.syncDb()
+  const db = testDb(Database)
   db.delete(missionExec).run()
   db.delete(mission).run()
 })

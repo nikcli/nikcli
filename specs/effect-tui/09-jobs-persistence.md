@@ -12,7 +12,7 @@ repository work. A new generic scheduler or SQL migration is not justified by th
 ## Scope and Non-Goals
 
 Strengthen existing session/tool/delegation/monitor ownership and repository seams, starting with one job type. Preserve
-`Database.syncDb()` repositories, schemas, logs, job IDs, and status wire compatibility. No live database operations,
+the `Database.query` repositories, schemas, logs, job IDs, and status wire compatibility. No live database operations,
 dependency installation, distributed workflow platform, global worker-pool replacement, or default concurrency change
 without characterization and review.
 

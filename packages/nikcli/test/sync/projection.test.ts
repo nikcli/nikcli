@@ -5,6 +5,7 @@ import fs from "fs/promises"
 import os from "os"
 import path from "path"
 import { afterAll, describe, expect, it } from "bun:test"
+import { testDb } from "../helpers/sqlite"
 
 const testDir = await fs.mkdtemp(path.join(os.tmpdir(), "nikcli-sync-projection-"))
 process.env.NIKCLI_TEST_HOME = testDir
@@ -117,7 +118,7 @@ describe("replay across a compacted range", () => {
     // A snapshot that has fallen behind, then compaction removing the events
     // it would have needed to catch up.
     Effect.runSync(SyncSnapshot.save(key, 1, { id: sessionID, title: "stale" }))
-    Database.syncDb()
+    testDb(Database)
       .delete(syncEvent)
       .where(and(eq(syncEvent.aggregate, sessionID), lte(syncEvent.seq, 2)))
       .run()

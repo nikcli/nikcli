@@ -9,6 +9,7 @@ import { loop, loopRun } from "@/loop/loop.sql"
 import * as Manager from "@/loop/manager"
 import { generateID, type LoopDefinition, type LoopRun } from "@/loop/schema"
 import { InstanceState, type InstanceContext } from "@/effect"
+import { testDb } from "../helpers/sqlite"
 
 const testHome = await fs.mkdtemp(path.join(os.tmpdir(), "nikcli-loop-manager-home-"))
 process.env.NIKCLI_TEST_HOME = testHome
@@ -44,7 +45,7 @@ async function withInstance<A>(fn: (instance: InstanceContext) => Promise<A>): P
 }
 
 afterEach(() => {
-  const db = Database.syncDb()
+  const db = testDb(Database)
   db.delete(loopRun).run()
   db.delete(loop).run()
 })

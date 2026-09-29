@@ -4,6 +4,7 @@ import fs from "fs/promises"
 import os from "os"
 import path from "path"
 import { removeTestDir } from "../helpers/fs"
+import { testDb } from "../helpers/sqlite"
 
 const testHome = await fs.mkdtemp(path.join(os.tmpdir(), "nikcli-sync-event-home-"))
 process.env.NIKCLI_TEST_HOME = testHome
@@ -95,7 +96,7 @@ SyncEvent.init({
 })
 
 function rows(projectID: string, aggregate: string) {
-  return Database.syncDb()
+  return testDb(Database)
     .select()
     .from(syncEvent)
     .where(and(eq(syncEvent.projectId, projectID), eq(syncEvent.aggregate, aggregate)))
@@ -103,7 +104,7 @@ function rows(projectID: string, aggregate: string) {
 }
 
 function sequence(projectID: string, aggregate: string) {
-  return Database.syncDb()
+  return testDb(Database)
     .select({ seq: syncSequence.seq })
     .from(syncSequence)
     .where(and(eq(syncSequence.projectId, projectID), eq(syncSequence.aggregate, aggregate)))

@@ -3,7 +3,7 @@ import { Effect } from "effect"
 import { existsSync } from "fs"
 import fs from "fs/promises"
 import path from "path"
-import { withIsolatedDatabase } from "../helpers/sqlite"
+import { testDb, withIsolatedDatabase } from "../helpers/sqlite"
 
 function goalState(sessionID = "ses_goal_1") {
   return {
@@ -31,7 +31,7 @@ describe("session goal SQL", () => {
 
       const { Database } = await import("@/database/database")
       const { GoalRepo } = await import("@/session/goal-repo")
-      Database.syncDb()
+      testDb(Database)
 
       expect(Effect.runSync(GoalRepo.get(state.sessionID))?.objective).toBe("move goals off JSON")
       expect(Effect.runSync(GoalRepo.get(state.sessionID))?.tokensUsed).toBe(12)
@@ -50,7 +50,7 @@ describe("session goal SQL", () => {
     await withIsolatedDatabase(async ({ home }) => {
       const { Database } = await import("@/database/database")
       const { GoalRepo } = await import("@/session/goal-repo")
-      Database.syncDb()
+      testDb(Database)
 
       const state = goalState("ses_no_json")
       Effect.runSync(GoalRepo.upsert(state))
@@ -65,7 +65,7 @@ describe("session goal SQL", () => {
     await withIsolatedDatabase(async ({ home }) => {
       const { Database } = await import("@/database/database")
       const { GoalRepo } = await import("@/session/goal-repo")
-      Database.syncDb()
+      testDb(Database)
 
       const state = goalState("ses_trap")
       Effect.runSync(GoalRepo.upsert({ ...state, objective: "sql-objective" }))
@@ -89,7 +89,7 @@ describe("session goal SQL", () => {
     await withIsolatedDatabase(async () => {
       const { Database } = await import("@/database/database")
       const { GoalRepo } = await import("@/session/goal-repo")
-      Database.syncDb()
+      testDb(Database)
 
       const state = goalState("ses_mutate")
       Effect.runSync(GoalRepo.upsert(state))

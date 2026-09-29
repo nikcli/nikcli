@@ -3,7 +3,7 @@ import { Effect } from "effect"
 import { existsSync } from "fs"
 import fs from "fs/promises"
 import path from "path"
-import { withIsolatedDatabase } from "../helpers/sqlite"
+import { testDb, withIsolatedDatabase } from "../helpers/sqlite"
 
 function diffs() {
   return [
@@ -31,7 +31,7 @@ describe("session diff SQL", () => {
 
       const { Database } = await import("@/database/database")
       const { SessionDiffRepo } = await import("@/session/diff-repo")
-      Database.syncDb()
+      testDb(Database)
 
       expect(Effect.runSync(SessionDiffRepo.get(sessionID))).toEqual(payload)
 
@@ -49,7 +49,7 @@ describe("session diff SQL", () => {
     await withIsolatedDatabase(async ({ home }) => {
       const { Database } = await import("@/database/database")
       const { SessionDiffRepo } = await import("@/session/diff-repo")
-      Database.syncDb()
+      testDb(Database)
 
       const sessionID = "ses_no_json"
       Effect.runSync(SessionDiffRepo.upsert(sessionID, diffs()))
@@ -64,7 +64,7 @@ describe("session diff SQL", () => {
     await withIsolatedDatabase(async ({ home }) => {
       const { Database } = await import("@/database/database")
       const { SessionDiffRepo } = await import("@/session/diff-repo")
-      Database.syncDb()
+      testDb(Database)
 
       const sessionID = "ses_trap"
       Effect.runSync(SessionDiffRepo.upsert(sessionID, [{ ...diffs()[0]!, after: "sql-after" }]))
@@ -88,7 +88,7 @@ describe("session diff SQL", () => {
     await withIsolatedDatabase(async () => {
       const { Database } = await import("@/database/database")
       const { SessionDiffRepo } = await import("@/session/diff-repo")
-      Database.syncDb()
+      testDb(Database)
 
       const sessionID = "ses_remove"
       Effect.runSync(SessionDiffRepo.upsert(sessionID, diffs()))

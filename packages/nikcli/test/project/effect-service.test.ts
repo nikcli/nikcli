@@ -6,6 +6,7 @@ import { existsSync } from "fs"
 import fs from "fs/promises"
 import os from "os"
 import path from "path"
+import { testDb } from "../helpers/sqlite"
 
 /** Whether any ancestor of `directory` is a git repository, itself included. */
 function repositoryAbove(directory: string) {
@@ -35,7 +36,7 @@ describe("Project.Service", () => {
   beforeEach(async () => {
     const { Database } = await import("@/database/database")
     const { ProjectRepo } = await import("@/project/repo")
-    Database.syncDb()
+    testDb(Database)
     Effect.runSync(ProjectRepo.clear())
     await removeTestDir(path.join(testHome, "data", "storage"))
   })

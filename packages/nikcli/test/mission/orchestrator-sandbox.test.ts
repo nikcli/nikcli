@@ -12,6 +12,7 @@ import * as Manager from "@/mission/manager"
 import * as Orchestrator from "@/mission/orchestrator"
 import { RunSandbox } from "@/worktree/sandbox"
 import { generateID, type MissionDefinition, type MissionFeature } from "@/mission/schema"
+import { testDb } from "../helpers/sqlite"
 
 /**
  * The sandbox half of the mission contract
@@ -63,7 +64,7 @@ afterEach(async () => {
   await withInstance(async () => {
     Orchestrator.dispose()
   })
-  const db = Database.syncDb()
+  const db = testDb(Database)
   db.delete(missionExec).run()
   db.delete(mission).run()
 })

@@ -109,14 +109,15 @@ independently: upstream published `drizzle-orm/effect-sqlite-bun`; the measureme
 came back the other way (Effect at the repository boundary, 0.5µs a query, against 9µs to swap the
 driver); and its consumer finished without it.
 
-That consumer, [../storage/retire-database-wrapper.md](../storage/retire-database-wrapper.md), has
-**landed groups 1-4** on the synchronous driver: `Database.syncDb()` has no callers in `src`, down
-from 32 across 28 modules. What is left there is deleting the export, once the test and tooling
-callers move.
+That consumer, [../storage/retire-database-wrapper.md](../storage/retire-database-wrapper.md), is
+**complete** on the synchronous driver: `Database.syncDb()` went from 32 call sites across 28 modules
+to none in `src` (2026-09-15), and the export itself was deleted on 2026-09-29 once the 24 test callers
+moved to the `testDb` helper.
 
 Both fences hold: `test/database/transaction-semantics.test.ts` pins the nested-join and
-post-commit-drain semantics, and `test/database/wrapper-inventory.test.ts` gates `syncDb` at zero for
-`src` and holds the rest as a ceiling. Lower the baseline in the same change that lands a group.
+post-commit-drain semantics, and `test/database/wrapper-inventory.test.ts` asserts `syncDb` is no longer a
+member of the namespace and holds the rest as a ceiling. Lower the baseline in the same change that
+lands a group.
 
 Two hardening items are independent of that work and should not block it:
 

@@ -12,6 +12,7 @@ import * as Engine from "@/loop/engine"
 import { RunSandbox } from "@/worktree/sandbox"
 import { generateID, type LoopDefinition } from "@/loop/schema"
 import { InstanceState, type InstanceContext } from "@/effect"
+import { testDb } from "../helpers/sqlite"
 
 const testHome = await fs.mkdtemp(path.join(os.tmpdir(), "nikcli-loop-sandbox-home-"))
 process.env.NIKCLI_TEST_HOME = testHome
@@ -62,7 +63,7 @@ afterEach(async () => {
   await withInstance(async () => {
     Engine.dispose()
   })
-  const db = Database.syncDb()
+  const db = testDb(Database)
   db.delete(loopRun).run()
   db.delete(loop).run()
 })

@@ -1,12 +1,12 @@
 # Retire the synchronous `Database` wrapper
 
-| Field   | Value                                                                                                                         |
-| ------- | ----------------------------------------------------------------------------------------------------------------------------- |
-| Status  | **Groups 1-4 complete** — 2026-09-15: `Database.syncDb()` has no callers left in `src`                                        |
-| Scope   | `packages/nikcli/src/database/database.ts` and its 38 consumers                                                               |
-| Buys    | One database access shape, so a repository's failure mode is visible in its type                                              |
-| Depends | Nothing. The adapter dependency is void — see below.                                                                          |
-| Tests   | `test/database/transaction-semantics.test.ts` (the two semantics), `test/database/wrapper-inventory.test.ts` (the count gate) |
+| Field   | Value                                                                                                                                                                                         |
+| ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Status  | **Complete** — 2026-09-29: the `Database.syncDb` export is deleted; `src` had been at zero since 2026-09-15 and the 24 test files now take the shared client through `test/helpers/sqlite.ts` |
+| Scope   | `packages/nikcli/src/database/database.ts` and its 38 consumers                                                                                                                               |
+| Buys    | One database access shape, so a repository's failure mode is visible in its type                                                                                                              |
+| Depends | Nothing. The adapter dependency is void — see below.                                                                                                                                          |
+| Tests   | `test/database/transaction-semantics.test.ts` (the two semantics), `test/database/wrapper-inventory.test.ts` (the count gate)                                                                 |
 
 ## The Adapter Was Never Needed — 2026-09-15
 
@@ -250,6 +250,27 @@ that only reads should not be handed something that can write.
 Several files in this group already take `Database.Service` from Effect context. They are done; they
 appear here only because they still import the namespace.
 
+## The Export Is Gone — 2026-09-29
+
+`Database.syncDb()` no longer exists. Inside `database.ts` the shared connection is a private `client()`
+that only `query` and `transaction` reach; `wrapper-inventory.test.ts` now asserts `"syncDb" in Database`
+is false as well as counting zero references in `src`.
+
+The 24 test files that still called it wanted one of two things: the Drizzle handle itself, to seed a row
+or read one back without an Effect per statement, or the side effect of opening the database so the
+migrations run before a repository is read. Both come from one helper, `testDb()` in
+`test/helpers/sqlite.ts`, which asks `Database.query` for its executor — the same shared connection the
+code under test uses, closed by `withIsolatedDatabase` with everything else. It resolves the database
+module with `require` at call time rather than a static import, because those tests load the module
+inside `withIsolatedDatabase`, after `NIKCLI_TEST_HOME` and `NIKCLI_DB` are set, and a static import in a
+helper every test file loads would have moved that to module evaluation. Nineteen `const { Database } =
+await import(...)` lines and six static imports whose only use was `syncDb()` are gone with it.
+
+What was **not** done, and why: the Effect layer (`Database.Service` through `layerFromPath`) is the
+destination for production code, not for fixtures — it opens its own connection to the file, which is
+not the one `close` in the isolation helper closes. `syncNative` stays as documented, for migrations and
+the tests that run them.
+
 ## What Stays
 
 - `Database.Service`, `Database.layerFromPath`, `Database.defaultLayer` — the Effect surface is the
@@ -266,9 +287,9 @@ appear here only because they still import the namespace.
    the named accessor.
 3. ~~Group 3, one domain per change, each with its existing repository tests green.~~ **Done.**
 4. ~~Group 4.~~ **Done.**
-5. Add the gate, then delete the synchronous exports. **This is what is left.** `syncDb` is already
-   gated at zero for `src` by `wrapper-inventory.test.ts`; deleting the export itself needs the test
-   and tooling callers moved first, which is why it did not land with group 4.
+5. ~~Add the gate, then delete the synchronous exports.~~ **Done 2026-09-29.** The gate landed first
+   (`wrapper-inventory.test.ts`, `syncDb` at zero for `src`); the export went once the 24 test callers
+   moved, which is why it did not land with group 4. See "The Export Is Gone" below.
 
 An earlier revision of this list had a step between groups 2 and 3: land the Effect Drizzle adapter,
 so groups 3 and 4 had an Effect-native executor to move onto. That step is gone, and its absence is

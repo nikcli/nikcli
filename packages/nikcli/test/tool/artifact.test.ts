@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from "bun:test"
 import path from "path"
 import { Artifact } from "@/artifact"
 import { ArtifactTool } from "@/tool/artifact"
-import { withIsolatedDatabase } from "../helpers/sqlite"
+import { testDb, withIsolatedDatabase } from "../helpers/sqlite"
 import { makeToolContext, withProjectDirectory } from "../helpers/tool-context"
 
 const ORIGINAL_FETCH = globalThis.fetch
@@ -56,7 +56,7 @@ describe("ArtifactTool", () => {
   it("returns a ?key= capability link as metadata.url, not the login-gated page", async () => {
     await withIsolatedDatabase(async ({ home }) => {
       const { Database } = await import("@/database/database")
-      Database.syncDb()
+      testDb(Database)
 
       process.env["NIKCLI_ARTIFACT_URL"] = "https://nikcli-ai.dev"
       // SAFETY: the stub answers the single publish call this test makes, so it

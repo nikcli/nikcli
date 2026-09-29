@@ -2,7 +2,7 @@ import { describe, expect, it } from "bun:test"
 import { Effect } from "effect"
 import fs from "fs/promises"
 import path from "path"
-import { withIsolatedDatabase } from "../helpers/sqlite"
+import { testDb, withIsolatedDatabase } from "../helpers/sqlite"
 
 function workspaceRecord(id = "wrk_json_1") {
   return {
@@ -29,7 +29,7 @@ describe("workspace JSON backfill", () => {
 
       const { Database } = await import("@/database/database")
       const { WorkspaceDB } = await import("@/workspace/db")
-      Database.syncDb()
+      testDb(Database)
 
       expect(Effect.runSync(WorkspaceDB.get(record.id))?.name).toBe("json workspace")
       expect(Effect.runSync(WorkspaceDB.get(record.id))?.config).toEqual(record.config)
@@ -48,7 +48,7 @@ describe("workspace JSON backfill", () => {
     await withIsolatedDatabase(async ({ home }) => {
       const { Database } = await import("@/database/database")
       const { WorkspaceDB } = await import("@/workspace/db")
-      Database.syncDb()
+      testDb(Database)
 
       const record = workspaceRecord("wrk_trap")
       Effect.runSync(WorkspaceDB.upsert({ ...record, name: "sql-title" }))
