@@ -10,14 +10,14 @@ export function Activity() {
   const svc = () => app.service()
   const [days, setDays] = createSignal("30")
   const c = () => app.client()
-  const global = createPoll(async () => (c() ? unwrap(c()!.analytics.global()) : undefined), 30000, svc)
+  const global = createPoll(async () => (c() ? unwrap(c()!.analytics.global()) : undefined), 120_000, svc)
   const daily = createPoll(
     async () => (c() ? unwrap(c()!.analytics.daily({ days: days() })) : undefined),
-    30000,
+    120_000,
     () => [svc(), days()],
   )
-  const board = createPoll(async () => (c() ? unwrap(c()!.analytics.leaderboard()) : undefined), 60000, svc)
-  const sessions = createPoll(async () => (c() ? unwrap(c()!.analytics.sessions()) : undefined), 60000, svc)
+  const board = createPoll(async () => (c() ? unwrap(c()!.analytics.leaderboard()) : undefined), 180_000, svc)
+  const sessions = createPoll(async () => (c() ? unwrap(c()!.analytics.sessions()) : undefined), 180_000, svc)
 
   const series = createMemo(() => [...(daily.data() ?? [])].sort((a, b) => a.date.localeCompare(b.date)))
   const tools = createMemo(() => {

@@ -62,6 +62,54 @@ function createStore() {
   const accountTimer = setInterval(refreshAccount, 60_000)
   onCleanup(() => clearInterval(accountTimer))
 
+  // Service health, polled once for the whole app (status bar, overview and the rest read it).
+  // "slow" = answers, but late: the service is busy with agent turns, not down.
+  type Health = {
+    state: "connecting" | "ok" | "slow" | "down"
+    version?: string
+    revision?: string
+    latency?: number
+    error?: string
+  }
+  const [health, setHealth] = createSignal<Health>({ state: "connecting" })
+  let healthVersion = 0
+  let healthTimer: ReturnType<typeof setTimeout> | undefined
+  const pollHealth = async () => {
+    const s = service()
+    const mine = healthVersion
+    if (!s?.alive)
+      setHealth({ state: s ? "down" : "connecting", error: s ? "service process is not running" : undefined })
+    else {
+      const t = performance.now()
+      try {
+        const r = await native.api({ serviceUrl: s.url, method: "GET", path: "/global/health", timeoutSecs: 8 })
+        const latency = performance.now() - t
+        if (mine === healthVersion)
+          setHealth(
+            r.status === 200
+              ? {
+                  state: latency > 1500 ? "slow" : "ok",
+                  ...(JSON.parse(r.body) as { version: string; revision?: string }),
+                  latency,
+                }
+              : { state: "down", error: `HTTP ${r.status}` },
+          )
+      } catch (e) {
+        if (mine === healthVersion) setHealth({ state: "down", error: errorText(e) })
+      }
+    }
+    if (mine === healthVersion) healthTimer = setTimeout(() => void pollHealth(), 5000)
+  }
+  createEffect(() => {
+    service()?.url
+    service()?.alive
+    healthVersion++
+    if (healthTimer) clearTimeout(healthTimer)
+    setHealth({ state: "connecting" })
+    void pollHealth()
+  })
+  onCleanup(() => healthTimer && clearTimeout(healthTimer))
+
   const refreshServices = () => native.services().then(setServices, (e) => setError(errorText(e)))
   const refreshRepo = () =>
     native.repoRoot().then(
@@ -104,6 +152,7 @@ function createStore() {
     select: setSelected,
     client,
     snapshot,
+    health,
     account,
     refreshAccount,
     history,
@@ -130,30 +179,52 @@ export function toastOk(title: string, description?: string) {
   showToast({ variant: "success", title, description })
 }
 
-/** Polls an async loader; re-runs when the service changes. Returns accessors. */
+/**
+ * Polls an async loader. The next run is scheduled only after the previous one has finished, so a
+ * slow service never accumulates overlapping requests; `reload` while one is running queues exactly
+ * one follow-up. Re-runs when `deps` change, discarding any result of the superseded run.
+ */
 export function createPoll<T>(load: () => Promise<T>, intervalMs: number, deps?: () => unknown) {
   const [data, setData] = createSignal<T>()
   const [err, setErr] = createSignal<string>()
   const [loading, setLoading] = createSignal(true)
   let alive = true
-  let stamp = 0
-  const run = async () => {
-    const mine = ++stamp
+  let version = 0
+  let running = false
+  let queued = false
+  let timer: ReturnType<typeof setTimeout> | undefined
+
+  const tick = async () => {
+    if (running) {
+      queued = true
+      return
+    }
+    running = true
+    const mine = version
     try {
       const v = await load()
-      if (alive && mine === stamp) (setData(() => v), setErr(undefined))
+      if (alive && mine === version) (setData(() => v), setErr(undefined))
     } catch (e) {
-      if (alive && mine === stamp) setErr(errorText(e))
+      if (alive && mine === version) setErr(errorText(e))
     } finally {
-      if (alive && mine === stamp) setLoading(false)
+      running = false
+      if (alive && mine === version) setLoading(false)
+      if (alive) {
+        if (queued) {
+          queued = false
+          void tick()
+        } else if (intervalMs > 0) timer = setTimeout(() => void tick(), intervalMs)
+      }
     }
   }
+
   createEffect(() => {
     deps?.()
+    version++
+    if (timer) clearTimeout(timer)
     setLoading(true)
-    void run()
+    void tick()
   })
-  const timer = intervalMs > 0 ? setInterval(() => void run(), intervalMs) : undefined
-  onCleanup(() => ((alive = false), timer && clearInterval(timer)))
-  return { data, error: err, loading, reload: run }
+  onCleanup(() => ((alive = false), timer && clearTimeout(timer)))
+  return { data, error: err, loading, reload: tick }
 }

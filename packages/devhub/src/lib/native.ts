@@ -49,6 +49,16 @@ export type Snapshot = {
   procs: ProcInfo[]
 }
 
+export type ModelRow = {
+  providerId: string
+  providerName: string
+  modelId: string
+  name: string
+  inputCost: number | null
+  outputCost: number | null
+  context: number | null
+  reasoning: boolean
+}
 export type TestFile = { package: string; path: string; size: number; modified: number }
 export type StorageEntry = { name: string; location: "data" | "state"; path: string; size: number; isDir: boolean }
 export type LogFile = { name: string; size: number; modified: number }
@@ -118,6 +128,8 @@ export const native = {
     channel.onmessage = onEvent
     return invoke<void>("event_stream", { id, serviceUrl, path, onEvent: channel })
   },
+  /** Connected-provider models, reduced natively (the raw /provider document is ~6 MB). */
+  providerModels: (serviceUrl: string) => invoke<ModelRow[]>("provider_models", { serviceUrl }),
   eventStop: (id: string) => invoke<void>("event_stop", { id }),
   accountComplete: (serviceUrl: string, deviceCode: string, expiresIn?: number) =>
     invoke<SignedIn>("account_complete", { serviceUrl, deviceCode, expiresIn }),

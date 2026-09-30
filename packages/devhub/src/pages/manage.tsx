@@ -25,10 +25,10 @@ type Session = {
 }
 
 function Sessions() {
-  const list = createPoll(() => call<Session[]>({ method: "GET", path: "/session?limit=300" }), 15000, svc)
+  const list = createPoll(() => call<Session[]>({ method: "GET", path: "/session?limit=300" }), 30_000, svc)
   const status = createPoll(
     () => call<Record<string, { type: string }>>({ method: "GET", path: "/session/status" }),
-    4000,
+    5000,
     svc,
   )
   const [q, setQ] = createSignal("")
@@ -336,7 +336,7 @@ function Providers() {
 function Mcp() {
   const data = createPoll(
     () => call<Record<string, { status: string; error?: string }>>({ method: "GET", path: "/mcp" }),
-    6000,
+    15_000,
     svc,
   )
   const entries = createMemo(() => Object.entries(data.data() ?? {}))

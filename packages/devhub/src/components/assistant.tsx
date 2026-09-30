@@ -213,9 +213,23 @@ export function Assistant() {
     el.style.height = "auto"
     el.style.height = `${Math.min(el.scrollHeight, 180)}px`
   }
-  const current = createMemo(() =>
-    models().find((m) => assistant.model() && modelKey(m) === modelKey(assistant.model()!)),
-  )
+  // The stored choice is shown immediately, even before the catalogue has loaded.
+  const current = createMemo<ModelOption | undefined>(() => {
+    const chosen = assistant.model()
+    if (!chosen) return undefined
+    return (
+      models().find((m) => modelKey(m) === modelKey(chosen)) ?? {
+        ...chosen,
+        providerName: chosen.providerID,
+        name: chosen.modelID,
+      }
+    )
+  })
+  const modelOptions = createMemo<(ModelOption | undefined)[]>(() => {
+    const c = current()
+    const list = models()
+    return [undefined, ...(c && !list.some((m) => modelKey(m) === modelKey(c)) ? [c] : []), ...list]
+  })
   const ownProcs = () =>
     app.snapshot()?.procs.filter((p) => ["service", "server", "cli", "test", "dev", "child"].includes(p.category)) ?? []
   const rss = () => ownProcs().reduce((a, p) => a + p.rss, 0)
@@ -263,7 +277,7 @@ export function Assistant() {
         <Select<ModelOption | undefined>
           size="small"
           variant="ghost"
-          options={[undefined, ...models()]}
+          options={modelOptions()}
           current={current()}
           value={(m) => (m ? modelKey(m) : "default")}
           label={(m) => (m ? `${m.name}` : "Default model")}

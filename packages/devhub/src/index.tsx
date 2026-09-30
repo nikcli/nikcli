@@ -11,7 +11,7 @@ import { Toast } from "@nikcli-ai/ui/toast"
 import { ThemeProvider } from "@nikcli-ai/ui/theme"
 import { MarkedProvider } from "@nikcli-ai/ui/context/marked"
 import "./styles.css"
-import { app } from "./lib/store"
+import { app, toastError } from "./lib/store"
 import { assistant } from "./lib/assistant"
 import { native } from "./lib/native"
 import { runner } from "./lib/tasks"
@@ -239,6 +239,12 @@ function Shell() {
 }
 
 initPlatform()
+const report = (title: string, e: unknown) => {
+  console.error(title, e)
+  toastError(title, e)
+}
+window.addEventListener("error", (e) => report("Unexpected error", e.error ?? e.message))
+window.addEventListener("unhandledrejection", (e) => report("Unhandled error", e.reason))
 render(
   () => (
     <MetaProvider>

@@ -1,6 +1,6 @@
 import { shortcut } from "../lib/platform"
 import { Show, createMemo, createSignal, onCleanup } from "solid-js"
-import { app, createPoll } from "../lib/store"
+import { app } from "../lib/store"
 import { runner } from "../lib/tasks"
 import { assistant } from "../lib/assistant"
 import { bytes, pct } from "../lib/format"
@@ -8,18 +8,6 @@ import { Dot, Spark } from "./kit"
 
 /** Always-visible telemetry strip: the task-manager heartbeat of the app. */
 export function StatusBar(props: { go: (id: string) => void }) {
-  const health = createPoll(
-    async () => {
-      const c = app.client()
-      if (!c) return undefined
-      const t = performance.now()
-      const r = await c.global.health()
-      if (r.error !== undefined) throw new Error("unhealthy")
-      return { version: r.data!.version, latency: performance.now() - t }
-    },
-    5000,
-    () => app.service()?.url,
-  )
   const [now, setNow] = createSignal(Date.now())
   const tick = setInterval(() => setNow(Date.now()), 1000)
   onCleanup(() => clearInterval(tick))
@@ -36,11 +24,41 @@ export function StatusBar(props: { go: (id: string) => void }) {
 
   return (
     <footer class="dh-status" role="status">
-      <button class="dh-status__item" onClick={() => props.go("overview")} title={app.service()?.url}>
-        <Dot tone={health.data() ? "ok" : app.service() ? "bad" : "idle"} live={!!health.data()} />
-        <Show when={health.data()} fallback={<span>{app.service() ? "service unreachable" : "no service"}</span>}>
-          <span>nikcli {health.data()!.version}</span>
-          <em>{health.data()!.latency.toFixed(0)} ms</em>
+      <button
+        class="dh-status__item"
+        onClick={() => props.go("overview")}
+        title={app.health().error ?? app.service()?.url}
+      >
+        <Dot
+          tone={
+            app.health().state === "ok"
+              ? "ok"
+              : app.health().state === "slow" || app.health().state === "connecting"
+                ? "warn"
+                : app.service()
+                  ? "bad"
+                  : "idle"
+          }
+          live={app.health().state === "ok"}
+        />
+        <Show
+          when={app.health().version}
+          fallback={
+            <span>
+              {!app.service()
+                ? "no service"
+                : app.health().state === "connecting"
+                  ? "connecting…"
+                  : "service unreachable"}
+            </span>
+          }
+        >
+          <span>nikcli {app.health().version}</span>
+          <em>
+            {app.health().state === "slow"
+              ? `busy · ${app.health().latency!.toFixed(0)} ms`
+              : `${app.health().latency!.toFixed(0)} ms`}
+          </em>
         </Show>
       </button>
       <button class="dh-status__item" onClick={() => props.go("processes")}>

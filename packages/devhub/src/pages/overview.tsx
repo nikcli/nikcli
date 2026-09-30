@@ -11,23 +11,13 @@ const OWN = ["service", "server", "cli", "test", "dev", "child"]
 
 export function Overview(props: { go: (id: string) => void }) {
   const svc = () => app.service()
-  const health = createPoll(
-    async () => {
-      const c = app.client()
-      if (!c) return undefined
-      const t = performance.now()
-      const h = await unwrap(c.global.health())
-      return { ...h, latency: performance.now() - t }
-    },
-    5000,
-    svc,
-  )
+  const health = app.health
   const analytics = createPoll(
     async () => (app.client() ? unwrap(app.client()!.analytics.global()) : undefined),
-    30000,
+    120_000,
     svc,
   )
-  const doctor = createPoll(async () => (app.client() ? unwrap(app.client()!.doctor.run()) : undefined), 60000, svc)
+  const doctor = createPoll(async () => (app.client() ? unwrap(app.client()!.doctor.run()) : undefined), 300_000, svc)
 
   const snap = app.snapshot
   const own = createMemo(() => snap()?.procs.filter((p) => OWN.includes(p.category)) ?? [])
@@ -53,7 +43,7 @@ export function Overview(props: { go: (id: string) => void }) {
       }
     >
       <Problem error={app.error()} title="System probe failed" />
-      <Problem error={health.error()} title="nikcli service unreachable" />
+      <Problem error={health().state === "down" ? health().error : undefined} title="nikcli service unreachable" />
       <Show when={!svc()}>
         <Problem
           error="Start one with `nikcli serve --service` (or launch the nikcli TUI) and it will appear here."
@@ -64,11 +54,19 @@ export function Overview(props: { go: (id: string) => void }) {
       <div class="dh-grid" data-cols="4">
         <Stat
           label="Service"
-          tone={health.data() ? "ok" : "bad"}
-          value={health.data() ? "Healthy" : health.error() ? "Down" : "…"}
+          tone={health().state === "ok" ? "ok" : health().state === "down" ? "bad" : "warn"}
+          value={
+            health().state === "ok"
+              ? "Healthy"
+              : health().state === "slow"
+                ? "Busy"
+                : health().state === "down"
+                  ? "Down"
+                  : "Connecting"
+          }
           hint={
-            health.data()
-              ? `v${health.data()!.version} · ${health.data()!.latency.toFixed(0)} ms round trip`
+            health().version
+              ? `v${health().version} · ${health().latency!.toFixed(0)} ms round trip${health().state === "slow" ? " — running agent turns" : ""}`
               : undefined
           }
         />
@@ -120,10 +118,7 @@ export function Overview(props: { go: (id: string) => void }) {
               rows={[
                 ["URL", <span class="dh-mono">{svc()!.url}</span>],
                 ["Channel", svc()!.channel],
-                [
-                  "Version",
-                  `${svc()!.version}${health.data()?.revision ? ` · ${health.data()!.revision!.slice(0, 10)}` : ""}`,
-                ],
+                ["Version", `${svc()!.version}${health().revision ? ` · ${health().revision!.slice(0, 10)}` : ""}`],
                 [
                   "Started",
                   svc()!.startedAt

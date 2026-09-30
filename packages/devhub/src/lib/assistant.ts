@@ -126,7 +126,14 @@ function createAssistant() {
 
   const startPolling = (id: string) => {
     stopPolling()
-    polling = setInterval(() => void load(id).catch(() => undefined), 900)
+    let inFlight = false
+    polling = setInterval(() => {
+      if (inFlight) return
+      inFlight = true
+      void load(id)
+        .catch(() => undefined)
+        .finally(() => (inFlight = false))
+    }, 900)
   }
   const stopPolling = () => polling && (clearInterval(polling), (polling = undefined))
 
