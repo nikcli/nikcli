@@ -1,0 +1,39 @@
+{
+  "$schema": "https://schema.tauri.app/config/2",
+  "productName": "Nikcli DevHub",
+  "identifier": "ai.nikcli.devhub",
+  "version": "../package.json",
+  "build": {
+    "beforeDevCommand": "bun x vite",
+    "devUrl": "http://localhost:1430",
+    "beforeBuildCommand": "bun x vite build",
+    "frontendDist": "../dist"
+  },
+  "app": {
+    "windows": [
+      {
+        "label": "main",
+        "title": "Nikcli DevHub",
+        "width": 1360,
+        "height": 860,
+        "minWidth": 980,
+        "minHeight": 600
+      }
+    ],
+    "security": {
+      "csp": null
+    },
+    "macOSPrivateApi": true
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ]
+  }
+}

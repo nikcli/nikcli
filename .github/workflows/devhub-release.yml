@@ -1,0 +1,192 @@
+name: devhub-release
+
+# Releases DevHub for macOS, Windows and Linux from a tag.
+#
+#   git tag devhub-v1.2.3 && git push origin devhub-v1.2.3
+#
+# The release is created as a draft, every platform uploads into it, and only when all of
+# them have succeeded is it published. Nothing red is built: `devhub-checks` runs on the
+# exact commit first.
+#
+# The version comes from the tag and is written into the Tauri config at build time.
+# macOS bundles are ad-hoc signed and not notarized (right-click → Open once); Windows
+# installers are unsigned (SmartScreen asks).
+on:
+  push:
+    tags:
+      - "devhub-v*.*.*"
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Existing tag to release, e.g. devhub-v1.2.3"
+        required: true
+        type: string
+
+concurrency:
+  group: devhub-release-${{ inputs.tag || github.ref_name }}
+  cancel-in-progress: false
+
+permissions:
+  contents: write
+
+env:
+  TAG: ${{ inputs.tag || github.ref_name }}
+
+jobs:
+  draft:
+    if: github.repository == 'nikcli/nikcli' || github.repository == 'nikomatt69/nikcli'
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.version.outputs.version }}
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.TAG }}
+
+      - name: Version from tag
+        id: version
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${TAG#devhub-v}"
+          if [[ "$TAG" != devhub-v* ]] || ! [[ "$VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "tag '$TAG' is not devhub-v<major>.<minor>.<patch>"
+            exit 1
+          fi
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
+      - name: Create draft release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view "$TAG" --repo "$GITHUB_REPOSITORY" >/dev/null 2>&1; then
+            echo "release $TAG already exists; builds will upload into it"
+            exit 0
+          fi
+          gh release create "$TAG" --repo "$GITHUB_REPOSITORY" --draft --latest=false \
+            --title "Nikcli DevHub ${TAG#devhub-v}" \
+            --notes "Desktop admin dashboard and developer platform for nikcli. macOS: right-click → Open the first time (not notarized). Windows: SmartScreen → More info → Run anyway (unsigned)." \
+            --verify-tag
+
+  checks:
+    needs: draft
+    uses: ./.github/workflows/devhub-checks.yml
+    with:
+      ref: ${{ inputs.tag || github.ref_name }}
+
+  build:
+    needs: [draft, checks]
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - os: macos-14
+            target: aarch64-apple-darwin
+            bundles: app
+          - os: macos-14
+            target: x86_64-apple-darwin
+            bundles: app
+          - os: windows-latest
+            target: x86_64-pc-windows-msvc
+            bundles: nsis
+          - os: windows-11-arm
+            target: aarch64-pc-windows-msvc
+            bundles: nsis
+          - os: ubuntu-22.04
+            target: x86_64-unknown-linux-gnu
+            bundles: deb,rpm,appimage
+          - os: ubuntu-22.04-arm
+            target: aarch64-unknown-linux-gnu
+            bundles: deb,rpm
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          ref: ${{ env.TAG }}
+
+      - name: Free disk space
+        if: runner.os == 'Linux'
+        run: |
+          sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc \
+            /opt/hostedtoolcache/CodeQL /usr/local/.ghcup || true
+
+      - name: Install Linux dependencies
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev \
+            librsvg2-dev patchelf libssl-dev libxdo-dev build-essential file rpm
+
+      - uses: ./.github/actions/setup-bun
+
+      - name: Setup Rust
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - name: Cache Rust build
+        uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: packages/devhub/src-tauri -> target
+          key: release-${{ matrix.target }}
+
+      # Outside Tauri's beforeBuildCommand, which can pick up a broken bun shim on Windows.
+      - name: Build frontend
+        working-directory: packages/devhub
+        shell: bash
+        run: bun x vite build
+
+      # macOS: `app` only. Tauri's dmg step drives Finder through AppleScript and fails on
+      # headless runners; the dmg is made with hdiutil below.
+      - name: Build app
+        working-directory: packages/devhub
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION="${{ needs.draft.outputs.version }}"
+          CONFIG_JSON="{\"version\":\"$VERSION\",\"build\":{\"beforeBuildCommand\":\"\"},\"bundle\":{\"macOS\":{\"signingIdentity\":\"-\"}}}"
+          bun x tauri build --target ${{ matrix.target }} --bundles ${{ matrix.bundles }} --config "$CONFIG_JSON"
+
+      - name: Collect and upload
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          VERSION="${{ needs.draft.outputs.version }}"
+          NAME="Nikcli DevHub"
+          BUNDLE="packages/devhub/src-tauri/target/${{ matrix.target }}/release/bundle"
+          STAGE="devhub-release"
+          mkdir -p "$STAGE"
+          case "${{ matrix.target }}" in
+            *-apple-darwin)
+              ARCH="${{ matrix.target }}"; ARCH="${ARCH%%-*}"
+              ditto -c -k --keepParent "$BUNDLE/macos/$NAME.app" "$STAGE/nikcli-devhub_${VERSION}_${ARCH}.app.zip"
+              DMGROOT="$(mktemp -d)"
+              cp -R "$BUNDLE/macos/$NAME.app" "$DMGROOT/"
+              ln -s /Applications "$DMGROOT/Applications"
+              hdiutil create -volname "$NAME" -srcfolder "$DMGROOT" -ov -format UDZO "$STAGE/nikcli-devhub_${VERSION}_${ARCH}.dmg"
+              ;;
+            *)
+              find "$BUNDLE" -type f \( -name "*.exe" -o -name "*.msi" -o -name "*.deb" \
+                -o -name "*.rpm" -o -name "*.AppImage" \) -exec cp {} "$STAGE/" \;
+              ;;
+          esac
+          ls -la "$STAGE"
+          if [ "$(find "$STAGE" -maxdepth 1 -type f | wc -l | tr -d '[:space:]')" = "0" ]; then
+            echo "no bundles produced for ${{ matrix.target }}"
+            exit 1
+          fi
+          find "$STAGE" -maxdepth 1 -type f -exec gh release upload "$TAG" --clobber --repo "$GITHUB_REPOSITORY" {} +
+
+  publish:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh release edit "$TAG" --repo "$GITHUB_REPOSITORY" --draft=false --latest=false

@@ -81,3 +81,9 @@ test-results/
 .claude/RESUME.md
 .claude/worktrees/
 .claude/settings.local.json
+
+# nikcli devhub scratch (junit reports, perf probes, playground scripts)
+.devhub/
+packages/devhub/src-tauri/target/
+packages/devhub/src-tauri/gen/
+packages/devhub/dist/
