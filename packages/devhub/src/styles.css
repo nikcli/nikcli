@@ -408,6 +408,10 @@ html[data-platform="mac"] .dh-drag {
 .dh-grid[data-cols="split"] {
   grid-template-columns: minmax(0, 2fr) minmax(0, 3fr);
 }
+/* as many columns as fit: cards never shrink below a readable width */
+.dh-grid[data-cols="auto"] {
+  grid-template-columns: repeat(auto-fit, minmax(118px, 1fr));
+}
 .dh-grid[data-cols="wide-left"] {
   grid-template-columns: minmax(0, 5fr) minmax(0, 4fr);
 }

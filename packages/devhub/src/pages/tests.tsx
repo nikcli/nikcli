@@ -45,7 +45,7 @@ export function RunSummary(props: { run: Run }) {
   )
   return (
     <div style={{ display: "flex", "flex-direction": "column", gap: "12px" }}>
-      <div class="dh-grid" data-cols="4">
+      <div class="dh-grid" data-cols="auto">
         <Stat
           label="Status"
           value={r().status}
@@ -73,9 +73,13 @@ export function RunSummary(props: { run: Run }) {
                           fail
                         </span>
                       </td>
-                      <td>{f.name}</td>
-                      <td class="dh-mono dh-ellipsis" title={f.file}>
-                        {f.file}
+                      <td class="dh-fill">
+                        <div class="dh-ellipsis" title={f.name}>
+                          {f.name}
+                        </div>
+                        <div class="dh-ellipsis dh-sub dh-mono" title={f.file}>
+                          {f.file}
+                        </div>
                       </td>
                     </tr>
                   )}
