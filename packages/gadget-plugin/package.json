@@ -1,0 +1,47 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@nikcli-ai/plugin-gadgets",
+  "version": "1.427.0",
+  "description": "nikcli plugin: the gadgets bridge, the `gadget` tool for the agent, and /gadget commands in the TUI",
+  "type": "module",
+  "license": "MIT",
+  "exports": {
+    ".": {
+      "import": "./src/index.ts",
+      "types": "./src/index.ts"
+    },
+    "./tui": {
+      "import": "./src/tui.tsx",
+      "types": "./src/tui.tsx"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "bun test tests"
+  },
+  "dependencies": {
+    "@nikcli-ai/gadget": "workspace:*",
+    "@nikcli-ai/plugin": "workspace:*"
+  },
+  "devDependencies": {
+    "@tsconfig/node22": "catalog:",
+    "@types/bun": "catalog:",
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "@opentui/core": "0.5.11",
+    "@opentui/solid": "0.5.11",
+    "solid-js": "catalog:"
+  },
+  "peerDependencies": {
+    "@opentui/solid": "0.5.11",
+    "solid-js": "*"
+  },
+  "peerDependenciesMeta": {
+    "@opentui/solid": {
+      "optional": true
+    },
+    "solid-js": {
+      "optional": true
+    }
+  }
+}

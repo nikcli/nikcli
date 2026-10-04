@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json.schemastore.org/package.json",
+  "name": "@nikcli-ai/gadget",
+  "version": "1.427.0",
+  "description": "Build nikcli gadgets: devices that pair with a nikcli server, run commands for the agent, push messages into sessions and draw what it answers",
+  "type": "module",
+  "license": "MIT",
+  "bin": {
+    "nikcli-gadget": "./linux/src/cli.ts"
+  },
+  "exports": {
+    ".": {
+      "import": "./linux/src/index.ts",
+      "types": "./linux/src/index.ts"
+    },
+    "./protocol": {
+      "import": "./linux/src/protocol.ts",
+      "types": "./linux/src/protocol.ts"
+    },
+    "./display": {
+      "import": "./linux/src/display/index.ts",
+      "types": "./linux/src/display/index.ts"
+    }
+  },
+  "scripts": {
+    "typecheck": "tsc --noEmit",
+    "test": "bun test linux/tests"
+  },
+  "devDependencies": {
+    "@tsconfig/node22": "catalog:",
+    "@types/bun": "catalog:",
+    "@types/node": "catalog:",
+    "typescript": "catalog:"
+  }
+}

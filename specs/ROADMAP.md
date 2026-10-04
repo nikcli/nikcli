@@ -186,29 +186,30 @@ efficiency after evidence. Owner names below are responsibility roles, not assig
 relative: S is a narrow change, M spans a few seams, L requires several separately verified PRs. No calendar dates are
 promised.
 
-| ID                                                        | Tier | Phase | Dependencies                   | Effort | Risk   | Primary owner               | Release gate                                                        |
-| --------------------------------------------------------- | ---- | ----- | ------------------------------ | ------ | ------ | --------------------------- | ------------------------------------------------------------------- |
-| [EOT-00](effect-tui/00-startup-hang.md)                   | 1    | P0    | none                           | M      | High   | TUI host/renderer           | `hangRate == 0` over 200 compiled starts across a PTY matrix        |
-| [EOT-01](effect-tui/01-performance-baseline.md)           | 1    | P0    | EOT-00                         | M      | Low    | Performance/test            | Reproducible measurements and failure-sensitive assertions          |
-| [EOT-02](effect-tui/02-effect-boundaries.md)              | 1    | P1    | EOT-01                         | L      | High   | Effect/domain               | Typed boundary and multi-instance teardown tests                    |
-| [EOT-03](effect-tui/03-tui-lifecycle.md)                  | 1    | P1    | EOT-02                         | M      | High   | TUI lifecycle               | No stale commits or surviving owner work                            |
-| [EOT-10](effect-tui/10-contracts-errors-security.md)      | 1    | P1    | EOT-01                         | L      | High   | HttpApi/security            | Error/encoding/auth parity and clean generated output               |
-| [EOT-12](effect-tui/12-identity-onboarding-auth.md)       | 1    | P1    | EOT-02, EOT-03, EOT-10         | L      | High   | Identity/auth/account       | Typed state machine, no PKCE downgrade, no skipped onboarding       |
-| [EOT-13](effect-tui/13-observability-pipeline.md)         | 1    | P1    | EOT-01, EOT-02                 | M      | Medium | Observability/brain/profile | Fixed schema, redaction, live panel bounded                         |
-| [EOT-20](effect-tui/20-testing-architecture-harnesses.md) | 1    | P1    | EOT-01, EOT-02                 | M      | Low    | Test infra                  | Three-layer harness, deterministic fixtures, no flake wins          |
-| [EOT-04](effect-tui/04-event-delivery.md)                 | 1    | P2    | EOT-02, EOT-10                 | L      | High   | Transport/bus               | Bounded lag and verified recovery without silent loss               |
-| [EOT-09](effect-tui/09-jobs-persistence.md)               | 1    | P2    | EOT-02, EOT-04, EOT-10         | L      | High   | Execution/storage           | Durable terminal states, concurrency bounds, recovery               |
-| [EOT-11](effect-tui/11-provider-inference-streaming.md)   | 1    | P2    | EOT-01, EOT-02, EOT-10         | L      | High   | Provider/llm core           | Adapter unification, cancellation, cache, retry, token accounting   |
-| [EOT-14](effect-tui/14-plugin-v2-architecture.md)         | 1    | P2    | EOT-02, EOT-03, EOT-08, EOT-10 | L      | High   | Plugin SDK/runtime          | v2 contract, hot reload, capability gating, scoped generation       |
-| [EOT-15](effect-tui/15-sync-snapshots-watermarks.md)      | 1    | P2    | EOT-04, EOT-05, EOT-09         | L      | High   | Sync/mobile bridge          | Snapshot barrier, watermark, gap handling, multi-device ordering    |
-| [EOT-16](effect-tui/16-workspace-isolation.md)            | 1    | P2    | EOT-02, EOT-03, EOT-09         | M      | High   | Workspace/instance          | Workspace as typed Effect scope, hot switch, isolation tests        |
-| [EOT-17](effect-tui/17-sandbox-permission-boundaries.md)  | 1    | P2    | EOT-02, EOT-09, EOT-10, EOT-11 | L      | High   | Permission/sandbox/policy   | Typed ruleset, coupling respected, sandbox containment              |
-| [EOT-05](effect-tui/05-reactive-state.md)                 | 2    | P2    | EOT-03, EOT-04                 | L      | High   | TUI state                   | Scoped query/state correctness and stable row identity              |
-| [EOT-08](effect-tui/08-host-plugins-startup.md)           | 2    | P2    | EOT-02, EOT-03                 | M      | Medium | Host/plugins                | Standalone and compiled parity; reload resource plateau             |
-| [EOT-19](effect-tui/19-mobile-companion-bridge.md)        | 2    | P3    | EOT-04, EOT-08, EOT-12, EOT-15 | L      | High   | Mobile/companion/remote     | Typed bridge, JWT, websocket, multi-device, capability gating       |
-| [EOT-18](effect-tui/18-cli-command-architecture.md)       | 2    | P3    | EOT-02, EOT-08                 | S      | Medium | CLI dispatch                | Exit-code mapping, headless posture, daemon lifecycle (parser done) |
-| [EOT-06](effect-tui/06-terminal-rendering.md)             | 2    | P3    | EOT-05                         | L      | High   | TUI rendering               | Streaming virtualization, anchor fidelity, measured latency         |
-| [EOT-07](effect-tui/07-input-interaction.md)              | 2    | P3    | EOT-03, EOT-05                 | M      | High   | TUI interaction             | Keyboard/focus/permission matrix on real terminals                  |
+| ID                                                        | Tier | Phase | Dependencies                           | Effort | Risk   | Primary owner               | Release gate                                                        |
+| --------------------------------------------------------- | ---- | ----- | -------------------------------------- | ------ | ------ | --------------------------- | ------------------------------------------------------------------- |
+| [EOT-00](effect-tui/00-startup-hang.md)                   | 1    | P0    | none                                   | M      | High   | TUI host/renderer           | `hangRate == 0` over 200 compiled starts across a PTY matrix        |
+| [EOT-01](effect-tui/01-performance-baseline.md)           | 1    | P0    | EOT-00                                 | M      | Low    | Performance/test            | Reproducible measurements and failure-sensitive assertions          |
+| [EOT-02](effect-tui/02-effect-boundaries.md)              | 1    | P1    | EOT-01                                 | L      | High   | Effect/domain               | Typed boundary and multi-instance teardown tests                    |
+| [EOT-03](effect-tui/03-tui-lifecycle.md)                  | 1    | P1    | EOT-02                                 | M      | High   | TUI lifecycle               | No stale commits or surviving owner work                            |
+| [EOT-10](effect-tui/10-contracts-errors-security.md)      | 1    | P1    | EOT-01                                 | L      | High   | HttpApi/security            | Error/encoding/auth parity and clean generated output               |
+| [EOT-12](effect-tui/12-identity-onboarding-auth.md)       | 1    | P1    | EOT-02, EOT-03, EOT-10                 | L      | High   | Identity/auth/account       | Typed state machine, no PKCE downgrade, no skipped onboarding       |
+| [EOT-13](effect-tui/13-observability-pipeline.md)         | 1    | P1    | EOT-01, EOT-02                         | M      | Medium | Observability/brain/profile | Fixed schema, redaction, live panel bounded                         |
+| [EOT-20](effect-tui/20-testing-architecture-harnesses.md) | 1    | P1    | EOT-01, EOT-02                         | M      | Low    | Test infra                  | Three-layer harness, deterministic fixtures, no flake wins          |
+| [EOT-04](effect-tui/04-event-delivery.md)                 | 1    | P2    | EOT-02, EOT-10                         | L      | High   | Transport/bus               | Bounded lag and verified recovery without silent loss               |
+| [EOT-09](effect-tui/09-jobs-persistence.md)               | 1    | P2    | EOT-02, EOT-04, EOT-10                 | L      | High   | Execution/storage           | Durable terminal states, concurrency bounds, recovery               |
+| [EOT-11](effect-tui/11-provider-inference-streaming.md)   | 1    | P2    | EOT-01, EOT-02, EOT-10                 | L      | High   | Provider/llm core           | Adapter unification, cancellation, cache, retry, token accounting   |
+| [EOT-14](effect-tui/14-plugin-v2-architecture.md)         | 1    | P2    | EOT-02, EOT-03, EOT-08, EOT-10         | L      | High   | Plugin SDK/runtime          | v2 contract, hot reload, capability gating, scoped generation       |
+| [EOT-15](effect-tui/15-sync-snapshots-watermarks.md)      | 1    | P2    | EOT-04, EOT-05, EOT-09                 | L      | High   | Sync/mobile bridge          | Snapshot barrier, watermark, gap handling, multi-device ordering    |
+| [EOT-16](effect-tui/16-workspace-isolation.md)            | 1    | P2    | EOT-02, EOT-03, EOT-09                 | M      | High   | Workspace/instance          | Workspace as typed Effect scope, hot switch, isolation tests        |
+| [EOT-17](effect-tui/17-sandbox-permission-boundaries.md)  | 1    | P2    | EOT-02, EOT-09, EOT-10, EOT-11         | L      | High   | Permission/sandbox/policy   | Typed ruleset, coupling respected, sandbox containment              |
+| [EOT-05](effect-tui/05-reactive-state.md)                 | 2    | P2    | EOT-03, EOT-04                         | L      | High   | TUI state                   | Scoped query/state correctness and stable row identity              |
+| [EOT-08](effect-tui/08-host-plugins-startup.md)           | 2    | P2    | EOT-02, EOT-03                         | M      | Medium | Host/plugins                | Standalone and compiled parity; reload resource plateau             |
+| [EOT-19](effect-tui/19-mobile-companion-bridge.md)        | 2    | P3    | EOT-04, EOT-08, EOT-12, EOT-15         | L      | High   | Mobile/companion/remote     | Typed bridge, JWT, websocket, multi-device, capability gating       |
+| [EOT-18](effect-tui/18-cli-command-architecture.md)       | 2    | P3    | EOT-02, EOT-08                         | S      | Medium | CLI dispatch                | Exit-code mapping, headless posture, daemon lifecycle (parser done) |
+| [EOT-06](effect-tui/06-terminal-rendering.md)             | 2    | P3    | EOT-05                                 | L      | High   | TUI rendering               | Streaming virtualization, anchor fidelity, measured latency         |
+| [EOT-07](effect-tui/07-input-interaction.md)              | 2    | P3    | EOT-03, EOT-05                         | M      | High   | TUI interaction             | Keyboard/focus/permission matrix on real terminals                  |
+| [EOT-21](effect-tui/21-gadgets-device-bridge.md)          | 2    | P3    | EOT-04, EOT-10, EOT-14, EOT-17, EOT-19 | L      | Medium | Plugin SDK/bridge           | Bounded feed, gated tool, TUI commands, SDK round-trip              |
 
 EOT-00 is the one hard stop: while a compiled start can silently fail to paint, no startup or rendering budget may
 be ratified and no spec may be promoted past its current phase. Characterization work continues; promotion does not.
@@ -217,7 +218,7 @@ Dependencies are exit gates, not permission to stall unrelated characterization 
 EOT-12, EOT-13, and EOT-20 may characterize existing behavior in parallel, but each release gate still requires all
 dependencies listed above to pass.
 
-EOT-08 and EOT-18 need not wait for EOT-04/05/15; EOT-06, EOT-07, and EOT-19 are independent after their listed
+EOT-08 and EOT-18 need not wait for EOT-04/05/15; EOT-06, EOT-07, EOT-19 and EOT-21 are independent after their listed
 prerequisites. Run memory-heavy verification serially even when implementation work is independent.
 
 ## Phase Exits

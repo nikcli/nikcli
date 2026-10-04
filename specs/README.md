@@ -4,8 +4,9 @@ Planning baseline: 2026-09-10. Scope: `packages/tui` and `packages/nikcli`, incl
 bridge, and host seams.
 
 Start with the [integrated roadmap](ROADMAP.md). These are implementation specifications, not claims that the proposed
-changes or performance targets have shipped. Every spec has at least one landed slice — the roadmap's landed-work table
+changes or performance targets have shipped. Every spec but EOT-21 has at least one landed slice — the roadmap's landed-work table
 is the record of which — and a landed slice is not a passed release gate; the migrations the specs scope remain open.
+EOT-21 is new: its first slice (device SDK, bridge, tool, TUI commands) is implemented as plugins, with no commit to cite in the landed-work table until it merges.
 EOT-18 is the one spec whose premise has been overtaken: the yargs surface it was written against is gone, and
 [`cli-framework.md`](cli-framework.md) is the reference for what replaced it. Each spec header carries its own status.
 No benchmark was run to establish a runtime baseline during this documentation change.
@@ -35,6 +36,7 @@ No benchmark was run to establish a runtime baseline during this documentation c
 | EOT-18 | [CLI command architecture and dispatch](effect-tui/18-cli-command-architecture.md)               | CLI dispatch/maintainers                   | Consistent command shape, daemon lifecycle, headless posture             |
 | EOT-19 | [Mobile companion bridge](effect-tui/19-mobile-companion-bridge.md)                              | Mobile/companion/remote maintainers        | Typed bridge, JWT, websocket, multi-device, capability gating            |
 | EOT-20 | [Testing architecture and harnesses](effect-tui/20-testing-architecture-harnesses.md)            | Test infrastructure                        | Three-layer harness, deterministic fixtures, barrier-based races         |
+| EOT-21 | [Gadgets: device SDK, bridge and agent tool](effect-tui/21-gadgets-device-bridge.md)             | Plugin SDK and bridge maintainers          | Paired devices as agent hands: bridge, tool, TUI commands, device SDK    |
 
 ## Evidence Register
 

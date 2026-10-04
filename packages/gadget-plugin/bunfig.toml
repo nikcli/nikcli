@@ -1,0 +1,3 @@
+# The TUI plugin is TSX compiled for OpenTUI's Solid renderer; the tests load it through the same transform nikcli uses.
+[test]
+preload = ["@opentui/solid/preload"]

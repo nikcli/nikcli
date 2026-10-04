@@ -466,6 +466,44 @@
         "wrangler": "^4.103.0",
       },
     },
+    "packages/gadget": {
+      "name": "@nikcli-ai/gadget",
+      "version": "1.427.0",
+      "bin": {
+        "nikcli-gadget": "./linux/src/cli.ts",
+      },
+      "devDependencies": {
+        "@tsconfig/node22": "catalog:",
+        "@types/bun": "catalog:",
+        "@types/node": "catalog:",
+        "typescript": "catalog:",
+      },
+    },
+    "packages/gadget-plugin": {
+      "name": "@nikcli-ai/plugin-gadgets",
+      "version": "1.427.0",
+      "dependencies": {
+        "@nikcli-ai/gadget": "workspace:*",
+        "@nikcli-ai/plugin": "workspace:*",
+      },
+      "devDependencies": {
+        "@opentui/core": "0.5.11",
+        "@opentui/solid": "0.5.11",
+        "@tsconfig/node22": "catalog:",
+        "@types/bun": "catalog:",
+        "@types/node": "catalog:",
+        "solid-js": "catalog:",
+        "typescript": "catalog:",
+      },
+      "peerDependencies": {
+        "@opentui/solid": "0.5.11",
+        "solid-js": "*",
+      },
+      "optionalPeers": [
+        "@opentui/solid",
+        "solid-js",
+      ],
+    },
     "packages/http-recorder": {
       "name": "@nikcli-ai/http-recorder",
       "version": "1.427.0",
@@ -2082,6 +2120,8 @@
 
     "@nikcli-ai/function": ["@nikcli-ai/function@workspace:packages/function"],
 
+    "@nikcli-ai/gadget": ["@nikcli-ai/gadget@workspace:packages/gadget"],
+
     "@nikcli-ai/http-recorder": ["@nikcli-ai/http-recorder@workspace:packages/http-recorder"],
 
     "@nikcli-ai/httpapi-codegen": ["@nikcli-ai/httpapi-codegen@workspace:packages/httpapi-codegen"],
@@ -2099,6 +2139,8 @@
     "@nikcli-ai/nikcli-island": ["@nikcli-ai/nikcli-island@workspace:packages/nikcli-island"],
 
     "@nikcli-ai/plugin": ["@nikcli-ai/plugin@workspace:packages/plugin"],
+
+    "@nikcli-ai/plugin-gadgets": ["@nikcli-ai/plugin-gadgets@workspace:packages/gadget-plugin"],
 
     "@nikcli-ai/remote": ["@nikcli-ai/remote@workspace:packages/remote"],
 
@@ -6094,6 +6136,8 @@
 
     "@nikcli-ai/enterprise/typescript": ["typescript@5.8.2", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-aJn6wq13/afZp/jT9QZmwEjDqqvSGp1VT5GVg+f/t6/oVyrgXM6BY1h9BRh/O5p3PlUPAe+WuiEZOmb/49RqoQ=="],
 
+    "@nikcli-ai/gadget/typescript": ["typescript@5.8.2", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-aJn6wq13/afZp/jT9QZmwEjDqqvSGp1VT5GVg+f/t6/oVyrgXM6BY1h9BRh/O5p3PlUPAe+WuiEZOmb/49RqoQ=="],
+
     "@nikcli-ai/httpapi-codegen/prettier": ["prettier@3.6.2", "", { "bin": { "prettier": "bin/prettier.cjs" } }, "sha512-I7AIg5boAr5R0FFtJ6rCfD+LFsWHp81dolrFD8S79U9tb8Az2nGrJncnMSnys+bpQJfRUzqs9hnA81OAA3hCuQ=="],
 
     "@nikcli-ai/httpapi-codegen/typescript": ["typescript@5.8.2", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-aJn6wq13/afZp/jT9QZmwEjDqqvSGp1VT5GVg+f/t6/oVyrgXM6BY1h9BRh/O5p3PlUPAe+WuiEZOmb/49RqoQ=="],
@@ -6125,6 +6169,8 @@
     "@nikcli-ai/mobile/zustand": ["zustand@5.0.11", "", { "peerDependencies": { "@types/react": ">=18.0.0", "immer": ">=9.0.6", "react": ">=18.0.0", "use-sync-external-store": ">=1.2.0" }, "optionalPeers": ["@types/react", "immer", "react", "use-sync-external-store"] }, "sha512-fdZY+dk7zn/vbWNCYmzZULHRrss0jx5pPFiOuMZ/5HJN6Yv3u+1Wswy/4MpZEkEGhtNH+pwxZB8OKgUBPzYAGg=="],
 
     "@nikcli-ai/plugin/typescript": ["typescript@5.8.2", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-aJn6wq13/afZp/jT9QZmwEjDqqvSGp1VT5GVg+f/t6/oVyrgXM6BY1h9BRh/O5p3PlUPAe+WuiEZOmb/49RqoQ=="],
+
+    "@nikcli-ai/plugin-gadgets/typescript": ["typescript@5.8.2", "", { "bin": { "tsc": "bin/tsc", "tsserver": "bin/tsserver" } }, "sha512-aJn6wq13/afZp/jT9QZmwEjDqqvSGp1VT5GVg+f/t6/oVyrgXM6BY1h9BRh/O5p3PlUPAe+WuiEZOmb/49RqoQ=="],
 
     "@nikcli-ai/remote/@types/ws": ["@types/ws@8.18.1", "", { "dependencies": { "@types/node": "*" } }, "sha512-ThVF6DCVhA8kUGy+aazFQ4kXQ7E1Ty7A3ypFOe0IcJV8O/M511G99AW24irKrW56Wt44yG9+ij8FaqoBGkuBXg=="],
 
