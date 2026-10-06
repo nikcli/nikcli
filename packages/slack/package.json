@@ -1,6 +1,6 @@
 {
   "name": "@nikcli-ai/slack",
-  "version": "1.430.0",
+  "version": "1.431.0",
   "files": [
     "src",
     "sst-env.d.ts",

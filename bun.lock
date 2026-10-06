@@ -53,7 +53,7 @@
     },
     "packages/ade": {
       "name": "@nikcli-ai/ade",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "dependencies": {
         "@kobalte/core": "catalog:",
         "@nikcli-ai/plugin": "workspace:*",
@@ -87,7 +87,7 @@
     },
     "packages/app": {
       "name": "@nikcli-ai/app",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "dependencies": {
         "@kobalte/core": "catalog:",
         "@nikcli-ai/sdk": "workspace:*",
@@ -137,7 +137,7 @@
     },
     "packages/auth": {
       "name": "@nikcli-ai/auth",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "dependencies": {
         "jose": "5.9.6",
         "zod": "catalog:",
@@ -153,7 +153,7 @@
     },
     "packages/bench-tui": {
       "name": "@nikcli-ai/bench-tui",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "bin": {
         "bench-tui": "./src/index.ts",
       },
@@ -173,7 +173,7 @@
     },
     "packages/browser-control": {
       "name": "@nikcli-ai/browser-control",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "bin": {
         "browser-control": "./src/cli.ts",
       },
@@ -188,7 +188,7 @@
     },
     "packages/cloud": {
       "name": "@nikcli-ai/cloud",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "dependencies": {
         "@nikcli-ai/auth": "workspace:*",
         "hono": "catalog:",
@@ -203,7 +203,7 @@
     },
     "packages/companion": {
       "name": "@nikcli-ai/companion",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "dependencies": {
         "@hono/node-server": "1.19.15",
         "@nikcli-ai/sdk": "workspace:*",
@@ -228,7 +228,7 @@
     },
     "packages/computer-use": {
       "name": "@nikcli-ai/computer-use",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "bin": {
         "computer-use": "./src/cli.ts",
       },
@@ -242,7 +242,7 @@
     },
     "packages/console/app": {
       "name": "@nikcli-ai/console-app",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "dependencies": {
         "@cloudflare/vite-plugin": "1.15.2",
         "@ibm/plex": "6.4.1",
@@ -277,7 +277,7 @@
     },
     "packages/console/core": {
       "name": "@nikcli-ai/console-core",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "dependencies": {
         "@aws-sdk/client-sts": "3.782.0",
         "@jsx-email/render": "1.1.1",
@@ -304,7 +304,7 @@
     },
     "packages/console/function": {
       "name": "@nikcli-ai/console-function",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "dependencies": {
         "@hono/zod-validator": "catalog:",
         "@nikcli-ai/console-core": "workspace:*",
@@ -324,7 +324,7 @@
     },
     "packages/console/mail": {
       "name": "@nikcli-ai/console-mail",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "dependencies": {
         "@jsx-email/all": "2.2.3",
         "@jsx-email/cli": "1.4.3",
@@ -336,7 +336,7 @@
     },
     "packages/console/resource": {
       "name": "@nikcli-ai/console-resource",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "dependencies": {
         "@cloudflare/workers-types": "catalog:",
       },
@@ -349,7 +349,7 @@
     },
     "packages/desktop": {
       "name": "@nikcli-ai/desktop",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "dependencies": {
         "@nikcli-ai/app": "workspace:*",
         "@nikcli-ai/ui": "workspace:*",
@@ -383,7 +383,7 @@
     },
     "packages/devhub": {
       "name": "@nikcli-ai/devhub",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "dependencies": {
         "@nikcli-ai/sdk": "workspace:*",
         "@nikcli-ai/ui": "workspace:*",
@@ -408,7 +408,7 @@
     },
     "packages/discord": {
       "name": "@nikcli-ai/discord",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "dependencies": {
         "@nikcli-ai/sdk": "workspace:*",
         "discord.js": "14.22.1",
@@ -425,7 +425,7 @@
     },
     "packages/enterprise": {
       "name": "@nikcli-ai/enterprise",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "dependencies": {
         "@nikcli-ai/sdk": "workspace:*",
         "@nikcli-ai/ui": "workspace:*",
@@ -456,7 +456,7 @@
     },
     "packages/function": {
       "name": "@nikcli-ai/function",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "dependencies": {
         "hono": "catalog:",
         "zod": "catalog:",
@@ -468,7 +468,7 @@
     },
     "packages/gadget": {
       "name": "@nikcli-ai/gadget",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "bin": {
         "nikcli-gadget": "./linux/src/cli.ts",
       },
@@ -481,7 +481,7 @@
     },
     "packages/gadget-plugin": {
       "name": "@nikcli-ai/plugin-gadgets",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "dependencies": {
         "@nikcli-ai/gadget": "workspace:*",
         "@nikcli-ai/plugin": "workspace:*",
@@ -506,7 +506,7 @@
     },
     "packages/http-recorder": {
       "name": "@nikcli-ai/http-recorder",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "dependencies": {
         "@effect/platform-node": "4.0.0-rc.112",
         "effect": "4.0.0-rc.112",
@@ -519,7 +519,7 @@
     },
     "packages/httpapi-codegen": {
       "name": "@nikcli-ai/httpapi-codegen",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "dependencies": {
         "effect": "4.0.0-rc.112",
         "prettier": "3.6.2",
@@ -532,7 +532,7 @@
     },
     "packages/identity": {
       "name": "@nikcli-ai/identity",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "dependencies": {
         "@simplewebauthn/server": "13.3.2",
         "hono": "4.12.34",
@@ -547,7 +547,7 @@
     },
     "packages/inference": {
       "name": "@nikcli-ai/inference",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "dependencies": {
         "@upstash/ratelimit": "^2.0.6",
         "@upstash/redis": "^1.34.9",
@@ -564,7 +564,7 @@
     },
     "packages/inference-dashboard": {
       "name": "@nikcli-ai/inference-dashboard",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "dependencies": {
         "@astrojs/cloudflare": "^12.0.0",
         "@astrojs/mdx": "^4.0.2",
@@ -590,7 +590,7 @@
     },
     "packages/llm": {
       "name": "@nikcli-ai/llm",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "dependencies": {
         "@smithy/eventstream-codec": "4.2.14",
         "@smithy/util-utf8": "4.2.2",
@@ -609,7 +609,7 @@
     },
     "packages/mobile": {
       "name": "@nikcli-ai/mobile",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "dependencies": {
         "@babel/runtime": "7.28.6",
         "@expo/metro-runtime": "~56.0.15",
@@ -677,7 +677,7 @@
     },
     "packages/nikcli": {
       "name": "nikcli-ai",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "bin": {
         "nikcli": "./bin/nikcli",
       },
@@ -811,11 +811,11 @@
     },
     "packages/nikcli-island": {
       "name": "@nikcli-ai/nikcli-island",
-      "version": "1.430.0",
+      "version": "1.431.0",
     },
     "packages/plugin": {
       "name": "@nikcli-ai/plugin",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "dependencies": {
         "@nikcli-ai/sdk": "workspace:*",
         "@opentui/core": "0.5.11",
@@ -833,7 +833,7 @@
     },
     "packages/remote": {
       "name": "@nikcli-ai/remote",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "bin": {
         "nikcli-remote": "./dist/nikcli-remote",
       },
@@ -858,14 +858,14 @@
     },
     "packages/script": {
       "name": "@nikcli-ai/script",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "devDependencies": {
         "@types/bun": "catalog:",
       },
     },
     "packages/sdk-next": {
       "name": "@nikcli-ai/sdk-next",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "dependencies": {
         "@nikcli-ai/sdk": "workspace:*",
         "effect": "4.0.0-rc.112",
@@ -880,7 +880,7 @@
     },
     "packages/sdk/js": {
       "name": "@nikcli-ai/sdk",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "devDependencies": {
         "@tsconfig/node22": "catalog:",
         "@types/node": "catalog:",
@@ -890,7 +890,7 @@
     },
     "packages/simulation": {
       "name": "@nikcli-ai/simulation",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "dependencies": {
         "@fontsource/adwaita-mono": "5.2.1",
         "@napi-rs/canvas": "1.0.2",
@@ -908,7 +908,7 @@
     },
     "packages/slack": {
       "name": "@nikcli-ai/slack",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "dependencies": {
         "@nikcli-ai/sdk": "workspace:*",
         "@slack/bolt": "^4.6.0",
@@ -926,7 +926,7 @@
     },
     "packages/terminal-control": {
       "name": "@nikcli-ai/terminal-control",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "bin": {
         "terminal-control": "./src/cli.ts",
       },
@@ -945,7 +945,7 @@
     },
     "packages/tui": {
       "name": "@nikcli-ai/tui",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "bin": {
         "nikcli-tui": "./bin/nikcli-tui.ts",
       },
@@ -983,7 +983,7 @@
     },
     "packages/tui-image": {
       "name": "@nikcli-ai/tui-image",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "dependencies": {
         "jimp": "1.6.0",
       },
@@ -999,7 +999,7 @@
     },
     "packages/tui-math": {
       "name": "@nikcli-ai/tui-math",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "devDependencies": {
         "@opentui/core": "0.5.11",
         "@opentui/solid": "0.5.11",
@@ -1014,7 +1014,7 @@
     },
     "packages/tui-storybook": {
       "name": "@nikcli-ai/tui-storybook",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "bin": {
         "tui-storybook": "./src/index.ts",
       },
@@ -1033,7 +1033,7 @@
     },
     "packages/ui": {
       "name": "@nikcli-ai/ui",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "dependencies": {
         "@kobalte/core": "catalog:",
         "@nikcli-ai/sdk": "workspace:*",
@@ -1075,7 +1075,7 @@
     },
     "packages/util": {
       "name": "@nikcli-ai/util",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "dependencies": {
         "@nikcli-ai/remote": "workspace:*",
         "@silvia-odwyer/photon-node": "0.3.4",
@@ -1093,7 +1093,7 @@
     },
     "packages/voice": {
       "name": "@nikcli-ai/voice",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "dependencies": {
         "@nikcli-ai/ade": "workspace:*",
         "effect": "^3.22.2",
@@ -1109,7 +1109,7 @@
     },
     "packages/web": {
       "name": "@nikcli-ai/web",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "dependencies": {
         "@astrojs/cloudflare": "^12.0.0",
         "@astrojs/mdx": "^4.0.2",
@@ -1147,7 +1147,7 @@
     },
     "packages/webrenderer": {
       "name": "@opentui/webrenderer",
-      "version": "1.430.0",
+      "version": "1.431.0",
       "devDependencies": {
         "@tsconfig/bun": "catalog:",
         "@types/bun": "catalog:",

@@ -3,6 +3,19 @@
 <!-- UNRELEASED:START -->
 <!-- UNRELEASED:END -->
 
+## v1.431.0 (October 2026)
+
+## Core
+
+- Apply prettier to native llm fallback files (@nikomatt69)
+- Add new AI SDKs and improve provider handling (@nikomatt69)
+
+**Thank you to 1 community contributor:**
+
+- @nikomatt69:
+  - feat: add new AI SDKs and improve provider handling
+  - style(nikcli): apply prettier to native llm fallback files
+
 ## v1.430.0 (October 2026)
 
 - No notable changes

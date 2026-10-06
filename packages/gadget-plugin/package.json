@@ -1,7 +1,7 @@
 {
   "$schema": "https://json.schemastore.org/package.json",
   "name": "@nikcli-ai/plugin-gadgets",
-  "version": "1.430.0",
+  "version": "1.431.0",
   "description": "nikcli plugin: the gadgets bridge, the `gadget` tool for the agent, and /gadget commands in the TUI",
   "type": "module",
   "license": "MIT",

@@ -1,7 +1,7 @@
 {
   "name": "@nikcli-ai/devhub",
   "private": true,
-  "version": "1.430.0",
+  "version": "1.431.0",
   "type": "module",
   "license": "MIT",
   "description": "Local admin dashboard and developer platform for nikcli: processes, memory, tests, benchmarks, API",
