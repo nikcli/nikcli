@@ -9,6 +9,8 @@
  * clear error rather than reaching for another runtime.
  */
 import { Effect } from "effect"
+import { Config } from "@/config/config"
+import { generateLegacyText, generateLegacyObject } from "@/provider/legacy/call"
 import { Runtime as LLMRuntime, type ProviderOptions } from "@nikcli-ai/llm"
 import { runPromiseWithLayer, withCurrentInstance } from "@/effect"
 import { LoadAPIKeyError, NoNativeRouteError } from "@/provider/error"
@@ -33,6 +35,21 @@ export type CallInput = {
 
 export type CallUsage = { inputTokens?: number; outputTokens?: number }
 
+async function nativeEnabled() {
+  return runPromiseWithLayer(
+    Config.defaultLayer,
+    withCurrentInstance(
+      Effect.gen(function* () {
+        return (yield* (yield* Config.Service).get()).experimental?.nativeLlm !== false
+      }),
+    ),
+  )
+}
+
+function canFallback(error: unknown, input: CallInput) {
+  return !input.abort?.aborted && !(error instanceof Error && error.name === "AbortError")
+}
+
 async function prepare(input: CallInput) {
   const { modelRef, provider } = await runPromiseWithLayer(
     Provider.defaultLayer,
@@ -47,7 +64,10 @@ async function prepare(input: CallInput) {
     ),
   )
   if (!provider || !modelRef) {
-    throw new NoNativeRouteError({ providerID: input.model.providerID, modelID: input.model.id })
+    throw new NoNativeRouteError({
+      providerID: input.model.providerID,
+      modelID: input.model.id,
+    })
   }
   const apiKey = typeof provider.options.apiKey === "string" ? provider.options.apiKey : provider.key
   if (!apiKey && typeof provider.options.fetch !== "function") {
@@ -84,18 +104,34 @@ async function prepare(input: CallInput) {
     },
     input.headers,
   )
-  return { request, fetch: Provider.nativeFetch(provider), signal: input.abort }
+  return {
+    request,
+    fetch: Provider.nativeFetch(provider),
+    signal: input.abort,
+  }
 }
 
 /** Ask a model for text. */
 export async function generateText(input: CallInput): Promise<{ text: string; usage?: CallUsage }> {
-  const { request, fetch, signal } = await prepare(input)
-  const response = await LLMRuntime.generateRequest(request, { fetch, signal })
-  return {
-    text: response.text,
-    usage: response.usage
-      ? { inputTokens: response.usage.inputTokens, outputTokens: response.usage.outputTokens }
-      : undefined,
+  if (!(await nativeEnabled())) return generateLegacyText(input)
+  try {
+    const { request, fetch, signal } = await prepare(input)
+    const response = await LLMRuntime.generateRequest(request, {
+      fetch,
+      signal,
+    })
+    return {
+      text: response.text,
+      usage: response.usage
+        ? {
+            inputTokens: response.usage.inputTokens,
+            outputTokens: response.usage.outputTokens,
+          }
+        : undefined,
+    }
+  } catch (error) {
+    if (!canFallback(error, input)) throw error
+    return generateLegacyText(input)
   }
 }
 
@@ -104,20 +140,26 @@ export async function generateText(input: CallInput): Promise<{ text: string; us
  * parameters are the schema, which every protocol supports; the caller validates the result.
  */
 export async function generateObject(input: CallInput & { schema: JSONSchema7 }): Promise<{ object: unknown }> {
-  const { request, fetch, signal } = await prepare(input)
-  const result = await LLMRuntime.generateObjectRequest(
-    {
-      model: request.model,
-      system: request.system,
-      messages: request.messages,
-      generation: request.generation,
-      providerOptions: request.providerOptions,
-      http: request.http,
-      jsonSchema: input.schema as never,
-    },
-    { fetch, signal },
-  )
-  return { object: result.object }
+  if (!(await nativeEnabled())) return generateLegacyObject(input)
+  try {
+    const { request, fetch, signal } = await prepare(input)
+    const result = await LLMRuntime.generateObjectRequest(
+      {
+        model: request.model,
+        system: request.system,
+        messages: request.messages,
+        generation: request.generation,
+        providerOptions: request.providerOptions,
+        http: request.http,
+        jsonSchema: input.schema as never,
+      },
+      { fetch, signal },
+    )
+    return { object: result.object }
+  } catch (error) {
+    if (!canFallback(error, input)) throw error
+    return generateLegacyObject(input)
+  }
 }
 
 // ── Images ──────────────────────────────────────────────────────────────────
@@ -198,7 +240,11 @@ export async function generateImage(input: ImageInput): Promise<{ images: Genera
     headers["x-goog-api-key"] = apiKey
     body = {
       instances: [{ prompt: input.prompt }],
-      parameters: { sampleCount: n, ...(input.aspectRatio ? { aspectRatio: input.aspectRatio } : {}), ...extra },
+      parameters: {
+        sampleCount: n,
+        ...(input.aspectRatio ? { aspectRatio: input.aspectRatio } : {}),
+        ...extra,
+      },
     }
     if (input.size) warnings.push("size is not supported by this model; use aspectRatio")
     if (input.seed !== undefined) warnings.push("seed is not supported by this model")
@@ -248,7 +294,12 @@ export async function generateImage(input: ImageInput): Promise<{ images: Genera
     ),
     ...(json.predictions ?? []).flatMap((item) =>
       item.bytesBase64Encoded
-        ? [{ base64: item.bytesBase64Encoded, mediaType: item.mimeType ?? sniffMediaType(item.bytesBase64Encoded) }]
+        ? [
+            {
+              base64: item.bytesBase64Encoded,
+              mediaType: item.mimeType ?? sniffMediaType(item.bytesBase64Encoded),
+            },
+          ]
         : [],
     ),
   ]

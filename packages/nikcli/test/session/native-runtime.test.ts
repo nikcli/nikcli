@@ -109,7 +109,10 @@ describe("LLMNativeRuntime.status OAuth", () => {
 
   it("still requires a key when nothing else carries the credential", () => {
     const result = status_({ key: undefined, options: {} }, { type: "oauth" })
-    expect(result).toEqual({ type: "unsupported", reason: "API key is not configured" })
+    expect(result).toEqual({
+      type: "unsupported",
+      reason: "API key is not configured",
+    })
   })
 
   it("supports an API key with no custom fetch", () => {
@@ -135,68 +138,80 @@ describe("LLM.stream native failure handling", () => {
       const { LLM } = await import("@/session/llm")
       const { runPromiseWithLayer, withCurrentInstance } = await import("@/effect")
       try {
-        await Bun.write(
-          path.join(home, "nikcli.json"),
-          JSON.stringify({
-            experimental: { openTelemetry: false },
-            enabled_providers: ["native-safety"],
-            provider: {
-              "native-safety": {
-                npm: "@ai-sdk/openai-compatible",
-                api: "http://127.0.0.1:1/v1",
-                options: { apiKey: "local-test-key" },
-                models: {
-                  "safety-model": {
-                    name: "Safety Model",
-                    limit: { context: 8192, output: 1024 },
+        const server = Bun.serve({
+          port: 0,
+          fetch: () =>
+            new Response(
+              'data: {"id":"fallback","choices":[{"index":0,"delta":{"role":"assistant","content":"SDK fallback"},"finish_reason":null}]}\n\ndata: {"id":"fallback","choices":[{"index":0,"delta":{},"finish_reason":"stop"}]}\n\ndata: [DONE]\n\n',
+              { headers: { "content-type": "text/event-stream" } },
+            ),
+        })
+        try {
+          await Bun.write(
+            path.join(home, "nikcli.json"),
+            JSON.stringify({
+              experimental: { openTelemetry: false },
+              enabled_providers: ["native-safety"],
+              provider: {
+                "native-safety": {
+                  npm: "@ai-sdk/openai-compatible",
+                  api: `http://127.0.0.1:${server.port}/v1`,
+                  options: { apiKey: "local-test-key" },
+                  models: {
+                    "safety-model": {
+                      name: "Safety Model",
+                      limit: { context: 8192, output: 1024 },
+                    },
                   },
                 },
               },
-            },
-          }),
-        )
-        await Instance.provide({
-          directory: home,
-          fn: async () => {
-            const model = await runPromiseWithLayer(
-              Provider.defaultLayer,
-              withCurrentInstance(
-                Effect.gen(function* () {
-                  const provider = yield* Provider.Service
-                  return yield* provider.getModel("native-safety", "safety-model")
-                }),
-              ),
-            )
-            const controller = new AbortController()
-            const input: import("@/session/llm").LLM.StreamInput = {
-              sessionID: "ses_native_safety",
-              user: {
-                id: "msg_native_safety",
+            }),
+          )
+          await Instance.provide({
+            directory: home,
+            fn: async () => {
+              const model = await runPromiseWithLayer(
+                Provider.defaultLayer,
+                withCurrentInstance(
+                  Effect.gen(function* () {
+                    const provider = yield* Provider.Service
+                    return yield* provider.getModel("native-safety", "safety-model")
+                  }),
+                ),
+              )
+              const controller = new AbortController()
+              const input: import("@/session/llm").LLM.StreamInput = {
                 sessionID: "ses_native_safety",
-                role: "user",
-                time: { created: 0 },
-                agent: "build",
-                model: { providerID: model.providerID, modelID: model.id },
-              },
-              agent: {
-                name: "build",
-                mode: "primary",
-                options: {},
-                permission: [],
-              },
-              model,
-              system: [],
-              messages: [{ role: "user", content: "hello" }],
-              tools: {},
-              abort: controller.signal,
-            }
-            await body({
-              input,
-              stream: LLM.stream,
-              controller,
-            })
-          },
-        })
+                user: {
+                  id: "msg_native_safety",
+                  sessionID: "ses_native_safety",
+                  role: "user",
+                  time: { created: 0 },
+                  agent: "build",
+                  model: { providerID: model.providerID, modelID: model.id },
+                },
+                agent: {
+                  name: "build",
+                  mode: "primary",
+                  options: {},
+                  permission: [],
+                },
+                model,
+                system: [],
+                messages: [{ role: "user", content: "hello" }],
+                tools: {},
+                abort: controller.signal,
+              }
+              await body({
+                input,
+                stream: LLM.stream,
+                controller,
+              })
+            },
+          })
+        } finally {
+          server.stop(true)
+        }
       } finally {
         await Instance.disposeAll()
         if (previous === undefined) delete process.env.NIKCLI_DISABLE_PROJECT_CONFIG
@@ -300,15 +315,15 @@ describe("LLM.stream native failure handling", () => {
     })
   }
 
-  it("fails the turn with the route's reason when the route refuses the request", async () => {
+  it("uses SDK fallback when the native route refuses the request", async () => {
     await fixture(async ({ input, stream }) => {
       const native = spyOn(LLMNativeRuntime, "streamRequestOnly").mockReturnValue({
         type: "unsupported",
         reason: "route refused",
       })
       try {
-        await expect(stream(input)).rejects.toMatchObject({ name: "NoNativeRouteError" })
-        await expect(stream(input)).rejects.toThrow(/route refused/)
+        expect(await (await stream(input)).text).toBe("SDK fallback")
+        expect(await (await stream(input)).text).toBe("SDK fallback")
         expect(native).toHaveBeenCalledTimes(2)
       } finally {
         native.mockRestore()
@@ -316,28 +331,28 @@ describe("LLM.stream native failure handling", () => {
     })
   })
 
-  it("fails the turn as a missing API key when the pre-flight finds none", async () => {
+  it("uses SDK credentials when the native pre-flight is ineligible", async () => {
     await fixture(async ({ input, stream }) => {
       const preflight = spyOn(LLMNativeRuntime, "status").mockReturnValue({
         type: "unsupported",
         reason: "API key is not configured",
       })
       try {
-        await expect(stream(input)).rejects.toMatchObject({ name: "AI_LoadAPIKeyError" })
+        expect(await (await stream(input)).text).toBe("SDK fallback")
       } finally {
         preflight.mockRestore()
       }
     })
   })
 
-  it("surfaces a non-cancellation setup failure rather than hiding it", async () => {
+  it("uses SDK fallback on a non-cancellation native setup failure", async () => {
     await fixture(async ({ input, stream }) => {
       const failure = new Error("native setup failed")
       const native = spyOn(LLMNativeRuntime, "streamRequestOnly").mockImplementation(() => {
         throw failure
       })
       try {
-        await expect(stream(input)).rejects.toBe(failure)
+        expect(await (await stream(input)).text).toBe("SDK fallback")
       } finally {
         native.mockRestore()
       }
