@@ -24,9 +24,9 @@
  * Nothing here branches production behaviour. Recording is the whole job.
  */
 
-import { Log } from "@nikcli-ai/util/log";
+import { Log } from "@nikcli-ai/util/log"
 
-const log = Log.create({ service: "llm-coverage" });
+const log = Log.create({ service: "llm-coverage" })
 
 /**
  * What happened to one turn, with respect to the native route.
@@ -43,15 +43,9 @@ export type Outcome =
   /** The native runtime returned a stream (not proof of completion). */
   | "native"
   /** The native runtime refused or failed; the AI SDK fallback finished the turn. */
-  | "fallback";
+  | "fallback"
 
-export const OUTCOMES: readonly Outcome[] = [
-  "unmapped",
-  "ineligible",
-  "ineligible-late",
-  "native",
-  "fallback",
-] as const;
+export const OUTCOMES: readonly Outcome[] = ["unmapped", "ineligible", "ineligible-late", "native", "fallback"] as const
 
 /**
  * Distinct refusal reasons kept before the rest bucket into `other`.
@@ -61,9 +55,9 @@ export const OUTCOMES: readonly Outcome[] = [
  * string that starts carrying a model id would otherwise turn a bounded map into
  * an unbounded one without anybody noticing.
  */
-const REASON_CAP = 32;
-const PROVIDER_CAP = 32;
-const PROVIDER_OVERFLOW = "other";
+const REASON_CAP = 32
+const PROVIDER_CAP = 32
+const PROVIDER_OVERFLOW = "other"
 
 /**
  * Distinct `provider/model` pairs kept for the refused set.
@@ -72,7 +66,7 @@ const PROVIDER_OVERFLOW = "other";
  * an exception). Sixty-four is several times the size of a realistic catalog
  * slice for one process, and the counters — not this set — are the measurement.
  */
-const MODEL_CAP = 64;
+const MODEL_CAP = 64
 
 /**
  * Turns between aggregate log lines.
@@ -82,18 +76,18 @@ const MODEL_CAP = 64;
  * line every `LOG_EVERY` turns leaves the soak in the service's own redacted log
  * without adding a route, a file, or a timer.
  */
-const LOG_EVERY = 25;
+const LOG_EVERY = 25
 
-const counts = new Map<string, Map<Outcome, number>>();
-const overflowCounts = new Map<Outcome, number>();
-const reasons = new Map<string, number>();
-let reasonOverflow = 0;
-const refusedModels = new Set<string>();
-let refusedOverflow = 0;
-let turns = 0;
+const counts = new Map<string, Map<Outcome, number>>()
+const overflowCounts = new Map<Outcome, number>()
+const reasons = new Map<string, number>()
+let reasonOverflow = 0
+const refusedModels = new Set<string>()
+let refusedOverflow = 0
+let turns = 0
 
 function bump<K extends string>(map: Map<K, number>, key: K) {
-  map.set(key, (map.get(key) ?? 0) + 1);
+  map.set(key, (map.get(key) ?? 0) + 1)
 }
 
 /**
@@ -104,77 +98,60 @@ function bump<K extends string>(map: Map<K, number>, key: K) {
  * model that ran does not need to be listed for anyone to find it.
  */
 export function record(input: {
-  readonly outcome: Outcome;
-  readonly providerID: string;
-  readonly modelID: string;
-  readonly reason?: string;
+  readonly outcome: Outcome
+  readonly providerID: string
+  readonly modelID: string
+  readonly reason?: string
 }): void {
   // Reserve `other` before admission; neither literal ids nor later arrivals
   // may consume another named slot or collide with the overflow counters.
-  let provider = counts.get(input.providerID);
-  if (
-    !provider &&
-    input.providerID !== PROVIDER_OVERFLOW &&
-    counts.size < PROVIDER_CAP
-  ) {
-    provider = new Map<Outcome, number>();
-    counts.set(input.providerID, provider);
+  let provider = counts.get(input.providerID)
+  if (!provider && input.providerID !== PROVIDER_OVERFLOW && counts.size < PROVIDER_CAP) {
+    provider = new Map<Outcome, number>()
+    counts.set(input.providerID, provider)
   }
-  bump(provider ?? overflowCounts, input.outcome);
-  turns++;
+  bump(provider ?? overflowCounts, input.outcome)
+  turns++
 
-  if (
-    input.reason &&
-    (input.outcome === "ineligible" || input.outcome === "ineligible-late")
-  ) {
+  if (input.reason && (input.outcome === "ineligible" || input.outcome === "ineligible-late")) {
     // Past the cap a new reason is still counted, just not named. Dropping it
     // entirely would make the totals disagree with the counters.
-    if (
-      input.reason === "other" ||
-      (reasons.size >= REASON_CAP && !reasons.has(input.reason))
-    )
-      reasonOverflow++;
-    else bump(reasons, input.reason);
+    if (input.reason === "other" || (reasons.size >= REASON_CAP && !reasons.has(input.reason))) reasonOverflow++
+    else bump(reasons, input.reason)
   }
 
-  if (
-    input.outcome === "unmapped" ||
-    input.outcome === "ineligible" ||
-    input.outcome === "ineligible-late"
-  ) {
-    const pair = `${input.providerID}/${input.modelID}`;
+  if (input.outcome === "unmapped" || input.outcome === "ineligible" || input.outcome === "ineligible-late") {
+    const pair = `${input.providerID}/${input.modelID}`
     if (refusedModels.has(pair)) {
       // already named
     } else if (refusedModels.size < MODEL_CAP) {
-      refusedModels.add(pair);
+      refusedModels.add(pair)
     } else {
-      refusedOverflow++;
+      refusedOverflow++
     }
   }
 
-  if (turns % LOG_EVERY === 0) log.info("native route coverage", report());
+  if (turns % LOG_EVERY === 0) log.info("native route coverage", report())
 }
 
 export type Snapshot = {
-  readonly turns: number;
+  readonly turns: number
   /** `providerID:outcome` → count. */
-  readonly counts: Readonly<Record<string, number>>;
+  readonly counts: Readonly<Record<string, number>>
   /** Refusal reason → count, with everything past the cap under `other`. */
-  readonly reasons: Readonly<Record<string, number>>;
+  readonly reasons: Readonly<Record<string, number>>
   /** Up to `MODEL_CAP` distinct `provider/model` pairs the native route refused. */
-  readonly refusedModels: readonly string[];
+  readonly refusedModels: readonly string[]
   /** Refusal observations not retained after the cap, including repeated pairs. */
-  readonly refusedOverflow: number;
-};
+  readonly refusedOverflow: number
+}
 
 /** A stable snapshot. Do not mutate the result. */
 export function snapshot(): Snapshot {
   return {
     turns,
     counts: Object.fromEntries(
-      providerEntries().flatMap(([id, values]) =>
-        [...values].map(([outcome, n]) => [`${id}:${outcome}`, n]),
-      ),
+      providerEntries().flatMap(([id, values]) => [...values].map(([outcome, n]) => [`${id}:${outcome}`, n])),
     ),
     reasons: Object.fromEntries(
       [...reasons.entries()]
@@ -183,7 +160,7 @@ export function snapshot(): Snapshot {
     ),
     refusedModels: [...refusedModels].sort(),
     refusedOverflow,
-  };
+  }
 }
 
 /**
@@ -193,52 +170,47 @@ export function snapshot(): Snapshot {
  * in: the per-provider keys answer "who", this answers "how much".
  */
 export function summary(): Readonly<Record<Outcome | "turns", number>> {
-  const out = { turns } as Record<Outcome | "turns", number>;
-  for (const outcome of OUTCOMES) out[outcome] = 0;
-  for (const [, values] of providerEntries())
-    for (const [outcome, n] of values) out[outcome] += n;
-  return out;
+  const out = { turns } as Record<Outcome | "turns", number>
+  for (const outcome of OUTCOMES) out[outcome] = 0
+  for (const [, values] of providerEntries()) for (const [outcome, n] of values) out[outcome] += n
+  return out
 }
 
 function compare(a: string, b: string) {
-  return a < b ? -1 : a > b ? 1 : 0;
+  return a < b ? -1 : a > b ? 1 : 0
 }
 
 function providerEntries(): [string, Map<Outcome, number>][] {
-  const entries = [...counts.entries()];
-  if (overflowCounts.size) entries.push([PROVIDER_OVERFLOW, overflowCounts]);
-  return entries.sort(([a], [b]) => compare(a, b));
+  const entries = [...counts.entries()]
+  if (overflowCounts.size) entries.push([PROVIDER_OVERFLOW, overflowCounts])
+  return entries.sort(([a], [b]) => compare(a, b))
 }
 
 export type ProviderReport = Readonly<Record<Outcome | "turns", number>> & {
-  readonly providerID: string;
-  readonly overflow: boolean;
-  readonly mapped: number;
+  readonly providerID: string
+  readonly overflow: boolean
+  readonly mapped: number
   /** Turns the route or pre-flight refused after a mapping existed. */
-  readonly eligibilityRefused: number;
-};
+  readonly eligibilityRefused: number
+}
 
 /** Cumulative, deterministic decision inputs, without model ids or request data. */
 export function report() {
-  const providers: ProviderReport[] = providerEntries().map(
-    ([providerID, values]) => {
-      const outcomes = Object.fromEntries(
-        OUTCOMES.map((outcome) => [outcome, values.get(outcome) ?? 0]),
-      ) as Record<Outcome, number>;
-      const total = OUTCOMES.reduce(
-        (sum, outcome) => sum + outcomes[outcome],
-        0,
-      );
-      return {
-        providerID,
-        overflow: providerID === PROVIDER_OVERFLOW,
-        ...outcomes,
-        turns: total,
-        mapped: total - outcomes.unmapped,
-        eligibilityRefused: outcomes.ineligible + outcomes["ineligible-late"],
-      };
-    },
-  );
+  const providers: ProviderReport[] = providerEntries().map(([providerID, values]) => {
+    const outcomes = Object.fromEntries(OUTCOMES.map((outcome) => [outcome, values.get(outcome) ?? 0])) as Record<
+      Outcome,
+      number
+    >
+    const total = OUTCOMES.reduce((sum, outcome) => sum + outcomes[outcome], 0)
+    return {
+      providerID,
+      overflow: providerID === PROVIDER_OVERFLOW,
+      ...outcomes,
+      turns: total,
+      mapped: total - outcomes.unmapped,
+      eligibilityRefused: outcomes.ineligible + outcomes["ineligible-late"],
+    }
+  })
   // Reasons are values in the log payload: the redactor does not sanitize
   // arbitrary object keys, which could otherwise carry an interpolated secret.
   return {
@@ -248,7 +220,7 @@ export function report() {
       reason,
       count,
     })),
-  };
+  }
 }
 
 /**
@@ -259,11 +231,11 @@ export function report() {
  * earlier file left behind.
  */
 export function reset(): void {
-  counts.clear();
-  overflowCounts.clear();
-  reasons.clear();
-  reasonOverflow = 0;
-  refusedModels.clear();
-  refusedOverflow = 0;
-  turns = 0;
+  counts.clear()
+  overflowCounts.clear()
+  reasons.clear()
+  reasonOverflow = 0
+  refusedModels.clear()
+  refusedOverflow = 0
+  turns = 0
 }
