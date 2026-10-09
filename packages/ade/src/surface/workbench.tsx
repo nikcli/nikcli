@@ -521,6 +521,7 @@ import {
   describeShortcut,
   holdsToTalk,
   type VoiceEngine,
+  type VoiceMode,
   type VoiceSettings,
   type InstallProgress,
   type PackState,
@@ -560,6 +561,7 @@ import { createPushToTalkHandler, resolveVoiceOrAdeKey } from "../voice/shortcut
 import {
   GLOBAL_VOICE_EVENT,
   globalVoiceAction,
+  refusalsOf,
   registerVoiceShortcuts,
   serialiseRegistrations,
   unknownChordMessage,
@@ -5253,6 +5255,9 @@ export function Workbench() {
   const voiceEngine = createVoiceEngine({
     host: voiceHost,
     settings: voiceSettings(),
+    // A tap on a dictation chord held to speak closed it unseen: said, so the press is not dead.
+    onDictationTap: () =>
+      report(t("vui.dictation.tapHint", describeShortcut(voiceSettings().transcriptionChord, platform)), "info"),
     ...(voiceAvailable ? {} : { transcriber: noMicrophone }),
     speaker,
     micMeter,
@@ -5362,6 +5367,8 @@ export function Workbench() {
 
   /* Set once the native shell has registered the voice hotkeys; see onMount. */
   let registerGlobalShortcuts: ((settings: VoiceSettings) => Promise<void>) | undefined
+  /* The chords the system refused at the last registration, shown in the voice settings. */
+  const [shortcutRefusals, setShortcutRefusals] = createSignal<Partial<Record<VoiceMode, string>>>({})
 
   /*
    * Always-on listening: whether ADE should hold the microphone open by
@@ -5445,6 +5452,8 @@ export function Workbench() {
       now: () => Date.now(),
       isLocked: isScreenLocked,
       isHidden: () => hiddenInTray,
+      isDictating: () => voiceEngine.activeMode() === "transcription",
+      isLatched: () => voiceEngine.isLatched(),
       shouldListen: () => listensByItself(voiceSettings()),
       isListening: () => voiceEngine.isRunning(),
       isPaused: () => voiceEngine.listenPaused(),
@@ -6087,11 +6096,12 @@ export function Workbench() {
            * the chords the user kept were whichever finished last.
            */
           const syncGlobalShortcuts = serialiseRegistrations(async (settings: VoiceSettings) => {
-            await registerVoiceShortcuts(settings, {
+            const { failed } = await registerVoiceShortcuts(settings, {
               unregisterAll: () => invoke("unregister_global_voice_shortcuts") as Promise<void>,
               register: (chord) => invoke("register_global_voice_shortcut", { chord }) as Promise<void>,
               report: (message) => report(message, "warning"),
             })
+            setShortcutRefusals(refusalsOf(failed))
           })
 
           await syncGlobalShortcuts(voiceSettings())
@@ -9294,6 +9304,7 @@ export function Workbench() {
             engine={voiceEngine}
             settings={voiceSettings()}
             initialSection={voiceSettingsSection()}
+            shortcutRefusals={shortcutRefusals()}
             onChange={handleVoiceSettingsChange}
             onClose={closeVoiceSettings}
             onOpenVoiceSource={(voice) => void getHost().then((host) => host?.ttsOpenVoiceSource?.(voice))}
