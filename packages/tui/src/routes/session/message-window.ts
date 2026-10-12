@@ -51,7 +51,10 @@ export type VisibleRangeInput = {
  * Compute the half-open `[start, end)` slice of messages that intersect the viewport,
  * padded by `overscan`. `end` is exclusive and suitable for `messages.slice(start, end)`.
  */
-export function visibleRange(input: VisibleRangeInput): { start: number; end: number } {
+export function visibleRange(input: VisibleRangeInput): {
+  start: number
+  end: number
+} {
   const { heights, scrollTop, viewportHeight } = input
   const overscan = Math.max(0, input.overscan ?? 0)
   const count = heights.length
@@ -70,6 +73,23 @@ export function visibleRange(input: VisibleRangeInput): { start: number; end: nu
   const start = Math.max(0, first - overscan)
   const end = Math.min(count, last + 1 + overscan)
   return { start, end }
+}
+
+/**
+ * Scroll correction that keeps the message under the viewport top in place after heights change.
+ *
+ * The anchor is the message that contains `scrollTop` under the old heights, and its intra-message
+ * offset is kept. Returns the delta to add to `scrollTop` under the new heights; 0 when nothing above
+ * the anchor moved, so a height change below the viewport never shifts what the user is reading.
+ */
+export function anchorAdjustment(oldHeights: number[], newHeights: number[], scrollTop: number): number {
+  if (oldHeights.length === 0 || newHeights.length === 0) return 0
+  const oldOffsets = cumulativeOffsets(oldHeights)
+  const newOffsets = cumulativeOffsets(newHeights)
+  const anchor = Math.min(indexAtOffset(oldOffsets, Math.max(0, scrollTop)), newHeights.length - 1)
+  const intra = Math.max(0, scrollTop) - oldOffsets[anchor]
+  const newTop = newOffsets[anchor] + intra
+  return newTop - Math.max(0, scrollTop)
 }
 
 /** Total spacer heights above/below the rendered window, for scrollbar/sticky math. */

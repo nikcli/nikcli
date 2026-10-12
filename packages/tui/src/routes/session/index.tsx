@@ -72,7 +72,7 @@ import { DialogSelect } from "../../ui/dialog-select"
 import { DialogBgAgents } from "./dialog-bg-agents"
 import { features } from "@nikcli-ai/util/features"
 import { useLanguage } from "@tui/context/language"
-import { spacerHeights, visibleRange } from "./message-window"
+import { anchorAdjustment, spacerHeights, visibleRange } from "./message-window"
 import { groupParts, type ExplorationGroup } from "./rows"
 import { liveMarkdown, splitLiveMarkdown, wrapDiagramsInFences } from "./diagram"
 import { SESSION_SIDEBAR_WIDTH } from "@tui/ui/layout"
@@ -172,10 +172,6 @@ export function Session() {
   const turnUsage = createMemo(() =>
     sync.data.config.tui?.turn_tokens === true ? TurnUsage.byMessage(messages()) : undefined,
   )
-  // The virtualizer uses estimated heights. While the assistant is streaming,
-  // the active row grows on every text delta, so those estimates no longer
-  // describe the scroll position and can window the live response out.
-  const streaming = createMemo(() => turns().some((turn) => turn.role === "assistant" && !turn.completedAt))
   /**
    * Fallback row height, used only when a turn's content cannot be measured.
    * `estimateTurnHeight` derives the real figure from the turn's body.
@@ -195,44 +191,75 @@ export function Session() {
     onCleanup(() => clearInterval(id))
   })
   /**
+   * Row heights measured from the renderer's own layout, keyed by message ID and valid only at the
+   * width they were measured at. Rows never measured keep the estimate. Layout changes bump
+   * `layoutVersion` so the window is recomputed.
+   */
+  const measured = new Map<string, { layout: string; height: number }>()
+  const [layoutVersion, setLayoutVersion] = createSignal(0)
+  const rowColumns = () => Math.max(1, scroll?.viewport.width || dimensions().width || 80)
+  // Everything a measured height depends on: the viewport width, and the resolved user-message
+  // style. Chrome rows come from that style, not a constant, so a theme that changes its padding
+  // changes the key and every measurement taken under the old theme is ignored.
+  function layoutKey() {
+    const userBox = userStyle().box
+    const userColumns = bodyColumns(userBox, contentWidth())
+    return `${rowColumns()}|${chromeRows(userBox)}|${userColumns}`
+  }
+  function heightsFor(all: Turn[]): number[] {
+    layoutVersion()
+    const columns = rowColumns()
+    const userBox = userStyle().box
+    const userColumns = bodyColumns(userBox, contentWidth())
+    const key = layoutKey()
+    const metrics = {
+      chromeRows: chromeRows(userBox),
+      entryRows: DEFAULT_TURN_HEIGHT_METRICS.entryRows,
+    }
+    return all.map((turn) => {
+      const known = measured.get(turn.messageID)
+      if (known && known.layout === key) return known.height
+      // Per-turn, from content. A flat constant was wrong in both directions
+      // and the errors did not cancel. `specs/effect-tui/06-terminal-rendering.md`.
+      return (
+        estimateTurnHeight(
+          turn,
+          turn.role === "user" ? userColumns : columns,
+          turn.role === "user" ? metrics : DEFAULT_TURN_HEIGHT_METRICS,
+        ) || MESSAGE_HEIGHT_FALLBACK
+      )
+    })
+  }
+  function recordHeight(messageID: string, height: number) {
+    if (height <= 0) return
+    const key = layoutKey()
+    const previous = measured.get(messageID)
+    if (previous && previous.layout === key && previous.height === height) return
+    const all = turns()
+    const before = heightsFor(all)
+    measured.set(messageID, { layout: key, height })
+    const after = heightsFor(all)
+    if (scroll && !scroll.isDestroyed) {
+      const top = scroll.scrollTop
+      // Following the tail is sticky-bottom's job; only correct while the user is reading history.
+      const following = top + scroll.viewport.height >= scroll.scrollHeight - 1
+      const delta = following ? 0 : anchorAdjustment(before, after, top)
+      if (delta !== 0) scroll.scrollTop = top + delta
+    }
+    setLayoutVersion((version) => version + 1)
+  }
+  /**
    * Windowed message list for C1 virtualization. Flag off → full list (bit-identical).
-   * On any error → full list fallback.
+   * On any error → full list fallback. Stays windowed while streaming: measured heights keep the
+   * live turn's position correct as it grows.
    */
   const windowed = createMemo(() => {
     const all = turns()
-    if (!virtualizationEnabled() || streaming() || all.length === 0) {
+    if (!virtualizationEnabled() || all.length === 0) {
       return { items: all, top: 0, bottom: 0, baseIndex: 0 }
     }
     try {
-      // Per-turn, from content. A flat constant was wrong in both directions
-      // and the errors did not cancel: a one-line acknowledgement was
-      // over-reserved while a long diff was under-reserved by an order of
-      // magnitude, so the offset drifted further the more the transcript mixed
-      // the two. `specs/effect-tui/06-terminal-rendering.md`.
-      const columns = Math.max(1, scroll?.viewport.width || dimensions().width || 80)
-      // Chrome rows come from the *resolved* message style, not a constant. A
-      // theme that changes the message padding changes how tall every turn
-      // renders; an estimator still counting the stock 3 would mis-reserve and
-      // the scroll offset would drift — which reads as a renderer bug, not a
-      // theming one.
-      // `contentWidth()`, the same number the message component reads as
-      // `ctx.width`. The scrollbox viewport above falls back to the whole
-      // terminal, which ignores the sidebar and is some thirty columns wide of
-      // what a message is actually given.
-      const userBox = userStyle().box
-      const userColumns = bodyColumns(userBox, contentWidth())
-      const metrics = {
-        chromeRows: chromeRows(userBox),
-        entryRows: DEFAULT_TURN_HEIGHT_METRICS.entryRows,
-      }
-      const heights = all.map(
-        (turn) =>
-          estimateTurnHeight(
-            turn,
-            turn.role === "user" ? userColumns : columns,
-            turn.role === "user" ? metrics : DEFAULT_TURN_HEIGHT_METRICS,
-          ) || MESSAGE_HEIGHT_FALLBACK,
-      )
+      const heights = heightsFor(all)
       const scrollTop = scrollPos()
       const vp = viewportH()
       // Sticky-bottom is owned by the scrollbox itself (stickyScroll=true,
@@ -1439,57 +1466,77 @@ export function Session() {
                 <RevertBanner count={revert()!.reverted.length} diffFiles={revert()!.diffFiles} />
               </Show>
               <For each={windowed().items}>
-                {(turn, index) => (
-                  <Switch>
-                    <Match when={revert()?.messageID && turn.messageID >= revert()!.messageID}>
-                      <></>
-                    </Match>
-                    <Match when={turn.role === "user"}>
-                      <Replace
-                        component="UserMessage"
-                        requestId={turn.messageID}
-                        sessionID={route.sessionID}
-                        props={{ text: String((turn.body[0] as { text?: string } | undefined)?.text ?? "") }}
-                      >
-                        <UserMessage
-                          style={userStyle()}
-                          index={windowed().baseIndex + index()}
-                          onMouseUp={() => {
-                            if (renderer.getSelection()?.getSelectedText()) return
-                            dialog.replace(() => (
-                              <DialogMessage
-                                messageID={turn.messageID}
-                                sessionID={route.sessionID}
-                                setPrompt={(promptInfo) => prompt.set(promptInfo)}
-                              />
-                            ))
+                {(turn, index) => {
+                  const row = () => (
+                    <Switch>
+                      <Match when={revert()?.messageID && turn.messageID >= revert()!.messageID}>
+                        <></>
+                      </Match>
+                      <Match when={turn.role === "user"}>
+                        <Replace
+                          component="UserMessage"
+                          requestId={turn.messageID}
+                          sessionID={route.sessionID}
+                          props={{
+                            text: String((turn.body[0] as { text?: string } | undefined)?.text ?? ""),
                           }}
-                          turn={turn}
-                          pending={pending()}
-                        />
-                      </Replace>
-                    </Match>
-                    <Match when={turn.role === "assistant"}>
-                      <Replace
-                        component="AssistantMessage"
-                        requestId={turn.messageID}
-                        sessionID={route.sessionID}
-                        props={{
-                          text: (turn.body as Array<{ type?: string; text?: string }>)
-                            .filter((entry) => entry.type === "text")
-                            .map((entry) => entry.text ?? "")
-                            .join("\n"),
+                        >
+                          <UserMessage
+                            style={userStyle()}
+                            index={windowed().baseIndex + index()}
+                            onMouseUp={() => {
+                              if (renderer.getSelection()?.getSelectedText()) return
+                              dialog.replace(() => (
+                                <DialogMessage
+                                  messageID={turn.messageID}
+                                  sessionID={route.sessionID}
+                                  setPrompt={(promptInfo) => prompt.set(promptInfo)}
+                                />
+                              ))
+                            }}
+                            turn={turn}
+                            pending={pending()}
+                          />
+                        </Replace>
+                      </Match>
+                      <Match when={turn.role === "assistant"}>
+                        <Replace
+                          component="AssistantMessage"
+                          requestId={turn.messageID}
+                          sessionID={route.sessionID}
+                          props={{
+                            text: (
+                              turn.body as Array<{
+                                type?: string
+                                text?: string
+                              }>
+                            )
+                              .filter((entry) => entry.type === "text")
+                              .map((entry) => entry.text ?? "")
+                              .join("\n"),
+                          }}
+                        >
+                          <AssistantMessage
+                            last={lastAssistant()?.id === turn.messageID}
+                            turn={turn}
+                            usage={turnUsage()?.get(turn.messageID)}
+                          />
+                        </Replace>
+                      </Match>
+                    </Switch>
+                  )
+                  return (
+                    <Show when={virtualizationEnabled()} fallback={row()}>
+                      <box
+                        ref={(el) => {
+                          el.onSizeChange = () => recordHeight(turn.messageID, el.height)
                         }}
                       >
-                        <AssistantMessage
-                          last={lastAssistant()?.id === turn.messageID}
-                          turn={turn}
-                          usage={turnUsage()?.get(turn.messageID)}
-                        />
-                      </Replace>
-                    </Match>
-                  </Switch>
-                )}
+                        {row()}
+                      </box>
+                    </Show>
+                  )
+                }}
               </For>
               <Show when={windowed().bottom > 0}>
                 <box height={windowed().bottom} flexShrink={0} />

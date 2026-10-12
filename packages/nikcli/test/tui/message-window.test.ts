@@ -1,5 +1,37 @@
 import { describe, expect, it } from "bun:test"
-import { cumulativeOffsets, indexAtOffset, spacerHeights, visibleRange } from "@tui/routes/session/message-window"
+import {
+  anchorAdjustment,
+  cumulativeOffsets,
+  indexAtOffset,
+  spacerHeights,
+  visibleRange,
+} from "@tui/routes/session/message-window"
+
+describe("anchorAdjustment", () => {
+  it("keeps the anchored message in place when a message above it grows", () => {
+    const before = [10, 10, 10, 10]
+    const after = [10, 25, 10, 10]
+    // scrollTop 25 sits 5 rows into message 2 (starts at 20). Message 1 grew by 15, so message 2
+    // now starts at 35 and the same content sits at 35 + 5 = 40.
+    expect(anchorAdjustment(before, after, 25)).toBe(15)
+  })
+
+  it("does nothing when only messages below the viewport change", () => {
+    const before = [10, 10, 10, 10]
+    const after = [10, 10, 10, 90]
+    expect(anchorAdjustment(before, after, 5)).toBe(0)
+  })
+
+  it("does nothing for an empty list", () => {
+    expect(anchorAdjustment([], [], 0)).toBe(0)
+  })
+
+  it("keeps the anchor when the message above shrinks", () => {
+    // scrollTop 25 is 5 rows into message 1 (starts at 20). Message 0 shrank 20 -> 5, so message 1
+    // now starts at 5 and the same content sits at 5 + 5 = 10: a correction of 10 - 25 = -15.
+    expect(anchorAdjustment([20, 10, 10], [5, 10, 10], 25)).toBe(-15)
+  })
+})
 
 describe("cumulativeOffsets", () => {
   it("returns a running sum with a leading zero and a total", () => {
@@ -64,7 +96,12 @@ describe("visibleRange", () => {
   })
 
   it("clamps overscan at the list edges", () => {
-    const range = visibleRange({ heights, scrollTop: 0, viewportHeight: 10, overscan: 99 })
+    const range = visibleRange({
+      heights,
+      scrollTop: 0,
+      viewportHeight: 10,
+      overscan: 99,
+    })
     expect(range.start).toBe(0)
     expect(range.end).toBe(heights.length)
   })
@@ -74,13 +111,21 @@ describe("visibleRange", () => {
   })
 
   it("returns an empty range for a zero-height viewport", () => {
-    expect(visibleRange({ heights, scrollTop: 0, viewportHeight: 0 })).toEqual({ start: 0, end: 0 })
+    expect(visibleRange({ heights, scrollTop: 0, viewportHeight: 0 })).toEqual({
+      start: 0,
+      end: 0,
+    })
   })
 
   it("never returns an inverted or out-of-bounds range", () => {
     for (const scrollTop of [-50, 0, 5, 45, 95, 10_000]) {
       for (const viewportHeight of [0, 1, 13, 200]) {
-        const range = visibleRange({ heights, scrollTop, viewportHeight, overscan: 3 })
+        const range = visibleRange({
+          heights,
+          scrollTop,
+          viewportHeight,
+          overscan: 3,
+        })
         expect(range.start).toBeGreaterThanOrEqual(0)
         expect(range.end).toBeLessThanOrEqual(heights.length)
         expect(range.end).toBeGreaterThanOrEqual(range.start)
@@ -94,7 +139,11 @@ describe("visibleRange", () => {
     const offsets = cumulativeOffsets(varied)
     for (let scrollTop = 0; scrollTop < offsets[offsets.length - 1]; scrollTop += 3) {
       const viewportHeight = 25
-      const range = visibleRange({ heights: varied, scrollTop, viewportHeight })
+      const range = visibleRange({
+        heights: varied,
+        scrollTop,
+        viewportHeight,
+      })
       const bottom = scrollTop + viewportHeight
       for (let i = 0; i < varied.length; i++) {
         const intersects = offsets[i] < bottom && offsets[i + 1] > scrollTop
@@ -111,19 +160,31 @@ describe("spacerHeights", () => {
   const heights = [10, 20, 30, 40]
 
   it("measures the hidden space above and below the window", () => {
-    expect(spacerHeights(heights, { start: 1, end: 3 })).toEqual({ top: 10, bottom: 40 })
+    expect(spacerHeights(heights, { start: 1, end: 3 })).toEqual({
+      top: 10,
+      bottom: 40,
+    })
   })
 
   it("is all-bottom when the window starts at the top", () => {
-    expect(spacerHeights(heights, { start: 0, end: 1 })).toEqual({ top: 0, bottom: 90 })
+    expect(spacerHeights(heights, { start: 0, end: 1 })).toEqual({
+      top: 0,
+      bottom: 90,
+    })
   })
 
   it("has no spacers when the whole list is windowed", () => {
-    expect(spacerHeights(heights, { start: 0, end: heights.length })).toEqual({ top: 0, bottom: 0 })
+    expect(spacerHeights(heights, { start: 0, end: heights.length })).toEqual({
+      top: 0,
+      bottom: 0,
+    })
   })
 
   it("clamps a range that runs past the end", () => {
-    expect(spacerHeights(heights, { start: 99, end: 99 })).toEqual({ top: 100, bottom: 0 })
+    expect(spacerHeights(heights, { start: 99, end: 99 })).toEqual({
+      top: 100,
+      bottom: 0,
+    })
   })
 
   it("keeps top + window + bottom equal to the total height", () => {
