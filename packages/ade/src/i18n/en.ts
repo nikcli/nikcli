@@ -432,6 +432,8 @@ export const en: Messages = {
   "voice.shortcut.feature.transcription": "dictation",
   "voice.shortcut.busy": (chord, feature) =>
     `The shortcut ${chord} for ${feature} is unavailable: another application might be using it. Choose another one in voice settings.`,
+  "voice.shortcut.notSystem": (chord, feature) =>
+    `The shortcut ${chord} for ${feature} only works with ADE in front: its key cannot be registered with the system. Choose one with a letter, a digit or an F key in voice settings.`,
   "voice.shortcut.unknown": (chord) =>
     `Unrecognized voice shortcut (${chord}): the microphone was not opened. Reassign it in voice settings.`,
   "voice.permission.notRefusal":
