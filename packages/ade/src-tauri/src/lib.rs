@@ -3109,3 +3109,35 @@ mod tests {
         assert_eq!(manager.on_close_requested(), CloseAction::AllowClose);
     }
 }
+
+/// The voice chords as `toTauriChord` writes them, parsed by the real crate:
+/// the same table as `src/voice/any-chord.test.ts`, which checks that what the
+/// crate prints back when the hotkey fires is recognised by the page.
+#[cfg(all(test, not(target_os = "macos")))]
+mod voice_chord_tests {
+    use std::str::FromStr;
+    use tauri_plugin_global_shortcut::Shortcut;
+
+    #[test]
+    fn every_kind_of_key_the_recorder_accepts_parses_and_prints_back() {
+        for (registered, reported) in [
+            ("CommandOrControl+Shift+J", "shift+control+KeyJ"),
+            ("CommandOrControl+Shift+1", "shift+control+Digit1"),
+            ("CommandOrControl+Alt+NUMPAD1", "control+alt+Numpad1"),
+            ("CommandOrControl+Shift+F5", "shift+control+F5"),
+            ("CommandOrControl+Shift+ARROWUP", "shift+control+ArrowUp"),
+            ("CommandOrControl+Shift+SPACE", "shift+control+Space"),
+            ("CommandOrControl+Shift+PAGEUP", "shift+control+PageUp"),
+        ] {
+            let shortcut = Shortcut::from_str(registered).unwrap_or_else(|e| panic!("{registered}: {e}"));
+            assert_eq!(shortcut.to_string(), reported, "{registered}");
+        }
+    }
+
+    #[test]
+    fn the_characters_the_recorder_used_to_store_cannot_be_registered() {
+        for character in ["CommandOrControl+Shift+!", "CommandOrControl+Shift+Ò", "CommandOrControl+Alt+€"] {
+            assert!(Shortcut::from_str(character).is_err(), "{character}");
+        }
+    }
+}
