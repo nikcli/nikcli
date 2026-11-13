@@ -7,9 +7,12 @@
  * far later than it should, and after one the microphone stream may be dead,
  * so it is opened again.
  *
- * ADE hidden in the tray counts as a lock (G11 review, M1): nobody is
- * looking at the window, so no microphone stays open in it, and listening
- * comes back when the window does.
+ * ADE hidden in the tray closes always-on listening (G11 review, M1): nobody
+ * is looking at the window, so ADE does not keep a microphone open in it by
+ * itself, and listening comes back when the window does. It is not a lock,
+ * though: a microphone the user opened from the tray, with the system-wide
+ * dictation chord, stays open. That chord is the only way to dictate while
+ * ADE is in the tray, and the guard used to close it within five seconds.
  *
  * What it does not bring back is listening that stopped itself to stop
  * spending — the cap on requests an hour, or half an hour with nobody calling
@@ -29,6 +32,10 @@ export interface ListenGuardDeps {
   isLocked(): Promise<boolean>
   /** Whether ADE's window is hidden in the tray (G11). */
   isHidden?(): boolean
+  /** Whether the open microphone is a dictation, which only the user opens. */
+  isDictating?(): boolean
+  /** Whether a tap left the microphone open until the next one: nobody is holding it. */
+  isLatched?(): boolean
   /** Whether ADE should be listening by itself, from the settings. */
   shouldListen(): boolean
   /** Whether any microphone is open, dictation included. */
@@ -59,9 +66,19 @@ export function createListenGuard(deps: ListenGuardDeps) {
          dictation too, whether or not it listens by itself. A check that
          cannot answer is taken as a lock — an open microphone is the costly
          mistake. */
-      const locked = deps.isHidden?.() === true || (await deps.isLocked().catch(() => true))
+      const locked = await deps.isLocked().catch(() => true)
       if (locked) {
         if (deps.isListening()) await deps.pause()
+        return
+      }
+      /* In the tray only what listens by itself closes, and a dictation left
+         open by a tap: nobody is holding that one, and in a window nobody
+         sees it could be forgotten. A microphone open with listening switched
+         off, or a dictation held on its chord, was opened by the user after
+         the window went away. */
+      if (deps.isHidden?.() === true) {
+        const opened = (!deps.shouldListen() || deps.isDictating?.() === true) && deps.isLatched?.() !== true
+        if (deps.isListening() && !opened) await deps.pause()
         return
       }
       if (!deps.shouldListen() || deps.isHalted()) return

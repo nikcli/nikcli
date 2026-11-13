@@ -1,5 +1,10 @@
 import { afterAll, beforeAll, describe, expect, test } from "bun:test"
-import { setShortcutActivationEnabledForTests, setWakeWordEnabledForTests } from "./settings/model"
+import {
+  DEFAULT_VOICE_SETTINGS,
+  normalizeSettings,
+  setShortcutActivationEnabledForTests,
+  setWakeWordEnabledForTests,
+} from "./settings/model"
 import { createVoiceEngine, holdsToTalk } from "./engine"
 import { FOLLOW_UP_MS, WAKE_WINDOW_MS } from "./effect/program"
 import { firstWords } from "./dialog/while-thinking"
@@ -2506,6 +2511,92 @@ describe("after 0.7.0: dictation is held on its key", () => {
     transcriber.emit("una nota", true)
     await settle()
     expect(engine.isRunning()).toBe(false)
+  })
+})
+
+/*
+ * The user pressed the dictation chord the way one presses a switch, and nothing
+ * happened: held to speak, a tap opens and closes the microphone before it can
+ * be seen. It is now said, and the chord can be a switch instead (2026-09-28).
+ */
+describe("the dictation chord: held to speak, or a switch", () => {
+  function dictation(dictationPress: "hold" | "toggle", alwaysListen = false) {
+    let clock = 10_000
+    const host = new MockVoiceHost()
+    const transcriber = createFakeTranscriber()
+    const taps: number[] = []
+    const engine = createVoiceEngine({
+      host,
+      transcriber,
+      speaker: createFakeSpeaker(),
+      now: () => clock,
+      settings: { alwaysListen, dictationPress },
+      getContext: () => ({ focusedPaneId: "pane-1" }),
+      onDictationTap: () => taps.push(clock),
+    })
+    const settle = () => new Promise((r) => setTimeout(r, 40))
+    const tap = async () => {
+      await engine.pressToTalk("transcription")
+      clock += 100
+      await engine.releaseToTalk()
+      await settle()
+    }
+    return { host, transcriber, engine, settle, tap, taps, advance: (ms: number) => (clock += ms) }
+  }
+
+  test("held to speak, the default: a tap closes it and says how it opens", async () => {
+    const { engine, tap, taps } = dictation("hold")
+    expect(engine.settings().dictationPress).toBe("hold")
+    await tap()
+    expect(engine.isRunning()).toBe(false)
+    expect(taps).toHaveLength(1)
+  })
+
+  test("a hold says nothing: it is how it opens", async () => {
+    const { host, engine, transcriber, settle, taps, advance } = dictation("hold")
+    await engine.pressToTalk("transcription")
+    advance(2_000)
+    transcriber.setCommitResult(true)
+    await engine.releaseToTalk()
+    transcriber.emit("tenuto premuto", true)
+    await settle()
+    expect(host.calls).toContainEqual({ method: "insertText", args: ["pane-1", "tenuto premuto"] })
+    expect(taps).toEqual([])
+    await engine.stop()
+  })
+
+  test("as a switch: a tap opens dictation and keeps it open, the next tap closes it", async () => {
+    const { host, engine, transcriber, settle, tap, taps } = dictation("toggle")
+    await tap()
+    expect(engine.isRunning()).toBe(true)
+    expect(engine.activeMode()).toBe("transcription")
+    expect(engine.isLatched()).toBe(true)
+    transcriber.emit("detto a microfono aperto", true)
+    await settle()
+    expect(host.calls).toContainEqual({ method: "insertText", args: ["pane-1", "detto a microfono aperto"] })
+    expect(engine.isRunning()).toBe(true)
+
+    await tap()
+    expect(engine.isRunning()).toBe(false)
+    expect(engine.isLatched()).toBe(false)
+    expect(taps).toEqual([])
+  })
+
+  test("as a switch over always-on listening: closing it gives the microphone back to the name", async () => {
+    const { engine, tap } = dictation("toggle", true)
+    await engine.start("agent", { waitForName: true })
+    await tap()
+    expect(engine.activeMode()).toBe("transcription")
+    await tap()
+    expect(engine.isRunning()).toBe(true)
+    expect(engine.activeMode()).toBe("agent")
+    await engine.stop()
+  })
+
+  test("a profile from before the choice is held to speak, without a note", async () => {
+    const { settings, corrections } = normalizeSettings({ ...DEFAULT_VOICE_SETTINGS, dictationPress: undefined })
+    expect(settings.dictationPress).toBe("hold")
+    expect(corrections).toEqual([])
   })
 })
 

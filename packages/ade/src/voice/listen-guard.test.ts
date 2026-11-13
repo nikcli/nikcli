@@ -1,4 +1,5 @@
 import { afterEach, beforeEach, describe, expect, jest, test } from "bun:test"
+import { readFileSync } from "node:fs"
 import { createListenGuard, pollListenGuard, SLEEP_GAP_MS, LOCK_POLL_MS } from "./listen-guard"
 
 function world() {
@@ -6,6 +7,8 @@ function world() {
     at: 0,
     locked: false,
     hidden: false,
+    dictating: false,
+    latched: false,
     wanted: true,
     listening: true,
     paused: false,
@@ -20,6 +23,8 @@ function world() {
       return state.locked
     },
     isHidden: () => state.hidden,
+    isDictating: () => state.dictating,
+    isLatched: () => state.latched,
     shouldListen: () => state.wanted,
     isListening: () => state.listening,
     isPaused: () => state.paused,
@@ -158,6 +163,65 @@ describe("listening that stopped itself to stop spending", () => {
     await tick()
     expect(state.calls).toEqual(["pause", "resume"])
     expect(state.listening).toBe(true)
+  })
+})
+
+/*
+ * From the tray the system-wide dictation chord is the only way to dictate, and
+ * the guard closed what it opened within one tick: pressed, and nothing happened.
+ */
+describe("a microphone the user opens while ADE is in the tray", () => {
+  test("a dictation stays open, tick after tick", async () => {
+    const { state, tick } = world()
+    state.hidden = true
+    state.dictating = true
+    await tick()
+    await tick()
+    expect(state.calls).toEqual([])
+    expect(state.listening).toBe(true)
+  })
+
+  test("so does one opened with listening switched off", async () => {
+    const { state, tick } = world()
+    state.hidden = true
+    state.wanted = false
+    await tick()
+    expect(state.calls).toEqual([])
+  })
+
+  test("a lock still closes it", async () => {
+    const { state, tick } = world()
+    state.hidden = true
+    state.dictating = true
+    state.locked = true
+    await tick()
+    expect(state.calls).toEqual(["pause"])
+  })
+
+  test("the dictation handing back to listening by itself: that closes at the next tick", async () => {
+    const { state, tick } = world()
+    state.hidden = true
+    state.dictating = true
+    await tick()
+    state.dictating = false
+    await tick()
+    expect(state.calls).toEqual(["pause"])
+  })
+
+  test("a dictation left open by a tap, as a switch, closes: nobody is holding it", async () => {
+    const { state, tick } = world()
+    state.hidden = true
+    state.wanted = false
+    state.dictating = true
+    state.latched = true
+    await tick()
+    expect(state.calls).toEqual(["pause"])
+  })
+
+  test("the workbench says which microphone is a dictation, and which a tap left open", () => {
+    const source = readFileSync(new URL("../surface/workbench.tsx", import.meta.url), "utf8")
+    expect(source).toContain('isDictating: () => voiceEngine.activeMode() === "transcription"')
+    expect(source).toContain("isLatched: () => voiceEngine.isLatched()")
   })
 })
 

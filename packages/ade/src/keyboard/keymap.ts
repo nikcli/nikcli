@@ -28,6 +28,8 @@ export interface Chord {
 /** Minimal keyboard event shape — just enough to match, no DOM dependency. */
 export interface KeyInput {
   key: string
+  /** The physical key (`KeyboardEvent.code`), where the caller has it. */
+  code?: string
   ctrlKey: boolean
   metaKey: boolean
   shiftKey: boolean

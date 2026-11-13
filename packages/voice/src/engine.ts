@@ -99,6 +99,12 @@ export interface VoiceEngineOptions {
   /** Overrides `LISTEN_REQUESTS_PER_HOUR`, for tests. */
   listenRequestsPerHour?: number
   /**
+   * A tap on the dictation chord when it is held to speak: the tap closed it,
+   * and the host says how it opens. Without this a tap was a microphone that
+   * opened and closed before it could be seen — pressed, and nothing happened.
+   */
+  onDictationTap?: () => void
+  /**
    * Where what the planning provider said goes when its call could not be
    * made — the notice strip, in the app. Takes the keys out of it first: the
    * provider quotes the key it refused, and this is not a place to write one.
@@ -201,6 +207,8 @@ export interface VoiceEngine {
    * same bill. Only the user starts it again.
    */
   readonly listenHalted: () => boolean
+  /** Whether a tap is holding the microphone open until the next press. */
+  readonly isLatched: () => boolean
 
   // Control methods
   /**
@@ -1405,6 +1413,7 @@ export function createVoiceEngine(options: VoiceEngineOptions): VoiceEngine {
     listenWarning,
     listenSpend,
     listenHalted,
+    isLatched: () => latched,
     followUp,
 
     async start(mode?: VoiceMode, startOptions?: { waitForName?: boolean; automatic?: boolean }): Promise<void> {
@@ -1586,7 +1595,9 @@ export function createVoiceEngine(options: VoiceEngineOptions): VoiceEngine {
           return
         }
         pressEndsLatch = true
-        await stop()
+        // A dictation switched on over always-on listening gives the microphone back to it.
+        if (heldDictation) await endPress()
+        else await stop()
         return
       }
 
@@ -1650,9 +1661,17 @@ export function createVoiceEngine(options: VoiceEngineOptions): VoiceEngine {
         const held = pressedAt === undefined ? Number.POSITIVE_INFINITY : now() - pressedAt
         pressedAt = undefined
         if (held < PTT_TAP_MS && heldDictation) {
-          /* A held dictation never stays open by itself: a tap is nothing said. */
           activeTranscriber?.cancelSegment?.()
+          /* As a switch, the tap opens it until the next one. */
+          if (currentSettings().dictationPress === "toggle") {
+            latched = true
+            openedWithoutChord = true
+            return
+          }
+          /* Held to speak, it never stays open by itself: a tap is nothing said,
+             and the host says so rather than leave the press looking dead. */
           void endPress()
+          options.onDictationTap?.()
           return
         }
         if (held < PTT_TAP_MS) {
