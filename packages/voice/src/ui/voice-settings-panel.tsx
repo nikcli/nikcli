@@ -98,6 +98,12 @@ export interface VoiceSettingsPanelProps {
   settingsNotice?: string
   /** Optional existing ADE keymap bindings to evaluate for shortcut collision. */
   existingBindings?: readonly Binding[]
+  /**
+   * The chords the system would not register, each with what to say: another
+   * application holds it. Shown beside the chord, because a refused one looks
+   * exactly like one that works until it is pressed and nothing happens.
+   */
+  shortcutRefusals?: { agent?: string; transcription?: string }
   /** Opens the page of a Piper voice's model, where its licence is stated. Absent: no link is shown. */
   onOpenVoiceSource?: (voice: ReplyVoice) => void
   naturalVoiceError?: string
@@ -737,6 +743,7 @@ export function VoiceSettingsPanel(props: VoiceSettingsPanelProps) {
     const result = captureKeyboardEvent(
       {
         key: e.key,
+        code: e.code,
         ctrlKey: e.ctrlKey,
         metaKey: e.metaKey,
         shiftKey: e.shiftKey,
@@ -830,7 +837,9 @@ export function VoiceSettingsPanel(props: VoiceSettingsPanelProps) {
 
   /** The recording attempt's complaint, or the saved chord's, in that order. */
   const shortcutIssue = (field: "agent" | "transcription") =>
-    (field === "agent" ? agentConflict() : transcriptionConflict()) ?? storedIssue(field)
+    (field === "agent" ? agentConflict() : transcriptionConflict()) ??
+    storedIssue(field) ??
+    props.shortcutRefusals?.[field]
 
   /**
    * What the recorder button says while it is listening.
@@ -852,6 +861,9 @@ export function VoiceSettingsPanel(props: VoiceSettingsPanelProps) {
 
   const modeKeys = radioGroupKeys((value) => selectMode(value as VoiceMode))
   const sendKeys = radioGroupKeys((value) => updateSettings({ transcriptionSend: value as TranscriptionSendMode }))
+  const pressKeys = radioGroupKeys((value) =>
+    updateSettings({ dictationPress: value === "toggle" ? "toggle" : "hold" }),
+  )
   const listenKeys = radioGroupKeys((value) => updateSettings({ alwaysListen: value === "always" }))
   const replyKeys = radioGroupKeys((value) => updateSettings({ speakReplies: value === "speak" }))
   const alertsKeys = radioGroupKeys((value) => updateSettings({ spokenAlerts: value === "on" }))
@@ -1750,7 +1762,11 @@ export function VoiceSettingsPanel(props: VoiceSettingsPanelProps) {
                       {t("vui.shortcuts.transcription")}
                     </label>
                     <span id="transcription-chord-desc" data-slot="item-desc">
-                      {t("vui.shortcuts.transcription.desc")}
+                      {t(
+                        props.settings.dictationPress === "toggle"
+                          ? "vui.shortcuts.transcription.desc.toggle"
+                          : "vui.shortcuts.transcription.desc",
+                      )}
                     </span>
                   </div>
                   <div data-slot="shortcut-controls">
@@ -1797,6 +1813,40 @@ export function VoiceSettingsPanel(props: VoiceSettingsPanelProps) {
                     </div>
                   )}
                 </Show>
+                <div data-slot="sub-choice-box">
+                  <span id="dictation-press-label" data-slot="sub-choice-label">
+                    {t("vui.dictation.press.title")}
+                  </span>
+                  <div
+                    role="radiogroup"
+                    aria-labelledby="dictation-press-label"
+                    data-slot="sub-choice-row"
+                    onKeyDown={pressKeys}
+                  >
+                    <div
+                      role="radio"
+                      data-value="hold"
+                      aria-checked={props.settings.dictationPress !== "toggle"}
+                      tabIndex={props.settings.dictationPress !== "toggle" ? 0 : -1}
+                      data-slot="sub-choice-item"
+                      onClick={() => updateSettings({ dictationPress: "hold" })}
+                    >
+                      <span data-slot="sub-item-title">{t("vui.dictation.press.hold")}</span>
+                      <span data-slot="sub-item-desc">{t("vui.dictation.press.hold.desc")}</span>
+                    </div>
+                    <div
+                      role="radio"
+                      data-value="toggle"
+                      aria-checked={props.settings.dictationPress === "toggle"}
+                      tabIndex={props.settings.dictationPress === "toggle" ? 0 : -1}
+                      data-slot="sub-choice-item"
+                      onClick={() => updateSettings({ dictationPress: "toggle" })}
+                    >
+                      <span data-slot="sub-item-title">{t("vui.dictation.press.toggle")}</span>
+                      <span data-slot="sub-item-desc">{t("vui.dictation.press.toggle.desc")}</span>
+                    </div>
+                  </div>
+                </div>
               </div>
             </div>
           </section>
