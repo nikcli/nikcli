@@ -78,6 +78,24 @@ function conflictsFor(
   return conflicts
 }
 
+/**
+ * A voice chord against a key event, by the character or by the physical key.
+ *
+ * A voice chord is recorded from the physical key where the character is not
+ * the key (see `chordKey` in the voice's shortcut capture): Ctrl+Shift+1 is
+ * stored as «1» although an Italian keyboard reports «!». The physical key
+ * stands in only when the character is not a letter or a digit of its own, so
+ * on a layout that moves the letters the chord still answers one key, not two;
+ * the keypad is always its physical key.
+ */
+export function matchesVoiceChord(chord: Chord, event: KeyInput): boolean {
+  if (matchesChord(chord, event)) return true
+  if (!event.code) return false
+  const code = normalizeKeyName(event.code)
+  if (!/^numpad[0-9]$/.test(code) && /^[a-z0-9]$/.test(normalizeKeyName(event.key))) return false
+  return matchesChord(chord, { ...event, key: code })
+}
+
 export function resolveVoiceOrAdeKey(
   adeBindings: readonly Binding[],
   voiceSettings: VoiceSettings,
@@ -110,7 +128,7 @@ export function resolveVoiceOrAdeKey(
 
   // 3. Match against agent chord
   const agentChordObj = parseChord(voiceSettings.agentChord, platform)
-  if (matchesChord(agentChordObj, event)) {
+  if (matchesVoiceChord(agentChordObj, event)) {
     return {
       type: "voice-agent",
       commandId: VOICE_COMMAND_AGENT,
@@ -119,7 +137,7 @@ export function resolveVoiceOrAdeKey(
 
   // 4. Match against transcription chord
   const transcriptionChordObj = parseChord(voiceSettings.transcriptionChord, platform)
-  if (matchesChord(transcriptionChordObj, event)) {
+  if (matchesVoiceChord(transcriptionChordObj, event)) {
     return {
       type: "voice-transcription",
       commandId: VOICE_COMMAND_TRANSCRIPTION,

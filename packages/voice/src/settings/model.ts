@@ -14,6 +14,11 @@ export type VoiceMode = "agent" | "transcription"
 export type VoiceActivation = "push-to-talk" | "toggle" | "wake-word"
 
 export type TranscriptionSendMode = "manual" | "auto"
+/**
+ * How the dictation chord opens the microphone: held while speaking, or a
+ * switch — one tap opens it and the next closes it.
+ */
+export type DictationPress = "hold" | "toggle"
 
 export const AGENT_ENGINES = ["auto", "claude", "codex", "nikcli", "off"] as const
 export type AgentEngine = (typeof AGENT_ENGINES)[number]
@@ -196,6 +201,11 @@ export interface VoiceSettings {
   readonly agentChord: string
   /** Keyboard chord triggering or toggling transcription mode. */
   readonly transcriptionChord: string
+  /**
+   * Whether the dictation chord is held while speaking or works as a switch.
+   * Held is the default: a dictation left open sends the room to the pane.
+   */
+  readonly dictationPress: DictationPress
   /** Selected speech-to-text transcription engine. */
   readonly backend: TranscriberBackend
   /** Optional OpenRouter cloud speech API authentication key. */
@@ -314,6 +324,7 @@ export const DEFAULT_VOICE_SETTINGS: VoiceSettings = Object.freeze({
   alwaysListen: false,
   agentChord: "mod+shift+k",
   transcriptionChord: "mod+shift+j",
+  dictationPress: "hold",
   /*
    * The cloud engine, despite needing a key and sending audio away.
    *
@@ -838,11 +849,15 @@ export function normalizeSettings(raw: unknown): NormalizedVoiceSettings {
     corrections.push(t("vui.fix.codexFallback"))
   }
 
+  // A profile from before the choice existed has none, and gets the default without a note.
+  const dictationPress: DictationPress = candidate.dictationPress === "toggle" ? "toggle" : "hold"
+
   const cleanSettings: VoiceSettings = {
     version: Number(version),
     mode,
     activation,
     transcriptionSend,
+    dictationPress,
     language,
     wakeWord,
     alwaysListen,
